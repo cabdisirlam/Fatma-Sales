@@ -741,10 +741,8 @@
             </div>
             <form id="loginForm">
                 <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <select class="form-select" id="username" required>
-                        <option value="">Select User</option>
-                    </select>
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" placeholder="Enter your email" required>
                 </div>
                 <div class="mb-3">
                     <label for="pin" class="form-label">PIN</label>
@@ -1371,25 +1369,16 @@
             document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
         }
 
-        // Load Users for Login
+        // Load Users for Login (No longer needed with email login, but kept for auto-creating first user)
         function loadUsers() {
-            showLoading();
+            // Call getUsers to ensure first user is auto-created if needed
             google.script.run
                 .withSuccessHandler(function(users) {
-                    hideLoading();
-                    const select = document.getElementById('username');
-                    users.forEach(user => {
-                        if (user.Status === 'Active') {
-                            const option = document.createElement('option');
-                            option.value = user.Username;
-                            option.textContent = user.Username + ' (' + user.Role + ')';
-                            select.appendChild(option);
-                        }
-                    });
+                    // Users loaded successfully, first user auto-created if needed
+                    console.log('System initialized, users ready');
                 })
                 .withFailureHandler(function(error) {
-                    hideLoading();
-                    showToast('Error loading users: ' + error.message, 'danger');
+                    console.error('Error initializing users: ' + error.message);
                 })
                 .getUsers();
         }
@@ -1397,11 +1386,11 @@
         // Handle Login
         function handleLogin(e) {
             e.preventDefault();
-            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
             const pin = document.getElementById('pin').value;
 
-            if (!username || !pin) {
-                showToast('Please enter username and PIN', 'warning');
+            if (!email || !pin) {
+                showToast('Please enter email and PIN', 'warning');
                 return;
             }
 
@@ -1422,7 +1411,7 @@
                     hideLoading();
                     showToast('Login error: ' + error.message, 'danger');
                 })
-                .authenticate(username, pin);
+                .authenticate(email, pin);
         }
 
         // Show App After Login
