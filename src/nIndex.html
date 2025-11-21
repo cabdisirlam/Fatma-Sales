@@ -1374,11 +1374,18 @@
             // Call getUsers to ensure first user is auto-created if needed
             google.script.run
                 .withSuccessHandler(function(users) {
+                    // Check if result is null (OAuth not authorized)
+                    if (!users && users !== undefined) {
+                        console.warn('System initialization returned null - OAuth may not be authorized');
+                        console.warn('If you cannot log in, run "🏪 Fatma System" > "🔐 Force Reauthorization" from the spreadsheet menu');
+                        return;
+                    }
                     // Users loaded successfully, first user auto-created if needed
                     console.log('System initialized, users ready');
                 })
                 .withFailureHandler(function(error) {
                     console.error('Error initializing users: ' + error.message);
+                    console.warn('If you see OAuth errors, run "🏪 Fatma System" > "🔐 Force Reauthorization" from the spreadsheet menu');
                 })
                 .getUsers();
         }
@@ -1402,12 +1409,12 @@
 
                     // Check if result is null or undefined
                     if (!result) {
-                        console.error('Login returned null result');
+                        console.error('Login returned null result - likely OAuth authorization issue');
                         showDetailedError({
-                            message: 'Server returned invalid response',
-                            debugInfo: 'The server did not return a valid response object',
-                            recommendation: 'This may indicate a server configuration issue. Try refreshing the page and logging in again. If the problem persists, try running "🔍 Check System Health" from the spreadsheet menu.',
-                            technicalDetails: 'Result object is null or undefined'
+                            message: 'OAuth Authorization Required',
+                            debugInfo: 'The server did not return a response. This typically indicates that OAuth permissions have not been granted.',
+                            recommendation: 'SOLUTION: Open your spreadsheet and run "🏪 Fatma System" > "🔐 Force Reauthorization" from the menu. This will trigger the OAuth consent screen to grant necessary permissions. After authorizing, refresh this page and try logging in again.',
+                            technicalDetails: 'Result object is null or undefined - google.script.run did not receive a response from the server function, which commonly occurs when OAuth scopes have not been authorized.'
                         });
                         return;
                     }
