@@ -39,6 +39,27 @@ function onInstall() {
 }
 
 /**
+ * Manual setup - Run this function once from Apps Script editor
+ * This will initialize the menu and set up the Fatma System
+ */
+function manualSetup() {
+  // First create the menu
+  onOpen();
+
+  // Show success message
+  SpreadsheetApp.getUi().alert(
+    'Menu Created!',
+    'The Fatma System menu has been added to your spreadsheet.\n\n' +
+    'Look for "🏪 Fatma System" in the top menu bar.\n\n' +
+    'Now running the full system setup...',
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
+
+  // Then run the setup
+  setupFatmaSystem();
+}
+
+/**
  * Show dashboard
  */
 function showDashboard() {
