@@ -114,6 +114,13 @@
 
       google.script.run
         .withSuccessHandler(function(result) {
+          // Check if result is null or undefined
+          if (!result) {
+            console.error('addProduct returned null result');
+            alert('Server returned invalid response. Please try again.');
+            return;
+          }
+
           alert(result.message);
           if (result.success) {
             google.script.host.close();

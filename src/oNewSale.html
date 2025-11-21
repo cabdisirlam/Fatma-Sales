@@ -181,6 +181,13 @@
     }
 
     function onSuccess(result) {
+      // Check if result is null or undefined
+      if (!result) {
+        console.error('onSuccess received null result');
+        showMessage('Server returned invalid response. Please try again.', 'error');
+        return;
+      }
+
       if (result.success) {
         showMessage(result.message, 'success');
         document.getElementById('saleForm').reset();

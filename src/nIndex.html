@@ -1400,6 +1400,18 @@
                     hideLoading();
                     console.log('Login result:', result);
 
+                    // Check if result is null or undefined
+                    if (!result) {
+                        console.error('Login returned null result');
+                        showDetailedError({
+                            message: 'Server returned invalid response',
+                            debugInfo: 'The server did not return a valid response object',
+                            recommendation: 'This may indicate a server configuration issue. Try refreshing the page and logging in again. If the problem persists, try running "🔍 Check System Health" from the spreadsheet menu.',
+                            technicalDetails: 'Result object is null or undefined'
+                        });
+                        return;
+                    }
+
                     if (result.success) {
                         currentUser = result.user;
                         sessionId = result.sessionId;
@@ -1896,6 +1908,14 @@
             google.script.run
                 .withSuccessHandler(function(result) {
                     hideLoading();
+
+                    // Check if result is null or undefined
+                    if (!result) {
+                        console.error('processSale returned null result');
+                        showToast('Server returned invalid response. Please try again.', 'danger');
+                        return;
+                    }
+
                     if (result.success) {
                         showToast('Sale completed successfully!', 'success');
 
@@ -2321,6 +2341,14 @@
                 google.script.run
                     .withSuccessHandler(function(result) {
                         hideLoading();
+
+                        // Check if result is null or undefined
+                        if (!result) {
+                            console.error('convertToSale returned null result');
+                            showToast('Server returned invalid response. Please try again.', 'danger');
+                            return;
+                        }
+
                         if (result.success) {
                             showToast('Quotation converted to sale successfully!', 'success');
                             loadQuotations();
@@ -2346,6 +2374,14 @@
                 google.script.run
                     .withSuccessHandler(function(result) {
                         hideLoading();
+
+                        // Check if result is null or undefined
+                        if (!result) {
+                            console.error('approveExpense returned null result');
+                            showToast('Server returned invalid response. Please try again.', 'danger');
+                            return;
+                        }
+
                         if (result.success) {
                             showToast('Expense approved successfully!', 'success');
                             loadExpenses();
