@@ -165,20 +165,10 @@ function authenticate(email, pin) {
         return {
           success: false,
           message: errorMsg,
-          debugInfo: 'PIN validation failed'
+          debugInfo: 'PIN validation failed',
+          recommendation: 'Please enter a valid ' + pinLength + '-digit PIN'
         };
       }
-
-    // Validate email is provided
-    if (!email || email.trim() === '') {
-      const errorMsg = 'Email is required';
-      Logger.log(logPrefix + ' FAILED: ' + errorMsg);
-      return {
-        success: false,
-        message: errorMsg,
-        debugInfo: 'Email validation failed'
-      };
-    }
 
     // Try to get Users sheet
     Logger.log(logPrefix + ' Attempting to access Users sheet...');
@@ -619,6 +609,37 @@ function logout(token) {
   } catch (error) {
     logError('logout', error);
     return { success: false, message: 'Logout error: ' + error.message };
+  }
+}
+
+/**
+ * Checks OAuth authorization status
+ * This function is used to verify that OAuth permissions are properly granted
+ * Returns a simple object to confirm the system is accessible
+ */
+function checkOAuthStatus() {
+  try {
+    // Try to access basic services to verify OAuth is working
+    const ss = getSpreadsheet();
+    const ssName = ss.getName();
+    const ssId = ss.getId();
+
+    return {
+      success: true,
+      authorized: true,
+      spreadsheetName: ssName,
+      spreadsheetId: ssId,
+      message: 'OAuth permissions are properly granted'
+    };
+  } catch (error) {
+    Logger.log('OAuth check failed: ' + error.message);
+    return {
+      success: false,
+      authorized: false,
+      message: 'OAuth authorization required',
+      error: error.message,
+      recommendation: 'Please run "🏪 Fatma System" > "🔐 Force Reauthorization" from the spreadsheet menu to grant necessary permissions.'
+    };
   }
 }
 
