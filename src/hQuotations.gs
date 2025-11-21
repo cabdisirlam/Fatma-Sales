@@ -151,7 +151,10 @@ function getQuotations(filters) {
     return sheetToObjects('Quotations', filters);
   } catch (error) {
     logError('getQuotations', error);
-    throw new Error('Error loading quotations: ' + error.message);
+    return {
+      success: false,
+      message: 'Error loading quotations: ' + error.message
+    };
   }
 }
 
@@ -611,7 +614,10 @@ function getSuppliers(filters) {
     return sheetToObjects('Suppliers', filters);
   } catch (error) {
     logError('getSuppliers', error);
-    throw new Error('Error loading suppliers: ' + error.message);
+    return {
+      success: false,
+      message: 'Error loading suppliers: ' + error.message
+    };
   }
 }
 

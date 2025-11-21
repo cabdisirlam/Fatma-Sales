@@ -128,7 +128,10 @@ function getCustomers(filters) {
     return sheetToObjects('Customers', filters);
   } catch (error) {
     logError('getCustomers', error);
-    throw new Error('Error loading customers: ' + error.message);
+    return {
+      success: false,
+      message: 'Error loading customers: ' + error.message
+    };
   }
 }
 
