@@ -1,7 +1,34 @@
 /**
  * Fatma Sales Management System
  * Workbook Manager - Complete Sheet Setup System
+ *
+ * To setup the system:
+ * 1. Run the function: createFatmaSystem()
+ * 2. The system will automatically create a new spreadsheet named "Fatma System"
+ * 3. All required sheets will be created and formatted
+ * 4. Default admin user will be created (username: admin, PIN: 1234)
  */
+
+/**
+ * Easy-to-use function to create and setup Fatma System
+ * Run this function from the Script Editor to get started!
+ */
+function createFatmaSystem() {
+  try {
+    Logger.log('=== Creating Fatma System ===');
+    const result = setupFatmaSystem();
+
+    if (result.success) {
+      Logger.log('SUCCESS! Spreadsheet created at: ' + result.spreadsheetUrl);
+      Logger.log('Spreadsheet ID: ' + result.spreadsheetId);
+      return result;
+    }
+  } catch (error) {
+    Logger.log('ERROR: ' + error.message);
+    Logger.log(error.stack);
+    throw error;
+  }
+}
 
 /**
  * Main setup function - creates Fatma System workbook with all sheets
@@ -10,18 +37,32 @@ function setupFatmaSystem() {
   try {
     Logger.log('Starting Fatma System setup...');
 
-    const ss = getSpreadsheet();
-
-    if (!ss) {
-      throw new Error('No active spreadsheet found. Please run this from a spreadsheet.');
+    // Try to get existing spreadsheet, or create new one
+    let ss;
+    try {
+      ss = getSpreadsheet();
+    } catch (e) {
+      Logger.log('No existing spreadsheet found, creating new one...');
+      ss = null;
     }
 
-    // Rename spreadsheet to "Fatma System"
-    ss.rename(CONFIG.WORKBOOK_NAME);
-    Logger.log('Renamed workbook to: ' + CONFIG.WORKBOOK_NAME);
+    // If no spreadsheet exists, create a new one
+    if (!ss) {
+      Logger.log('Creating new spreadsheet: ' + CONFIG.WORKBOOK_NAME);
+      ss = SpreadsheetApp.create(CONFIG.WORKBOOK_NAME);
+      Logger.log('Created new workbook with ID: ' + ss.getId());
 
-    // Store spreadsheet ID in Script Properties
-    PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ss.getId());
+      // Store spreadsheet ID in Script Properties
+      PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ss.getId());
+      Logger.log('Saved spreadsheet ID to Script Properties');
+    } else {
+      // Rename existing spreadsheet to "Fatma System"
+      ss.rename(CONFIG.WORKBOOK_NAME);
+      Logger.log('Renamed workbook to: ' + CONFIG.WORKBOOK_NAME);
+
+      // Store spreadsheet ID in Script Properties
+      PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ss.getId());
+    }
 
     // Initialize all sheets using the comprehensive setup
     initializeAllSheets();
@@ -44,12 +85,15 @@ function setupFatmaSystem() {
     }
 
     Logger.log('Fatma System setup completed successfully!');
+    Logger.log('Spreadsheet URL: ' + ss.getUrl());
 
     // Show success message
     try {
       SpreadsheetApp.getUi().alert(
         'Success',
         'Fatma System has been initialized successfully!\n\n' +
+        'Workbook Name: ' + CONFIG.WORKBOOK_NAME + '\n' +
+        'Spreadsheet URL: ' + ss.getUrl() + '\n\n' +
         'All sheets have been created and formatted.\n\n' +
         'Default admin user created:\n' +
         'Username: admin\n' +
@@ -59,9 +103,15 @@ function setupFatmaSystem() {
       );
     } catch (e) {
       Logger.log('Setup completed. Default admin: username=admin, PIN=1234');
+      Logger.log('Spreadsheet URL: ' + ss.getUrl());
     }
 
-    return true;
+    return {
+      success: true,
+      spreadsheetId: ss.getId(),
+      spreadsheetUrl: ss.getUrl(),
+      message: 'Fatma System initialized successfully'
+    };
   } catch (error) {
     Logger.log('ERROR in setupFatmaSystem: ' + error.message);
     Logger.log(error.stack);
@@ -118,7 +168,7 @@ function initializeAllSheets() {
  * Get or create a sheet
  */
 function getOrCreateSheet(sheetName) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   let sheet = ss.getSheetByName(sheetName);
 
   if (!sheet) {
