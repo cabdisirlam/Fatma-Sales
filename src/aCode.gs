@@ -127,9 +127,9 @@ function getSheetHeaders(sheetName) {
 // =====================================================
 
 /**
- * Authenticates a user with username and PIN
+ * Authenticates a user with email and PIN
  */
-function authenticate(username, pin) {
+function authenticate(email, pin) {
   try {
     // Validate PIN format (must be 4 digits)
     if (!pin || pin.toString().length !== CONFIG.PIN_LENGTH) {
@@ -139,21 +139,31 @@ function authenticate(username, pin) {
       };
     }
 
+    // Validate email is provided
+    if (!email || email.trim() === '') {
+      return {
+        success: false,
+        message: 'Email is required'
+      };
+    }
+
     const sheet = getSheet('Users');
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
 
-    // Find username and PIN column indices
+    // Find email, username, and PIN column indices
+    const emailCol = headers.indexOf('Email');
     const usernameCol = headers.indexOf('Username');
     const pinCol = headers.indexOf('PIN');
     const statusCol = headers.indexOf('Status');
     const roleCol = headers.indexOf('Role');
 
-    // Search for user
+    // Search for user by email
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
 
-      if (row[usernameCol] === username && row[pinCol].toString() === pin.toString()) {
+      if (row[emailCol] && row[emailCol].toLowerCase() === email.toLowerCase() &&
+          row[pinCol].toString() === pin.toString()) {
         if (row[statusCol] !== 'Active') {
           return {
             success: false,
@@ -161,20 +171,23 @@ function authenticate(username, pin) {
           };
         }
 
+        const username = row[usernameCol];
+
         // Generate session ID and token
         const sessionId = generateSessionId();
-        const token = generateAuthToken(username);
+        const token = generateAuthToken(email);
 
         // Store session in cache (valid for 8 hours)
         const cache = CacheService.getUserCache();
         cache.put(token, JSON.stringify({
           username: username,
+          email: email,
           sessionId: sessionId,
           loginTime: new Date().getTime()
         }), 28800); // 8 hours in seconds
 
         // Log successful login
-        logAudit(username, 'Authentication', 'Login', 'User logged in successfully', sessionId, '', '');
+        logAudit(username, 'Authentication', 'Login', 'User logged in successfully with email: ' + email, sessionId, '', '');
 
         // Return user data
         const userData = {};
@@ -196,7 +209,7 @@ function authenticate(username, pin) {
     // Invalid credentials
     return {
       success: false,
-      message: 'Invalid username or PIN'
+      message: 'Invalid email or PIN'
     };
 
   } catch (error) {
@@ -354,10 +367,10 @@ function createDefaultAdmin() {
 
     const userData = [
       userId,
-      'admin',
+      'Cabdisirlam', // Username derived from email
       '1234', // Default PIN
       'Admin',
-      'admin@company.com',
+      'cabdisirlam@gmail.com',
       '',
       'Active',
       new Date()
@@ -365,7 +378,7 @@ function createDefaultAdmin() {
 
     sheet.appendRow(userData);
 
-    Logger.log('Default admin user created. Username: admin, PIN: 1234');
+    Logger.log('Default admin user created. Email: cabdisirlam@gmail.com, PIN: 1234');
 
   } catch (error) {
     logError('createDefaultAdmin', error);
