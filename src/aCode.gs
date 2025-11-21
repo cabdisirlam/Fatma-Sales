@@ -552,6 +552,18 @@ function authenticate(email, pin) {
 }
 
 /**
+ * Returns the dashboard HTML content
+ */
+function getDashboardHTML() {
+  try {
+    return HtmlService.createHtmlOutputFromFile('mDashboard').getContent();
+  } catch (error) {
+    Logger.log('Error loading dashboard: ' + error.message);
+    return '<html><body><h2>Error loading dashboard</h2><p>' + error.message + '</p></body></html>';
+  }
+}
+
+/**
  * Gets all active users (for login dropdown)
  */
 function getUsers() {
