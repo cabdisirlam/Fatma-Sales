@@ -1,0 +1,8 @@
+**/**
+!src/**/*.js
+!appsscript.json
+.git/**
+node_modules/**
+.gitignore
+.claspignore
+README.md

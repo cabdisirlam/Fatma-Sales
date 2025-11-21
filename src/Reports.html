@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #4A90E2;
+      margin-top: 0;
+    }
+    .report-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .stat:last-child {
+      border-bottom: none;
+    }
+    .stat-label {
+      font-weight: 600;
+      color: #333;
+    }
+    .stat-value {
+      color: #4A90E2;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📈 Sales Reports</h2>
+    <div id="reports">
+      <div class="report-section">
+        <h3>Summary</h3>
+        <div class="stat">
+          <span class="stat-label">Total Sales:</span>
+          <span class="stat-value" id="totalSales">-</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Total Revenue:</span>
+          <span class="stat-value" id="totalRevenue">-</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Today's Sales:</span>
+          <span class="stat-value" id="todaySales">-</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Today's Revenue:</span>
+          <span class="stat-value" id="todayRevenue">-</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Average Sale:</span>
+          <span class="stat-value" id="averageSale">-</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    google.script.run
+      .withSuccessHandler(function(summary) {
+        document.getElementById('totalSales').textContent = summary.totalSales;
+        document.getElementById('totalRevenue').textContent = '$' + summary.totalRevenue.toFixed(2);
+        document.getElementById('todaySales').textContent = summary.todaySales;
+        document.getElementById('todayRevenue').textContent = '$' + summary.todayRevenue.toFixed(2);
+        document.getElementById('averageSale').textContent = '$' + summary.averageSale.toFixed(2);
+      })
+      .getSalesSummary();
+  </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "beipoa-sales-management",
+  "version": "1.0.0",
+  "description": "BeiPoa Sales Management System - Google Apps Script based sales management",
+  "main": "src/Main.js",
+  "scripts": {
+    "push": "clasp push",
+    "pull": "clasp pull",
+    "open": "clasp open",
+    "watch": "clasp push --watch",
+    "deploy": "clasp deploy",
+    "logs": "clasp logs"
+  },
+  "keywords": [
+    "google-apps-script",
+    "sales-management",
+    "inventory",
+    "spreadsheet",
+    "beipoa"
+  ],
+  "author": "cabdisirlam@gmail.com",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "@google/clasp": "^2.4.2"
+  }
+}
