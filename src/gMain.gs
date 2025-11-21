@@ -13,7 +13,7 @@ function onOpen() {
   ui.createMenu('🏪 Fatma System')
     .addItem('⚡ Setup Fatma System', 'setupFatmaSystem')
     .addItem('🔄 Refresh System', 'refreshSystem')
-    .addItem('🧹 Clear Cache & Reset Auth', 'clearAllCacheAndAuth')
+    .addItem('🔐 Force Reauthorization', 'clearAllCacheAndAuth')
     .addSeparator()
     .addItem('📊 Dashboard', 'showDashboard')
     .addSeparator()
@@ -191,170 +191,119 @@ function refreshSystem() {
 }
 
 /**
- * Clear All Cache and Reset Authentication
- * This clears all caches, sessions, and forces reauthorization
- * NUCLEAR OPTION: Clears ALL cached data from Apps Script Properties Service
+ * Force Google OAuth Reauthorization
+ * Triggers the OAuth consent screen by accessing services requiring permissions.
+ * DOES NOT clear any data - just forces permission verification.
+ * Safe to call - no data is modified or deleted.
  */
 function clearAllCacheAndAuth() {
+  Logger.log('=== FORCE REAUTHORIZATION STARTED ===');
+
   try {
-    const ui = SpreadsheetApp.getUi();
-
-    // Confirm action
-    const response = ui.alert(
-      'Clear ALL Apps Script Cache & Auth',
-      '⚠️ NUCLEAR CACHE CLEAR ⚠️\n\n' +
-      'This will clear EVERYTHING cached in Apps Script:\n' +
-      '• ALL CacheService data (user, script, document)\n' +
-      '• ALL Script Properties (stored configurations)\n' +
-      '• ALL User Properties (user-specific settings)\n' +
-      '• ALL authentication tokens\n' +
-      '• Force complete reauthorization\n\n' +
-      '✓ Sheet data is preserved (not affected)\n' +
-      '✓ Spreadsheet connection will be re-established\n\n' +
-      'This solves issues where old cached data persists\n' +
-      'even after deploying new versions.\n\n' +
-      'Continue?',
-      ui.ButtonSet.YES_NO
-    );
-
-    if (response !== ui.Button.YES) {
-      return;
-    }
-
-    let clearedItems = [];
-
-    // 1. Clear ALL CacheService caches
+    // Try to get UI (only works from menu/button clicks, not triggers)
+    let ui = null;
+    let showUI = false;
     try {
-      CacheService.getUserCache().removeAll([]);
-      clearedItems.push('✓ User cache');
-      Logger.log('User cache cleared');
-    } catch (e) {
-      Logger.log('Error clearing user cache: ' + e.message);
-      clearedItems.push('✗ User cache: ' + e.message);
-    }
+      ui = SpreadsheetApp.getUi();
+      showUI = true;
 
-    try {
-      CacheService.getScriptCache().removeAll([]);
-      clearedItems.push('✓ Script cache');
-      Logger.log('Script cache cleared');
-    } catch (e) {
-      Logger.log('Error clearing script cache: ' + e.message);
-      clearedItems.push('✗ Script cache: ' + e.message);
-    }
-
-    try {
-      CacheService.getDocumentCache().removeAll([]);
-      clearedItems.push('✓ Document cache');
-      Logger.log('Document cache cleared');
-    } catch (e) {
-      Logger.log('Error clearing document cache: ' + e.message);
-      clearedItems.push('✗ Document cache: ' + e.message);
-    }
-
-    // 2. Clear ALL Script Properties (and log what we're clearing)
-    try {
-      const scriptProperties = PropertiesService.getScriptProperties();
-      const allProperties = scriptProperties.getProperties();
-      const propertyKeys = Object.keys(allProperties);
-
-      if (propertyKeys.length > 0) {
-        Logger.log('Clearing ALL Script Properties: ' + propertyKeys.join(', '));
-
-        // Delete ALL properties
-        scriptProperties.deleteAllProperties();
-
-        clearedItems.push('✓ ALL Script Properties (' + propertyKeys.length + ' items)');
-        Logger.log('Cleared ' + propertyKeys.length + ' script properties: ' + propertyKeys.join(', '));
-
-        // Re-establish spreadsheet connection
-        try {
-          const ss = SpreadsheetApp.getActiveSpreadsheet();
-          scriptProperties.setProperty('SPREADSHEET_ID', ss.getId());
-          clearedItems.push('✓ Spreadsheet reconnected');
-          Logger.log('Spreadsheet ID re-established: ' + ss.getId());
-        } catch (e) {
-          Logger.log('Warning: Could not re-establish spreadsheet ID: ' + e.message);
-        }
-      } else {
-        clearedItems.push('ℹ Script Properties were already empty');
-      }
-    } catch (e) {
-      Logger.log('Error clearing script properties: ' + e.message);
-      clearedItems.push('✗ Script Properties: ' + e.message);
-    }
-
-    // 3. Clear ALL User Properties
-    try {
-      const userProps = PropertiesService.getUserProperties();
-      const allUserProps = userProps.getProperties();
-      const userPropKeys = Object.keys(allUserProps);
-
-      if (userPropKeys.length > 0) {
-        Logger.log('Clearing ALL User Properties: ' + userPropKeys.join(', '));
-        userProps.deleteAllProperties();
-        clearedItems.push('✓ ALL User Properties (' + userPropKeys.length + ' items)');
-        Logger.log('Cleared ' + userPropKeys.length + ' user properties');
-      } else {
-        clearedItems.push('ℹ User Properties were already empty');
-      }
-    } catch (e) {
-      Logger.log('Error clearing user properties: ' + e.message);
-      clearedItems.push('✗ User Properties: ' + e.message);
-    }
-
-    // Log the action
-    try {
-      logAction(
-        getActiveUserEmail(),
-        'System',
-        'NuclearCacheClear',
-        'NUCLEAR: All Apps Script caches and properties cleared',
-        '',
-        '',
-        clearedItems.join('\n')
+      // Confirm action if UI is available
+      const response = ui.alert(
+        'Force Reauthorization',
+        '🔐 FORCE GOOGLE REAUTHORIZATION 🔐\n\n' +
+        'This will trigger the OAuth consent screen.\n\n' +
+        'What this does:\n' +
+        '• Accesses services requiring permissions\n' +
+        '• Forces Google to verify authorization\n' +
+        '• Shows the permission consent dialog\n\n' +
+        'What this does NOT do:\n' +
+        '✓ Does not clear any spreadsheet data\n' +
+        '✓ Does not clear cache or properties\n' +
+        '✓ Does not affect your configuration\n\n' +
+        'Continue?',
+        ui.ButtonSet.YES_NO
       );
-    } catch (e) {
-      Logger.log('Could not log action (expected if audit trail has issues): ' + e.message);
+
+      if (response !== ui.Button.YES) {
+        Logger.log('User cancelled reauthorization');
+        return;
+      }
+    } catch (uiError) {
+      // UI not available (called from trigger/script) - continue anyway
+      Logger.log('UI not available (called from trigger context): ' + uiError.message);
+      showUI = false;
     }
 
-    // Show detailed results
-    ui.alert(
-      '🧹 Apps Script Cache Completely Cleared',
-      'CLEARED FROM APPS SCRIPT:\n' +
-      clearedItems.join('\n') + '\n\n' +
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-      'NEXT STEPS:\n\n' +
-      '1️⃣ DEPLOY NEW VERSION:\n' +
-      '   • In Apps Script Editor\n' +
-      '   • Click "Deploy" > "Manage deployments"\n' +
-      '   • Edit your web app deployment\n' +
-      '   • Select "NEW VERSION"\n' +
-      '   • Click "Deploy"\n\n' +
-      '2️⃣ USERS MUST:\n' +
-      '   • Close ALL browser tabs with the app\n' +
-      '   • Clear browser cache (Ctrl+Shift+Delete)\n' +
-      '   • Use the NEW deployment URL\n' +
-      '   • Log in again (reauthorize)\n\n' +
-      '3️⃣ If still having issues:\n' +
-      '   • Wait 5-10 minutes for Google servers to sync\n' +
-      '   • Try in Incognito/Private browsing mode',
-      ui.ButtonSet.OK
-    );
+    // Force OAuth by accessing services that require explicit permissions
+    Logger.log('Accessing services to trigger OAuth...');
+
+    // 1. Access spreadsheet (requires spreadsheets scope)
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheetId = ss.getId();
+    const spreadsheetName = ss.getName();
+    Logger.log('✓ Spreadsheet access: ' + spreadsheetName + ' (' + spreadsheetId + ')');
+
+    // 2. Access user info (requires userinfo.email scope)
+    const userEmail = Session.getActiveUser().getEmail();
+    Logger.log('✓ User email access: ' + userEmail);
+
+    // 3. Access properties (requires script properties)
+    const scriptProps = PropertiesService.getScriptProperties();
+    const testProp = scriptProps.getProperty('SPREADSHEET_ID');
+    Logger.log('✓ Script properties access confirmed');
+
+    // If we got here, all permissions are granted
+    Logger.log('=== AUTHORIZATION SUCCESSFUL ===');
+
+    // Show success message if UI is available
+    if (showUI && ui) {
+      ui.alert(
+        '✅ Authorization Successful',
+        'All permissions are properly granted!\n\n' +
+        'Spreadsheet: ' + spreadsheetName + '\n' +
+        'User: ' + userEmail + '\n\n' +
+        'If you were having permission issues, they should be resolved now.\n\n' +
+        'If you still have issues:\n' +
+        '1. Go to: https://myaccount.google.com/permissions\n' +
+        '2. Find "Fatma Sales Management"\n' +
+        '3. Click "Remove access"\n' +
+        '4. Run this function again to re-grant permissions',
+        ui.ButtonSet.OK
+      );
+    }
+
+    return {
+      success: true,
+      spreadsheet: spreadsheetName,
+      user: userEmail
+    };
 
   } catch (error) {
-    Logger.log('CRITICAL ERROR in clearAllCacheAndAuth: ' + error.message);
+    Logger.log('=== AUTHORIZATION ERROR ===');
+    Logger.log('ERROR: ' + error.message);
     Logger.log(error.stack);
 
+    // Try to show error if UI available
     try {
-      SpreadsheetApp.getUi().alert(
-        'Clear Cache Error',
-        'Error clearing cache: ' + error.message + '\n\n' +
-        'Check Execution Log (View > Logs) for details.',
-        SpreadsheetApp.getUi().ButtonSet.OK
+      const ui = SpreadsheetApp.getUi();
+      ui.alert(
+        '❌ Authorization Error',
+        'Error during authorization:\n\n' +
+        error.message + '\n\n' +
+        'To manually revoke and re-grant permissions:\n' +
+        '1. Visit: https://myaccount.google.com/permissions\n' +
+        '2. Find "Fatma Sales Management System"\n' +
+        '3. Click "Remove access"\n' +
+        '4. Close this spreadsheet\n' +
+        '5. Reopen and try again\n\n' +
+        'Check Execution Log for details.',
+        ui.ButtonSet.OK
       );
-    } catch (e) {
-      Logger.log('Could not show error alert: ' + e.message);
+    } catch (uiError) {
+      Logger.log('Cannot show error dialog (no UI context)');
     }
+
+    throw error;
   }
 }
 
