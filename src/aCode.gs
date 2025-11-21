@@ -28,33 +28,118 @@ function doGet(e) {
 
 /**
  * Gets the main spreadsheet
+ * CRITICAL: This function must work in both bound script and web app contexts
  */
 function getSpreadsheet() {
   try {
-    // Use Script Properties to avoid circular dependency
+    // Strategy 1: Try to use explicitly configured SPREADSHEET_ID from Script Properties
     const scriptProperties = PropertiesService.getScriptProperties();
-    const spreadsheetId = scriptProperties.getProperty('SPREADSHEET_ID');
+    let spreadsheetId = scriptProperties.getProperty('SPREADSHEET_ID');
 
-    if (spreadsheetId) {
+    // Strategy 2: If not in Script Properties, try hardcoded ID (for web app deployment)
+    if (!spreadsheetId) {
+      // IMPORTANT: Set this to your actual spreadsheet ID
+      // You can find this in the URL: https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
+      spreadsheetId = '1m_IHBaz4PJZOo2sy5w4s27XQilQqGsFveMDRWt7tP-w';
+
+      // Save it to Script Properties for future use
       try {
-        return SpreadsheetApp.openById(spreadsheetId);
+        scriptProperties.setProperty('SPREADSHEET_ID', spreadsheetId);
+        Logger.log('Saved SPREADSHEET_ID to Script Properties: ' + spreadsheetId);
       } catch (e) {
-        // If can't open by ID, fall back to active spreadsheet
-        return SpreadsheetApp.getActiveSpreadsheet();
+        Logger.log('Could not save SPREADSHEET_ID to Script Properties: ' + e.message);
       }
     }
 
-    // Fallback to active spreadsheet
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-    // Save the ID for future use
-    if (ss) {
-      scriptProperties.setProperty('SPREADSHEET_ID', ss.getId());
+    // Strategy 3: Try to open by ID
+    if (spreadsheetId) {
+      try {
+        const ss = SpreadsheetApp.openById(spreadsheetId);
+        Logger.log('Successfully opened spreadsheet by ID: ' + spreadsheetId);
+        return ss;
+      } catch (e) {
+        Logger.log('Cannot open spreadsheet by ID: ' + spreadsheetId + ' - Error: ' + e.message);
+        // Don't throw yet, try fallback
+      }
     }
 
-    return ss;
+    // Strategy 4: Fallback to active spreadsheet (only works in bound script context, not web app)
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+      // If we got here and have a spreadsheet, save its ID for future use
+      if (ss) {
+        const actualId = ss.getId();
+        scriptProperties.setProperty('SPREADSHEET_ID', actualId);
+        Logger.log('Using active spreadsheet and saved ID: ' + actualId);
+        return ss;
+      }
+    } catch (e) {
+      Logger.log('getActiveSpreadsheet failed (expected in web app context): ' + e.message);
+    }
+
+    // If we got here, we couldn't access the spreadsheet
+    throw new Error('SPREADSHEET_NOT_CONFIGURED: Cannot access spreadsheet. Please configure SPREADSHEET_ID in Script Properties or update the hardcoded ID in getSpreadsheet() function.');
   } catch (error) {
-    throw new Error('Cannot access spreadsheet. Please check permissions and configuration.');
+    // Enhanced error message for debugging
+    const errorMsg = error.message || error.toString();
+    Logger.log('FATAL: getSpreadsheet failed - ' + errorMsg);
+
+    if (errorMsg.indexOf('SPREADSHEET_NOT_CONFIGURED') !== -1) {
+      throw error; // Re-throw with our custom message
+    }
+
+    throw new Error('Cannot access spreadsheet: ' + errorMsg + '. Check permissions and configuration.');
+  }
+}
+
+/**
+ * Verifies that the spreadsheet is accessible and properly configured
+ * Returns diagnostic information for debugging
+ */
+function verifySpreadsheetConfiguration() {
+  const diagnostics = {
+    timestamp: new Date().toISOString(),
+    checks: []
+  };
+
+  try {
+    // Check 1: Script Properties
+    diagnostics.checks.push({ name: 'Script Properties Access', status: 'CHECKING' });
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const storedId = scriptProperties.getProperty('SPREADSHEET_ID');
+    diagnostics.checks[0].status = 'OK';
+    diagnostics.checks[0].details = 'Stored ID: ' + (storedId || 'NOT SET');
+
+    // Check 2: Spreadsheet Access
+    diagnostics.checks.push({ name: 'Spreadsheet Access', status: 'CHECKING' });
+    const ss = getSpreadsheet();
+    diagnostics.checks[1].status = 'OK';
+    diagnostics.checks[1].details = 'Name: ' + ss.getName() + ', ID: ' + ss.getId();
+
+    // Check 3: Users Sheet
+    diagnostics.checks.push({ name: 'Users Sheet', status: 'CHECKING' });
+    const usersSheet = ss.getSheetByName('Users');
+    if (usersSheet) {
+      const data = usersSheet.getDataRange().getValues();
+      diagnostics.checks[2].status = 'OK';
+      diagnostics.checks[2].details = 'Rows: ' + data.length + ', Users: ' + (data.length - 1);
+    } else {
+      diagnostics.checks[2].status = 'WARNING';
+      diagnostics.checks[2].details = 'Users sheet not found - needs initialization';
+    }
+
+    diagnostics.overall = 'SUCCESS';
+    diagnostics.message = 'Spreadsheet is properly configured and accessible';
+
+    return diagnostics;
+
+  } catch (error) {
+    diagnostics.overall = 'FAILED';
+    diagnostics.message = 'Configuration error: ' + error.message;
+    diagnostics.error = error.toString();
+    diagnostics.stack = error.stack;
+    return diagnostics;
   }
 }
 
@@ -151,6 +236,30 @@ function authenticate(email, pin) {
     try {
       Logger.log(logPrefix + ' Authentication attempt started');
       Logger.log(logPrefix + ' Email: ' + email);
+
+      // CRITICAL: Verify spreadsheet is accessible FIRST before proceeding
+      Logger.log(logPrefix + ' Verifying spreadsheet configuration...');
+      try {
+        const diagnostics = verifySpreadsheetConfiguration();
+        Logger.log(logPrefix + ' Spreadsheet verification: ' + diagnostics.overall);
+
+        if (diagnostics.overall === 'FAILED') {
+          Logger.log(logPrefix + ' FAILED: Spreadsheet not accessible');
+          return {
+            success: false,
+            message: 'System configuration error: Cannot access spreadsheet',
+            debugInfo: diagnostics.message,
+            technicalDetails: JSON.stringify(diagnostics, null, 2),
+            recommendation: 'The spreadsheet ID may not be configured correctly. Check that the SPREADSHEET_ID in aCode.gs matches your actual spreadsheet ID.',
+            timestamp: new Date().toISOString()
+          };
+        }
+
+        Logger.log(logPrefix + ' Spreadsheet accessible: ' + diagnostics.checks[1].details);
+      } catch (verifyError) {
+        Logger.log(logPrefix + ' WARNING: Could not verify spreadsheet: ' + verifyError.message);
+        // Continue anyway, but this might be the root cause
+      }
 
       // Validate inputs are provided
       if (!email || !pin) {
@@ -672,6 +781,82 @@ function logout(token) {
     logError('logout', error);
     return { success: false, message: 'Logout error: ' + error.message };
   }
+}
+
+/**
+ * Simple test function to verify Google Apps Script is responding
+ * This is the most basic test - if this returns null, there's a fundamental connection issue
+ */
+function testConnection() {
+  return {
+    success: true,
+    message: 'Google Apps Script is responding',
+    timestamp: new Date().toISOString(),
+    test: 'ping'
+  };
+}
+
+/**
+ * Comprehensive system health check
+ * Tests all critical system components
+ */
+function checkSystemHealth() {
+  const results = {
+    timestamp: new Date().toISOString(),
+    tests: []
+  };
+
+  // Test 1: Basic execution
+  results.tests.push({
+    name: 'Script Execution',
+    status: 'OK',
+    message: 'Google Apps Script is executing'
+  });
+
+  // Test 2: Spreadsheet configuration
+  try {
+    const diagnostics = verifySpreadsheetConfiguration();
+    results.tests.push({
+      name: 'Spreadsheet Access',
+      status: diagnostics.overall === 'SUCCESS' ? 'OK' : 'FAILED',
+      message: diagnostics.message,
+      details: diagnostics
+    });
+  } catch (error) {
+    results.tests.push({
+      name: 'Spreadsheet Access',
+      status: 'FAILED',
+      message: error.message,
+      error: error.toString()
+    });
+  }
+
+  // Test 3: Users sheet
+  try {
+    const users = getUsers();
+    results.tests.push({
+      name: 'Users Data',
+      status: 'OK',
+      message: 'Found ' + users.length + ' users',
+      userCount: users.length
+    });
+  } catch (error) {
+    results.tests.push({
+      name: 'Users Data',
+      status: 'FAILED',
+      message: error.message,
+      error: error.toString()
+    });
+  }
+
+  // Determine overall status
+  const failedTests = results.tests.filter(t => t.status === 'FAILED');
+  results.overall = failedTests.length === 0 ? 'HEALTHY' : 'UNHEALTHY';
+  results.summary = failedTests.length === 0 ?
+    'All systems operational' :
+    failedTests.length + ' test(s) failed';
+
+  return results;
 }
 
 /**
