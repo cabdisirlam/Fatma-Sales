@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management System</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #16a085;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-logo i {
+            font-size: 60px;
+            color: var(--secondary-color);
+        }
+
+        .login-logo h2 {
+            color: var(--primary-color);
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        /* Main App Container */
+        .app-container {
+            display: none;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--primary-color);
+            color: white;
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            padding: 20px 0;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .sidebar-header h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 10px 0 0;
+        }
+
+        .nav-menu {
+            margin-top: 20px;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .nav-item i {
+            margin-right: 12px;
+            width: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .stat-card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-card-label {
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .section-header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h3 {
+            margin: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* POS Interface */
+        .pos-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .pos-left, .pos-right {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .product-search {
+            margin-bottom: 20px;
+        }
+
+        .cart-items {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .cart-item-details {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .cart-item-price {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .cart-item-qty {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qty-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 5px;
+            background: var(--secondary-color);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cart-summary {
+            border-top: 2px solid #e0e0e0;
+            padding-top: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .summary-row.total {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid var(--primary-color);
+        }
+
+        /* Tables */
+        .data-table {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+            padding: 15px;
+        }
+
+        .table tbody td {
+            padding: 12px 15px;
+            vertical-align: middle;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 6px 12px;
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--secondary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            border: none;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        /* Forms */
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 10px 15px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        /* Loading Spinner */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9998;
+        }
+
+        /* Modal Improvements */
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            background: var(--primary-color);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        /* Print Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .receipt-print, .receipt-print * {
+                visibility: visible;
+            }
+            .receipt-print {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+
+        /* Receipt Styles */
+        .receipt {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 2px dashed #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+        }
+
+        .receipt-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .receipt-items {
+            margin: 20px 0;
+        }
+
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .receipt-totals {
+            border-top: 2px solid #333;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .receipt-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #333;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .pos-container {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <!-- Login Screen -->
+    <div class="login-container" id="loginScreen">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="bi bi-box-seam"></i>
+                <h2>Inventory System</h2>
+                <p class="text-muted">Sign in to continue</p>
+            </div>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <select class="form-select" id="username" required>
+                        <option value="">Select User</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="pin" class="form-label">PIN</label>
+                    <input type="password" class="form-control" id="pin" maxlength="4" placeholder="Enter 4-digit PIN" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div class="app-container" id="appContainer">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-box-seam" style="font-size: 30px;"></i>
+                <h4>Inventory System</h4>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item active" data-section="dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" data-section="sales">
+                    <i class="bi bi-cart-check"></i>
+                    <span>Sales (POS)</span>
+                </div>
+                <div class="nav-item" data-section="quotations">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Quotations</span>
+                </div>
+                <div class="nav-item" data-section="customers">
+                    <i class="bi bi-people"></i>
+                    <span>Customers</span>
+                </div>
+                <div class="nav-item" data-section="inventory">
+                    <i class="bi bi-box"></i>
+                    <span>Inventory</span>
+                </div>
+                <div class="nav-item" data-section="suppliers">
+                    <i class="bi bi-truck"></i>
+                    <span>Suppliers</span>
+                </div>
+                <div class="nav-item" data-section="expenses">
+                    <i class="bi bi-wallet2"></i>
+                    <span>Expenses</span>
+                </div>
+                <div class="nav-item" data-section="reports">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Reports</span>
+                </div>
+                <div class="nav-item" data-section="settings" id="settingsNav" style="display:none;">
+                    <i class="bi bi-gear"></i>
+                    <span>Settings</span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Logout</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div>
+                    <h5 class="mb-0" id="pageTitle">Dashboard</h5>
+                    <small class="text-muted" id="currentDate"></small>
+                </div>
+                <div class="user-info">
+                    <div>
+                        <div class="fw-bold" id="currentUser">User</div>
+                        <small class="text-muted" id="currentRole">Role</small>
+                    </div>
+                    <div class="user-avatar" id="userAvatar">U</div>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div class="content-section active" id="dashboard">
+                <div class="dashboard-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-label">Cash Balance</div>
+                                <div class="stat-card-value" id="cashBalance">KES 0.00</div>
+                            </div>
+                            <div class="stat-card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <i class="bi bi-cash-coin"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-label">MPESA Balance</div>
+                                <div class="stat-card-value" id="mpesaBalance">KES 0.00</div>
+                            </div>
+                            <div class="stat-card-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                <i class="bi bi-phone"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-label">Bank Balance</div>
+                                <div class="stat-card-value" id="bankBalance">KES 0.00</div>
+                            </div>
+                            <div class="stat-card-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <i class="bi bi-bank"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-label">Today's Sales</div>
+                                <div class="stat-card-value" id="todaySales">KES 0.00</div>
+                            </div>
+                            <div class="stat-card-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-label">Customer Debt</div>
+                                <div class="stat-card-value" id="customerDebt">KES 0.00</div>
+                            </div>
+                            <div class="stat-card-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                                <i class="bi bi-arrow-down-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-label">Supplier Debt</div>
+                                <div class="stat-card-value" id="supplierDebt">KES 0.00</div>
+                            </div>
+                            <div class="stat-card-icon" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+                                <i class="bi bi-arrow-up-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-label">Low Stock Items</div>
+                                <div class="stat-card-value" id="lowStock">0</div>
+                            </div>
+                            <div class="stat-card-icon" style="background: linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%);">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-label">Today's Expenses</div>
+                                <div class="stat-card-value" id="todayExpenses">KES 0.00</div>
+                            </div>
+                            <div class="stat-card-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                                <i class="bi bi-wallet"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-table">
+                    <h5 class="mb-3">Recent Sales</h5>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Sale ID</th>
+                                <th>Date/Time</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentSalesTable">
+                            <tr>
+                                <td colspan="6" class="text-center">No recent sales</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sales (POS) Section -->
+            <div class="content-section" id="sales">
+                <div class="section-header">
+                    <h3>Point of Sale</h3>
+                    <button class="btn btn-secondary" onclick="viewSalesHistory()">
+                        <i class="bi bi-clock-history me-2"></i>Sales History
+                    </button>
+                </div>
+
+                <div class="pos-container">
+                    <div class="pos-left">
+                        <h5 class="mb-3">Products</h5>
+
+                        <!-- Product Search -->
+                        <div class="product-search">
+                            <input type="text" class="form-control" id="productSearch" placeholder="Search products...">
+                        </div>
+
+                        <!-- Product List -->
+                        <div id="productList" style="max-height: 500px; overflow-y: auto;">
+                            <!-- Products will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="pos-right">
+                        <h5 class="mb-3">Cart</h5>
+
+                        <!-- Customer Selection -->
+                        <div class="mb-3">
+                            <label class="form-label">Customer</label>
+                            <div class="input-group">
+                                <select class="form-select" id="customerSelect">
+                                    <option value="">Walk-in Customer</option>
+                                </select>
+                                <button class="btn btn-outline-secondary" onclick="showAddCustomerModal()">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Cart Items -->
+                        <div class="cart-items" id="cartItems">
+                            <div class="text-center text-muted py-5">
+                                <i class="bi bi-cart-x" style="font-size: 48px;"></i>
+                                <p class="mt-2">Cart is empty</p>
+                            </div>
+                        </div>
+
+                        <!-- Cart Summary -->
+                        <div class="cart-summary">
+                            <div class="mb-3">
+                                <label class="form-label">Delivery Charge</label>
+                                <input type="number" class="form-control" id="deliveryCharge" value="0" min="0" step="0.01">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Discount</label>
+                                <input type="number" class="form-control" id="discount" value="0" min="0" step="0.01">
+                            </div>
+
+                            <div class="summary-row">
+                                <span>Subtotal:</span>
+                                <strong id="subtotal">KES 0.00</strong>
+                            </div>
+
+                            <div class="summary-row">
+                                <span>Delivery:</span>
+                                <strong id="deliveryDisplay">KES 0.00</strong>
+                            </div>
+
+                            <div class="summary-row">
+                                <span>Discount:</span>
+                                <strong id="discountDisplay">KES 0.00</strong>
+                            </div>
+
+                            <div class="summary-row total">
+                                <span>TOTAL:</span>
+                                <span id="grandTotal">KES 0.00</span>
+                            </div>
+
+                            <div class="mb-3 mt-3">
+                                <label class="form-label">Payment Method</label>
+                                <select class="form-select" id="paymentMethod">
+                                    <option value="Cash">Cash</option>
+                                    <option value="MPESA">MPESA</option>
+                                    <option value="Bank">Equity Bank</option>
+                                    <option value="Credit">Credit</option>
+                                </select>
+                            </div>
+
+                            <button class="btn btn-success w-100" id="checkoutBtn" onclick="checkout()">
+                                <i class="bi bi-check-circle me-2"></i>Checkout
+                            </button>
+
+                            <button class="btn btn-outline-danger w-100 mt-2" onclick="clearCart()">
+                                <i class="bi bi-trash me-2"></i>Clear Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quotations Section -->
+            <div class="content-section" id="quotations">
+                <div class="section-header">
+                    <h3>Quotations</h3>
+                    <button class="btn btn-primary" onclick="showQuotationModal()">
+                        <i class="bi bi-plus-circle me-2"></i>New Quotation
+                    </button>
+                </div>
+
+                <div class="data-table">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Quote ID</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Valid Until</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quotationsTable">
+                            <tr>
+                                <td colspan="7" class="text-center">No quotations found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Customers Section -->
+            <div class="content-section" id="customers">
+                <div class="section-header">
+                    <h3>Customers</h3>
+                    <button class="btn btn-primary" onclick="showAddCustomerModal()">
+                        <i class="bi bi-plus-circle me-2"></i>Add Customer
+                    </button>
+                </div>
+
+                <div class="data-table">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="customerSearchInput" placeholder="Search customers...">
+                    </div>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Customer ID</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Location</th>
+                                <th>Balance</th>
+                                <th>Total Purchases</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTable">
+                            <tr>
+                                <td colspan="8" class="text-center">No customers found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Inventory Section -->
+            <div class="content-section" id="inventory">
+                <div class="section-header">
+                    <h3>Inventory Management</h3>
+                    <div>
+                        <button class="btn btn-success me-2" onclick="showAddProductModal()">
+                            <i class="bi bi-plus-circle me-2"></i>Add Product
+                        </button>
+                        <button class="btn btn-primary" onclick="showPurchaseModal()">
+                            <i class="bi bi-cart-plus me-2"></i>Record Purchase
+                        </button>
+                    </div>
+                </div>
+
+                <div class="data-table">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="productSearchInput" placeholder="Search products...">
+                    </div>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Item ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Cost Price</th>
+                                <th>Selling Price</th>
+                                <th>Quantity</th>
+                                <th>Reorder Level</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTable">
+                            <tr>
+                                <td colspan="9" class="text-center">No products found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Suppliers Section -->
+            <div class="content-section" id="suppliers">
+                <div class="section-header">
+                    <h3>Suppliers</h3>
+                    <button class="btn btn-primary" onclick="showAddSupplierModal()">
+                        <i class="bi bi-plus-circle me-2"></i>Add Supplier
+                    </button>
+                </div>
+
+                <div class="data-table">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Supplier ID</th>
+                                <th>Name</th>
+                                <th>Contact Person</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suppliersTable">
+                            <tr>
+                                <td colspan="8" class="text-center">No suppliers found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Expenses Section -->
+            <div class="content-section" id="expenses">
+                <div class="section-header">
+                    <h3>Expenses</h3>
+                    <button class="btn btn-primary" onclick="showAddExpenseModal()">
+                        <i class="bi bi-plus-circle me-2"></i>Record Expense
+                    </button>
+                </div>
+
+                <div class="data-table">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Expense ID</th>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expensesTable">
+                            <tr>
+                                <td colspan="8" class="text-center">No expenses found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div class="content-section" id="reports">
+                <div class="section-header">
+                    <h3>Reports & Analytics</h3>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Sales Reports</h5>
+                                <p class="card-text">View daily, weekly, and monthly sales reports</p>
+                                <button class="btn btn-primary" onclick="generateSalesReport()">Generate</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Inventory Report</h5>
+                                <p class="card-text">Current stock levels and valuation</p>
+                                <button class="btn btn-primary" onclick="generateInventoryReport()">Generate</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Financial Report</h5>
+                                <p class="card-text">P&L and cash flow statements</p>
+                                <button class="btn btn-primary" onclick="generateFinancialReport()">Generate</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Customer Statement</h5>
+                                <p class="card-text">Generate customer account statement</p>
+                                <button class="btn btn-primary" onclick="showCustomerStatementModal()">Generate</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Supplier Statement</h5>
+                                <p class="card-text">Generate supplier account statement</p>
+                                <button class="btn btn-primary" onclick="showSupplierStatementModal()">Generate</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Expense Report</h5>
+                                <p class="card-text">Expense breakdown by category</p>
+                                <button class="btn btn-primary" onclick="generateExpenseReport()">Generate</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div class="content-section" id="settings">
+                <div class="section-header">
+                    <h3>System Settings</h3>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">User Management</h5>
+                                <button class="btn btn-primary" onclick="showUserManagement()">Manage Users</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Business Settings</h5>
+                                <button class="btn btn-primary" onclick="showBusinessSettings()">Configure</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals will be added dynamically by JavaScript -->
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        // Global Variables
+        let currentUser = null;
+        let sessionId = null;
+        let cart = [];
+        let products = [];
+        let customers = [];
+        let suppliers = [];
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+            updateCurrentDate();
+            setInterval(updateCurrentDate, 60000); // Update every minute
+
+            // Event Listeners
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('productSearch').addEventListener('input', filterProducts);
+            document.getElementById('deliveryCharge').addEventListener('input', updateCartSummary);
+            document.getElementById('discount').addEventListener('input', updateCartSummary);
+
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    if (this.getAttribute('data-section')) {
+                        navigateTo(this.getAttribute('data-section'));
+                    }
+                });
+            });
+        });
+
+        // Update Current Date
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // Load Users for Login
+        function loadUsers() {
+            showLoading();
+            google.script.run
+                .withSuccessHandler(function(users) {
+                    hideLoading();
+                    const select = document.getElementById('username');
+                    users.forEach(user => {
+                        if (user.Status === 'Active') {
+                            const option = document.createElement('option');
+                            option.value = user.Username;
+                            option.textContent = user.Username + ' (' + user.Role + ')';
+                            select.appendChild(option);
+                        }
+                    });
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showToast('Error loading users: ' + error.message, 'danger');
+                })
+                .getUsers();
+        }
+
+        // Handle Login
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const pin = document.getElementById('pin').value;
+
+            if (!username || !pin) {
+                showToast('Please enter username and PIN', 'warning');
+                return;
+            }
+
+            showLoading();
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    hideLoading();
+                    if (result.success) {
+                        currentUser = result.user;
+                        sessionId = result.sessionId;
+                        showApp();
+                        loadDashboard();
+                    } else {
+                        showToast(result.message, 'danger');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showToast('Login error: ' + error.message, 'danger');
+                })
+                .authenticate(username, pin);
+        }
+
+        // Show App After Login
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+
+            // Update user info
+            document.getElementById('currentUser').textContent = currentUser.Username;
+            document.getElementById('currentRole').textContent = currentUser.Role;
+            document.getElementById('userAvatar').textContent = currentUser.Username.charAt(0).toUpperCase();
+
+            // Show settings for admin
+            if (currentUser.Role === 'Admin') {
+                document.getElementById('settingsNav').style.display = 'block';
+            }
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                currentUser = null;
+                sessionId = null;
+                cart = [];
+                document.getElementById('appContainer').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('loginForm').reset();
+            }
+        }
+
+        // Navigation
+        function navigateTo(section) {
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-section="${section}"]`).classList.add('active');
+
+            // Update active content section
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(section).classList.add('active');
+
+            // Update page title
+            const titles = {
+                'dashboard': 'Dashboard',
+                'sales': 'Point of Sale',
+                'quotations': 'Quotations',
+                'customers': 'Customers',
+                'inventory': 'Inventory Management',
+                'suppliers': 'Suppliers',
+                'expenses': 'Expenses',
+                'reports': 'Reports & Analytics',
+                'settings': 'Settings'
+            };
+            document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
+
+            // Load section data
+            switch(section) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'sales':
+                    loadPOSData();
+                    break;
+                case 'quotations':
+                    loadQuotations();
+                    break;
+                case 'customers':
+                    loadCustomers();
+                    break;
+                case 'inventory':
+                    loadInventory();
+                    break;
+                case 'suppliers':
+                    loadSuppliers();
+                    break;
+                case 'expenses':
+                    loadExpenses();
+                    break;
+            }
+        }
+
+        // Load Dashboard
+        function loadDashboard() {
+            showLoading();
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    hideLoading();
+
+                    // Update stat cards
+                    document.getElementById('cashBalance').textContent = formatCurrency(data.cashBalance);
+                    document.getElementById('mpesaBalance').textContent = formatCurrency(data.mpesaBalance);
+                    document.getElementById('bankBalance').textContent = formatCurrency(data.bankBalance);
+                    document.getElementById('todaySales').textContent = formatCurrency(data.todaySales);
+                    document.getElementById('customerDebt').textContent = formatCurrency(data.customerDebt);
+                    document.getElementById('supplierDebt').textContent = formatCurrency(data.supplierDebt);
+                    document.getElementById('lowStock').textContent = data.lowStockCount;
+                    document.getElementById('todayExpenses').textContent = formatCurrency(data.todayExpenses);
+
+                    // Load recent sales
+                    loadRecentSales(data.recentSales);
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showToast('Error loading dashboard: ' + error.message, 'danger');
+                })
+                .getDashboardData();
+        }
+
+        // Load Recent Sales
+        function loadRecentSales(sales) {
+            const tbody = document.getElementById('recentSalesTable');
+            tbody.innerHTML = '';
+
+            if (sales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">No recent sales</td></tr>';
+                return;
+            }
+
+            sales.forEach(sale => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${sale.Sale_ID}</td>
+                    <td>${formatDateTime(sale.DateTime)}</td>
+                    <td>${sale.Customer_Name}</td>
+                    <td>${formatCurrency(sale.Grand_Total)}</td>
+                    <td><span class="badge bg-info">${sale.Payment_Mode}</span></td>
+                    <td><span class="badge bg-success">${sale.Status}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Load POS Data
+        function loadPOSData() {
+            showLoading();
+
+            // Load products
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    products = data;
+                    displayProducts(products);
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error loading products: ' + error.message, 'danger');
+                })
+                .getProducts({});
+
+            // Load customers
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    hideLoading();
+                    customers = data;
+                    const select = document.getElementById('customerSelect');
+                    select.innerHTML = '<option value="">Walk-in Customer</option>';
+                    data.forEach(customer => {
+                        if (customer.Status === 'Active') {
+                            const option = document.createElement('option');
+                            option.value = customer.Customer_ID;
+                            option.textContent = customer.Customer_Name + ' (' + customer.Phone + ')';
+                            option.setAttribute('data-credit-limit', customer.Credit_Limit);
+                            option.setAttribute('data-balance', customer.Current_Balance);
+                            select.appendChild(option);
+                        }
+                    });
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showToast('Error loading customers: ' + error.message, 'danger');
+                })
+                .getCustomers({});
+        }
+
+        // Display Products
+        function displayProducts(productList) {
+            const container = document.getElementById('productList');
+            container.innerHTML = '';
+
+            productList.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'card mb-2';
+                card.style.cursor = 'pointer';
+                card.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">${product.Item_Name}</h6>
+                                <small class="text-muted">${product.Category}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">${formatCurrency(product.Selling_Price)}</div>
+                                <small class="text-muted">Stock: ${product.Current_Qty}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                card.onclick = () => addToCart(product);
+                container.appendChild(card);
+            });
+        }
+
+        // Filter Products
+        function filterProducts() {
+            const search = document.getElementById('productSearch').value.toLowerCase();
+            const filtered = products.filter(p =>
+                p.Item_Name.toLowerCase().includes(search) ||
+                p.Category.toLowerCase().includes(search)
+            );
+            displayProducts(filtered);
+        }
+
+        // Add to Cart
+        function addToCart(product) {
+            if (product.Current_Qty <= 0) {
+                showToast('Product out of stock', 'warning');
+                return;
+            }
+
+            const existing = cart.find(item => item.Item_ID === product.Item_ID);
+            if (existing) {
+                if (existing.qty < product.Current_Qty) {
+                    existing.qty++;
+                } else {
+                    showToast('Cannot exceed available stock', 'warning');
+                    return;
+                }
+            } else {
+                cart.push({
+                    Item_ID: product.Item_ID,
+                    Item_Name: product.Item_Name,
+                    Unit_Price: product.Selling_Price,
+                    qty: 1,
+                    maxQty: product.Current_Qty
+                });
+            }
+
+            updateCartDisplay();
+            updateCartSummary();
+        }
+
+        // Update Cart Display
+        function updateCartDisplay() {
+            const container = document.getElementById('cartItems');
+
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-cart-x" style="font-size: 48px;"></i>
+                        <p class="mt-2">Cart is empty</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            cart.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <div class="cart-item-details">
+                        <div class="cart-item-name">${item.Item_Name}</div>
+                        <div class="cart-item-price">${formatCurrency(item.Unit_Price)} x ${item.qty}</div>
+                    </div>
+                    <div class="cart-item-qty">
+                        <button class="qty-btn" onclick="updateItemQty('${item.Item_ID}', -1)">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                        <span style="min-width: 30px; text-align: center;">${item.qty}</span>
+                        <button class="qty-btn" onclick="updateItemQty('${item.Item_ID}', 1)">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                    <button class="btn btn-sm btn-danger" onclick="removeFromCart('${item.Item_ID}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Update Item Quantity
+        function updateItemQty(itemId, change) {
+            const item = cart.find(i => i.Item_ID === itemId);
+            if (!item) return;
+
+            const newQty = item.qty + change;
+            if (newQty <= 0) {
+                removeFromCart(itemId);
+                return;
+            }
+
+            if (newQty > item.maxQty) {
+                showToast('Cannot exceed available stock', 'warning');
+                return;
+            }
+
+            item.qty = newQty;
+            updateCartDisplay();
+            updateCartSummary();
+        }
+
+        // Remove from Cart
+        function removeFromCart(itemId) {
+            cart = cart.filter(item => item.Item_ID !== itemId);
+            updateCartDisplay();
+            updateCartSummary();
+        }
+
+        // Clear Cart
+        function clearCart() {
+            if (cart.length === 0) return;
+
+            if (confirm('Clear all items from cart?')) {
+                cart = [];
+                updateCartDisplay();
+                updateCartSummary();
+            }
+        }
+
+        // Update Cart Summary
+        function updateCartSummary() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.Unit_Price * item.qty), 0);
+            const delivery = parseFloat(document.getElementById('deliveryCharge').value) || 0;
+            const discount = parseFloat(document.getElementById('discount').value) || 0;
+            const total = subtotal + delivery - discount;
+
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('deliveryDisplay').textContent = formatCurrency(delivery);
+            document.getElementById('discountDisplay').textContent = formatCurrency(discount);
+            document.getElementById('grandTotal').textContent = formatCurrency(total);
+        }
+
+        // Checkout
+        function checkout() {
+            if (cart.length === 0) {
+                showToast('Cart is empty', 'warning');
+                return;
+            }
+
+            const customerSelect = document.getElementById('customerSelect');
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const delivery = parseFloat(document.getElementById('deliveryCharge').value) || 0;
+            const discount = parseFloat(document.getElementById('discount').value) || 0;
+
+            // Get customer details
+            let customerId = customerSelect.value;
+            let customerName = 'Walk-in Customer';
+
+            if (customerId) {
+                const selectedOption = customerSelect.options[customerSelect.selectedIndex];
+                customerName = selectedOption.textContent.split('(')[0].trim();
+
+                // Check credit limit for credit sales
+                if (paymentMethod === 'Credit') {
+                    const creditLimit = parseFloat(selectedOption.getAttribute('data-credit-limit'));
+                    const currentBalance = parseFloat(selectedOption.getAttribute('data-balance'));
+                    const subtotal = cart.reduce((sum, item) => sum + (item.Unit_Price * item.qty), 0);
+                    const total = subtotal + delivery - discount;
+
+                    if (currentBalance + total > creditLimit) {
+                        showToast('Customer credit limit exceeded', 'danger');
+                        return;
+                    }
+                }
+            } else if (paymentMethod === 'Credit') {
+                showToast('Please select a customer for credit sales', 'warning');
+                return;
+            }
+
+            const saleData = {
+                Customer_ID: customerId,
+                Customer_Name: customerName,
+                Items: cart,
+                Delivery_Charge: delivery,
+                Discount: discount,
+                Payment_Mode: paymentMethod,
+                Sold_By: currentUser.Username,
+                Session_ID: sessionId
+            };
+
+            showLoading();
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    hideLoading();
+                    if (result.success) {
+                        showToast('Sale completed successfully!', 'success');
+
+                        // Print receipt
+                        printReceipt(result.saleId);
+
+                        // Clear cart
+                        cart = [];
+                        document.getElementById('deliveryCharge').value = '0';
+                        document.getElementById('discount').value = '0';
+                        customerSelect.value = '';
+                        updateCartDisplay();
+                        updateCartSummary();
+
+                        // Reload products to update stock
+                        loadPOSData();
+                    } else {
+                        showToast(result.message, 'danger');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showToast('Error processing sale: ' + error.message, 'danger');
+                })
+                .createSale(saleData);
+        }
+
+        // Print Receipt
+        function printReceipt(saleId) {
+            showLoading();
+            google.script.run
+                .withSuccessHandler(function(receiptHtml) {
+                    hideLoading();
+
+                    // Open print window
+                    const printWindow = window.open('', '', 'height=600,width=400');
+                    printWindow.document.write(receiptHtml);
+                    printWindow.document.close();
+                    printWindow.focus();
+                    printWindow.print();
+                    printWindow.close();
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showToast('Error generating receipt: ' + error.message, 'danger');
+                })
+                .generateReceipt(saleId);
+        }
+
+        // Load Customers
+        function loadCustomers() {
+            showLoading();
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    hideLoading();
+                    customers = data;
+                    displayCustomers(data);
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showToast('Error loading customers: ' + error.message, 'danger');
+                })
+                .getCustomers({});
+        }
+
+        // Display Customers
+        function displayCustomers(customerList) {
+            const tbody = document.getElementById('customersTable');
+            tbody.innerHTML = '';
+
+            if (customerList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No customers found</td></tr>';
+                return;
+            }
+
+            customerList.forEach(customer => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${customer.Customer_ID}</td>
+                    <td>${customer.Customer_Name}</td>
+                    <td>${customer.Phone}</td>
+                    <td>${customer.Location}</td>
+                    <td>${formatCurrency(customer.Current_Balance)}</td>
+                    <td>${formatCurrency(customer.Total_Purchases)}</td>
+                    <td><span class="badge bg-${customer.Status === 'Active' ? 'success' : 'danger'}">${customer.Status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewCustomerDetails('${customer.Customer_ID}')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-success" onclick="recordPayment('${customer.Customer_ID}')">
+                            <i class="bi bi-cash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Load Inventory
+        function loadInventory() {
+            showLoading();
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    hideLoading();
+                    products = data;
+                    displayInventory(data);
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showToast('Error loading inventory: ' + error.message, 'danger');
+                })
+                .getProducts({});
+        }
+
+        // Display Inventory
+        function displayInventory(productList) {
+            const tbody = document.getElementById('inventoryTable');
+            tbody.innerHTML = '';
+
+            if (productList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">No products found</td></tr>';
+                return;
+            }
+
+            productList.forEach(product => {
+                const status = product.Current_Qty <= product.Reorder_Level ? 'Low Stock' : 'In Stock';
+                const statusClass = product.Current_Qty <= product.Reorder_Level ? 'danger' : 'success';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product.Item_ID}</td>
+                    <td>${product.Item_Name}</td>
+                    <td>${product.Category}</td>
+                    <td>${formatCurrency(product.Cost_Price)}</td>
+                    <td>${formatCurrency(product.Selling_Price)}</td>
+                    <td>${product.Current_Qty}</td>
+                    <td>${product.Reorder_Level}</td>
+                    <td><span class="badge bg-${statusClass}">${status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editProduct('${product.Item_ID}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-success" onclick="adjustStock('${product.Item_ID}')">
+                            <i class="bi bi-arrows-move"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Load Suppliers
+        function loadSuppliers() {
+            showLoading();
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    hideLoading();
+                    suppliers = data;
+                    displaySuppliers(data);
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showToast('Error loading suppliers: ' + error.message, 'danger');
+                })
+                .getSuppliers({});
+        }
+
+        // Display Suppliers
+        function displaySuppliers(supplierList) {
+            const tbody = document.getElementById('suppliersTable');
+            tbody.innerHTML = '';
+
+            if (supplierList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No suppliers found</td></tr>';
+                return;
+            }
+
+            supplierList.forEach(supplier => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${supplier.Supplier_ID}</td>
+                    <td>${supplier.Supplier_Name}</td>
+                    <td>${supplier.Contact_Person}</td>
+                    <td>${supplier.Phone}</td>
+                    <td>${supplier.Email}</td>
+                    <td>${formatCurrency(supplier.Current_Balance)}</td>
+                    <td><span class="badge bg-${supplier.Status === 'Active' ? 'success' : 'danger'}">${supplier.Status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewSupplierDetails('${supplier.Supplier_ID}')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-success" onclick="paySupplier('${supplier.Supplier_ID}')">
+                            <i class="bi bi-cash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Load Quotations
+        function loadQuotations() {
+            showLoading();
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    hideLoading();
+                    displayQuotations(data);
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showToast('Error loading quotations: ' + error.message, 'danger');
+                })
+                .getQuotations({});
+        }
+
+        // Display Quotations
+        function displayQuotations(quotationList) {
+            const tbody = document.getElementById('quotationsTable');
+            tbody.innerHTML = '';
+
+            if (quotationList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No quotations found</td></tr>';
+                return;
+            }
+
+            quotationList.forEach(quote => {
+                const statusColors = {
+                    'Draft': 'secondary',
+                    'Sent': 'info',
+                    'Accepted': 'success',
+                    'Rejected': 'danger'
+                };
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${quote.Quote_ID}</td>
+                    <td>${formatDate(quote.Date)}</td>
+                    <td>${quote.Customer_Name}</td>
+                    <td>${formatDate(quote.Valid_Until)}</td>
+                    <td>${formatCurrency(quote.Total)}</td>
+                    <td><span class="badge bg-${statusColors[quote.Status]}">${quote.Status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewQuotation('${quote.Quote_ID}')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        ${quote.Status === 'Accepted' && !quote.Converted_Sale_ID ?
+                            `<button class="btn btn-sm btn-success" onclick="convertToSale('${quote.Quote_ID}')">
+                                <i class="bi bi-arrow-right-circle"></i>
+                            </button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Load Expenses
+        function loadExpenses() {
+            showLoading();
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    hideLoading();
+                    displayExpenses(data);
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showToast('Error loading expenses: ' + error.message, 'danger');
+                })
+                .getExpenses({});
+        }
+
+        // Display Expenses
+        function displayExpenses(expenseList) {
+            const tbody = document.getElementById('expensesTable');
+            tbody.innerHTML = '';
+
+            if (expenseList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No expenses found</td></tr>';
+                return;
+            }
+
+            expenseList.forEach(expense => {
+                const statusColors = {
+                    'Pending': 'warning',
+                    'Approved': 'success',
+                    'Rejected': 'danger'
+                };
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${expense.Expense_ID}</td>
+                    <td>${formatDate(expense.Date)}</td>
+                    <td>${expense.Category}</td>
+                    <td>${expense.Description}</td>
+                    <td>${formatCurrency(expense.Amount)}</td>
+                    <td><span class="badge bg-info">${expense.Payment_Method}</span></td>
+                    <td><span class="badge bg-${statusColors[expense.Status]}">${expense.Status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewExpense('${expense.Expense_ID}')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        ${expense.Status === 'Pending' && currentUser.Role === 'Admin' ?
+                            `<button class="btn btn-sm btn-success" onclick="approveExpense('${expense.Expense_ID}')">
+                                <i class="bi bi-check"></i>
+                            </button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Utility Functions
+        function formatCurrency(amount) {
+            return 'KES ' + parseFloat(amount).toLocaleString('en-KE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB');
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB') + ' ' + date.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        function showToast(message, type = 'info') {
+            const colors = {
+                'success': '#27ae60',
+                'danger': '#e74c3c',
+                'warning': '#f39c12',
+                'info': '#3498db'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = 'toast show';
+            toast.style.cssText = `
+                background: ${colors[type]};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+            toast.textContent = message;
+
+            document.querySelector('.toast-container').appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Placeholder Modal Functions (to be implemented)
+        function showAddCustomerModal() {
+            showToast('Add Customer modal - To be implemented', 'info');
+        }
+
+        function showQuotationModal() {
+            showToast('Quotation modal - To be implemented', 'info');
+        }
+
+        function showAddProductModal() {
+            showToast('Add Product modal - To be implemented', 'info');
+        }
+
+        function showPurchaseModal() {
+            showToast('Purchase modal - To be implemented', 'info');
+        }
+
+        function showAddSupplierModal() {
+            showToast('Add Supplier modal - To be implemented', 'info');
+        }
+
+        function showAddExpenseModal() {
+            showToast('Add Expense modal - To be implemented', 'info');
+        }
+
+        function viewSalesHistory() {
+            showToast('Sales History - To be implemented', 'info');
+        }
+
+        function viewCustomerDetails(customerId) {
+            showToast('Customer Details - To be implemented', 'info');
+        }
+
+        function recordPayment(customerId) {
+            showToast('Record Payment - To be implemented', 'info');
+        }
+
+        function editProduct(itemId) {
+            showToast('Edit Product - To be implemented', 'info');
+        }
+
+        function adjustStock(itemId) {
+            showToast('Adjust Stock - To be implemented', 'info');
+        }
+
+        function viewSupplierDetails(supplierId) {
+            showToast('Supplier Details - To be implemented', 'info');
+        }
+
+        function paySupplier(supplierId) {
+            showToast('Pay Supplier - To be implemented', 'info');
+        }
+
+        function viewQuotation(quoteId) {
+            showToast('View Quotation - To be implemented', 'info');
+        }
+
+        function convertToSale(quoteId) {
+            if (confirm('Convert this quotation to a sale?')) {
+                showLoading();
+                google.script.run
+                    .withSuccessHandler(function(result) {
+                        hideLoading();
+                        if (result.success) {
+                            showToast('Quotation converted to sale successfully!', 'success');
+                            loadQuotations();
+                        } else {
+                            showToast(result.message, 'danger');
+                        }
+                    })
+                    .withFailureHandler(function(error) {
+                        hideLoading();
+                        showToast('Error converting quotation: ' + error.message, 'danger');
+                    })
+                    .convertQuotationToSale(quoteId);
+            }
+        }
+
+        function viewExpense(expenseId) {
+            showToast('View Expense - To be implemented', 'info');
+        }
+
+        function approveExpense(expenseId) {
+            if (confirm('Approve this expense?')) {
+                showLoading();
+                google.script.run
+                    .withSuccessHandler(function(result) {
+                        hideLoading();
+                        if (result.success) {
+                            showToast('Expense approved successfully!', 'success');
+                            loadExpenses();
+                        } else {
+                            showToast(result.message, 'danger');
+                        }
+                    })
+                    .withFailureHandler(function(error) {
+                        hideLoading();
+                        showToast('Error approving expense: ' + error.message, 'danger');
+                    })
+                    .approveExpense(expenseId);
+            }
+        }
+
+        function generateSalesReport() {
+            showToast('Sales Report - To be implemented', 'info');
+        }
+
+        function generateInventoryReport() {
+            showToast('Inventory Report - To be implemented', 'info');
+        }
+
+        function generateFinancialReport() {
+            showToast('Financial Report - To be implemented', 'info');
+        }
+
+        function showCustomerStatementModal() {
+            showToast('Customer Statement - To be implemented', 'info');
+        }
+
+        function showSupplierStatementModal() {
+            showToast('Supplier Statement - To be implemented', 'info');
+        }
+
+        function generateExpenseReport() {
+            showToast('Expense Report - To be implemented', 'info');
+        }
+
+        function showUserManagement() {
+            showToast('User Management - To be implemented', 'info');
+        }
+
+        function showBusinessSettings() {
+            showToast('Business Settings - To be implemented', 'info');
+        }
+    </script>
+</body>
+</html>
