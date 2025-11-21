@@ -1,5 +1,5 @@
 /**
- * BeiPoa Sales Management System
+ * Fatma Sales Management System
  * Main Entry Point
  */
 
@@ -10,18 +10,23 @@ function onOpen() {
   const ui = SpreadsheetApp.getUi();
 
   // Create custom menu
-  ui.createMenu('🏪 ' + CONFIG.SHOP_NAME)
+  ui.createMenu('🏪 Fatma System')
+    .addItem('⚡ Setup Fatma System', 'setupFatmaSystem')
+    .addSeparator()
     .addItem('📊 Dashboard', 'showDashboard')
     .addSeparator()
     .addItem('🛍️ New Sale', 'showNewSaleDialog')
-    .addItem('📦 Manage Products', 'showProductsManager')
+    .addItem('📦 Manage Inventory', 'showInventoryManager')
     .addItem('👥 Manage Customers', 'showCustomersManager')
+    .addItem('🏭 Manage Suppliers', 'showSuppliersManager')
     .addSeparator()
+    .addItem('💰 Financials', 'showFinancials')
+    .addItem('💳 Expenses', 'showExpenses')
+    .addItem('📋 Quotations', 'showQuotations')
+    .addSeparator()
+    .addItem('👤 User Management', 'showUserManagement')
     .addItem('📈 View Reports', 'showReports')
-    .addItem('📋 Inventory Check', 'showInventory')
-    .addSeparator()
     .addItem('⚙️ Settings', 'showSettings')
-    .addItem('🔄 Initialize Workbook', 'initializeWorkbook')
     .addToUi();
 }
 
@@ -30,7 +35,7 @@ function onOpen() {
  */
 function onInstall() {
   onOpen();
-  initializeWorkbook();
+  setupFatmaSystem();
 }
 
 /**
