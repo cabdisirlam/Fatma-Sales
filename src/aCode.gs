@@ -422,8 +422,13 @@ function authenticate(email, pin) {
         emailMatch = true;
         Logger.log(logPrefix + ' Found user with matching email at row ' + (i + 1));
 
-        // Check PIN
-        if (row[pinCol].toString() === pin.toString()) {
+        // Check PIN - handle both string and number types, trim whitespace
+        const storedPin = row[pinCol] ? row[pinCol].toString().trim() : '';
+        const enteredPin = pin ? pin.toString().trim() : '';
+
+        Logger.log(logPrefix + ' Comparing PINs - Stored: "' + storedPin + '" (length: ' + storedPin.length + ', type: ' + typeof row[pinCol] + '), Entered: "' + enteredPin + '" (length: ' + enteredPin.length + ')');
+
+        if (storedPin === enteredPin) {
           Logger.log(logPrefix + ' PIN matches');
 
           // Check status
@@ -487,11 +492,19 @@ function authenticate(email, pin) {
           };
         } else {
           Logger.log(logPrefix + ' FAILED: PIN does not match for user');
+          Logger.log(logPrefix + ' Expected PIN: "' + storedPin + '", Got PIN: "' + enteredPin + '"');
           try {
-            logAction(email, 'Authentication', 'Failed Login', 'Incorrect PIN attempt for email: ' + email, '', '', '');
+            logAction(email, 'Authentication', 'Failed Login', 'Incorrect PIN attempt for email: ' + email + ' (expected: ' + storedPin.length + ' chars, got: ' + enteredPin.length + ' chars)', '', '', '');
           } catch (e) {
             // Ignore logging errors
           }
+          // Return immediately to prevent continuing loop
+          return {
+            success: false,
+            message: 'Invalid PIN',
+            debugInfo: 'Email found but PIN does not match. Expected length: ' + storedPin.length + ', Got length: ' + enteredPin.length,
+            timestamp: new Date().toISOString()
+          };
         }
       }
     }
@@ -710,7 +723,7 @@ function createDefaultAdmin() {
     const userData = [
       userId,
       'Cabdisirlam', // Username derived from email
-      '1234', // Default PIN
+      '2020', // Default PIN
       'Admin',
       'cabdisirlam@gmail.com',
       '',
@@ -720,7 +733,7 @@ function createDefaultAdmin() {
 
     sheet.appendRow(userData);
 
-    Logger.log('Default admin user created. Email: cabdisirlam@gmail.com, PIN: 1234');
+    Logger.log('Default admin user created. Email: cabdisirlam@gmail.com, PIN: 2020');
 
   } catch (error) {
     logError('createDefaultAdmin', error);
@@ -898,6 +911,69 @@ function checkOAuthStatus() {
       message: 'OAuth authorization required',
       error: error.message,
       recommendation: 'Please check your permissions and try again.'
+    };
+  }
+}
+
+/**
+ * Diagnostic function to check user data in the spreadsheet
+ * This helps troubleshoot login issues by showing exactly what's stored
+ */
+function checkUserData(email) {
+  try {
+    const sheet = getSheet('Users');
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length <= 1) {
+      return {
+        success: false,
+        message: 'No users found in the system',
+        totalUsers: 0
+      };
+    }
+
+    const headers = data[0];
+    const emailCol = headers.indexOf('Email');
+    const usernameCol = headers.indexOf('Username');
+    const pinCol = headers.indexOf('PIN');
+    const statusCol = headers.indexOf('Status');
+    const roleCol = headers.indexOf('Role');
+
+    // Find user by email
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (row[emailCol] && row[emailCol].toLowerCase() === email.toLowerCase()) {
+        return {
+          success: true,
+          found: true,
+          user: {
+            email: row[emailCol],
+            username: row[usernameCol],
+            pinLength: row[pinCol] ? row[pinCol].toString().length : 0,
+            pinType: typeof row[pinCol],
+            status: row[statusCol],
+            role: row[roleCol]
+          },
+          message: 'User found',
+          headers: headers,
+          rowNumber: i + 1
+        };
+      }
+    }
+
+    return {
+      success: true,
+      found: false,
+      message: 'User with email ' + email + ' not found',
+      totalUsers: data.length - 1,
+      availableEmails: data.slice(1).map(row => row[emailCol]).filter(e => e)
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: 'Error checking user data'
     };
   }
 }
