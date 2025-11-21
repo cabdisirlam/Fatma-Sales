@@ -10,7 +10,11 @@ function setupFatmaSystem() {
   try {
     Logger.log('Starting Fatma System setup...');
 
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getSpreadsheet();
+
+    if (!ss) {
+      throw new Error('No active spreadsheet found. Please run this from a spreadsheet.');
+    }
 
     // Rename spreadsheet to "Fatma System"
     ss.rename(CONFIG.WORKBOOK_NAME);
