@@ -76,8 +76,8 @@ Fatma-Sales/
 
 6. **Run the script**:
    - In the spreadsheet, refresh the page
-   - You should see a "🏪 BeiPoa" menu appear
-   - Click "🏪 BeiPoa" > "🔄 Initialize Workbook" to set up all sheets
+   - You should see a "🏪 Fatma" menu appear
+   - Click "🏪 Fatma" > "🔄 Initialize Workbook" to set up all sheets
 
 ## Quick Start
 
@@ -165,7 +165,7 @@ The Fatma System workbook contains the following sheets:
 
 ### Adding a New Sale
 
-1. Go to menu: **🏪 BeiPoa** > **🛍️ New Sale**
+1. Go to menu: **🏪 Fatma** > **🛍️ New Sale**
 2. Fill in the sale details:
    - Customer Name (required)
    - Customer Email (optional)
@@ -179,7 +179,7 @@ The Fatma System workbook contains the following sheets:
 
 ### Managing Products
 
-1. Go to menu: **🏪 BeiPoa** > **📦 Manage Products**
+1. Go to menu: **🏪 Fatma** > **📦 Manage Products**
 2. Fill in product details:
    - Product Name (required)
    - Description
@@ -193,13 +193,13 @@ The Fatma System workbook contains the following sheets:
 
 ### Managing Customers
 
-1. Go to menu: **🏪 BeiPoa** > **👥 Manage Customers**
+1. Go to menu: **🏪 Fatma** > **👥 Manage Customers**
 2. Fill in customer details
 3. Click "Add Customer"
 
 ### Viewing Reports
 
-1. Go to menu: **🏪 BeiPoa** > **📈 View Reports**
+1. Go to menu: **🏪 Fatma** > **📈 View Reports**
 2. See comprehensive sales statistics:
    - Total sales count
    - Total revenue
@@ -209,7 +209,7 @@ The Fatma System workbook contains the following sheets:
 
 ### Dashboard
 
-1. Go to menu: **🏪 BeiPoa** > **📊 Dashboard**
+1. Go to menu: **🏪 Fatma** > **📊 Dashboard**
 2. View at-a-glance statistics and quick action buttons
 
 ## Configuration

@@ -13,6 +13,7 @@ function onOpen() {
   ui.createMenu('🏪 Fatma System')
     .addItem('⚡ Setup Fatma System', 'setupFatmaSystem')
     .addItem('🔄 Refresh System', 'refreshSystem')
+    .addItem('🧹 Clear Cache & Reset Auth', 'clearAllCacheAndAuth')
     .addSeparator()
     .addItem('📊 Dashboard', 'showDashboard')
     .addSeparator()
@@ -184,6 +185,117 @@ function refreshSystem() {
     SpreadsheetApp.getUi().alert(
       'Refresh Error',
       'Error refreshing system: ' + error.message,
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+  }
+}
+
+/**
+ * Clear All Cache and Reset Authentication
+ * This clears all caches, sessions, and forces reauthorization
+ */
+function clearAllCacheAndAuth() {
+  try {
+    const ui = SpreadsheetApp.getUi();
+
+    // Confirm action
+    const response = ui.alert(
+      'Clear Cache & Reset Auth',
+      'This will:\n' +
+      '• Clear all user caches\n' +
+      '• Clear all script caches\n' +
+      '• Clear all authentication tokens\n' +
+      '• Force reauthorization on next access\n\n' +
+      'This does NOT delete any data from sheets.\n\n' +
+      'Continue?',
+      ui.ButtonSet.YES_NO
+    );
+
+    if (response !== ui.Button.YES) {
+      return;
+    }
+
+    // Clear all caches
+    try {
+      CacheService.getUserCache().removeAll([]);
+      Logger.log('User cache cleared');
+    } catch (e) {
+      Logger.log('Error clearing user cache: ' + e.message);
+    }
+
+    try {
+      CacheService.getScriptCache().removeAll([]);
+      Logger.log('Script cache cleared');
+    } catch (e) {
+      Logger.log('Error clearing script cache: ' + e.message);
+    }
+
+    try {
+      CacheService.getDocumentCache().removeAll([]);
+      Logger.log('Document cache cleared');
+    } catch (e) {
+      Logger.log('Error clearing document cache: ' + e.message);
+    }
+
+    // Clear all session-related properties
+    try {
+      const scriptProperties = PropertiesService.getScriptProperties();
+      const allProperties = scriptProperties.getProperties();
+      const sessionKeys = [];
+
+      // Find all session/auth related keys
+      for (const key in allProperties) {
+        if (key.includes('session_') || key.includes('token_') || key.includes('auth_')) {
+          sessionKeys.push(key);
+        }
+      }
+
+      // Delete session keys
+      if (sessionKeys.length > 0) {
+        scriptProperties.deleteAllProperties(sessionKeys);
+        Logger.log('Cleared ' + sessionKeys.length + ' session properties');
+      }
+    } catch (e) {
+      Logger.log('Error clearing session properties: ' + e.message);
+    }
+
+    // Clear user properties
+    try {
+      PropertiesService.getUserProperties().deleteAllProperties();
+      Logger.log('User properties cleared');
+    } catch (e) {
+      Logger.log('Error clearing user properties: ' + e.message);
+    }
+
+    // Log the action
+    logAction(
+      getActiveUserEmail(),
+      'System',
+      'ClearCache',
+      'All caches and authentication cleared',
+      '',
+      '',
+      ''
+    );
+
+    ui.alert(
+      'Cache & Auth Cleared',
+      '✓ All caches cleared\n' +
+      '✓ Authentication tokens removed\n' +
+      '✓ Session data cleared\n\n' +
+      'IMPORTANT: Users need to:\n' +
+      '1. Close all browser tabs with the app\n' +
+      '2. Clear browser cache (Ctrl+Shift+Delete)\n' +
+      '3. Reopen the app and log in again\n\n' +
+      'For fresh deployment, redeploy the web app with a new version.',
+      ui.ButtonSet.OK
+    );
+
+  } catch (error) {
+    logError('clearAllCacheAndAuth', error);
+    SpreadsheetApp.getUi().alert(
+      'Clear Cache Error',
+      'Error clearing cache: ' + error.message,
       SpreadsheetApp.getUi().ButtonSet.OK
     );
   }
