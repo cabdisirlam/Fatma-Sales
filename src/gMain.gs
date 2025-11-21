@@ -238,14 +238,53 @@ function clearAllCacheAndAuth() {
     Logger.log('Accessing services to trigger OAuth...');
 
     // 1. Access spreadsheet (requires spreadsheets scope)
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const spreadsheetId = ss.getId();
-    const spreadsheetName = ss.getName();
-    Logger.log('✓ Spreadsheet access: ' + spreadsheetName + ' (' + spreadsheetId + ')');
+    let ss = null;
+    let spreadsheetId = null;
+    let spreadsheetName = null;
+
+    try {
+      // Try to get active spreadsheet (works in UI context)
+      ss = SpreadsheetApp.getActiveSpreadsheet();
+      if (ss) {
+        spreadsheetId = ss.getId();
+        spreadsheetName = ss.getName();
+        Logger.log('✓ Spreadsheet access (active): ' + spreadsheetName + ' (' + spreadsheetId + ')');
+      }
+    } catch (e) {
+      Logger.log('Cannot get active spreadsheet: ' + e.message);
+    }
+
+    // If active spreadsheet is not available (trigger context), try from properties
+    if (!ss) {
+      try {
+        const scriptProps = PropertiesService.getScriptProperties();
+        spreadsheetId = scriptProps.getProperty('SPREADSHEET_ID');
+
+        if (spreadsheetId) {
+          ss = SpreadsheetApp.openById(spreadsheetId);
+          spreadsheetName = ss.getName();
+          Logger.log('✓ Spreadsheet access (by ID from properties): ' + spreadsheetName + ' (' + spreadsheetId + ')');
+        } else {
+          Logger.log('⚠ No SPREADSHEET_ID in script properties');
+        }
+      } catch (e) {
+        Logger.log('Cannot open spreadsheet by ID: ' + e.message);
+      }
+    }
+
+    // If we still don't have a spreadsheet, log a warning but continue
+    if (!ss) {
+      Logger.log('⚠ Could not access spreadsheet (this is normal in some trigger contexts)');
+    }
 
     // 2. Access user info (requires userinfo.email scope)
-    const userEmail = Session.getActiveUser().getEmail();
-    Logger.log('✓ User email access: ' + userEmail);
+    let userEmail = 'unknown';
+    try {
+      userEmail = Session.getActiveUser().getEmail();
+      Logger.log('✓ User email access: ' + userEmail);
+    } catch (e) {
+      Logger.log('⚠ Cannot get user email (this is normal in some trigger contexts): ' + e.message);
+    }
 
     // 3. Access properties (requires script properties)
     const scriptProps = PropertiesService.getScriptProperties();
@@ -260,7 +299,7 @@ function clearAllCacheAndAuth() {
       ui.alert(
         '✅ Authorization Successful',
         'All permissions are properly granted!\n\n' +
-        'Spreadsheet: ' + spreadsheetName + '\n' +
+        'Spreadsheet: ' + (spreadsheetName || 'N/A (trigger context)') + '\n' +
         'User: ' + userEmail + '\n\n' +
         'If you were having permission issues, they should be resolved now.\n\n' +
         'If you still have issues:\n' +
@@ -270,11 +309,13 @@ function clearAllCacheAndAuth() {
         '4. Run this function again to re-grant permissions',
         ui.ButtonSet.OK
       );
+    } else {
+      Logger.log('Authorization completed in trigger context (no UI available)');
     }
 
     return {
       success: true,
-      spreadsheet: spreadsheetName,
+      spreadsheet: spreadsheetName || 'N/A',
       user: userEmail
     };
 
