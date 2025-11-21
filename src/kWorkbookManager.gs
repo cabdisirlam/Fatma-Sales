@@ -3,6 +3,115 @@
  * Workbook Manager - Complete Sheet Setup System
  */
 
+// =====================================================
+// MAIN SETUP FUNCTION - RUN THIS FROM APPS SCRIPT EDITOR
+// =====================================================
+
+/**
+ * ONE-CLICK SETUP: Run this function to create all sheets
+ *
+ * Instructions:
+ * 1. In Apps Script Editor, select this function from the dropdown
+ * 2. Click the Run button (▶️)
+ * 3. Authorize when prompted
+ * 4. Wait for completion message
+ */
+function setupSheets() {
+  try {
+    Logger.log('🚀 Starting Fatma System setup...');
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    // Rename spreadsheet
+    ss.rename('Fatma System');
+    Logger.log('✓ Renamed workbook to: Fatma System');
+
+    // Store spreadsheet ID
+    PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ss.getId());
+
+    // Create all sheets with formatting
+    Logger.log('📋 Creating sheets...');
+    createUsersSheet();
+    createSuppliersSheet();
+    createCustomersSheet();
+    createInventorySheet();
+    createSalesDataSheet();
+    createSalesItemsSheet();
+    createPurchasesSheet();
+    createPurchaseItemsSheet();
+    createQuotationsSheet();
+    createQuotationItemsSheet();
+    createCustomerTransactionsSheet();
+    createFinancialsSheet();
+    createExpensesSheet();
+    createExpenseCategoriesSheet();
+    createAuditTrailSheet();
+    createSettingsSheet();
+    Logger.log('✓ All sheets created');
+
+    // Initialize data
+    Logger.log('📊 Initializing data...');
+    createDefaultAdmin();
+    initializeExpenseCategories();
+    initializeAccounts();
+    Logger.log('✓ Default data initialized');
+
+    // Delete default Sheet1 if it exists
+    try {
+      const sheet1 = ss.getSheetByName('Sheet1');
+      if (sheet1 && ss.getSheets().length > 1) {
+        ss.deleteSheet(sheet1);
+        Logger.log('✓ Deleted default Sheet1');
+      }
+    } catch (e) {
+      Logger.log('Sheet1 not found or already deleted');
+    }
+
+    // Set active sheet to Users
+    const usersSheet = ss.getSheetByName('Users');
+    if (usersSheet) {
+      ss.setActiveSheet(usersSheet);
+    }
+
+    Logger.log('✅ SETUP COMPLETED SUCCESSFULLY!');
+    Logger.log('');
+    Logger.log('Default admin user:');
+    Logger.log('Username: admin');
+    Logger.log('PIN: 1234');
+
+    // Show success message
+    SpreadsheetApp.getUi().alert(
+      '✅ Setup Complete!',
+      'Fatma System has been set up successfully!\n\n' +
+      '16 sheets have been created:\n' +
+      '✓ Users, Suppliers, Customers\n' +
+      '✓ Inventory, Sales, Purchases\n' +
+      '✓ Quotations, Transactions\n' +
+      '✓ Financials, Expenses\n' +
+      '✓ Audit Trail, Settings\n\n' +
+      'Default admin credentials:\n' +
+      'Username: admin\n' +
+      'PIN: 1234\n\n' +
+      'Change the PIN after first login!',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+
+    return true;
+  } catch (error) {
+    Logger.log('❌ ERROR: ' + error.message);
+    Logger.log(error.stack);
+
+    SpreadsheetApp.getUi().alert(
+      '❌ Setup Failed',
+      'Error: ' + error.message + '\n\n' +
+      'Check the Logs (View → Logs) for details.',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+
+    return false;
+  }
+}
+
 /**
  * Main setup function - creates Fatma System workbook with all sheets
  */
