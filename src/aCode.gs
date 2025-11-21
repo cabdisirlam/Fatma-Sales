@@ -12,7 +12,7 @@
  */
 function doGet(e) {
   try {
-    return HtmlService.createHtmlOutputFromFile('Index')
+    return HtmlService.createHtmlOutputFromFile('nIndex')
       .setTitle('Inventory Management System')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
