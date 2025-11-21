@@ -1,5 +1,5 @@
 /**
- * BEIPOA SYSTEM - MAIN CODE FILE
+ * FATMA SYSTEM - MAIN CODE FILE
  * Contains: Web App Entry Points, Authentication, Utility Functions
  */
 
