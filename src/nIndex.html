@@ -1342,7 +1342,7 @@
 
         // Initialize App
         document.addEventListener('DOMContentLoaded', function() {
-            checkOAuthAndInitialize();
+            loadUsers(); // Initialize users
             updateCurrentDate();
             setInterval(updateCurrentDate, 60000); // Update every minute
 
@@ -1362,85 +1362,6 @@
             });
         });
 
-        // Check OAuth Authorization Status on Page Load
-        function checkOAuthAndInitialize() {
-            console.log('Checking OAuth authorization status...');
-            google.script.run
-                .withSuccessHandler(function(status) {
-                    console.log('OAuth status:', status);
-
-                    if (!status) {
-                        // Null result means OAuth is definitely not authorized
-                        showOAuthWarningBanner();
-                        console.error('OAuth check returned null - permissions not granted');
-                    } else if (status.success && status.authorized) {
-                        console.log('✓ OAuth authorized:', status.message);
-                        // OAuth is good, proceed with initialization
-                        loadUsers();
-                    } else {
-                        // OAuth check returned but indicates not authorized
-                        showOAuthWarningBanner();
-                        console.warn('OAuth not properly authorized:', status.message);
-                    }
-                })
-                .withFailureHandler(function(error) {
-                    console.error('OAuth check failed:', error);
-                    showOAuthWarningBanner();
-                })
-                .checkOAuthStatus();
-        }
-
-        // Show OAuth Warning Banner
-        function showOAuthWarningBanner() {
-            const banner = document.createElement('div');
-            banner.id = 'oauth-warning-banner';
-            banner.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
-                color: white;
-                padding: 15px 20px;
-                text-align: center;
-                z-index: 9999;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-                animation: slideDown 0.3s ease-out;
-            `;
-            banner.innerHTML = `
-                <div style="max-width: 1000px; margin: 0 auto;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 18px;">
-                        🔐 Authorization Required
-                    </h3>
-                    <p style="margin: 0 0 10px 0; font-size: 14px;">
-                        This application needs permission to access your Google Sheets data.
-                    </p>
-                    <p style="margin: 0; font-size: 13px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px;">
-                        <strong>📋 Action Required:</strong> Open your spreadsheet and run
-                        <strong>"🏪 Fatma System" → "🔐 Force Reauthorization"</strong> from the menu.
-                        After authorizing, refresh this page.
-                    </p>
-                </div>
-            `;
-
-            // Add animation keyframes
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideDown {
-                    from { transform: translateY(-100%); }
-                    to { transform: translateY(0); }
-                }
-            `;
-            document.head.appendChild(style);
-            document.body.insertBefore(banner, document.body.firstChild);
-
-            // Adjust login container to account for banner
-            const loginContainer = document.querySelector('.login-container');
-            if (loginContainer) {
-                loginContainer.style.marginTop = '120px';
-            }
-        }
-
         // Update Current Date
         function updateCurrentDate() {
             const now = new Date();
@@ -1448,23 +1369,16 @@
             document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
         }
 
-        // Load Users for Login (No longer needed with email login, but kept for auto-creating first user)
+        // Load Users for Login (Auto-creates first user if needed)
         function loadUsers() {
             // Call getUsers to ensure first user is auto-created if needed
             google.script.run
                 .withSuccessHandler(function(users) {
-                    // Check if result is null (OAuth not authorized)
-                    if (!users && users !== undefined) {
-                        console.warn('System initialization returned null - OAuth may not be authorized');
-                        console.warn('If you cannot log in, run "🏪 Fatma System" > "🔐 Force Reauthorization" from the spreadsheet menu');
-                        return;
-                    }
                     // Users loaded successfully, first user auto-created if needed
                     console.log('System initialized, users ready');
                 })
                 .withFailureHandler(function(error) {
                     console.error('Error initializing users: ' + error.message);
-                    console.warn('If you see OAuth errors, run "🏪 Fatma System" > "🔐 Force Reauthorization" from the spreadsheet menu');
                 })
                 .getUsers();
         }
@@ -1486,36 +1400,17 @@
                     hideLoading();
                     console.log('Login result:', result);
 
-                    // Check if result is null or undefined
-                    if (!result) {
-                        console.error('Login returned null result - likely OAuth authorization issue');
-                        showDetailedError({
-                            message: '🔐 OAuth Authorization Required',
-                            debugInfo: 'The server did not return a response. This typically indicates that OAuth permissions have not been granted.',
-                            recommendation: '⚠️ <strong>ACTION REQUIRED:</strong><br><br>' +
-                                '1️⃣ Open your Google Spreadsheet<br>' +
-                                '2️⃣ Click on menu: <strong>"🏪 Fatma System"</strong><br>' +
-                                '3️⃣ Select: <strong>"🔐 Force Reauthorization"</strong><br>' +
-                                '4️⃣ Grant the requested permissions in the popup<br>' +
-                                '5️⃣ Refresh this page and try logging in again<br><br>' +
-                                '<strong>Why this happens:</strong> Google Apps Script requires explicit permission to access spreadsheet data. This is a one-time setup step for security.',
-                            technicalDetails: 'Result object is null or undefined - google.script.run did not receive a response from the server function, which commonly occurs when OAuth scopes have not been authorized.'
-                        });
-                        // Also show the banner if not already shown
-                        if (!document.getElementById('oauth-warning-banner')) {
-                            showOAuthWarningBanner();
-                        }
-                        return;
-                    }
-
-                    if (result.success) {
+                    if (result && result.success) {
                         currentUser = result.user;
                         sessionId = result.sessionId;
                         showApp();
                         loadDashboard();
                     } else {
                         // Show detailed error information
-                        showDetailedError(result);
+                        showDetailedError(result || {
+                            message: 'Login failed',
+                            debugInfo: 'No response from server'
+                        });
                     }
                 })
                 .withFailureHandler(function(error) {
@@ -1533,18 +1428,8 @@
 
         // Show Detailed Error Information
         function showDetailedError(errorResult) {
-            // Check if this is an OAuth error
-            const isOAuthError = errorResult.message && errorResult.message.toLowerCase().includes('oauth');
-
             let errorHtml = '<div style="text-align: left;">';
-
-            // Use different styling for OAuth errors
-            if (isOAuthError) {
-                errorHtml += '<h4 style="color: #f39c12; margin-bottom: 15px;">🔐 Authorization Issue</h4>';
-            } else {
-                errorHtml += '<h4 style="color: #e74c3c; margin-bottom: 15px;">❌ Login Failed</h4>';
-            }
-
+            errorHtml += '<h4 style="color: #e74c3c; margin-bottom: 15px;">❌ Login Failed</h4>';
             errorHtml += '<p><strong>Error:</strong> ' + (errorResult.message || 'Unknown error') + '</p>';
 
             if (errorResult.debugInfo) {
@@ -1552,10 +1437,7 @@
             }
 
             if (errorResult.recommendation) {
-                // Use orange/warning color for OAuth errors, yellow for others
-                const bgColor = isOAuthError ? '#ffe6cc' : '#fff3cd';
-                const borderColor = isOAuthError ? '#f39c12' : '#ffc107';
-                errorHtml += '<div style="background: ' + bgColor + '; padding: 15px; border-radius: 5px; margin-top: 10px; border-left: 4px solid ' + borderColor + ';">';
+                errorHtml += '<div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin-top: 10px; border-left: 4px solid #ffc107;">';
                 errorHtml += '<strong>💡 Solution:</strong><br>' + errorResult.recommendation;
                 errorHtml += '</div>';
             }
@@ -1568,10 +1450,7 @@
                 errorHtml += '</details>';
             }
 
-            if (!isOAuthError) {
-                errorHtml += '<p style="margin-top: 15px; color: #7f8c8d; font-size: 12px;">💡 <strong>Tip:</strong> All errors are logged to the Audit_Trail sheet and execution logs for debugging.</p>';
-            }
-
+            errorHtml += '<p style="margin-top: 15px; color: #7f8c8d; font-size: 12px;">💡 <strong>Tip:</strong> All errors are logged to the Audit_Trail sheet and execution logs for debugging.</p>';
             errorHtml += '</div>';
 
             // Create a modal-style error display
