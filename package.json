@@ -2,7 +2,7 @@
   "name": "beipoa-sales-management",
   "version": "1.0.0",
   "description": "BeiPoa Sales Management System - Google Apps Script based sales management",
-  "main": "src/Main.js",
+  "main": "src/Main.gs",
   "scripts": {
     "push": "clasp push",
     "pull": "clasp pull",
