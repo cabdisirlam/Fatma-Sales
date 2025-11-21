@@ -37,7 +37,7 @@ function onInstall() {
  * Show dashboard
  */
 function showDashboard() {
-  const html = HtmlService.createHtmlOutputFromFile('Dashboard')
+  const html = HtmlService.createHtmlOutputFromFile('mDashboard')
     .setTitle(CONFIG.SHOP_NAME + ' Dashboard')
     .setWidth(800)
     .setHeight(600);
@@ -48,7 +48,7 @@ function showDashboard() {
  * Show new sale dialog
  */
 function showNewSaleDialog() {
-  const html = HtmlService.createHtmlOutputFromFile('NewSale')
+  const html = HtmlService.createHtmlOutputFromFile('oNewSale')
     .setTitle('New Sale')
     .setWidth(600)
     .setHeight(500);
@@ -59,7 +59,7 @@ function showNewSaleDialog() {
  * Show products manager
  */
 function showProductsManager() {
-  const html = HtmlService.createHtmlOutputFromFile('Products')
+  const html = HtmlService.createHtmlOutputFromFile('pProducts')
     .setTitle('Manage Products')
     .setWidth(700)
     .setHeight(600);
@@ -70,7 +70,7 @@ function showProductsManager() {
  * Show customers manager
  */
 function showCustomersManager() {
-  const html = HtmlService.createHtmlOutputFromFile('Customers')
+  const html = HtmlService.createHtmlOutputFromFile('lCustomers')
     .setTitle('Manage Customers')
     .setWidth(700)
     .setHeight(600);
@@ -81,7 +81,7 @@ function showCustomersManager() {
  * Show reports
  */
 function showReports() {
-  const html = HtmlService.createHtmlOutputFromFile('Reports')
+  const html = HtmlService.createHtmlOutputFromFile('qReports')
     .setTitle('Reports')
     .setWidth(800)
     .setHeight(600);
@@ -101,7 +101,7 @@ function showInventory() {
  * Show settings
  */
 function showSettings() {
-  const html = HtmlService.createHtmlOutputFromFile('Settings')
+  const html = HtmlService.createHtmlOutputFromFile('rSettings')
     .setTitle('Settings')
     .setWidth(500)
     .setHeight(400);
