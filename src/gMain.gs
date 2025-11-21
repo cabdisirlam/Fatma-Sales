@@ -346,7 +346,7 @@ function checkSystemHealth() {
         'System health check performed. Issues: ' + issues.length + ', Warnings: ' + warnings.length,
         '',
         '',
-        report
+        'See execution log for full report'
       );
     } catch (logError) {
       Logger.log('Could not log health check: ' + logError.message);
