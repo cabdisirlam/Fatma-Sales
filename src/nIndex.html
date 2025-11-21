@@ -508,10 +508,62 @@
             border-top: 2px dashed #333;
         }
 
+        /* Mobile Menu Toggle Button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            width: 45px;
+            height: 45px;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .mobile-overlay.active {
+            display: block;
+        }
+
+        /* Responsive Tables */
+        @media (max-width: 992px) {
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .table {
+                min-width: 600px;
+            }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
             .sidebar {
                 transform: translateX(-100%);
+                box-shadow: 2px 0 10px rgba(0,0,0,0.3);
             }
 
             .sidebar.active {
@@ -520,14 +572,152 @@
 
             .main-content {
                 margin-left: 0;
+                padding: 15px;
+            }
+
+            .top-bar {
+                padding: 60px 15px 15px 15px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .user-info {
+                width: 100%;
+                justify-content: space-between;
             }
 
             .pos-container {
                 grid-template-columns: 1fr;
             }
 
+            .pos-left, .pos-right {
+                max-height: none;
+            }
+
             .dashboard-cards {
                 grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-card-value {
+                font-size: 24px;
+            }
+
+            .section-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .section-header h3 {
+                font-size: 20px;
+            }
+
+            .section-header .btn {
+                width: 100%;
+            }
+
+            /* Better touch targets */
+            .btn {
+                min-height: 44px;
+                padding: 12px 20px;
+            }
+
+            .nav-item {
+                padding: 15px 20px;
+                font-size: 16px;
+            }
+
+            /* Optimize form inputs for mobile */
+            .form-control, .form-select {
+                font-size: 16px;
+                min-height: 44px;
+            }
+
+            /* Mobile-optimized cart */
+            .cart-items {
+                max-height: 300px;
+            }
+
+            .cart-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .cart-item-details {
+                width: 100%;
+            }
+
+            .cart-item-qty {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* Login card mobile */
+            .login-card {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+
+            .login-logo h2 {
+                font-size: 24px;
+            }
+
+            /* Table improvements */
+            .table thead {
+                display: none;
+            }
+
+            .table tbody tr {
+                display: block;
+                margin-bottom: 15px;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 10px;
+            }
+
+            .table tbody td {
+                display: block;
+                text-align: right;
+                padding: 8px 10px;
+                border: none;
+                position: relative;
+            }
+
+            .table tbody td::before {
+                content: attr(data-label);
+                float: left;
+                font-weight: bold;
+                color: var(--primary-color);
+            }
+
+            .table tbody td:last-child {
+                border-bottom: none;
+            }
+        }
+
+        /* Small phones */
+        @media (max-width: 480px) {
+            .stat-card-value {
+                font-size: 20px;
+            }
+
+            .stat-card-label {
+                font-size: 12px;
+            }
+
+            h3 {
+                font-size: 18px !important;
+            }
+
+            .btn {
+                font-size: 14px;
+                padding: 10px 16px;
             }
         }
     </style>
@@ -569,6 +759,14 @@
 
     <!-- Main Application -->
     <div class="app-container" id="appContainer">
+        <!-- Mobile Menu Button -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <!-- Mobile Overlay -->
+        <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
+
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -1255,8 +1453,26 @@
             }
         }
 
+        // Mobile Menu Functions
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function closeMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+
         // Navigation
         function navigateTo(section) {
+            // Close mobile menu on navigation
+            closeMobileMenu();
+
             // Update active nav item
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
@@ -1282,6 +1498,9 @@
                 'settings': 'Settings'
             };
             document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
+
+            // Scroll to top on mobile
+            window.scrollTo(0, 0);
 
             // Load section data
             switch(section) {
@@ -1349,12 +1568,12 @@
             sales.forEach(sale => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${sale.Sale_ID}</td>
-                    <td>${formatDateTime(sale.DateTime)}</td>
-                    <td>${sale.Customer_Name}</td>
-                    <td>${formatCurrency(sale.Grand_Total)}</td>
-                    <td><span class="badge bg-info">${sale.Payment_Mode}</span></td>
-                    <td><span class="badge bg-success">${sale.Status}</span></td>
+                    <td data-label="Sale ID">${sale.Sale_ID}</td>
+                    <td data-label="Date/Time">${formatDateTime(sale.DateTime)}</td>
+                    <td data-label="Customer">${sale.Customer_Name}</td>
+                    <td data-label="Amount">${formatCurrency(sale.Grand_Total)}</td>
+                    <td data-label="Payment"><span class="badge bg-info">${sale.Payment_Mode}</span></td>
+                    <td data-label="Status"><span class="badge bg-success">${sale.Status}</span></td>
                 `;
                 tbody.appendChild(row);
             });
@@ -1689,14 +1908,14 @@
             customerList.forEach(customer => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${customer.Customer_ID}</td>
-                    <td>${customer.Customer_Name}</td>
-                    <td>${customer.Phone}</td>
-                    <td>${customer.Location}</td>
-                    <td>${formatCurrency(customer.Current_Balance)}</td>
-                    <td>${formatCurrency(customer.Total_Purchases)}</td>
-                    <td><span class="badge bg-${customer.Status === 'Active' ? 'success' : 'danger'}">${customer.Status}</span></td>
-                    <td>
+                    <td data-label="Customer ID">${customer.Customer_ID}</td>
+                    <td data-label="Name">${customer.Customer_Name}</td>
+                    <td data-label="Phone">${customer.Phone}</td>
+                    <td data-label="Location">${customer.Location}</td>
+                    <td data-label="Balance">${formatCurrency(customer.Current_Balance)}</td>
+                    <td data-label="Total Purchases">${formatCurrency(customer.Total_Purchases)}</td>
+                    <td data-label="Status"><span class="badge bg-${customer.Status === 'Active' ? 'success' : 'danger'}">${customer.Status}</span></td>
+                    <td data-label="Actions">
                         <button class="btn btn-sm btn-primary" onclick="viewCustomerDetails('${customer.Customer_ID}')">
                             <i class="bi bi-eye"></i>
                         </button>
@@ -1741,15 +1960,15 @@
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${product.Item_ID}</td>
-                    <td>${product.Item_Name}</td>
-                    <td>${product.Category}</td>
-                    <td>${formatCurrency(product.Cost_Price)}</td>
-                    <td>${formatCurrency(product.Selling_Price)}</td>
-                    <td>${product.Current_Qty}</td>
-                    <td>${product.Reorder_Level}</td>
-                    <td><span class="badge bg-${statusClass}">${status}</span></td>
-                    <td>
+                    <td data-label="Item ID">${product.Item_ID}</td>
+                    <td data-label="Name">${product.Item_Name}</td>
+                    <td data-label="Category">${product.Category}</td>
+                    <td data-label="Cost Price">${formatCurrency(product.Cost_Price)}</td>
+                    <td data-label="Selling Price">${formatCurrency(product.Selling_Price)}</td>
+                    <td data-label="Quantity">${product.Current_Qty}</td>
+                    <td data-label="Reorder Level">${product.Reorder_Level}</td>
+                    <td data-label="Status"><span class="badge bg-${statusClass}">${status}</span></td>
+                    <td data-label="Actions">
                         <button class="btn btn-sm btn-primary" onclick="editProduct('${product.Item_ID}')">
                             <i class="bi bi-pencil"></i>
                         </button>
@@ -1791,14 +2010,14 @@
             supplierList.forEach(supplier => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${supplier.Supplier_ID}</td>
-                    <td>${supplier.Supplier_Name}</td>
-                    <td>${supplier.Contact_Person}</td>
-                    <td>${supplier.Phone}</td>
-                    <td>${supplier.Email}</td>
-                    <td>${formatCurrency(supplier.Current_Balance)}</td>
-                    <td><span class="badge bg-${supplier.Status === 'Active' ? 'success' : 'danger'}">${supplier.Status}</span></td>
-                    <td>
+                    <td data-label="Supplier ID">${supplier.Supplier_ID}</td>
+                    <td data-label="Name">${supplier.Supplier_Name}</td>
+                    <td data-label="Contact Person">${supplier.Contact_Person}</td>
+                    <td data-label="Phone">${supplier.Phone}</td>
+                    <td data-label="Email">${supplier.Email}</td>
+                    <td data-label="Balance">${formatCurrency(supplier.Current_Balance)}</td>
+                    <td data-label="Status"><span class="badge bg-${supplier.Status === 'Active' ? 'success' : 'danger'}">${supplier.Status}</span></td>
+                    <td data-label="Actions">
                         <button class="btn btn-sm btn-primary" onclick="viewSupplierDetails('${supplier.Supplier_ID}')">
                             <i class="bi bi-eye"></i>
                         </button>
@@ -1846,13 +2065,13 @@
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${quote.Quote_ID}</td>
-                    <td>${formatDate(quote.Date)}</td>
-                    <td>${quote.Customer_Name}</td>
-                    <td>${formatDate(quote.Valid_Until)}</td>
-                    <td>${formatCurrency(quote.Total)}</td>
-                    <td><span class="badge bg-${statusColors[quote.Status]}">${quote.Status}</span></td>
-                    <td>
+                    <td data-label="Quote ID">${quote.Quote_ID}</td>
+                    <td data-label="Date">${formatDate(quote.Date)}</td>
+                    <td data-label="Customer">${quote.Customer_Name}</td>
+                    <td data-label="Valid Until">${formatDate(quote.Valid_Until)}</td>
+                    <td data-label="Amount">${formatCurrency(quote.Total)}</td>
+                    <td data-label="Status"><span class="badge bg-${statusColors[quote.Status]}">${quote.Status}</span></td>
+                    <td data-label="Actions">
                         <button class="btn btn-sm btn-primary" onclick="viewQuotation('${quote.Quote_ID}')">
                             <i class="bi bi-eye"></i>
                         </button>
@@ -1900,14 +2119,14 @@
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${expense.Expense_ID}</td>
-                    <td>${formatDate(expense.Date)}</td>
-                    <td>${expense.Category}</td>
-                    <td>${expense.Description}</td>
-                    <td>${formatCurrency(expense.Amount)}</td>
-                    <td><span class="badge bg-info">${expense.Payment_Method}</span></td>
-                    <td><span class="badge bg-${statusColors[expense.Status]}">${expense.Status}</span></td>
-                    <td>
+                    <td data-label="Expense ID">${expense.Expense_ID}</td>
+                    <td data-label="Date">${formatDate(expense.Date)}</td>
+                    <td data-label="Category">${expense.Category}</td>
+                    <td data-label="Description">${expense.Description}</td>
+                    <td data-label="Amount">${formatCurrency(expense.Amount)}</td>
+                    <td data-label="Payment Method"><span class="badge bg-info">${expense.Payment_Method}</span></td>
+                    <td data-label="Status"><span class="badge bg-${statusColors[expense.Status]}">${expense.Status}</span></td>
+                    <td data-label="Actions">
                         <button class="btn btn-sm btn-primary" onclick="viewExpense('${expense.Expense_ID}')">
                             <i class="bi bi-eye"></i>
                         </button>
