@@ -5,23 +5,33 @@
 
 const CONFIG = {
   // Shop Information
-  SHOP_NAME: 'BeiPoa',
+  SHOP_NAME: 'Fatma Sales',
   ADMIN_EMAIL: 'cabdisirlam@gmail.com',
 
   // Workbook Configuration
-  WORKBOOK_NAME: 'BeiPoa Sales Management',
+  WORKBOOK_NAME: 'Fatma System',
 
   // Sheet Names
   SHEETS: {
-    SALES: 'Sales',
-    PRODUCTS: 'Products',
+    USERS: 'Users',
+    SUPPLIERS: 'Suppliers',
     CUSTOMERS: 'Customers',
     INVENTORY: 'Inventory',
-    REPORTS: 'Reports',
+    SALES_DATA: 'Sales_Data',
+    SALES_ITEMS: 'Sales_Items',
+    PURCHASES: 'Purchases',
+    PURCHASE_ITEMS: 'Purchase_Items',
+    QUOTATIONS: 'Quotations',
+    QUOTATION_ITEMS: 'Quotation_Items',
+    CUSTOMER_TRANSACTIONS: 'Customer_Transactions',
+    FINANCIALS: 'Financials',
+    EXPENSES: 'Expenses',
+    EXPENSE_CATEGORIES: 'Expense_Categories',
+    AUDIT_TRAIL: 'Audit_Trail',
     SETTINGS: 'Settings'
   },
 
-  // Colors (BeiPoa Brand Colors)
+  // Colors (Fatma Brand Colors)
   COLORS: {
     PRIMARY: '#4A90E2',
     SECONDARY: '#50C878',
@@ -34,8 +44,12 @@ const CONFIG = {
   DATE_FORMAT: 'yyyy-MM-dd HH:mm:ss',
 
   // Currency
-  CURRENCY: 'USD',
-  CURRENCY_SYMBOL: '$'
+  CURRENCY: 'KES',
+  CURRENCY_SYMBOL: 'KES',
+
+  // Authentication
+  PIN_LENGTH: 4,
+  USE_TOKEN_AUTH: true
 };
 
 /**

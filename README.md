@@ -1,16 +1,21 @@
-# BeiPoa Sales Management System
+# Fatma System - Sales Management System
 
-A comprehensive Google Apps Script-based sales management system for BeiPoa shop. This system uses a single Google Spreadsheet workbook to manage all sales, products, customers, inventory, and reports.
+A comprehensive Google Apps Script-based sales and inventory management system. This system uses a single Google Spreadsheet workbook named "Fatma System" to manage all operations including sales, inventory, customers, suppliers, financials, and more.
 
-## Features
+## Key Features
 
-- **📊 Dashboard**: View real-time sales statistics and quick access to all features
-- **🛍️ Sales Management**: Track all sales transactions with detailed information
-- **📦 Product Management**: Manage product catalog with pricing and inventory
-- **👥 Customer Management**: Keep track of customer information and purchase history
-- **📋 Inventory Tracking**: Monitor stock levels with automatic reorder alerts
-- **📈 Reports**: Generate sales reports and analytics
-- **⚙️ Settings**: Configure system settings and preferences
+- **🔐 Secure Authentication**: 4-digit PIN authentication with token-based session management
+- **📊 Dashboard**: View real-time business statistics and quick access to all features
+- **🛍️ Sales Management**: Complete sales tracking with quotations and customer management
+- **📦 Inventory Management**: Track inventory with automatic stock updates and low stock alerts
+- **👥 Customer Management**: Manage customer information, credit limits, and transaction history
+- **🏭 Supplier Management**: Track suppliers and purchase orders
+- **💰 Financial Management**: Comprehensive financial tracking with multiple accounts (Cash, M-PESA, Bank)
+- **💳 Expense Management**: Track and categorize business expenses with approval workflow
+- **📋 Quotations**: Create and manage sales quotations that convert to sales
+- **👤 User Management**: Multi-user system with role-based access control
+- **📈 Reports & Analytics**: Generate comprehensive business reports
+- **🔍 Audit Trail**: Complete audit logging of all system activities
 
 ## Project Structure
 
@@ -74,19 +79,77 @@ Fatma-Sales/
    - You should see a "🏪 BeiPoa" menu appear
    - Click "🏪 BeiPoa" > "🔄 Initialize Workbook" to set up all sheets
 
-## Usage
+## Quick Start
 
-### Initializing the Workbook
+### Setting Up Fatma System
 
-1. Open your Google Spreadsheet
-2. Go to menu: **🏪 BeiPoa** > **🔄 Initialize Workbook**
-3. The system will create all necessary sheets:
-   - Sales
-   - Products
-   - Customers
-   - Inventory
-   - Reports
-   - Settings
+1. **Open your Google Spreadsheet**
+2. **Go to menu**: **🏪 Fatma System** > **⚡ Setup Fatma System**
+3. **The system will automatically**:
+   - Rename the workbook to "Fatma System"
+   - Create all necessary sheets (Users, Suppliers, Customers, Inventory, Sales, etc.)
+   - Create a default admin user with username `admin` and PIN `1234`
+   - Initialize default settings and expense categories
+
+4. **First Login**:
+   - Username: `admin`
+   - PIN: `1234`
+   - **IMPORTANT**: Change the PIN after first login for security
+
+### Authentication System
+
+The Fatma System uses **secure token-based authentication** with the following features:
+
+- **4-Digit PIN**: All users must use exactly 4 numeric digits for their PIN
+- **Token Sessions**: After login, a secure token is generated valid for 8 hours
+- **No Google OAuth**: The system uses its own authentication, not Google accounts
+- **Session Management**: Automatic token validation and session expiry handling
+
+### User Management
+
+**Adding New Users**:
+```javascript
+addUser({
+  Username: 'john',
+  PIN: '5678',
+  Role: 'Cashier',
+  Email: 'john@example.com',
+  Phone: '+254700000000',
+  Status: 'Active'
+});
+```
+
+**Changing PIN**:
+```javascript
+updateUserPIN('username', 'oldPIN', 'newPIN');
+```
+
+**User Roles**:
+- **Admin**: Full system access
+- **Manager**: Sales, inventory, and reporting access
+- **Cashier**: Sales and customer management only
+- **User**: Basic access
+
+### System Sheets
+
+The Fatma System workbook contains the following sheets:
+
+1. **Users**: System users with PIN authentication
+2. **Suppliers**: Supplier management with contact details and balances
+3. **Customers**: Customer information, credit limits, and balances
+4. **Inventory**: Product inventory with cost/selling prices
+5. **Sales_Data**: Sales transaction headers
+6. **Sales_Items**: Line items for each sale
+7. **Purchases**: Purchase orders from suppliers
+8. **Purchase_Items**: Line items for purchases
+9. **Quotations**: Sales quotations
+10. **Quotation_Items**: Line items for quotations
+11. **Customer_Transactions**: Customer payment history
+12. **Financials**: Financial transactions (Cash, M-PESA, Bank)
+13. **Expenses**: Business expense tracking
+14. **Expense_Categories**: Expense category definitions
+15. **Audit_Trail**: Complete system audit log
+16. **Settings**: System configuration settings
 
 ### Adding a New Sale
 
@@ -148,14 +211,25 @@ Edit `src/Config.js` to customize:
 - Color scheme
 - Sheet names
 
-## Admin Settings
+## Configuration
 
+Edit `src/cConfig.gs` to customize:
+
+- **Shop Name**: Fatma Sales (default)
 - **Admin Email**: cabdisirlam@gmail.com
-- **Shop Name**: BeiPoa
-- **Currency**: USD ($)
-- **Timezone**: Africa/Mogadishu
+- **Workbook Name**: Fatma System
+- **Currency**: KES (Kenyan Shillings)
+- **PIN Length**: 4 digits (mandatory)
+- **Token Auth**: Enabled by default
+- **Date Format**: yyyy-MM-dd HH:mm:ss
+- **Color Scheme**: Configurable brand colors
 
-The Settings sheet is protected and can only be edited by the admin email.
+### Security Settings
+
+- **PIN_LENGTH**: 4 (enforced, cannot be changed)
+- **USE_TOKEN_AUTH**: true (token-based sessions)
+- **Session Duration**: 8 hours
+- **PIN Requirements**: Must be exactly 4 numeric digits
 
 ## Sheets Description
 
@@ -276,14 +350,84 @@ For issues or questions:
 - Review the error messages in dialogs
 - Contact admin: cabdisirlam@gmail.com
 
+## Security Features
+
+### Authentication
+- ✅ Token-based authentication (no Google OAuth required)
+- ✅ 4-digit PIN system for all users
+- ✅ Secure session management with 8-hour expiry
+- ✅ Automatic token validation
+
+### Data Protection
+- ✅ Complete audit trail logging
+- ✅ User activity tracking
+- ✅ Before/after value recording for changes
+- ✅ Session ID tracking for all operations
+
+### Access Control
+- ✅ Role-based permissions
+- ✅ User status management (Active/Inactive)
+- ✅ Protected settings sheet
+
+## API Functions
+
+### Authentication
+```javascript
+// Login
+authenticate(username, pin) // Returns: {success, user, sessionId, token}
+
+// Validate token
+validateToken(token) // Returns: {valid, username, sessionId}
+
+// Logout
+logout(token) // Returns: {success, message}
+```
+
+### User Management
+```javascript
+// Add user
+addUser({Username, PIN, Role, Email, Phone, Status})
+
+// Update PIN
+updateUserPIN(username, oldPIN, newPIN)
+
+// Get users
+getUsers() // Returns array of users (without PINs)
+```
+
+## Troubleshooting
+
+### Circular Dependency Error Fixed
+The system previously had a circular dependency between `getSpreadsheet()` and `getSettingValue()` which has been resolved by using Script Properties instead of Settings sheet for storing the spreadsheet ID.
+
+### PIN Validation
+- PINs must be exactly 4 digits
+- Only numeric characters allowed
+- Validated on user creation and PIN change
+- Enforced during authentication
+
+### Token Management
+- Tokens are stored in Cache Service
+- Automatically expire after 8 hours
+- Can be manually invalidated via logout
+- Each login generates a new token
+
 ## License
 
-This project is proprietary software for BeiPoa shop.
+This project is proprietary software for Fatma Sales.
 
 ## Version
 
-Current Version: 1.0.0
+Current Version: 2.0.0
+
+**Major Changes in v2.0.0**:
+- Fixed circular dependency in core functions
+- Implemented token-based authentication
+- Enforced 4-digit PIN for all users
+- Renamed system to "Fatma System"
+- Added comprehensive user management
+- Enhanced security with session management
 
 ---
 
-**BeiPoa Sales Management System** - Manage your shop efficiently with automated workflows and real-time insights.
+**Fatma System** - Complete business management solution with secure authentication and comprehensive tracking.

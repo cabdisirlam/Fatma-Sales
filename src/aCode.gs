@@ -31,15 +31,28 @@ function doGet(e) {
  */
 function getSpreadsheet() {
   try {
-    // Try to get by ID first (set this after creating the spreadsheet)
-    const spreadsheetId = getSettingValue('SPREADSHEET_ID');
+    // Use Script Properties to avoid circular dependency
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const spreadsheetId = scriptProperties.getProperty('SPREADSHEET_ID');
 
     if (spreadsheetId) {
-      return SpreadsheetApp.openById(spreadsheetId);
+      try {
+        return SpreadsheetApp.openById(spreadsheetId);
+      } catch (e) {
+        // If can't open by ID, fall back to active spreadsheet
+        return SpreadsheetApp.getActiveSpreadsheet();
+      }
     }
 
     // Fallback to active spreadsheet
-    return SpreadsheetApp.getActiveSpreadsheet();
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    // Save the ID for future use
+    if (ss) {
+      scriptProperties.setProperty('SPREADSHEET_ID', ss.getId());
+    }
+
+    return ss;
   } catch (error) {
     throw new Error('Cannot access spreadsheet. Please check permissions and configuration.');
   }
@@ -118,6 +131,14 @@ function getSheetHeaders(sheetName) {
  */
 function authenticate(username, pin) {
   try {
+    // Validate PIN format (must be 4 digits)
+    if (!pin || pin.toString().length !== CONFIG.PIN_LENGTH) {
+      return {
+        success: false,
+        message: 'PIN must be exactly ' + CONFIG.PIN_LENGTH + ' digits'
+      };
+    }
+
     const sheet = getSheet('Users');
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
@@ -132,7 +153,7 @@ function authenticate(username, pin) {
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
 
-      if (row[usernameCol] === username && row[pinCol] === pin) {
+      if (row[usernameCol] === username && row[pinCol].toString() === pin.toString()) {
         if (row[statusCol] !== 'Active') {
           return {
             success: false,
@@ -140,8 +161,17 @@ function authenticate(username, pin) {
           };
         }
 
-        // Generate session ID
+        // Generate session ID and token
         const sessionId = generateSessionId();
+        const token = generateAuthToken(username);
+
+        // Store session in cache (valid for 8 hours)
+        const cache = CacheService.getUserCache();
+        cache.put(token, JSON.stringify({
+          username: username,
+          sessionId: sessionId,
+          loginTime: new Date().getTime()
+        }), 28800); // 8 hours in seconds
 
         // Log successful login
         logAudit(username, 'Authentication', 'Login', 'User logged in successfully', sessionId, '', '');
@@ -157,7 +187,8 @@ function authenticate(username, pin) {
         return {
           success: true,
           user: userData,
-          sessionId: sessionId
+          sessionId: sessionId,
+          token: token
         };
       }
     }
@@ -216,6 +247,104 @@ function getUsers() {
 }
 
 /**
+ * Adds a new user with PIN validation
+ */
+function addUser(userData) {
+  try {
+    // Validate PIN is 4 digits
+    if (!userData.PIN || userData.PIN.toString().length !== CONFIG.PIN_LENGTH) {
+      throw new Error('PIN must be exactly ' + CONFIG.PIN_LENGTH + ' digits');
+    }
+
+    // Validate PIN is numeric
+    if (!/^\d{4}$/.test(userData.PIN.toString())) {
+      throw new Error('PIN must contain only numbers');
+    }
+
+    const sheet = getSheet('Users');
+    const userId = generateId('Users', 'User_ID', 'USR');
+
+    const newUser = [
+      userId,
+      userData.Username || '',
+      userData.PIN,
+      userData.Role || 'User',
+      userData.Email || '',
+      userData.Phone || '',
+      userData.Status || 'Active',
+      new Date()
+    ];
+
+    sheet.appendRow(newUser);
+
+    logAudit(
+      userData.CreatedBy || 'SYSTEM',
+      'Users',
+      'Create',
+      'New user created: ' + userData.Username,
+      '',
+      '',
+      JSON.stringify(newUser)
+    );
+
+    return {
+      success: true,
+      userId: userId,
+      message: 'User created successfully'
+    };
+
+  } catch (error) {
+    logError('addUser', error);
+    throw new Error('Error adding user: ' + error.message);
+  }
+}
+
+/**
+ * Updates user PIN with validation
+ */
+function updateUserPIN(username, oldPIN, newPIN) {
+  try {
+    // Validate new PIN is 4 digits
+    if (!newPIN || newPIN.toString().length !== CONFIG.PIN_LENGTH) {
+      throw new Error('New PIN must be exactly ' + CONFIG.PIN_LENGTH + ' digits');
+    }
+
+    // Validate new PIN is numeric
+    if (!/^\d{4}$/.test(newPIN.toString())) {
+      throw new Error('PIN must contain only numbers');
+    }
+
+    // Authenticate with old PIN first
+    const authResult = authenticate(username, oldPIN);
+    if (!authResult.success) {
+      throw new Error('Current PIN is incorrect');
+    }
+
+    // Update PIN
+    const updateResult = updateRowById('Users', 'Username', username, { PIN: newPIN });
+
+    logAudit(
+      username,
+      'Users',
+      'Update PIN',
+      'User changed their PIN',
+      '',
+      'PIN changed',
+      'PIN changed'
+    );
+
+    return {
+      success: true,
+      message: 'PIN updated successfully'
+    };
+
+  } catch (error) {
+    logError('updateUserPIN', error);
+    throw new Error('Error updating PIN: ' + error.message);
+  }
+}
+
+/**
  * Creates default admin user if no users exist
  */
 function createDefaultAdmin() {
@@ -248,6 +377,67 @@ function createDefaultAdmin() {
  */
 function generateSessionId() {
   return 'SESSION_' + new Date().getTime() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+/**
+ * Generates an authentication token
+ */
+function generateAuthToken(username) {
+  const timestamp = new Date().getTime();
+  const random = Math.random().toString(36).substr(2, 16);
+  const hash = Utilities.base64Encode(username + ':' + timestamp + ':' + random);
+  return 'TOKEN_' + hash.replace(/[^a-zA-Z0-9]/g, '');
+}
+
+/**
+ * Validates an authentication token
+ */
+function validateToken(token) {
+  try {
+    if (!token) {
+      return { valid: false, message: 'No token provided' };
+    }
+
+    const cache = CacheService.getUserCache();
+    const sessionData = cache.get(token);
+
+    if (!sessionData) {
+      return { valid: false, message: 'Token expired or invalid' };
+    }
+
+    const session = JSON.parse(sessionData);
+
+    return {
+      valid: true,
+      username: session.username,
+      sessionId: session.sessionId
+    };
+  } catch (error) {
+    logError('validateToken', error);
+    return { valid: false, message: 'Token validation error' };
+  }
+}
+
+/**
+ * Logs out a user by invalidating their token
+ */
+function logout(token) {
+  try {
+    const cache = CacheService.getUserCache();
+    const sessionData = cache.get(token);
+
+    if (sessionData) {
+      const session = JSON.parse(sessionData);
+      logAudit(session.username, 'Authentication', 'Logout', 'User logged out', session.sessionId, '', '');
+    }
+
+    cache.remove(token);
+
+    return { success: true, message: 'Logged out successfully' };
+  } catch (error) {
+    logError('logout', error);
+    return { success: false, message: 'Logout error: ' + error.message };
+  }
 }
 
 // =====================================================

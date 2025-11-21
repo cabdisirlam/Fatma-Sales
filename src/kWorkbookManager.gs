@@ -1,57 +1,87 @@
 /**
- * BeiPoa Sales Management System
+ * Fatma Sales Management System
  * Workbook Manager
  */
 
 /**
- * Initialize the workbook with all necessary sheets
+ * Main setup function - creates Fatma System workbook with all sheets
  */
-function initializeWorkbook() {
+function setupFatmaSystem() {
   try {
+    Logger.log('Starting Fatma System setup...');
+
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    // Rename spreadsheet
+    // Rename spreadsheet to "Fatma System"
     ss.rename(CONFIG.WORKBOOK_NAME);
+    Logger.log('Renamed workbook to: ' + CONFIG.WORKBOOK_NAME);
 
-    // Create all sheets
-    createSalesSheet();
-    createProductsSheet();
-    createCustomersSheet();
-    createInventorySheet();
-    createReportsSheet();
-    createSettingsSheet();
+    // Store spreadsheet ID in Script Properties
+    PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ss.getId());
+
+    // Initialize all sheets using the existing initializeSheets function
+    initializeSheets();
 
     // Delete default Sheet1 if it exists
     try {
       const sheet1 = ss.getSheetByName('Sheet1');
       if (sheet1 && ss.getSheets().length > 1) {
         ss.deleteSheet(sheet1);
+        Logger.log('Deleted default Sheet1');
       }
     } catch (e) {
       // Sheet1 might not exist
+      Logger.log('Sheet1 not found or already deleted');
     }
 
-    // Set active sheet to Sales
-    const salesSheet = ss.getSheetByName(CONFIG.SHEETS.SALES);
-    if (salesSheet) {
-      ss.setActiveSheet(salesSheet);
+    // Set active sheet to Users
+    const usersSheet = ss.getSheetByName('Users');
+    if (usersSheet) {
+      ss.setActiveSheet(usersSheet);
     }
 
-    SpreadsheetApp.getUi().alert(
-      'Success',
-      CONFIG.SHOP_NAME + ' workbook has been initialized successfully!',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
+    Logger.log('Fatma System setup completed successfully!');
+
+    // Show success message
+    try {
+      SpreadsheetApp.getUi().alert(
+        'Success',
+        'Fatma System has been initialized successfully!\n\n' +
+        'Default admin user created:\n' +
+        'Username: admin\n' +
+        'PIN: 1234\n\n' +
+        'Please change the PIN after first login.',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+    } catch (e) {
+      // UI not available (running from script editor)
+      Logger.log('Setup completed. Default admin: username=admin, PIN=1234');
+    }
 
     return true;
   } catch (error) {
-    SpreadsheetApp.getUi().alert(
-      'Error',
-      'Failed to initialize workbook: ' + error.message,
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
+    Logger.log('ERROR in setupFatmaSystem: ' + error.message);
+    Logger.log(error.stack);
+
+    try {
+      SpreadsheetApp.getUi().alert(
+        'Error',
+        'Failed to setup Fatma System: ' + error.message,
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+    } catch (e) {
+      // UI not available
+    }
+
     return false;
   }
+}
+
+/**
+ * Legacy function for backward compatibility
+ */
+function initializeWorkbook() {
+  return setupFatmaSystem();
 }
 
 /**
