@@ -944,22 +944,11 @@ function getRecentSales(limit) {
 
 /**
  * Initializes all sheets with headers (run once during setup)
+ * Delegates to WorkbookManager for comprehensive setup
  */
 function initializeSheets() {
-  const sheetNames = [
-    'Inventory', 'Sales_Data', 'Sales_Items', 'Customers', 'Customer_Transactions',
-    'Quotations', 'Quotation_Items', 'Suppliers', 'Purchases', 'Purchase_Items',
-    'Financials', 'Expenses', 'Expense_Categories', 'Users', 'Audit_Trail', 'Settings'
-  ];
-
-  sheetNames.forEach(name => {
-    try {
-      getSheet(name);
-      Logger.log('Initialized sheet: ' + name);
-    } catch (error) {
-      Logger.log('Error initializing sheet ' + name + ': ' + error.message);
-    }
-  });
+  // Call the comprehensive sheet setup from WorkbookManager
+  initializeAllSheets();
 
   // Create default admin if no users exist
   createDefaultAdmin();
