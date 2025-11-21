@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Management System</title>
+    <title>BeiPoa System</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -736,7 +736,7 @@
         <div class="login-card">
             <div class="login-logo">
                 <i class="bi bi-box-seam"></i>
-                <h2>Inventory System</h2>
+                <h2>BeiPoa System</h2>
                 <p class="text-muted">Sign in to continue</p>
             </div>
             <form id="loginForm">
@@ -769,7 +769,7 @@
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <i class="bi bi-box-seam" style="font-size: 30px;"></i>
-                <h4>Inventory System</h4>
+                <h4>BeiPoa System</h4>
             </div>
             <div class="nav-menu">
                 <div class="nav-item active" data-section="dashboard">
@@ -790,7 +790,7 @@
                 </div>
                 <div class="nav-item" data-section="inventory">
                     <i class="bi bi-box"></i>
-                    <span>Inventory</span>
+                    <span>Products</span>
                 </div>
                 <div class="nav-item" data-section="suppliers">
                     <i class="bi bi-truck"></i>
@@ -1122,10 +1122,10 @@
                 </div>
             </div>
 
-            <!-- Inventory Section -->
+            <!-- Products Section -->
             <div class="content-section" id="inventory">
                 <div class="section-header">
-                    <h3>Inventory Management</h3>
+                    <h3>Products Management</h3>
                     <div>
                         <button class="btn btn-success me-2" onclick="showAddProductModal()">
                             <i class="bi bi-plus-circle me-2"></i>Add Product
@@ -1398,20 +1398,97 @@
             google.script.run
                 .withSuccessHandler(function(result) {
                     hideLoading();
+                    console.log('Login result:', result);
+
                     if (result.success) {
                         currentUser = result.user;
                         sessionId = result.sessionId;
                         showApp();
                         loadDashboard();
                     } else {
-                        showToast(result.message, 'danger');
+                        // Show detailed error information
+                        showDetailedError(result);
                     }
                 })
                 .withFailureHandler(function(error) {
                     hideLoading();
-                    showToast('Login error: ' + error.message, 'danger');
+                    console.error('Login failure:', error);
+                    showDetailedError({
+                        message: 'Connection error: ' + error.message,
+                        debugInfo: 'Failed to communicate with server',
+                        recommendation: 'Check your internet connection and try again. If the problem persists, try running "🔍 Check System Health" from the spreadsheet menu.',
+                        technicalDetails: error.stack || error.toString()
+                    });
                 })
                 .authenticate(email, pin);
+        }
+
+        // Show Detailed Error Information
+        function showDetailedError(errorResult) {
+            let errorHtml = '<div style="text-align: left;">';
+            errorHtml += '<h4 style="color: #e74c3c; margin-bottom: 15px;">❌ Login Failed</h4>';
+            errorHtml += '<p><strong>Error:</strong> ' + (errorResult.message || 'Unknown error') + '</p>';
+
+            if (errorResult.debugInfo) {
+                errorHtml += '<p style="color: #7f8c8d;"><strong>Details:</strong> ' + errorResult.debugInfo + '</p>';
+            }
+
+            if (errorResult.recommendation) {
+                errorHtml += '<div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin-top: 10px;">';
+                errorHtml += '<strong>💡 Recommendation:</strong><br>' + errorResult.recommendation;
+                errorHtml += '</div>';
+            }
+
+            if (errorResult.technicalDetails) {
+                errorHtml += '<details style="margin-top: 10px;">';
+                errorHtml += '<summary style="cursor: pointer; color: #3498db;">Show Technical Details</summary>';
+                errorHtml += '<pre style="background: #ecf0f1; padding: 10px; border-radius: 5px; font-size: 11px; overflow-x: auto;">' +
+                    errorResult.technicalDetails + '</pre>';
+                errorHtml += '</details>';
+            }
+
+            errorHtml += '<p style="margin-top: 15px; color: #7f8c8d; font-size: 12px;">💡 <strong>Tip:</strong> All errors are logged to the Audit_Trail sheet and execution logs for debugging.</p>';
+            errorHtml += '</div>';
+
+            // Create a modal-style error display
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+                z-index: 10000;
+            `;
+            errorDiv.innerHTML = errorHtml + '<button onclick="this.parentElement.remove()" class="btn btn-primary mt-3" style="width: 100%;">Close</button>';
+
+            // Add backdrop
+            const backdrop = document.createElement('div');
+            backdrop.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 9999;
+            `;
+            backdrop.onclick = function() {
+                backdrop.remove();
+                errorDiv.remove();
+            };
+
+            document.body.appendChild(backdrop);
+            document.body.appendChild(errorDiv);
+
+            // Also show a toast for quick feedback
+            showToast(errorResult.message, 'danger');
         }
 
         // Show App After Login
@@ -1480,7 +1557,7 @@
                 'sales': 'Point of Sale',
                 'quotations': 'Quotations',
                 'customers': 'Customers',
-                'inventory': 'Inventory Management',
+                'inventory': 'Products Management',
                 'suppliers': 'Suppliers',
                 'expenses': 'Expenses',
                 'reports': 'Reports & Analytics',

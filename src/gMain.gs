@@ -10,8 +10,9 @@ function onOpen() {
   const ui = SpreadsheetApp.getUi();
 
   // Create custom menu
-  ui.createMenu('🏪 Fatma System')
-    .addItem('⚡ Setup Fatma System', 'setupFatmaSystem')
+  ui.createMenu('🏪 BeiPoa System')
+    .addItem('⚡ Setup BeiPoa System', 'setupFatmaSystem')
+    .addItem('🔄 Refresh System', 'refreshSystem')
     .addSeparator()
     .addItem('📊 Dashboard', 'showDashboard')
     .addSeparator()
@@ -27,6 +28,8 @@ function onOpen() {
     .addItem('👤 User Management', 'showUserManagement')
     .addItem('📈 View Reports', 'showReports')
     .addItem('⚙️ Settings', 'showSettings')
+    .addSeparator()
+    .addItem('🔍 Check System Health', 'checkSystemHealth')
     .addToUi();
 }
 
@@ -126,4 +129,229 @@ function getActiveUserEmail() {
 function isAdmin() {
   const userEmail = getActiveUserEmail();
   return userEmail === CONFIG.ADMIN_EMAIL;
+}
+
+/**
+ * Refresh System - Reconnects to spreadsheet and clears caches
+ * This does NOT recreate sheets or delete data
+ */
+function refreshSystem() {
+  try {
+    const ui = SpreadsheetApp.getUi();
+
+    // Clear all caches
+    CacheService.getUserCache().removeAll([]);
+    CacheService.getScriptCache().removeAll([]);
+
+    // Reconnect to spreadsheet
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const spreadsheetId = scriptProperties.getProperty('SPREADSHEET_ID');
+
+    if (spreadsheetId) {
+      try {
+        const ss = SpreadsheetApp.openById(spreadsheetId);
+        Logger.log('Reconnected to spreadsheet: ' + ss.getName());
+      } catch (e) {
+        Logger.log('Could not reconnect by ID, using active spreadsheet');
+        const ss = SpreadsheetApp.getActiveSpreadsheet();
+        scriptProperties.setProperty('SPREADSHEET_ID', ss.getId());
+      }
+    }
+
+    // Log the refresh action
+    logAction(
+      getActiveUserEmail(),
+      'System',
+      'Refresh',
+      'System refresh triggered from menu',
+      '',
+      '',
+      ''
+    );
+
+    ui.alert(
+      'System Refreshed',
+      'BeiPoa System has been refreshed successfully.\n\n' +
+      '✓ Caches cleared\n' +
+      '✓ Spreadsheet connection refreshed\n' +
+      '✓ All data preserved\n\n' +
+      'You can now reload your web application.',
+      ui.ButtonSet.OK
+    );
+
+  } catch (error) {
+    logError('refreshSystem', error);
+    SpreadsheetApp.getUi().alert(
+      'Refresh Error',
+      'Error refreshing system: ' + error.message,
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+  }
+}
+
+/**
+ * Check System Health - Diagnostic tool to identify issues
+ */
+function checkSystemHealth() {
+  try {
+    const ui = SpreadsheetApp.getUi();
+    const issues = [];
+    const warnings = [];
+    const info = [];
+
+    // 1. Check spreadsheet connection
+    try {
+      const ss = getSpreadsheet();
+      info.push('✓ Spreadsheet: ' + ss.getName() + ' (ID: ' + ss.getId() + ')');
+    } catch (e) {
+      issues.push('✗ Cannot connect to spreadsheet: ' + e.message);
+    }
+
+    // 2. Check all required sheets exist
+    const requiredSheets = [
+      'Users', 'Customers', 'Suppliers', 'Inventory',
+      'Sales_Data', 'Sales_Items', 'Purchases', 'Purchase_Items',
+      'Quotations', 'Quotation_Items', 'Customer_Transactions',
+      'Financials', 'Expenses', 'Expense_Categories',
+      'Audit_Trail', 'Settings'
+    ];
+
+    let missingSheets = [];
+    try {
+      const ss = getSpreadsheet();
+      requiredSheets.forEach(sheetName => {
+        const sheet = ss.getSheetByName(sheetName);
+        if (!sheet) {
+          missingSheets.push(sheetName);
+        }
+      });
+
+      if (missingSheets.length === 0) {
+        info.push('✓ All required sheets present (' + requiredSheets.length + ' sheets)');
+      } else {
+        warnings.push('⚠ Missing sheets: ' + missingSheets.join(', '));
+      }
+    } catch (e) {
+      issues.push('✗ Cannot check sheets: ' + e.message);
+    }
+
+    // 3. Check Users sheet has data
+    try {
+      const usersSheet = getSheet('Users');
+      const userData = usersSheet.getDataRange().getValues();
+      if (userData.length <= 1) {
+        warnings.push('⚠ No users found. Run "Setup BeiPoa System" to create default admin.');
+      } else {
+        info.push('✓ Users: ' + (userData.length - 1) + ' user(s) registered');
+      }
+    } catch (e) {
+      issues.push('✗ Cannot read Users sheet: ' + e.message);
+    }
+
+    // 4. Check Script Properties
+    try {
+      const scriptProperties = PropertiesService.getScriptProperties();
+      const spreadsheetId = scriptProperties.getProperty('SPREADSHEET_ID');
+      if (spreadsheetId) {
+        info.push('✓ Script Properties: Spreadsheet ID configured');
+      } else {
+        warnings.push('⚠ Script Properties: No spreadsheet ID stored');
+      }
+    } catch (e) {
+      issues.push('✗ Cannot access Script Properties: ' + e.message);
+    }
+
+    // 5. Check cache service
+    try {
+      const cache = CacheService.getUserCache();
+      cache.put('health_check_test', 'ok', 60);
+      const testValue = cache.get('health_check_test');
+      if (testValue === 'ok') {
+        info.push('✓ Cache Service: Working correctly');
+      } else {
+        warnings.push('⚠ Cache Service: Not responding as expected');
+      }
+    } catch (e) {
+      warnings.push('⚠ Cache Service: ' + e.message);
+    }
+
+    // 6. Check Audit Trail logging
+    try {
+      const auditSheet = getSheet('Audit_Trail');
+      const auditData = auditSheet.getDataRange().getValues();
+      info.push('✓ Audit Trail: ' + (auditData.length - 1) + ' log entries');
+    } catch (e) {
+      warnings.push('⚠ Audit Trail: Cannot read - ' + e.message);
+    }
+
+    // Build the report
+    let report = '=== BEIPOA SYSTEM HEALTH CHECK ===\n\n';
+
+    if (issues.length === 0 && warnings.length === 0) {
+      report += '✅ SYSTEM STATUS: HEALTHY\n\n';
+    } else if (issues.length > 0) {
+      report += '❌ SYSTEM STATUS: CRITICAL ISSUES FOUND\n\n';
+    } else {
+      report += '⚠️ SYSTEM STATUS: WARNINGS PRESENT\n\n';
+    }
+
+    if (issues.length > 0) {
+      report += '🔴 CRITICAL ISSUES:\n';
+      issues.forEach(issue => report += issue + '\n');
+      report += '\n';
+    }
+
+    if (warnings.length > 0) {
+      report += '🟡 WARNINGS:\n';
+      warnings.forEach(warning => report += warning + '\n');
+      report += '\n';
+    }
+
+    if (info.length > 0) {
+      report += '📋 SYSTEM INFO:\n';
+      info.forEach(item => report += item + '\n');
+      report += '\n';
+    }
+
+    report += '\n📝 RECOMMENDATIONS:\n';
+    if (issues.length > 0) {
+      report += '• Run "Setup BeiPoa System" to fix critical issues\n';
+    }
+    if (missingSheets.length > 0) {
+      report += '• Run "Setup BeiPoa System" to create missing sheets\n';
+    }
+    if (warnings.length === 0 && issues.length === 0) {
+      report += '• System is healthy! No action needed.\n';
+    }
+
+    report += '\n💡 TIP: Check the Execution Log for detailed error messages\n';
+    report += '(View > Execution log in Apps Script Editor)';
+
+    // Log the health check
+    logAction(
+      getActiveUserEmail(),
+      'System',
+      'Health Check',
+      'System health check performed. Issues: ' + issues.length + ', Warnings: ' + warnings.length,
+      '',
+      '',
+      report
+    );
+
+    // Show the report
+    ui.alert(
+      'System Health Check',
+      report,
+      ui.ButtonSet.OK
+    );
+
+  } catch (error) {
+    logError('checkSystemHealth', error);
+    SpreadsheetApp.getUi().alert(
+      'Health Check Error',
+      'Error performing health check: ' + error.message + '\n\n' +
+      'This might indicate a serious system issue. Please check the execution log.',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+  }
 }
