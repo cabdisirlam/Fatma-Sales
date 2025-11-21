@@ -353,7 +353,17 @@ function clearAllCacheAndAuth() {
  */
 function checkSystemHealth() {
   try {
-    const ui = SpreadsheetApp.getUi();
+    // Try to get UI (only available in interactive contexts)
+    let ui = null;
+    let hasUI = false;
+    try {
+      ui = SpreadsheetApp.getUi();
+      hasUI = true;
+    } catch (uiError) {
+      Logger.log('UI not available (called from trigger/background context)');
+      hasUI = false;
+    }
+
     const issues = [];
     const warnings = [];
     const info = [];
@@ -487,30 +497,61 @@ function checkSystemHealth() {
     report += '(View > Execution log in Apps Script Editor)';
 
     // Log the health check
-    logAction(
-      getActiveUserEmail(),
-      'System',
-      'Health Check',
-      'System health check performed. Issues: ' + issues.length + ', Warnings: ' + warnings.length,
-      '',
-      '',
-      report
-    );
+    try {
+      logAction(
+        getActiveUserEmail(),
+        'System',
+        'Health Check',
+        'System health check performed. Issues: ' + issues.length + ', Warnings: ' + warnings.length,
+        '',
+        '',
+        report
+      );
+    } catch (logError) {
+      Logger.log('Could not log health check: ' + logError.message);
+    }
 
-    // Show the report
-    ui.alert(
-      'System Health Check',
-      report,
-      ui.ButtonSet.OK
-    );
+    // Always log the report
+    Logger.log(report);
+
+    // Show the report in UI if available
+    if (hasUI && ui) {
+      ui.alert(
+        'System Health Check',
+        report,
+        ui.ButtonSet.OK
+      );
+    } else {
+      Logger.log('Health check completed. UI not available - results logged only.');
+    }
+
+    // Return the report for programmatic access
+    return {
+      success: true,
+      issues: issues,
+      warnings: warnings,
+      info: info,
+      report: report
+    };
 
   } catch (error) {
     logError('checkSystemHealth', error);
-    SpreadsheetApp.getUi().alert(
-      'Health Check Error',
-      'Error performing health check: ' + error.message + '\n\n' +
-      'This might indicate a serious system issue. Please check the execution log.',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
+
+    // Try to show error in UI if available
+    try {
+      const errorUI = SpreadsheetApp.getUi();
+      errorUI.alert(
+        'Health Check Error',
+        'Error performing health check: ' + error.message + '\n\n' +
+        'This might indicate a serious system issue. Please check the execution log.',
+        errorUI.ButtonSet.OK
+      );
+    } catch (uiError) {
+      // UI not available, just log the error
+      Logger.log('Health Check Error (UI not available): ' + error.message);
+      Logger.log(error.stack);
+    }
+
+    throw error;
   }
 }
