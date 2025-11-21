@@ -13,7 +13,6 @@ function onOpen() {
   ui.createMenu('🏪 Fatma System')
     .addItem('⚡ Setup Fatma System', 'setupFatmaSystem')
     .addItem('🔄 Refresh System', 'refreshSystem')
-    .addItem('🔐 Force Reauthorization', 'clearAllCacheAndAuth')
     .addSeparator()
     .addItem('📊 Dashboard', 'showDashboard')
     .addSeparator()
@@ -191,169 +190,21 @@ function refreshSystem() {
 }
 
 /**
- * Force Google OAuth Reauthorization
- * Triggers the OAuth consent screen by accessing services requiring permissions.
- * DOES NOT clear any data - just forces permission verification.
- * Safe to call - no data is modified or deleted.
- */
-function clearAllCacheAndAuth() {
-  Logger.log('=== FORCE REAUTHORIZATION STARTED ===');
-
-  try {
-    // Try to get UI (only works from menu/button clicks, not triggers)
-    let ui = null;
-    let showUI = false;
-    try {
-      ui = SpreadsheetApp.getUi();
-      showUI = true;
-
-      // Confirm action if UI is available
-      const response = ui.alert(
-        'Force Reauthorization',
-        '🔐 FORCE GOOGLE REAUTHORIZATION 🔐\n\n' +
-        'This will trigger the OAuth consent screen.\n\n' +
-        'What this does:\n' +
-        '• Accesses services requiring permissions\n' +
-        '• Forces Google to verify authorization\n' +
-        '• Shows the permission consent dialog\n\n' +
-        'What this does NOT do:\n' +
-        '✓ Does not clear any spreadsheet data\n' +
-        '✓ Does not clear cache or properties\n' +
-        '✓ Does not affect your configuration\n\n' +
-        'Continue?',
-        ui.ButtonSet.YES_NO
-      );
-
-      if (response !== ui.Button.YES) {
-        Logger.log('User cancelled reauthorization');
-        return;
-      }
-    } catch (uiError) {
-      // UI not available (called from trigger/script) - continue anyway
-      Logger.log('UI not available (called from trigger context): ' + uiError.message);
-      showUI = false;
-    }
-
-    // Force OAuth by accessing services that require explicit permissions
-    Logger.log('Accessing services to trigger OAuth...');
-
-    // 1. Access spreadsheet (requires spreadsheets scope)
-    let ss = null;
-    let spreadsheetId = null;
-    let spreadsheetName = null;
-
-    try {
-      // Try to get active spreadsheet (works in UI context)
-      ss = SpreadsheetApp.getActiveSpreadsheet();
-      if (ss) {
-        spreadsheetId = ss.getId();
-        spreadsheetName = ss.getName();
-        Logger.log('✓ Spreadsheet access (active): ' + spreadsheetName + ' (' + spreadsheetId + ')');
-      }
-    } catch (e) {
-      Logger.log('Cannot get active spreadsheet: ' + e.message);
-    }
-
-    // If active spreadsheet is not available (trigger context), try from properties
-    if (!ss) {
-      try {
-        const scriptProps = PropertiesService.getScriptProperties();
-        spreadsheetId = scriptProps.getProperty('SPREADSHEET_ID');
-
-        if (spreadsheetId) {
-          ss = SpreadsheetApp.openById(spreadsheetId);
-          spreadsheetName = ss.getName();
-          Logger.log('✓ Spreadsheet access (by ID from properties): ' + spreadsheetName + ' (' + spreadsheetId + ')');
-        } else {
-          Logger.log('⚠ No SPREADSHEET_ID in script properties');
-        }
-      } catch (e) {
-        Logger.log('Cannot open spreadsheet by ID: ' + e.message);
-      }
-    }
-
-    // If we still don't have a spreadsheet, log a warning but continue
-    if (!ss) {
-      Logger.log('⚠ Could not access spreadsheet (this is normal in some trigger contexts)');
-    }
-
-    // 2. Access user info (requires userinfo.email scope)
-    let userEmail = 'unknown';
-    try {
-      userEmail = Session.getActiveUser().getEmail();
-      Logger.log('✓ User email access: ' + userEmail);
-    } catch (e) {
-      Logger.log('⚠ Cannot get user email (this is normal in some trigger contexts): ' + e.message);
-    }
-
-    // 3. Access properties (requires script properties)
-    const scriptProps = PropertiesService.getScriptProperties();
-    const testProp = scriptProps.getProperty('SPREADSHEET_ID');
-    Logger.log('✓ Script properties access confirmed');
-
-    // If we got here, all permissions are granted
-    Logger.log('=== AUTHORIZATION SUCCESSFUL ===');
-
-    // Show success message if UI is available
-    if (showUI && ui) {
-      ui.alert(
-        '✅ Authorization Successful',
-        'All permissions are properly granted!\n\n' +
-        'Spreadsheet: ' + (spreadsheetName || 'N/A (trigger context)') + '\n' +
-        'User: ' + userEmail + '\n\n' +
-        'If you were having permission issues, they should be resolved now.\n\n' +
-        'If you still have issues:\n' +
-        '1. Go to: https://myaccount.google.com/permissions\n' +
-        '2. Find "Fatma Sales Management"\n' +
-        '3. Click "Remove access"\n' +
-        '4. Run this function again to re-grant permissions',
-        ui.ButtonSet.OK
-      );
-    } else {
-      Logger.log('Authorization completed in trigger context (no UI available)');
-    }
-
-    return {
-      success: true,
-      spreadsheet: spreadsheetName || 'N/A',
-      user: userEmail
-    };
-
-  } catch (error) {
-    Logger.log('=== AUTHORIZATION ERROR ===');
-    Logger.log('ERROR: ' + error.message);
-    Logger.log(error.stack);
-
-    // Try to show error if UI available
-    try {
-      const ui = SpreadsheetApp.getUi();
-      ui.alert(
-        '❌ Authorization Error',
-        'Error during authorization:\n\n' +
-        error.message + '\n\n' +
-        'To manually revoke and re-grant permissions:\n' +
-        '1. Visit: https://myaccount.google.com/permissions\n' +
-        '2. Find "Fatma Sales Management System"\n' +
-        '3. Click "Remove access"\n' +
-        '4. Close this spreadsheet\n' +
-        '5. Reopen and try again\n\n' +
-        'Check Execution Log for details.',
-        ui.ButtonSet.OK
-      );
-    } catch (uiError) {
-      Logger.log('Cannot show error dialog (no UI context)');
-    }
-
-    throw error;
-  }
-}
-
-/**
  * Check System Health - Diagnostic tool to identify issues
  */
 function checkSystemHealth() {
   try {
-    const ui = SpreadsheetApp.getUi();
+    // Try to get UI (only available in interactive contexts)
+    let ui = null;
+    let hasUI = false;
+    try {
+      ui = SpreadsheetApp.getUi();
+      hasUI = true;
+    } catch (uiError) {
+      Logger.log('UI not available (called from trigger/background context)');
+      hasUI = false;
+    }
+
     const issues = [];
     const warnings = [];
     const info = [];
@@ -487,30 +338,61 @@ function checkSystemHealth() {
     report += '(View > Execution log in Apps Script Editor)';
 
     // Log the health check
-    logAction(
-      getActiveUserEmail(),
-      'System',
-      'Health Check',
-      'System health check performed. Issues: ' + issues.length + ', Warnings: ' + warnings.length,
-      '',
-      '',
-      report
-    );
+    try {
+      logAction(
+        getActiveUserEmail(),
+        'System',
+        'Health Check',
+        'System health check performed. Issues: ' + issues.length + ', Warnings: ' + warnings.length,
+        '',
+        '',
+        report
+      );
+    } catch (logError) {
+      Logger.log('Could not log health check: ' + logError.message);
+    }
 
-    // Show the report
-    ui.alert(
-      'System Health Check',
-      report,
-      ui.ButtonSet.OK
-    );
+    // Always log the report
+    Logger.log(report);
+
+    // Show the report in UI if available
+    if (hasUI && ui) {
+      ui.alert(
+        'System Health Check',
+        report,
+        ui.ButtonSet.OK
+      );
+    } else {
+      Logger.log('Health check completed. UI not available - results logged only.');
+    }
+
+    // Return the report for programmatic access
+    return {
+      success: true,
+      issues: issues,
+      warnings: warnings,
+      info: info,
+      report: report
+    };
 
   } catch (error) {
     logError('checkSystemHealth', error);
-    SpreadsheetApp.getUi().alert(
-      'Health Check Error',
-      'Error performing health check: ' + error.message + '\n\n' +
-      'This might indicate a serious system issue. Please check the execution log.',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
+
+    // Try to show error in UI if available
+    try {
+      const errorUI = SpreadsheetApp.getUi();
+      errorUI.alert(
+        'Health Check Error',
+        'Error performing health check: ' + error.message + '\n\n' +
+        'This might indicate a serious system issue. Please check the execution log.',
+        errorUI.ButtonSet.OK
+      );
+    } catch (uiError) {
+      // UI not available, just log the error
+      Logger.log('Health Check Error (UI not available): ' + error.message);
+      Logger.log(error.stack);
+    }
+
+    throw error;
   }
 }

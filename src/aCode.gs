@@ -638,7 +638,7 @@ function checkOAuthStatus() {
       authorized: false,
       message: 'OAuth authorization required',
       error: error.message,
-      recommendation: 'Please run "🏪 Fatma System" > "🔐 Force Reauthorization" from the spreadsheet menu to grant necessary permissions.'
+      recommendation: 'Please check your permissions and try again.'
     };
   }
 }
