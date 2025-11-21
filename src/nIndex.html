@@ -1664,6 +1664,11 @@
             // Load products
             google.script.run
                 .withSuccessHandler(function(data) {
+                    // Check if server returned an error object
+                    if (data && data.success === false) {
+                        showToast(data.message, 'danger');
+                        return;
+                    }
                     products = data;
                     displayProducts(products);
                 })
@@ -1676,6 +1681,11 @@
             google.script.run
                 .withSuccessHandler(function(data) {
                     hideLoading();
+                    // Check if server returned an error object
+                    if (data && data.success === false) {
+                        showToast(data.message, 'danger');
+                        return;
+                    }
                     customers = data;
                     const select = document.getElementById('customerSelect');
                     select.innerHTML = '<option value="">Walk-in Customer</option>';
@@ -1971,6 +1981,11 @@
             google.script.run
                 .withSuccessHandler(function(data) {
                     hideLoading();
+                    // Check if server returned an error object
+                    if (data && data.success === false) {
+                        showToast(data.message, 'danger');
+                        return;
+                    }
                     customers = data;
                     displayCustomers(data);
                 })
@@ -2020,6 +2035,11 @@
             google.script.run
                 .withSuccessHandler(function(data) {
                     hideLoading();
+                    // Check if server returned an error object
+                    if (data && data.success === false) {
+                        showToast(data.message, 'danger');
+                        return;
+                    }
                     products = data;
                     displayInventory(data);
                 })
@@ -2073,6 +2093,11 @@
             google.script.run
                 .withSuccessHandler(function(data) {
                     hideLoading();
+                    // Check if server returned an error object
+                    if (data && data.success === false) {
+                        showToast(data.message, 'danger');
+                        return;
+                    }
                     suppliers = data;
                     displaySuppliers(data);
                 })
@@ -2122,6 +2147,11 @@
             google.script.run
                 .withSuccessHandler(function(data) {
                     hideLoading();
+                    // Check if server returned an error object
+                    if (data && data.success === false) {
+                        showToast(data.message, 'danger');
+                        return;
+                    }
                     displayQuotations(data);
                 })
                 .withFailureHandler(function(error) {
@@ -2177,6 +2207,11 @@
             google.script.run
                 .withSuccessHandler(function(data) {
                     hideLoading();
+                    // Check if server returned an error object
+                    if (data && data.success === false) {
+                        showToast(data.message, 'danger');
+                        return;
+                    }
                     displayExpenses(data);
                 })
                 .withFailureHandler(function(error) {

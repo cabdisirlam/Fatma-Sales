@@ -485,7 +485,10 @@ function getSales(filters) {
     return sheetToObjects('Sales_Data', filters);
   } catch (error) {
     logError('getSales', error);
-    throw new Error('Error loading sales: ' + error.message);
+    return {
+      success: false,
+      message: 'Error loading sales: ' + error.message
+    };
   }
 }
 

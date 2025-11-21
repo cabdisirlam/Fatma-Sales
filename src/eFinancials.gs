@@ -446,7 +446,10 @@ function getExpenses(filters) {
     return sheetToObjects('Expenses', filters);
   } catch (error) {
     logError('getExpenses', error);
-    throw new Error('Error loading expenses: ' + error.message);
+    return {
+      success: false,
+      message: 'Error loading expenses: ' + error.message
+    };
   }
 }
 

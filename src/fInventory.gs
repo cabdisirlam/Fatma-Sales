@@ -122,7 +122,10 @@ function getProducts(filters) {
     return sheetToObjects('Inventory', filters);
   } catch (error) {
     logError('getProducts', error);
-    throw new Error('Error loading products: ' + error.message);
+    return {
+      success: false,
+      message: 'Error loading products: ' + error.message
+    };
   }
 }
 
