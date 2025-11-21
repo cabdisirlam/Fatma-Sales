@@ -10,8 +10,8 @@ function onOpen() {
   const ui = SpreadsheetApp.getUi();
 
   // Create custom menu
-  ui.createMenu('🏪 BeiPoa System')
-    .addItem('⚡ Setup BeiPoa System', 'setupFatmaSystem')
+  ui.createMenu('🏪 Fatma System')
+    .addItem('⚡ Setup Fatma System', 'setupFatmaSystem')
     .addItem('🔄 Refresh System', 'refreshSystem')
     .addSeparator()
     .addItem('📊 Dashboard', 'showDashboard')
@@ -171,7 +171,7 @@ function refreshSystem() {
 
     ui.alert(
       'System Refreshed',
-      'BeiPoa System has been refreshed successfully.\n\n' +
+      'Fatma System has been refreshed successfully.\n\n' +
       '✓ Caches cleared\n' +
       '✓ Spreadsheet connection refreshed\n' +
       '✓ All data preserved\n\n' +
@@ -240,7 +240,7 @@ function checkSystemHealth() {
       const usersSheet = getSheet('Users');
       const userData = usersSheet.getDataRange().getValues();
       if (userData.length <= 1) {
-        warnings.push('⚠ No users found. Run "Setup BeiPoa System" to create default admin.');
+        warnings.push('⚠ No users found. Run "Setup Fatma System" to create default admin.');
       } else {
         info.push('✓ Users: ' + (userData.length - 1) + ' user(s) registered');
       }
@@ -285,7 +285,7 @@ function checkSystemHealth() {
     }
 
     // Build the report
-    let report = '=== BEIPOA SYSTEM HEALTH CHECK ===\n\n';
+    let report = '=== FATMA SYSTEM HEALTH CHECK ===\n\n';
 
     if (issues.length === 0 && warnings.length === 0) {
       report += '✅ SYSTEM STATUS: HEALTHY\n\n';
@@ -315,10 +315,10 @@ function checkSystemHealth() {
 
     report += '\n📝 RECOMMENDATIONS:\n';
     if (issues.length > 0) {
-      report += '• Run "Setup BeiPoa System" to fix critical issues\n';
+      report += '• Run "Setup Fatma System" to fix critical issues\n';
     }
     if (missingSheets.length > 0) {
-      report += '• Run "Setup BeiPoa System" to create missing sheets\n';
+      report += '• Run "Setup Fatma System" to create missing sheets\n';
     }
     if (warnings.length === 0 && issues.length === 0) {
       report += '• System is healthy! No action needed.\n';

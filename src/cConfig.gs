@@ -1,5 +1,5 @@
 /**
- * BeiPoa Sales Management System
+ * Fatma Sales Management System
  * Configuration File
  */
 

@@ -13,7 +13,7 @@
 function doGet(e) {
   try {
     return HtmlService.createHtmlOutputFromFile('nIndex')
-      .setTitle('BeiPoa System')
+      .setTitle('Fatma System')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   } catch (error) {
@@ -129,26 +129,45 @@ function getSheetHeaders(sheetName) {
 /**
  * Authenticates a user with email and PIN
  * Enhanced with comprehensive error logging and diagnostics
+ * CRITICAL: This function MUST always return an object with a 'success' property
  */
 function authenticate(email, pin) {
-  const startTime = new Date();
-  const logPrefix = '[AUTH ' + startTime.toISOString() + ']';
-
+  // Wrap everything in try-catch to ensure we ALWAYS return a result object
   try {
-    Logger.log(logPrefix + ' Authentication attempt started');
-    Logger.log(logPrefix + ' Email: ' + email);
+    const startTime = new Date();
+    const logPrefix = '[AUTH ' + startTime.toISOString() + ']';
 
-    // Validate PIN format (must be 4 digits)
-    if (!pin || pin.toString().length !== CONFIG.PIN_LENGTH) {
-      const errorMsg = 'PIN must be exactly ' + CONFIG.PIN_LENGTH + ' digits';
-      Logger.log(logPrefix + ' FAILED: ' + errorMsg);
-      logAction('SYSTEM', 'Authentication', 'Failed Login', 'Invalid PIN format for email: ' + email, '', '', '');
-      return {
-        success: false,
-        message: errorMsg,
-        debugInfo: 'PIN validation failed'
-      };
-    }
+    try {
+      Logger.log(logPrefix + ' Authentication attempt started');
+      Logger.log(logPrefix + ' Email: ' + email);
+
+      // Validate inputs are provided
+      if (!email || !pin) {
+        return {
+          success: false,
+          message: 'Email and PIN are required',
+          debugInfo: 'Missing email or PIN'
+        };
+      }
+
+      // Safely get PIN_LENGTH with fallback
+      const pinLength = (typeof CONFIG !== 'undefined' && CONFIG.PIN_LENGTH) ? CONFIG.PIN_LENGTH : 4;
+
+      // Validate PIN format (must be 4 digits)
+      if (pin.toString().length !== pinLength) {
+        const errorMsg = 'PIN must be exactly ' + pinLength + ' digits';
+        Logger.log(logPrefix + ' FAILED: ' + errorMsg);
+        try {
+          logAction('SYSTEM', 'Authentication', 'Failed Login', 'Invalid PIN format for email: ' + email, '', '', '');
+        } catch (e) {
+          // Ignore audit logging errors during authentication
+        }
+        return {
+          success: false,
+          message: errorMsg,
+          debugInfo: 'PIN validation failed'
+        };
+      }
 
     // Validate email is provided
     if (!email || email.trim() === '') {
@@ -201,9 +220,9 @@ function authenticate(email, pin) {
       logAction('SYSTEM', 'Authentication', 'Failed Login', 'Users sheet is empty - no headers found', '', '', '');
       return {
         success: false,
-        message: 'System not initialized: No user data found. Please run "Setup BeiPoa System" from the menu.',
+        message: 'System not initialized: No user data found. Please run "Setup Fatma System" from the menu.',
         debugInfo: 'Users sheet has no data',
-        recommendation: 'Run "🏪 BeiPoa System" > "⚡ Setup BeiPoa System" from the spreadsheet menu'
+        recommendation: 'Run "🏪 Fatma System" > "⚡ Setup Fatma System" from the spreadsheet menu'
       };
     }
 
@@ -225,7 +244,7 @@ function authenticate(email, pin) {
         success: false,
         message: 'System configuration error: Users sheet is missing required columns. Please run system setup.',
         debugInfo: 'Missing columns - Email: ' + emailCol + ', Username: ' + usernameCol + ', PIN: ' + pinCol + ', Status: ' + statusCol,
-        recommendation: 'Run "🏪 BeiPoa System" > "⚡ Setup BeiPoa System" from the spreadsheet menu'
+        recommendation: 'Run "🏪 Fatma System" > "⚡ Setup Fatma System" from the spreadsheet menu'
       };
     }
 
@@ -239,9 +258,9 @@ function authenticate(email, pin) {
       logAction('SYSTEM', 'Authentication', 'Failed Login', 'No users found in system for email: ' + email, '', '', '');
       return {
         success: false,
-        message: 'No users found in system. Please run "Setup BeiPoa System" to create the default admin user.',
+        message: 'No users found in system. Please run "Setup Fatma System" to create the default admin user.',
         debugInfo: 'Users sheet has headers but no data rows',
-        recommendation: 'Run "🏪 BeiPoa System" > "⚡ Setup BeiPoa System" from the spreadsheet menu'
+        recommendation: 'Run "🏪 Fatma System" > "⚡ Setup Fatma System" from the spreadsheet menu'
       };
     }
 
@@ -339,19 +358,34 @@ function authenticate(email, pin) {
       };
     }
 
-  } catch (error) {
-    const duration = new Date() - startTime;
-    Logger.log(logPrefix + ' EXCEPTION after ' + duration + 'ms: ' + error.message);
-    Logger.log(logPrefix + ' Stack trace: ' + error.stack);
-    logError('authenticate', error);
-    logAction('SYSTEM', 'Authentication', 'Error', 'Authentication exception for email: ' + email + ' - ' + error.message, '', '', error.stack);
+    } catch (error) {
+      const duration = new Date() - startTime;
+      Logger.log(logPrefix + ' EXCEPTION after ' + duration + 'ms: ' + error.message);
+      Logger.log(logPrefix + ' Stack trace: ' + error.stack);
+      try {
+        logError('authenticate', error);
+        logAction('SYSTEM', 'Authentication', 'Error', 'Authentication exception for email: ' + email + ' - ' + error.message, '', '', error.stack);
+      } catch (e) {
+        // Ignore audit logging errors
+      }
 
+      return {
+        success: false,
+        message: 'Authentication system error. Please try again or contact administrator.',
+        debugInfo: 'Exception: ' + error.message,
+        technicalDetails: error.stack,
+        recommendation: 'Try running "🔍 Check System Health" from the Fatma System menu'
+      };
+    }
+  } catch (fatalError) {
+    // Ultimate fallback - ensure we ALWAYS return an object even if everything fails
+    Logger.log('FATAL ERROR in authenticate: ' + (fatalError.message || 'Unknown error'));
     return {
       success: false,
-      message: 'Authentication system error. Please try again or contact administrator.',
-      debugInfo: 'Exception: ' + error.message,
-      technicalDetails: error.stack,
-      recommendation: 'Try running "🔍 Check System Health" from the BeiPoa System menu'
+      message: 'Critical authentication error. Please refresh the page and try again.',
+      debugInfo: 'Fatal error: ' + (fatalError.message || 'Unknown error'),
+      technicalDetails: fatalError.stack || 'No stack trace available',
+      recommendation: 'Refresh the page and try again. If the problem persists, contact administrator.'
     };
   }
 }
