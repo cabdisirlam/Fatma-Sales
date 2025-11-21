@@ -132,6 +132,17 @@ function getSheetHeaders(sheetName) {
  * CRITICAL: This function MUST always return an object with a 'success' property
  */
 function authenticate(email, pin) {
+  // First, verify that the function is executing and can return a response
+  if (!email && !pin) {
+    // Quick test to verify Google Apps Script can respond
+    return {
+      success: false,
+      message: 'Email and PIN are required',
+      debugInfo: 'Function executing, no credentials provided',
+      timestamp: new Date().toISOString()
+    };
+  }
+
   // Wrap everything in try-catch to ensure we ALWAYS return a result object
   try {
     const startTime = new Date();
@@ -143,10 +154,12 @@ function authenticate(email, pin) {
 
       // Validate inputs are provided
       if (!email || !pin) {
+        Logger.log(logPrefix + ' Missing credentials');
         return {
           success: false,
           message: 'Email and PIN are required',
-          debugInfo: 'Missing email or PIN'
+          debugInfo: 'Missing email or PIN',
+          timestamp: new Date().toISOString()
         };
       }
 
@@ -166,7 +179,8 @@ function authenticate(email, pin) {
           success: false,
           message: errorMsg,
           debugInfo: 'PIN validation failed',
-          recommendation: 'Please enter a valid ' + pinLength + '-digit PIN'
+          recommendation: 'Please enter a valid ' + pinLength + '-digit PIN',
+          timestamp: new Date().toISOString()
         };
       }
 
@@ -178,12 +192,30 @@ function authenticate(email, pin) {
       Logger.log(logPrefix + ' Successfully accessed Users sheet');
     } catch (sheetError) {
       Logger.log(logPrefix + ' FAILED: Cannot access Users sheet - ' + sheetError.message);
-      logError('authenticate - getSheet', sheetError);
+      try {
+        logError('authenticate - getSheet', sheetError);
+      } catch (e) {
+        // Ignore logging errors
+      }
+
+      // Determine if this is likely an OAuth/permission issue
+      const isOAuthError = sheetError.message && (
+        sheetError.message.indexOf('permission') !== -1 ||
+        sheetError.message.indexOf('authorization') !== -1 ||
+        sheetError.message.indexOf('Cannot access') !== -1
+      );
+
       return {
         success: false,
-        message: 'System configuration error: Cannot access Users sheet. Please contact administrator.',
+        message: isOAuthError ?
+          'Authorization required: Cannot access spreadsheet. Please check permissions.' :
+          'System configuration error: Cannot access Users sheet.',
         debugInfo: 'Users sheet not accessible: ' + sheetError.message,
-        technicalDetails: sheetError.stack
+        technicalDetails: sheetError.stack,
+        recommendation: isOAuthError ?
+          'Try opening the spreadsheet directly and running any menu command to grant permissions, then try logging in again.' :
+          'Contact administrator to check system configuration.',
+        timestamp: new Date().toISOString()
       };
     }
 
@@ -195,24 +227,34 @@ function authenticate(email, pin) {
       Logger.log(logPrefix + ' Successfully read ' + data.length + ' rows from Users sheet');
     } catch (readError) {
       Logger.log(logPrefix + ' FAILED: Cannot read Users sheet - ' + readError.message);
-      logError('authenticate - getData', readError);
+      try {
+        logError('authenticate - getData', readError);
+      } catch (e) {
+        // Ignore logging errors
+      }
       return {
         success: false,
         message: 'System error: Cannot read user data. Please contact administrator.',
         debugInfo: 'Data read failed: ' + readError.message,
-        technicalDetails: readError.stack
+        technicalDetails: readError.stack,
+        timestamp: new Date().toISOString()
       };
     }
 
     // Check if sheet has headers
     if (data.length < 1) {
       Logger.log(logPrefix + ' FAILED: Users sheet is empty (no headers)');
-      logAction('SYSTEM', 'Authentication', 'Failed Login', 'Users sheet is empty - no headers found', '', '', '');
+      try {
+        logAction('SYSTEM', 'Authentication', 'Failed Login', 'Users sheet is empty - no headers found', '', '', '');
+      } catch (e) {
+        // Ignore logging errors
+      }
       return {
         success: false,
         message: 'System not initialized: No user data found. Please run "Setup Fatma System" from the menu.',
         debugInfo: 'Users sheet has no data',
-        recommendation: 'Run "🏪 Fatma System" > "⚡ Setup Fatma System" from the spreadsheet menu'
+        recommendation: 'Run "🏪 Fatma System" > "⚡ Setup Fatma System" from the spreadsheet menu',
+        timestamp: new Date().toISOString()
       };
     }
 
@@ -234,7 +276,8 @@ function authenticate(email, pin) {
         success: false,
         message: 'System configuration error: Users sheet is missing required columns. Please run system setup.',
         debugInfo: 'Missing columns - Email: ' + emailCol + ', Username: ' + usernameCol + ', PIN: ' + pinCol + ', Status: ' + statusCol,
-        recommendation: 'Run "🏪 Fatma System" > "⚡ Setup Fatma System" from the spreadsheet menu'
+        recommendation: 'Run "🏪 Fatma System" > "⚡ Setup Fatma System" from the spreadsheet menu',
+        timestamp: new Date().toISOString()
       };
     }
 
@@ -245,12 +288,17 @@ function authenticate(email, pin) {
     // Check if there are any users
     if (data.length <= 1) {
       Logger.log(logPrefix + ' FAILED: No users in database');
-      logAction('SYSTEM', 'Authentication', 'Failed Login', 'No users found in system for email: ' + email, '', '', '');
+      try {
+        logAction('SYSTEM', 'Authentication', 'Failed Login', 'No users found in system for email: ' + email, '', '', '');
+      } catch (e) {
+        // Ignore logging errors
+      }
       return {
         success: false,
         message: 'No users found in system. Please run "Setup Fatma System" to create the default admin user.',
         debugInfo: 'Users sheet has headers but no data rows',
-        recommendation: 'Run "🏪 Fatma System" > "⚡ Setup Fatma System" from the spreadsheet menu'
+        recommendation: 'Run "🏪 Fatma System" > "⚡ Setup Fatma System" from the spreadsheet menu',
+        timestamp: new Date().toISOString()
       };
     }
 
@@ -272,11 +320,16 @@ function authenticate(email, pin) {
           // Check status
           if (row[statusCol] !== 'Active') {
             Logger.log(logPrefix + ' FAILED: User account is inactive. Status: ' + row[statusCol]);
-            logAction(email, 'Authentication', 'Failed Login', 'Attempted login with inactive account', '', '', '');
+            try {
+              logAction(email, 'Authentication', 'Failed Login', 'Attempted login with inactive account', '', '', '');
+            } catch (e) {
+              // Ignore logging errors
+            }
             return {
               success: false,
               message: 'User account is inactive. Please contact administrator.',
-              debugInfo: 'User status: ' + row[statusCol]
+              debugInfo: 'User status: ' + row[statusCol],
+              timestamp: new Date().toISOString()
             };
           }
 
@@ -320,11 +373,16 @@ function authenticate(email, pin) {
             success: true,
             user: userData,
             sessionId: sessionId,
-            token: token
+            token: token,
+            timestamp: new Date().toISOString()
           };
         } else {
           Logger.log(logPrefix + ' FAILED: PIN does not match for user');
-          logAction(email, 'Authentication', 'Failed Login', 'Incorrect PIN attempt for email: ' + email, '', '', '');
+          try {
+            logAction(email, 'Authentication', 'Failed Login', 'Incorrect PIN attempt for email: ' + email, '', '', '');
+          } catch (e) {
+            // Ignore logging errors
+          }
         }
       }
     }
@@ -335,7 +393,8 @@ function authenticate(email, pin) {
       return {
         success: false,
         message: 'Invalid PIN',
-        debugInfo: 'Email found in database but PIN does not match'
+        debugInfo: 'Email found in database but PIN does not match',
+        timestamp: new Date().toISOString()
       };
     } else {
       Logger.log(logPrefix + ' FAILED: Email not found in database');
@@ -344,7 +403,8 @@ function authenticate(email, pin) {
         success: false,
         message: 'Email not registered in system',
         debugInfo: 'Email not found among ' + (data.length - 1) + ' registered users',
-        recommendation: 'Check your email address or contact administrator to create an account'
+        recommendation: 'Check your email address or contact administrator to create an account',
+        timestamp: new Date().toISOString()
       };
     }
 
@@ -364,7 +424,8 @@ function authenticate(email, pin) {
         message: 'Authentication system error. Please try again or contact administrator.',
         debugInfo: 'Exception: ' + error.message,
         technicalDetails: error.stack,
-        recommendation: 'Try running "🔍 Check System Health" from the Fatma System menu'
+        recommendation: 'Try running "🔍 Check System Health" from the Fatma System menu',
+        timestamp: new Date().toISOString()
       };
     }
   } catch (fatalError) {
@@ -375,7 +436,8 @@ function authenticate(email, pin) {
       message: 'Critical authentication error. Please refresh the page and try again.',
       debugInfo: 'Fatal error: ' + (fatalError.message || 'Unknown error'),
       technicalDetails: fatalError.stack || 'No stack trace available',
-      recommendation: 'Refresh the page and try again. If the problem persists, contact administrator.'
+      recommendation: 'Refresh the page and try again. If the problem persists, contact administrator.',
+      timestamp: new Date().toISOString()
     };
   }
 }
