@@ -1,6 +1,6 @@
-# Inventory Management System - Setup Guide
+# Fatma Sales Management System - Setup Guide
 
-This guide will walk you through the complete setup process for deploying the Inventory Management System using Google Apps Script and Google Sheets.
+This guide will walk you through the complete setup process for deploying the Fatma Sales Management System using Google Apps Script and Google Sheets.
 
 ## Prerequisites
 
@@ -8,183 +8,128 @@ This guide will walk you through the complete setup process for deploying the In
 - Basic understanding of Google Sheets
 - Web browser (Chrome, Firefox, Safari, or Edge)
 
-## Step 1: Create the Google Spreadsheet
+## Quick Start (Recommended)
 
-1. **Go to Google Sheets**
-   - Navigate to [sheets.google.com](https://sheets.google.com)
-   - Click on the "+" (Blank) to create a new spreadsheet
+The Fatma System now automatically creates and configures everything for you!
 
-2. **Rename the Spreadsheet**
-   - Click on "Untitled spreadsheet" at the top
-   - Rename it to "Inventory Management System"
+### Step 1: Set Up Google Apps Script
 
-3. **Note the Spreadsheet ID**
-   - Look at the URL in your browser
-   - The URL format: `https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit`
-   - Copy the SPREADSHEET_ID (the long string between `/d/` and `/edit`)
-   - Save this ID for later use
+1. **Create a New Apps Script Project**
+   - Go to [script.google.com](https://script.google.com)
+   - Click "New Project"
+   - Rename it to "Fatma Sales System"
 
-## Step 2: Create Sheet Tabs
+### Step 2: Add the Script Files
 
-Create the following 15 tabs (sheets) in your spreadsheet. You can create them manually or use the initialization script later.
+Copy all the files from the `src/` folder into your Apps Script project:
 
-**Required Tabs:**
-1. Inventory
-2. Sales_Data
-3. Sales_Items
-4. Customers
-5. Customer_Transactions
-6. Quotations
-7. Quotation_Items
-8. Suppliers
-9. Purchases
-10. Purchase_Items
-11. Financials
-12. Expenses
-13. Expense_Categories
-14. Users
-15. Audit_Trail
-16. Settings
-
-**To create tabs manually:**
-- Click the "+" button at the bottom left of the spreadsheet
-- Rename each tab by right-clicking and selecting "Rename"
-
-## Step 3: Set Up Google Apps Script
-
-1. **Open Apps Script Editor**
-   - In your spreadsheet, click on "Extensions" → "Apps Script"
-   - This opens the Apps Script editor in a new tab
-
-2. **Rename the Project**
-   - Click on "Untitled project" at the top
-   - Rename it to "Inventory Management System"
-
-3. **Delete Default Code**
+1. **Delete Default Code**
    - You'll see a file called "Code.gs" with some default code
    - Select all the code and delete it
 
-## Step 4: Add the Script Files
+2. **Add Script Files (.gs)**
+   - Click "+" next to "Files" in the left sidebar → Select "Script"
+   - Create and paste the following files:
+     - `aCode.gs` (rename default Code.gs to this)
+     - `bAuditLogger.gs`
+     - `cConfig.gs`
+     - `dCustomers.gs`
+     - `eFinancials.gs`
+     - `fInventory.gs`
+     - `gMain.gs`
+     - `hQuotations.gs`
+     - `iSales.gs`
+     - `jSalesManager.gs`
+     - `kWorkbookManager.gs`
 
-Create the following files in Apps Script and paste the corresponding code:
+3. **Add HTML Files**
+   - Click "+" next to "Files" → Select "HTML"
+   - Create: `nIndex.html`
 
-### File 1: Code.gs
-1. The default "Code.gs" file should already exist
-2. Copy the entire content from `src/Code.gs`
-3. Paste it into the Code.gs file in Apps Script editor
+### Step 3: Run the Setup Function
 
-### File 2: Sales.gs
-1. Click the "+" next to "Files" in the left sidebar
-2. Select "Script"
-3. Name it "Sales"
-4. Copy the content from `src/Sales.gs` and paste it
-
-### File 3: Inventory.gs
-1. Click the "+" next to "Files"
-2. Select "Script"
-3. Name it "Inventory"
-4. Copy the content from `src/Inventory.gs` and paste it
-
-### File 4: Customers.gs
-1. Create a new script file named "Customers"
-2. Copy the content from `src/Customers.gs` and paste it
-
-### File 5: Financials.gs
-1. Create a new script file named "Financials"
-2. Copy the content from `src/Financials.gs` and paste it
-
-### File 6: Quotations.gs
-1. Create a new script file named "Quotations"
-2. Copy the content from `src/Quotations.gs` and paste it
-
-### File 7: AuditLogger.gs
-1. Create a new script file named "AuditLogger"
-2. Copy the content from `src/AuditLogger.gs` and paste it
-
-### File 8: Index.html
-1. Click the "+" next to "Files"
-2. Select "HTML"
-3. Name it "Index"
-4. Copy the entire content from `src/Index.html` and paste it
-
-## Step 5: Save and Run Initialization
+This is the easiest part - just run one function and everything is created automatically!
 
 1. **Save All Files**
    - Click the disk icon or press Ctrl+S (Cmd+S on Mac)
-   - Ensure all files are saved
 
-2. **Run Initialization Function**
-   - In the Apps Script editor, select "Code.gs" from the files list
-   - In the function dropdown (next to the debug icon), select `initializeSheets`
+2. **Select the Setup Function**
+   - In the function dropdown (at the top), select `createFatmaSystem`
+
+3. **Run the Function**
    - Click the "Run" button (▶️ play icon)
 
-3. **Grant Permissions**
+4. **Grant Permissions**
    - You'll see a dialog asking for permissions
    - Click "Review Permissions"
    - Select your Google account
-   - Click "Advanced" → "Go to Inventory Management System (unsafe)"
+   - Click "Advanced" → "Go to Fatma Sales System (unsafe)"
    - Click "Allow"
 
-4. **Wait for Initialization**
-   - The function will create all sheet tabs with headers
-   - Create a default admin user (Username: `admin`, PIN: `1234`)
-   - Initialize expense categories
-   - Initialize account balances
+5. **Wait for Completion**
+   - The function will:
+     - ✅ Create a new spreadsheet named "Fatma System"
+     - ✅ Create all 16 required sheets with proper formatting
+     - ✅ Set up headers and column widths
+     - ✅ Create default admin user (Username: `admin`, PIN: `1234`)
+     - ✅ Initialize expense categories
+     - ✅ Initialize account balances
 
-5. **Check the Execution Log**
-   - Click "Execution log" at the bottom
-   - You should see messages like "Initialized sheet: Inventory"
-   - If you see errors, check that all tabs are created correctly
+6. **Check the Execution Log**
+   - Click "View" → "Logs" or "Execution log"
+   - You should see: "SUCCESS! Spreadsheet created at: [URL]"
+   - Copy the spreadsheet URL from the log
 
-## Step 6: Configure Business Settings
+### Step 4: Open Your New Spreadsheet
 
-1. **Go to the Settings Tab**
-   - Switch back to your spreadsheet
-   - Click on the "Settings" tab
+1. **Click the Spreadsheet URL**
+   - From the execution log, click or paste the spreadsheet URL
+   - Your new "Fatma System" spreadsheet will open
 
-2. **Add Business Information**
-   - Add the following rows (Setting_Key in column A, Setting_Value in column B):
+2. **Verify All Sheets**
+   - You should see 16 tabs at the bottom:
+     - Users, Suppliers, Customers, Inventory
+     - Sales_Data, Sales_Items
+     - Purchases, Purchase_Items
+     - Quotations, Quotation_Items
+     - Customer_Transactions, Financials
+     - Expenses, Expense_Categories
+     - Audit_Trail, Settings
 
-   | Setting_Key | Setting_Value |
-   |-------------|---------------|
-   | BUSINESS_NAME | Your Business Name |
-   | BUSINESS_KRA | P000000000A |
-   | BUSINESS_LOCATION | Nairobi, Kenya |
-   | BUSINESS_PHONE | +254 700 000000 |
-   | BUSINESS_EMAIL | info@yourbusiness.com |
-   | SPREADSHEET_ID | (Paste your Spreadsheet ID from Step 1) |
+3. **Check Settings**
+   - Click the "Settings" tab
+   - All default settings are already configured!
 
-## Step 7: Deploy as Web App
+### Step 5: Deploy as Web App
 
 1. **Return to Apps Script Editor**
+   - Go back to the Apps Script tab
 
-2. **Click "Deploy" → "New deployment"**
-
-3. **Configure Deployment**
+2. **Create Deployment**
+   - Click "Deploy" → "New deployment"
    - Click the gear icon ⚙️ next to "Select type"
    - Select "Web app"
 
-4. **Fill in Deployment Details**
-   - **Description:** "Inventory Management System v1"
+3. **Configure Deployment**
+   - **Description:** "Fatma Sales System v1.0"
    - **Execute as:** "Me (your email)"
    - **Who has access:** "Anyone" (or "Anyone with Google account" for more security)
+   - Click "Deploy"
 
-5. **Click "Deploy"**
-
-6. **Authorize Again**
+4. **Authorize (if needed)**
    - You may need to authorize again
-   - Follow the same permission process as in Step 5
+   - Follow the same permission process as before
 
-7. **Copy the Web App URL**
+5. **Copy the Web App URL**
    - You'll see a "Web app" URL
    - Copy this URL - this is your application's URL
    - It looks like: `https://script.google.com/macros/s/DEPLOYMENT_ID/exec`
 
-## Step 8: Test the Application
+### Step 6: Test the Application
 
 1. **Open the Web App**
    - Paste the Web App URL in a new browser tab
-   - You should see the login screen
+   - You should see the Fatma Sales System login screen
 
 2. **Login with Default Admin**
    - Username: `admin`
@@ -196,11 +141,17 @@ Create the following files in Apps Script and paste the corresponding code:
    - All stat cards should show "KES 0.00" or "0"
    - Navigate through different sections using the sidebar
 
-## Step 9: Add Sample Data (Optional)
+**🎉 Congratulations! Your Fatma Sales System is now ready to use!**
+
+---
+
+## Next Steps
+
+### Add Sample Data (Optional)
 
 Refer to `SAMPLE_DATA.md` for sample data you can add for testing.
 
-## Step 10: Create Additional Users
+### Create Additional Users
 
 1. **Navigate to Settings (Admin Only)**
    - Click "Settings" in the sidebar

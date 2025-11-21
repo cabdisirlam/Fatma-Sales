@@ -81,20 +81,32 @@ Fatma-Sales/
 
 ## Quick Start
 
-### Setting Up Fatma System
+### Setting Up Fatma System (Automatic Setup)
 
-1. **Open your Google Spreadsheet**
-2. **Go to menu**: **🏪 Fatma System** > **⚡ Setup Fatma System**
+The Fatma System now **automatically creates and configures everything** for you!
+
+1. **Set up Google Apps Script** (see Installation above)
+2. **Run the function**: `createFatmaSystem()` from the Apps Script editor
 3. **The system will automatically**:
-   - Rename the workbook to "Fatma System"
-   - Create all necessary sheets (Users, Suppliers, Customers, Inventory, Sales, etc.)
-   - Create a default admin user with username `admin` and PIN `1234`
-   - Initialize default settings and expense categories
+   - ✅ Create a new spreadsheet named "Fatma System"
+   - ✅ Create all necessary sheets (Users, Suppliers, Customers, Inventory, Sales, etc.)
+   - ✅ Set up proper formatting and headers
+   - ✅ Create a default admin user with username `admin` and PIN `1234`
+   - ✅ Initialize default settings and expense categories
+   - ✅ Return the spreadsheet URL in the logs
 
-4. **First Login**:
+4. **Open your new spreadsheet**:
+   - Check the execution log for the spreadsheet URL
+   - Open the spreadsheet to view all configured sheets
+
+5. **Deploy as Web App** to access the full UI
+
+6. **First Login**:
    - Username: `admin`
    - PIN: `1234`
    - **IMPORTANT**: Change the PIN after first login for security
+
+For detailed step-by-step instructions, see [SETUP_GUIDE.md](SETUP_GUIDE.md).
 
 ### Authentication System
 
