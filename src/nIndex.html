@@ -1561,11 +1561,7 @@
                         showApp();
                         loadDashboard();
                     } else {
-                        // Show detailed error information
-                        showDetailedError(result || {
-                            message: 'Login failed',
-                            debugInfo: 'No response from server'
-                        });
+                        handleNoServerResponse(result);
                     }
                 })
                 .withFailureHandler(function(error) {
@@ -1579,6 +1575,42 @@
                     });
                 })
                 .authenticate(email, pin);
+        }
+
+        // Handle cases where the server returns no usable response during authentication
+        function handleNoServerResponse(result) {
+            // If we received a structured error, show it immediately
+            if (result) {
+                showDetailedError(result);
+                return;
+            }
+
+            // Otherwise, run a quick connectivity test to provide meaningful guidance
+            showLoading();
+            google.script.run
+                .withSuccessHandler(function(pingResult) {
+                    hideLoading();
+                    const debugInfo = pingResult ?
+                        'authenticate returned null/undefined, but testConnection succeeded' :
+                        'authenticate returned null/undefined and testConnection returned no data';
+
+                    showDetailedError({
+                        message: 'No response from server during login',
+                        debugInfo: debugInfo,
+                        recommendation: 'Open the Fatma spreadsheet, run "🔍 Check System Health" from the menu, then retry login. If prompted, grant the script permissions.',
+                        technicalDetails: pingResult ? JSON.stringify(pingResult, null, 2) : 'testConnection returned no data'
+                    });
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    showDetailedError({
+                        message: 'Cannot reach server to verify connection',
+                        debugInfo: 'authenticate returned null/undefined and testConnection failed',
+                        recommendation: 'Check your internet connection and make sure the web app deployment is active. You can also open the spreadsheet and run "🔍 Check System Health" from the menu to re-authorize.',
+                        technicalDetails: error.stack || error.toString()
+                    });
+                })
+                .testConnection();
         }
 
         // Show Detailed Error Information
