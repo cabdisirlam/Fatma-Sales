@@ -193,6 +193,7 @@ function refreshSystem() {
 /**
  * Clear All Cache and Reset Authentication
  * This clears all caches, sessions, and forces reauthorization
+ * NUCLEAR OPTION: Clears ALL cached data from Apps Script Properties Service
  */
 function clearAllCacheAndAuth() {
   try {
@@ -200,13 +201,18 @@ function clearAllCacheAndAuth() {
 
     // Confirm action
     const response = ui.alert(
-      'Clear Cache & Reset Auth',
-      'This will:\n' +
-      '• Clear all user caches\n' +
-      '• Clear all script caches\n' +
-      '• Clear all authentication tokens\n' +
-      '• Force reauthorization on next access\n\n' +
-      'This does NOT delete any data from sheets.\n\n' +
+      'Clear ALL Apps Script Cache & Auth',
+      '⚠️ NUCLEAR CACHE CLEAR ⚠️\n\n' +
+      'This will clear EVERYTHING cached in Apps Script:\n' +
+      '• ALL CacheService data (user, script, document)\n' +
+      '• ALL Script Properties (stored configurations)\n' +
+      '• ALL User Properties (user-specific settings)\n' +
+      '• ALL authentication tokens\n' +
+      '• Force complete reauthorization\n\n' +
+      '✓ Sheet data is preserved (not affected)\n' +
+      '✓ Spreadsheet connection will be re-established\n\n' +
+      'This solves issues where old cached data persists\n' +
+      'even after deploying new versions.\n\n' +
       'Continue?',
       ui.ButtonSet.YES_NO
     );
@@ -215,89 +221,140 @@ function clearAllCacheAndAuth() {
       return;
     }
 
-    // Clear all caches
+    let clearedItems = [];
+
+    // 1. Clear ALL CacheService caches
     try {
       CacheService.getUserCache().removeAll([]);
+      clearedItems.push('✓ User cache');
       Logger.log('User cache cleared');
     } catch (e) {
       Logger.log('Error clearing user cache: ' + e.message);
+      clearedItems.push('✗ User cache: ' + e.message);
     }
 
     try {
       CacheService.getScriptCache().removeAll([]);
+      clearedItems.push('✓ Script cache');
       Logger.log('Script cache cleared');
     } catch (e) {
       Logger.log('Error clearing script cache: ' + e.message);
+      clearedItems.push('✗ Script cache: ' + e.message);
     }
 
     try {
       CacheService.getDocumentCache().removeAll([]);
+      clearedItems.push('✓ Document cache');
       Logger.log('Document cache cleared');
     } catch (e) {
       Logger.log('Error clearing document cache: ' + e.message);
+      clearedItems.push('✗ Document cache: ' + e.message);
     }
 
-    // Clear all session-related properties
+    // 2. Clear ALL Script Properties (and log what we're clearing)
     try {
       const scriptProperties = PropertiesService.getScriptProperties();
       const allProperties = scriptProperties.getProperties();
-      const sessionKeys = [];
+      const propertyKeys = Object.keys(allProperties);
 
-      // Find all session/auth related keys
-      for (const key in allProperties) {
-        if (key.includes('session_') || key.includes('token_') || key.includes('auth_')) {
-          sessionKeys.push(key);
+      if (propertyKeys.length > 0) {
+        Logger.log('Clearing ALL Script Properties: ' + propertyKeys.join(', '));
+
+        // Delete ALL properties
+        scriptProperties.deleteAllProperties();
+
+        clearedItems.push('✓ ALL Script Properties (' + propertyKeys.length + ' items)');
+        Logger.log('Cleared ' + propertyKeys.length + ' script properties: ' + propertyKeys.join(', '));
+
+        // Re-establish spreadsheet connection
+        try {
+          const ss = SpreadsheetApp.getActiveSpreadsheet();
+          scriptProperties.setProperty('SPREADSHEET_ID', ss.getId());
+          clearedItems.push('✓ Spreadsheet reconnected');
+          Logger.log('Spreadsheet ID re-established: ' + ss.getId());
+        } catch (e) {
+          Logger.log('Warning: Could not re-establish spreadsheet ID: ' + e.message);
         }
-      }
-
-      // Delete session keys
-      if (sessionKeys.length > 0) {
-        scriptProperties.deleteAllProperties(sessionKeys);
-        Logger.log('Cleared ' + sessionKeys.length + ' session properties');
+      } else {
+        clearedItems.push('ℹ Script Properties were already empty');
       }
     } catch (e) {
-      Logger.log('Error clearing session properties: ' + e.message);
+      Logger.log('Error clearing script properties: ' + e.message);
+      clearedItems.push('✗ Script Properties: ' + e.message);
     }
 
-    // Clear user properties
+    // 3. Clear ALL User Properties
     try {
-      PropertiesService.getUserProperties().deleteAllProperties();
-      Logger.log('User properties cleared');
+      const userProps = PropertiesService.getUserProperties();
+      const allUserProps = userProps.getProperties();
+      const userPropKeys = Object.keys(allUserProps);
+
+      if (userPropKeys.length > 0) {
+        Logger.log('Clearing ALL User Properties: ' + userPropKeys.join(', '));
+        userProps.deleteAllProperties();
+        clearedItems.push('✓ ALL User Properties (' + userPropKeys.length + ' items)');
+        Logger.log('Cleared ' + userPropKeys.length + ' user properties');
+      } else {
+        clearedItems.push('ℹ User Properties were already empty');
+      }
     } catch (e) {
       Logger.log('Error clearing user properties: ' + e.message);
+      clearedItems.push('✗ User Properties: ' + e.message);
     }
 
     // Log the action
-    logAction(
-      getActiveUserEmail(),
-      'System',
-      'ClearCache',
-      'All caches and authentication cleared',
-      '',
-      '',
-      ''
-    );
+    try {
+      logAction(
+        getActiveUserEmail(),
+        'System',
+        'NuclearCacheClear',
+        'NUCLEAR: All Apps Script caches and properties cleared',
+        '',
+        '',
+        clearedItems.join('\n')
+      );
+    } catch (e) {
+      Logger.log('Could not log action (expected if audit trail has issues): ' + e.message);
+    }
 
+    // Show detailed results
     ui.alert(
-      'Cache & Auth Cleared',
-      '✓ All caches cleared\n' +
-      '✓ Authentication tokens removed\n' +
-      '✓ Session data cleared\n\n' +
-      'IMPORTANT: Users need to:\n' +
-      '1. Close all browser tabs with the app\n' +
-      '2. Clear browser cache (Ctrl+Shift+Delete)\n' +
-      '3. Reopen the app and log in again\n\n' +
-      'For fresh deployment, redeploy the web app with a new version.',
+      '🧹 Apps Script Cache Completely Cleared',
+      'CLEARED FROM APPS SCRIPT:\n' +
+      clearedItems.join('\n') + '\n\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
+      'NEXT STEPS:\n\n' +
+      '1️⃣ DEPLOY NEW VERSION:\n' +
+      '   • In Apps Script Editor\n' +
+      '   • Click "Deploy" > "Manage deployments"\n' +
+      '   • Edit your web app deployment\n' +
+      '   • Select "NEW VERSION"\n' +
+      '   • Click "Deploy"\n\n' +
+      '2️⃣ USERS MUST:\n' +
+      '   • Close ALL browser tabs with the app\n' +
+      '   • Clear browser cache (Ctrl+Shift+Delete)\n' +
+      '   • Use the NEW deployment URL\n' +
+      '   • Log in again (reauthorize)\n\n' +
+      '3️⃣ If still having issues:\n' +
+      '   • Wait 5-10 minutes for Google servers to sync\n' +
+      '   • Try in Incognito/Private browsing mode',
       ui.ButtonSet.OK
     );
 
   } catch (error) {
-    logError('clearAllCacheAndAuth', error);
-    SpreadsheetApp.getUi().alert(
-      'Clear Cache Error',
-      'Error clearing cache: ' + error.message,
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
+    Logger.log('CRITICAL ERROR in clearAllCacheAndAuth: ' + error.message);
+    Logger.log(error.stack);
+
+    try {
+      SpreadsheetApp.getUi().alert(
+        'Clear Cache Error',
+        'Error clearing cache: ' + error.message + '\n\n' +
+        'Check Execution Log (View > Logs) for details.',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+    } catch (e) {
+      Logger.log('Could not show error alert: ' + e.message);
+    }
   }
 }
 
