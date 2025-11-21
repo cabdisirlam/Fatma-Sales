@@ -1,5 +1,5 @@
 /**
- * INVENTORY MANAGEMENT SYSTEM - MAIN CODE FILE
+ * BEIPOA SYSTEM - MAIN CODE FILE
  * Contains: Web App Entry Points, Authentication, Utility Functions
  */
 
@@ -13,7 +13,7 @@
 function doGet(e) {
   try {
     return HtmlService.createHtmlOutputFromFile('nIndex')
-      .setTitle('Inventory Management System')
+      .setTitle('BeiPoa System')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   } catch (error) {
@@ -128,28 +128,87 @@ function getSheetHeaders(sheetName) {
 
 /**
  * Authenticates a user with email and PIN
+ * Enhanced with comprehensive error logging and diagnostics
  */
 function authenticate(email, pin) {
+  const startTime = new Date();
+  const logPrefix = '[AUTH ' + startTime.toISOString() + ']';
+
   try {
+    Logger.log(logPrefix + ' Authentication attempt started');
+    Logger.log(logPrefix + ' Email: ' + email);
+
     // Validate PIN format (must be 4 digits)
     if (!pin || pin.toString().length !== CONFIG.PIN_LENGTH) {
+      const errorMsg = 'PIN must be exactly ' + CONFIG.PIN_LENGTH + ' digits';
+      Logger.log(logPrefix + ' FAILED: ' + errorMsg);
+      logAction('SYSTEM', 'Authentication', 'Failed Login', 'Invalid PIN format for email: ' + email, '', '', '');
       return {
         success: false,
-        message: 'PIN must be exactly ' + CONFIG.PIN_LENGTH + ' digits'
+        message: errorMsg,
+        debugInfo: 'PIN validation failed'
       };
     }
 
     // Validate email is provided
     if (!email || email.trim() === '') {
+      const errorMsg = 'Email is required';
+      Logger.log(logPrefix + ' FAILED: ' + errorMsg);
       return {
         success: false,
-        message: 'Email is required'
+        message: errorMsg,
+        debugInfo: 'Email validation failed'
       };
     }
 
-    const sheet = getSheet('Users');
-    const data = sheet.getDataRange().getValues();
+    // Try to get Users sheet
+    Logger.log(logPrefix + ' Attempting to access Users sheet...');
+    let sheet;
+    try {
+      sheet = getSheet('Users');
+      Logger.log(logPrefix + ' Successfully accessed Users sheet');
+    } catch (sheetError) {
+      Logger.log(logPrefix + ' FAILED: Cannot access Users sheet - ' + sheetError.message);
+      logError('authenticate - getSheet', sheetError);
+      return {
+        success: false,
+        message: 'System configuration error: Cannot access Users sheet. Please contact administrator.',
+        debugInfo: 'Users sheet not accessible: ' + sheetError.message,
+        technicalDetails: sheetError.stack
+      };
+    }
+
+    // Try to read data from sheet
+    Logger.log(logPrefix + ' Reading user data from sheet...');
+    let data;
+    try {
+      data = sheet.getDataRange().getValues();
+      Logger.log(logPrefix + ' Successfully read ' + data.length + ' rows from Users sheet');
+    } catch (readError) {
+      Logger.log(logPrefix + ' FAILED: Cannot read Users sheet - ' + readError.message);
+      logError('authenticate - getData', readError);
+      return {
+        success: false,
+        message: 'System error: Cannot read user data. Please contact administrator.',
+        debugInfo: 'Data read failed: ' + readError.message,
+        technicalDetails: readError.stack
+      };
+    }
+
+    // Check if sheet has headers
+    if (data.length < 1) {
+      Logger.log(logPrefix + ' FAILED: Users sheet is empty (no headers)');
+      logAction('SYSTEM', 'Authentication', 'Failed Login', 'Users sheet is empty - no headers found', '', '', '');
+      return {
+        success: false,
+        message: 'System not initialized: No user data found. Please run "Setup BeiPoa System" from the menu.',
+        debugInfo: 'Users sheet has no data',
+        recommendation: 'Run "🏪 BeiPoa System" > "⚡ Setup BeiPoa System" from the spreadsheet menu'
+      };
+    }
+
     const headers = data[0];
+    Logger.log(logPrefix + ' Headers found: ' + headers.join(', '));
 
     // Find email, username, and PIN column indices
     const emailCol = headers.indexOf('Email');
@@ -158,65 +217,141 @@ function authenticate(email, pin) {
     const statusCol = headers.indexOf('Status');
     const roleCol = headers.indexOf('Role');
 
+    // Validate that all required columns exist
+    if (emailCol === -1 || usernameCol === -1 || pinCol === -1 || statusCol === -1) {
+      Logger.log(logPrefix + ' FAILED: Missing required columns in Users sheet');
+      Logger.log(logPrefix + ' Email column: ' + emailCol + ', Username: ' + usernameCol + ', PIN: ' + pinCol + ', Status: ' + statusCol);
+      return {
+        success: false,
+        message: 'System configuration error: Users sheet is missing required columns. Please run system setup.',
+        debugInfo: 'Missing columns - Email: ' + emailCol + ', Username: ' + usernameCol + ', PIN: ' + pinCol + ', Status: ' + statusCol,
+        recommendation: 'Run "🏪 BeiPoa System" > "⚡ Setup BeiPoa System" from the spreadsheet menu'
+      };
+    }
+
+    Logger.log(logPrefix + ' All required columns found');
+    Logger.log(logPrefix + ' Searching for user with email: ' + email);
+    Logger.log(logPrefix + ' Total users in database: ' + (data.length - 1));
+
+    // Check if there are any users
+    if (data.length <= 1) {
+      Logger.log(logPrefix + ' FAILED: No users in database');
+      logAction('SYSTEM', 'Authentication', 'Failed Login', 'No users found in system for email: ' + email, '', '', '');
+      return {
+        success: false,
+        message: 'No users found in system. Please run "Setup BeiPoa System" to create the default admin user.',
+        debugInfo: 'Users sheet has headers but no data rows',
+        recommendation: 'Run "🏪 BeiPoa System" > "⚡ Setup BeiPoa System" from the spreadsheet menu'
+      };
+    }
+
     // Search for user by email
+    let userFound = false;
+    let emailMatch = false;
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
 
-      if (row[emailCol] && row[emailCol].toLowerCase() === email.toLowerCase() &&
-          row[pinCol].toString() === pin.toString()) {
-        if (row[statusCol] !== 'Active') {
-          return {
-            success: false,
-            message: 'User account is inactive. Please contact administrator.'
-          };
-        }
+      // Check if email matches
+      if (row[emailCol] && row[emailCol].toLowerCase() === email.toLowerCase()) {
+        emailMatch = true;
+        Logger.log(logPrefix + ' Found user with matching email at row ' + (i + 1));
 
-        const username = row[usernameCol];
+        // Check PIN
+        if (row[pinCol].toString() === pin.toString()) {
+          Logger.log(logPrefix + ' PIN matches');
 
-        // Generate session ID and token
-        const sessionId = generateSessionId();
-        const token = generateAuthToken(email);
-
-        // Store session in cache (valid for 8 hours)
-        const cache = CacheService.getUserCache();
-        cache.put(token, JSON.stringify({
-          username: username,
-          email: email,
-          sessionId: sessionId,
-          loginTime: new Date().getTime()
-        }), 28800); // 8 hours in seconds
-
-        // Log successful login
-        logAudit(username, 'Authentication', 'Login', 'User logged in successfully with email: ' + email, sessionId, '', '');
-
-        // Return user data
-        const userData = {};
-        headers.forEach((header, index) => {
-          if (header !== 'PIN') { // Don't send PIN back
-            userData[header] = row[index];
+          // Check status
+          if (row[statusCol] !== 'Active') {
+            Logger.log(logPrefix + ' FAILED: User account is inactive. Status: ' + row[statusCol]);
+            logAction(email, 'Authentication', 'Failed Login', 'Attempted login with inactive account', '', '', '');
+            return {
+              success: false,
+              message: 'User account is inactive. Please contact administrator.',
+              debugInfo: 'User status: ' + row[statusCol]
+            };
           }
-        });
 
-        return {
-          success: true,
-          user: userData,
-          sessionId: sessionId,
-          token: token
-        };
+          const username = row[usernameCol];
+          Logger.log(logPrefix + ' User authenticated successfully: ' + username);
+
+          // Generate session ID and token
+          const sessionId = generateSessionId();
+          const token = generateAuthToken(email);
+
+          // Store session in cache (valid for 8 hours)
+          try {
+            const cache = CacheService.getUserCache();
+            cache.put(token, JSON.stringify({
+              username: username,
+              email: email,
+              sessionId: sessionId,
+              loginTime: new Date().getTime()
+            }), 28800); // 8 hours in seconds
+            Logger.log(logPrefix + ' Session cached successfully');
+          } catch (cacheError) {
+            Logger.log(logPrefix + ' WARNING: Could not cache session - ' + cacheError.message);
+            // Continue anyway, just log the warning
+          }
+
+          // Log successful login
+          logAudit(username, 'Authentication', 'Login', 'User logged in successfully with email: ' + email, sessionId, '', '');
+
+          // Return user data
+          const userData = {};
+          headers.forEach((header, index) => {
+            if (header !== 'PIN') { // Don't send PIN back
+              userData[header] = row[index];
+            }
+          });
+
+          const duration = new Date() - startTime;
+          Logger.log(logPrefix + ' SUCCESS: Authentication completed in ' + duration + 'ms');
+
+          return {
+            success: true,
+            user: userData,
+            sessionId: sessionId,
+            token: token
+          };
+        } else {
+          Logger.log(logPrefix + ' FAILED: PIN does not match for user');
+          logAction(email, 'Authentication', 'Failed Login', 'Incorrect PIN attempt for email: ' + email, '', '', '');
+        }
       }
     }
 
-    // Invalid credentials
-    return {
-      success: false,
-      message: 'Invalid email or PIN'
-    };
+    // User not found or wrong credentials
+    if (emailMatch) {
+      Logger.log(logPrefix + ' FAILED: Email found but PIN incorrect');
+      return {
+        success: false,
+        message: 'Invalid PIN',
+        debugInfo: 'Email found in database but PIN does not match'
+      };
+    } else {
+      Logger.log(logPrefix + ' FAILED: Email not found in database');
+      Logger.log(logPrefix + ' Checked ' + (data.length - 1) + ' users');
+      return {
+        success: false,
+        message: 'Email not registered in system',
+        debugInfo: 'Email not found among ' + (data.length - 1) + ' registered users',
+        recommendation: 'Check your email address or contact administrator to create an account'
+      };
+    }
 
   } catch (error) {
+    const duration = new Date() - startTime;
+    Logger.log(logPrefix + ' EXCEPTION after ' + duration + 'ms: ' + error.message);
+    Logger.log(logPrefix + ' Stack trace: ' + error.stack);
     logError('authenticate', error);
+    logAction('SYSTEM', 'Authentication', 'Error', 'Authentication exception for email: ' + email + ' - ' + error.message, '', '', error.stack);
+
     return {
       success: false,
-      message: 'Authentication error: ' + error.message
+      message: 'Authentication system error. Please try again or contact administrator.',
+      debugInfo: 'Exception: ' + error.message,
+      technicalDetails: error.stack,
+      recommendation: 'Try running "🔍 Check System Health" from the BeiPoa System menu'
     };
   }
 }
