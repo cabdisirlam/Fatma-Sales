@@ -91,16 +91,49 @@ The Fatma Sales Management System has been reorganized from **16 sheets to 9 she
 2. The new 9-sheet structure will be created automatically
 3. All sheets will be properly formatted and initialized
 
-### For Existing Installations
-**WARNING**: This reorganization requires data migration. Before running the new setup:
+### For Existing Installations ⭐ USE THIS
 
-1. **Backup your data**: Export all sheets to CSV or make a copy of the spreadsheet
-2. **Document current data**: Note the number of records in each sheet
-3. **Plan migration**: You'll need to write migration scripts to:
-   - Merge Sales_Data and Sales_Items into new Sales sheet
-   - Merge Purchases and Purchase_Items into new Purchases sheet
-   - Merge Customer_Transactions, Financials, and Expenses into new Financials sheet
-   - Move Expense_Categories to Settings sheet
+**IMPORTANT**: This reorganization will delete old sheets. Your Users sheet will be preserved.
+
+#### Step-by-Step Instructions:
+
+1. **Backup your data first!**
+   - File → Make a copy (save it as "Fatma System - Backup")
+   - Or download as Excel/CSV files
+
+2. **Open the Script Editor**
+   - In your Google Sheet: Extensions → Apps Script
+
+3. **Run the reorganization function**
+   - In the Script Editor, find the file: `kWorkbookManager.gs`
+   - Locate the function: `reorganizeExistingSheetsToV2()`
+   - Click the "Run" button (▶️) at the top
+   - Authorize the script if prompted
+
+4. **Confirm the reorganization**
+   - A dialog will appear showing what will be kept/deleted
+   - Click "Yes" to proceed
+   - The script will:
+     - ✅ Keep your Users sheet (with existing data)
+     - ✅ Keep Suppliers, Customers, Inventory (if they have data)
+     - ✅ Create new Sales, Purchases, Financials sheets
+     - ❌ Delete old sheets: Sales_Data, Sales_Items, Purchase_Items, Quotations, Quotation_Items, Customer_Transactions, Expenses, Expense_Categories
+
+5. **Verify the results**
+   - You should now have exactly 9 sheets
+   - Your Users data is preserved
+   - New empty sheets are ready for data
+
+6. **What happens to old data?**
+   - Users sheet: **Data preserved**
+   - Suppliers, Customers, Inventory: **Preserved if they have data**
+   - All other sheets: **Deleted** (that's why backup is important!)
+
+#### After Reorganization
+
+The new sheets (Sales, Purchases, Financials) will be **empty**. You'll need to:
+- Start fresh with new data, OR
+- Manually migrate data from your backup if needed
 
 ## Code Changes
 

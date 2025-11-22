@@ -7,7 +7,214 @@
  * 2. The system will automatically create a new spreadsheet named "Fatma System"
  * 3. All required sheets will be created and formatted
  * 4. Default admin user will be created (email: cabdisirlam@gmail.com, username: Cabdisirlam, PIN: 2020)
+ *
+ * To reorganize existing workbook to v2.0:
+ * 1. Run the function: reorganizeExistingSheetsToV2()
+ * 2. This will keep your Users sheet data
+ * 3. Reorganize from 16 sheets to 9 sheets
  */
+
+/**
+ * REORGANIZE EXISTING WORKBOOK TO VERSION 2.0 (9-SHEET STRUCTURE)
+ *
+ * This function reorganizes your existing workbook from 16 sheets to 9 sheets.
+ * It preserves your Users sheet data and creates the new merged structure.
+ *
+ * What it does:
+ * - Keeps: Users (with data), Suppliers, Customers, Inventory
+ * - Creates new: Sales (merged), Purchases (merged), Financials (merged)
+ * - Deletes old: Sales_Data, Sales_Items, Purchases (old), Purchase_Items,
+ *                Quotations, Quotation_Items, Customer_Transactions,
+ *                Expenses, Expense_Categories
+ * - Updates: Audit_Trail, Settings (adds expense categories)
+ *
+ * IMPORTANT: This will DELETE old sheets. Make sure to backup your data first!
+ */
+function reorganizeExistingSheetsToV2() {
+  try {
+    const ss = getSpreadsheet();
+    Logger.log('=== Starting Workbook Reorganization to v2.0 ===');
+    Logger.log('Current workbook: ' + ss.getName());
+
+    // Show confirmation dialog
+    const ui = SpreadsheetApp.getUi();
+    const response = ui.alert(
+      'Reorganize to 9-Sheet Structure?',
+      'This will reorganize your workbook from 16 sheets to 9 sheets.\n\n' +
+      'KEPT (with data): Users\n' +
+      'RECREATED: Suppliers, Customers, Inventory, Audit_Trail, Settings\n' +
+      'NEW MERGED: Sales, Purchases, Financials\n' +
+      'DELETED: Sales_Data, Sales_Items, Purchase_Items, Quotations, Quotation_Items, Customer_Transactions, Expenses, Expense_Categories\n\n' +
+      '⚠️ WARNING: Old sheets will be deleted!\n' +
+      'Make sure you have backed up your data.\n\n' +
+      'Continue?',
+      ui.ButtonSet.YES_NO
+    );
+
+    if (response !== ui.Button.YES) {
+      Logger.log('User cancelled reorganization');
+      ui.alert('Reorganization cancelled');
+      return { success: false, message: 'Cancelled by user' };
+    }
+
+    Logger.log('User confirmed reorganization');
+
+    // Step 1: Delete old sheets that are no longer needed
+    const sheetsToDelete = [
+      'Sales_Data', 'Sales_Items', 'Purchase_Items',
+      'Quotations', 'Quotation_Items', 'Customer_Transactions',
+      'Expenses', 'Expense_Categories'
+    ];
+
+    Logger.log('Step 1: Deleting old sheets...');
+    sheetsToDelete.forEach(sheetName => {
+      try {
+        const sheet = ss.getSheetByName(sheetName);
+        if (sheet) {
+          ss.deleteSheet(sheet);
+          Logger.log('  ✓ Deleted: ' + sheetName);
+        } else {
+          Logger.log('  - Not found: ' + sheetName);
+        }
+      } catch (e) {
+        Logger.log('  ✗ Error deleting ' + sheetName + ': ' + e.message);
+      }
+    });
+
+    // Step 2: Recreate/update unchanged sheets (they might have old structure)
+    Logger.log('Step 2: Recreating core sheets...');
+
+    // Only recreate if they don't exist or are empty
+    const usersSheet = ss.getSheetByName('Users');
+    if (!usersSheet || usersSheet.getLastRow() <= 1) {
+      createUsersSheet();
+      Logger.log('  ✓ Created Users sheet');
+    } else {
+      Logger.log('  - Kept existing Users sheet (has data)');
+    }
+
+    // Recreate Suppliers (will preserve if has data)
+    const suppliersSheet = ss.getSheetByName('Suppliers');
+    if (!suppliersSheet || suppliersSheet.getLastRow() <= 1) {
+      createSuppliersSheet();
+      Logger.log('  ✓ Created Suppliers sheet');
+    } else {
+      Logger.log('  - Kept existing Suppliers sheet (has data)');
+    }
+
+    // Recreate Customers
+    const customersSheet = ss.getSheetByName('Customers');
+    if (!customersSheet || customersSheet.getLastRow() <= 1) {
+      createCustomersSheet();
+      Logger.log('  ✓ Created Customers sheet');
+    } else {
+      Logger.log('  - Kept existing Customers sheet (has data)');
+    }
+
+    // Recreate Inventory
+    const inventorySheet = ss.getSheetByName('Inventory');
+    if (!inventorySheet || inventorySheet.getLastRow() <= 1) {
+      createInventorySheet();
+      Logger.log('  ✓ Created Inventory sheet');
+    } else {
+      Logger.log('  - Kept existing Inventory sheet (has data)');
+    }
+
+    // Step 3: Create new merged sheets
+    Logger.log('Step 3: Creating new merged sheets...');
+    createSalesSheet();
+    Logger.log('  ✓ Created Sales sheet (merged structure)');
+
+    // Delete old Purchases if it exists, then create new one
+    const oldPurchases = ss.getSheetByName('Purchases');
+    if (oldPurchases) {
+      ss.deleteSheet(oldPurchases);
+      Logger.log('  ✓ Deleted old Purchases sheet');
+    }
+    createPurchasesSheet();
+    Logger.log('  ✓ Created Purchases sheet (merged structure)');
+
+    // Delete old Financials if it exists, then create new one
+    const oldFinancials = ss.getSheetByName('Financials');
+    if (oldFinancials) {
+      ss.deleteSheet(oldFinancials);
+      Logger.log('  ✓ Deleted old Financials sheet');
+    }
+    createFinancialsSheet();
+    Logger.log('  ✓ Created Financials sheet (merged structure)');
+
+    // Step 4: Update Audit_Trail and Settings
+    Logger.log('Step 4: Updating Audit_Trail and Settings...');
+
+    const auditSheet = ss.getSheetByName('Audit_Trail');
+    if (!auditSheet || auditSheet.getLastRow() <= 1) {
+      createAuditTrailSheet();
+      Logger.log('  ✓ Created Audit_Trail sheet');
+    } else {
+      Logger.log('  - Kept existing Audit_Trail sheet (has data)');
+    }
+
+    // Always recreate Settings to add expense categories
+    const oldSettings = ss.getSheetByName('Settings');
+    if (oldSettings) {
+      ss.deleteSheet(oldSettings);
+    }
+    createSettingsSheet();
+    Logger.log('  ✓ Created Settings sheet (with expense categories)');
+
+    // Step 5: Set active sheet to Users
+    const finalUsersSheet = ss.getSheetByName('Users');
+    if (finalUsersSheet) {
+      ss.setActiveSheet(finalUsersSheet);
+    }
+
+    Logger.log('=== Reorganization Complete! ===');
+    Logger.log('New structure: 9 sheets');
+    Logger.log('Spreadsheet URL: ' + ss.getUrl());
+
+    // Show success message
+    ui.alert(
+      'Success!',
+      'Workbook reorganized to 9-sheet structure (v2.0)\n\n' +
+      'New sheets created:\n' +
+      '✓ Sales (merged: Sales_Data + Sales_Items + Quotations + Quotation_Items)\n' +
+      '✓ Purchases (merged: Purchases + Purchase_Items)\n' +
+      '✓ Financials (merged: Customer_Transactions + Financials + Expenses)\n' +
+      '✓ Settings (now includes expense categories)\n\n' +
+      'Old sheets deleted:\n' +
+      '✗ Sales_Data, Sales_Items, Purchase_Items\n' +
+      '✗ Quotations, Quotation_Items, Customer_Transactions\n' +
+      '✗ Expenses, Expense_Categories\n\n' +
+      'Your Users sheet data has been preserved!\n\n' +
+      'Note: You now have empty sheets that need to be populated with data.',
+      ui.ButtonSet.OK
+    );
+
+    return {
+      success: true,
+      spreadsheetId: ss.getId(),
+      spreadsheetUrl: ss.getUrl(),
+      message: 'Workbook reorganized to 9-sheet structure successfully'
+    };
+
+  } catch (error) {
+    Logger.log('ERROR in reorganizeExistingSheetsToV2: ' + error.message);
+    Logger.log(error.stack);
+
+    try {
+      SpreadsheetApp.getUi().alert(
+        'Error',
+        'Failed to reorganize workbook: ' + error.message + '\n\n' +
+        'Check the logs for more details.',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+    } catch (e) {
+      // UI not available
+    }
+
+    return { success: false, message: error.message };
+  }
+}
 
 /**
  * Easy-to-use function to create and setup Fatma System
