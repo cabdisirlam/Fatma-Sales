@@ -183,23 +183,17 @@ function createSheet(sheetName) {
 
 /**
  * Returns headers for each sheet type
+ * Updated for new 9-sheet reorganized structure
  */
 function getSheetHeaders(sheetName) {
   const headerMap = {
-    'Inventory': ['Item_ID', 'Item_Name', 'Category', 'Cost_Price', 'Selling_Price', 'Current_Qty', 'Reorder_Level', 'Supplier', 'Last_Updated', 'Updated_By'],
-    'Sales_Data': ['Sale_ID', 'DateTime', 'Customer_ID', 'Customer_Name', 'Subtotal', 'Delivery_Charge', 'Discount', 'Grand_Total', 'Payment_Mode', 'Sold_By', 'Location', 'KRA_PIN', 'Status'],
-    'Sales_Items': ['Sale_ID', 'Item_ID', 'Item_Name', 'Qty', 'Unit_Price', 'Line_Total'],
-    'Customers': ['Customer_ID', 'Customer_Name', 'Phone', 'Email', 'Location', 'KRA_PIN', 'Customer_Type', 'Credit_Limit', 'Current_Balance', 'Total_Purchases', 'Last_Purchase_Date', 'Loyalty_Points', 'Status', 'Created_Date', 'Created_By'],
-    'Customer_Transactions': ['Transaction_ID', 'Customer_ID', 'Date', 'Type', 'Reference', 'Amount', 'Balance', 'Description', 'User'],
-    'Quotations': ['Quote_ID', 'Date', 'Customer_ID', 'Customer_Name', 'Valid_Until', 'Subtotal', 'Delivery', 'Discount', 'Total', 'Status', 'Prepared_By', 'Converted_Sale_ID'],
-    'Quotation_Items': ['Quote_ID', 'Item_ID', 'Item_Name', 'Qty', 'Unit_Price', 'Line_Total'],
-    'Suppliers': ['Supplier_ID', 'Supplier_Name', 'Contact_Person', 'Phone', 'Email', 'Address', 'Total_Purchased', 'Total_Paid', 'Current_Balance', 'Payment_Terms', 'Status'],
-    'Purchases': ['Purchase_ID', 'Date', 'Supplier_ID', 'Supplier_Name', 'Total_Amount', 'Payment_Status', 'Payment_Method', 'Paid_Amount', 'Balance', 'Recorded_By'],
-    'Purchase_Items': ['Purchase_ID', 'Item_ID', 'Item_Name', 'Qty', 'Cost_Price', 'Line_Total'],
-    'Financials': ['DateTime', 'Transaction_ID', 'Type', 'Account', 'Description', 'Debit', 'Credit', 'Balance', 'User', 'Reference'],
-    'Expenses': ['Expense_ID', 'Date', 'Category', 'Description', 'Amount', 'Payment_Method', 'Account', 'Payee', 'Receipt_No', 'Status', 'Approved_By', 'Recorded_By'],
-    'Expense_Categories': ['Category_ID', 'Category_Name', 'Monthly_Budget', 'Status'],
     'Users': ['User_ID', 'Username', 'PIN', 'Role', 'Email', 'Phone', 'Status', 'Created_Date'],
+    'Suppliers': ['Supplier_ID', 'Supplier_Name', 'Contact_Person', 'Phone', 'Email', 'Address', 'Total_Purchased', 'Total_Paid', 'Current_Balance', 'Payment_Terms', 'Status'],
+    'Customers': ['Customer_ID', 'Customer_Name', 'Phone', 'Email', 'Location', 'KRA_PIN', 'Customer_Type', 'Credit_Limit', 'Current_Balance', 'Total_Purchases', 'Last_Purchase_Date', 'Loyalty_Points', 'Status', 'Created_Date', 'Created_By'],
+    'Inventory': ['Item_ID', 'Item_Name', 'Category', 'Cost_Price', 'Selling_Price', 'Current_Qty', 'Reorder_Level', 'Supplier', 'Last_Updated', 'Updated_By'],
+    'Sales': ['Transaction_ID', 'DateTime', 'Type', 'Customer_ID', 'Customer_Name', 'Item_ID', 'Item_Name', 'Qty', 'Unit_Price', 'Line_Total', 'Subtotal', 'Delivery_Charge', 'Discount', 'Grand_Total', 'Payment_Mode', 'Sold_By', 'Location', 'KRA_PIN', 'Status', 'Valid_Until', 'Converted_Sale_ID'],
+    'Purchases': ['Purchase_ID', 'Date', 'Supplier_ID', 'Supplier_Name', 'Item_ID', 'Item_Name', 'Qty', 'Cost_Price', 'Line_Total', 'Total_Amount', 'Payment_Status', 'Payment_Method', 'Paid_Amount', 'Balance', 'Recorded_By'],
+    'Financials': ['Transaction_ID', 'DateTime', 'Type', 'Customer_ID', 'Category', 'Account', 'Description', 'Amount', 'Debit', 'Credit', 'Balance', 'Payment_Method', 'Payee', 'Receipt_No', 'Reference', 'Status', 'Approved_By', 'User'],
     'Audit_Trail': ['Timestamp', 'User', 'Module', 'Action', 'Details', 'Session_ID', 'Before_Value', 'After_Value'],
     'Settings': ['Setting_Key', 'Setting_Value']
   };
@@ -1538,10 +1532,11 @@ function getDashboardData() {
 
 /**
  * Gets today's sales total
+ * Updated for new Sales sheet structure (line items)
  */
 function getTodaySales() {
   try {
-    const sheet = getSheet('Sales_Data');
+    const sheet = getSheet('Sales');
     const data = sheet.getDataRange().getValues();
 
     if (data.length <= 1) return 0;
@@ -1549,18 +1544,28 @@ function getTodaySales() {
     const headers = data[0];
     const dateCol = headers.indexOf('DateTime');
     const totalCol = headers.indexOf('Grand_Total');
+    const transIdCol = headers.indexOf('Transaction_ID');
+    const typeCol = headers.indexOf('Type');
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     let total = 0;
+    const processedIds = new Set(); // Track unique transactions to avoid double counting
 
     for (let i = 1; i < data.length; i++) {
-      const saleDate = new Date(data[i][dateCol]);
-      saleDate.setHours(0, 0, 0, 0);
+      const transId = data[i][transIdCol];
+      const transType = data[i][typeCol];
 
-      if (saleDate.getTime() === today.getTime()) {
-        total += parseFloat(data[i][totalCol]) || 0;
+      // Only count Sales (not Quotations) and only once per transaction ID
+      if (transType === 'Sale' && !processedIds.has(transId)) {
+        const saleDate = new Date(data[i][dateCol]);
+        saleDate.setHours(0, 0, 0, 0);
+
+        if (saleDate.getTime() === today.getTime()) {
+          total += parseFloat(data[i][totalCol]) || 0;
+          processedIds.add(transId);
+        }
       }
     }
 
@@ -1661,18 +1666,20 @@ function getLowStockCount() {
 
 /**
  * Gets today's expenses total
+ * Updated for new Financials sheet structure
  */
 function getTodayExpenses() {
   try {
-    const sheet = getSheet('Expenses');
+    const sheet = getSheet('Financials');
     const data = sheet.getDataRange().getValues();
 
     if (data.length <= 1) return 0;
 
     const headers = data[0];
-    const dateCol = headers.indexOf('Date');
+    const dateCol = headers.indexOf('DateTime');
     const amountCol = headers.indexOf('Amount');
     const statusCol = headers.indexOf('Status');
+    const typeCol = headers.indexOf('Type');
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -1680,11 +1687,17 @@ function getTodayExpenses() {
     let total = 0;
 
     for (let i = 1; i < data.length; i++) {
-      const expenseDate = new Date(data[i][dateCol]);
-      expenseDate.setHours(0, 0, 0, 0);
+      const transType = data[i][typeCol];
 
-      if (expenseDate.getTime() === today.getTime() && data[i][statusCol] === 'Approved') {
-        total += parseFloat(data[i][amountCol]) || 0;
+      // Only count Expense transactions
+      if (transType === 'Expense') {
+        const expenseDate = new Date(data[i][dateCol]);
+        expenseDate.setHours(0, 0, 0, 0);
+
+        if (expenseDate.getTime() === today.getTime() &&
+            (data[i][statusCol] === 'Approved' || data[i][statusCol] === '')) {
+          total += parseFloat(data[i][amountCol]) || 0;
+        }
       }
     }
 
@@ -1698,16 +1711,28 @@ function getTodayExpenses() {
 
 /**
  * Gets recent sales
+ * Updated for new Sales sheet structure (deduplicates line items)
  */
 function getRecentSales(limit) {
   try {
-    const sales = sheetToObjects('Sales_Data', null);
+    const sales = sheetToObjects('Sales', null);
+
+    // Filter to only Sales (not Quotations) and deduplicate by Transaction_ID
+    const uniqueSales = [];
+    const seenIds = new Set();
+
+    for (const sale of sales) {
+      if (sale.Type === 'Sale' && !seenIds.has(sale.Transaction_ID)) {
+        uniqueSales.push(sale);
+        seenIds.add(sale.Transaction_ID);
+      }
+    }
 
     // Sort by date descending
-    sales.sort((a, b) => new Date(b.DateTime) - new Date(a.DateTime));
+    uniqueSales.sort((a, b) => new Date(b.DateTime) - new Date(a.DateTime));
 
     // Return limited results
-    return sales.slice(0, limit || 10);
+    return uniqueSales.slice(0, limit || 10);
 
   } catch (error) {
     logError('getRecentSales', error);
@@ -1741,30 +1766,13 @@ function initializeSheets() {
 
 /**
  * Initializes default expense categories
+ * Updated: Expense categories are now stored in Settings sheet
+ * This function is kept for backward compatibility but is now a no-op
  */
 function initializeExpenseCategories() {
-  try {
-    const sheet = getSheet('Expense_Categories');
-    const data = sheet.getDataRange().getValues();
-
-    if (data.length > 1) return; // Already have categories
-
-    const categories = [
-      ['CAT-001', 'Rent', 0, 'Active'],
-      ['CAT-002', 'Utilities', 0, 'Active'],
-      ['CAT-003', 'Salaries', 0, 'Active'],
-      ['CAT-004', 'Transport', 0, 'Active'],
-      ['CAT-005', 'Marketing', 0, 'Active'],
-      ['CAT-006', 'Supplies', 0, 'Active'],
-      ['CAT-007', 'Maintenance', 0, 'Active'],
-      ['CAT-008', 'Other', 0, 'Active']
-    ];
-
-    categories.forEach(cat => sheet.appendRow(cat));
-
-  } catch (error) {
-    logError('initializeExpenseCategories', error);
-  }
+  // Expense categories are now initialized as part of the Settings sheet
+  // See createSettingsSheet() in kWorkbookManager.gs
+  Logger.log('Expense categories are now part of Settings sheet');
 }
 
 /**

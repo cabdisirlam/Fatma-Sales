@@ -140,29 +140,23 @@ function initializeWorkbook() {
 
 /**
  * Initializes all sheets with proper formatting
+ * New simplified 9-sheet structure
  */
 function initializeAllSheets() {
-  Logger.log('Initializing all sheets...');
+  Logger.log('Initializing all sheets (9-sheet reorganized structure)...');
 
   // Create all sheets in order
   createUsersSheet();
   createSuppliersSheet();
   createCustomersSheet();
   createInventorySheet();
-  createSalesDataSheet();
-  createSalesItemsSheet();
-  createPurchasesSheet();
-  createPurchaseItemsSheet();
-  createQuotationsSheet();
-  createQuotationItemsSheet();
-  createCustomerTransactionsSheet();
-  createFinancialsSheet();
-  createExpensesSheet();
-  createExpenseCategoriesSheet();
+  createSalesSheet();          // Merged: Sales + Quotations with line items
+  createPurchasesSheet();      // Merged: Purchases with line items
+  createFinancialsSheet();     // Merged: All financial transactions
   createAuditTrailSheet();
-  createSettingsSheet();
+  createSettingsSheet();       // Now includes Expense Categories
 
-  Logger.log('All sheets initialized!');
+  Logger.log('All 9 sheets initialized!');
 }
 
 /**
@@ -311,69 +305,60 @@ function createInventorySheet() {
 }
 
 /**
- * Create Sales_Data sheet
+ * Create Sales sheet (merged: Sales_Data + Sales_Items + Quotations + Quotation_Items)
+ * Each row represents a line item from a sale or quotation
  */
-function createSalesDataSheet() {
-  const sheet = getOrCreateSheet(CONFIG.SHEETS.SALES_DATA);
+function createSalesSheet() {
+  const sheet = getOrCreateSheet(CONFIG.SHEETS.SALES);
   sheet.clear();
 
-  const headers = ['Sale_ID', 'DateTime', 'Customer_ID', 'Customer_Name', 'Subtotal',
-                   'Delivery_Charge', 'Discount', 'Grand_Total', 'Payment_Mode',
-                   'Sold_By', 'Location', 'KRA_PIN', 'Status'];
+  const headers = ['Transaction_ID', 'DateTime', 'Type', 'Customer_ID', 'Customer_Name',
+                   'Item_ID', 'Item_Name', 'Qty', 'Unit_Price', 'Line_Total',
+                   'Subtotal', 'Delivery_Charge', 'Discount', 'Grand_Total',
+                   'Payment_Mode', 'Sold_By', 'Location', 'KRA_PIN', 'Status',
+                   'Valid_Until', 'Converted_Sale_ID'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 
   formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
 
-  sheet.setColumnWidth(1, 100);  // Sale_ID
+  sheet.setColumnWidth(1, 120);  // Transaction_ID
   sheet.setColumnWidth(2, 150);  // DateTime
-  sheet.setColumnWidth(3, 120);  // Customer_ID
-  sheet.setColumnWidth(4, 180);  // Customer_Name
-  sheet.setColumnWidth(5, 120);  // Subtotal
-  sheet.setColumnWidth(6, 130);  // Delivery_Charge
-  sheet.setColumnWidth(7, 100);  // Discount
-  sheet.setColumnWidth(8, 120);  // Grand_Total
-  sheet.setColumnWidth(9, 130);  // Payment_Mode
-  sheet.setColumnWidth(10, 120); // Sold_By
-  sheet.setColumnWidth(11, 150); // Location
-  sheet.setColumnWidth(12, 120); // KRA_PIN
-  sheet.setColumnWidth(13, 100); // Status
+  sheet.setColumnWidth(3, 100);  // Type (Sale/Quotation)
+  sheet.setColumnWidth(4, 120);  // Customer_ID
+  sheet.setColumnWidth(5, 180);  // Customer_Name
+  sheet.setColumnWidth(6, 100);  // Item_ID
+  sheet.setColumnWidth(7, 250);  // Item_Name
+  sheet.setColumnWidth(8, 80);   // Qty
+  sheet.setColumnWidth(9, 120);  // Unit_Price
+  sheet.setColumnWidth(10, 120); // Line_Total
+  sheet.setColumnWidth(11, 120); // Subtotal
+  sheet.setColumnWidth(12, 130); // Delivery_Charge
+  sheet.setColumnWidth(13, 100); // Discount
+  sheet.setColumnWidth(14, 120); // Grand_Total
+  sheet.setColumnWidth(15, 130); // Payment_Mode
+  sheet.setColumnWidth(16, 120); // Sold_By
+  sheet.setColumnWidth(17, 150); // Location
+  sheet.setColumnWidth(18, 120); // KRA_PIN
+  sheet.setColumnWidth(19, 100); // Status
+  sheet.setColumnWidth(20, 150); // Valid_Until
+  sheet.setColumnWidth(21, 150); // Converted_Sale_ID
 
-  Logger.log('Created Sales_Data sheet');
+  Logger.log('Created Sales sheet (merged structure)');
   return sheet;
 }
 
 /**
- * Create Sales_Items sheet
- */
-function createSalesItemsSheet() {
-  const sheet = getOrCreateSheet(CONFIG.SHEETS.SALES_ITEMS);
-  sheet.clear();
-
-  const headers = ['Sale_ID', 'Item_ID', 'Item_Name', 'Qty', 'Unit_Price', 'Line_Total'];
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-
-  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
-
-  sheet.setColumnWidth(1, 100); // Sale_ID
-  sheet.setColumnWidth(2, 100); // Item_ID
-  sheet.setColumnWidth(3, 250); // Item_Name
-  sheet.setColumnWidth(4, 80);  // Qty
-  sheet.setColumnWidth(5, 120); // Unit_Price
-  sheet.setColumnWidth(6, 120); // Line_Total
-
-  Logger.log('Created Sales_Items sheet');
-  return sheet;
-}
-
-/**
- * Create Purchases sheet
+ * Create Purchases sheet (merged: Purchases + Purchase_Items)
+ * Each row represents a line item from a purchase order
  */
 function createPurchasesSheet() {
   const sheet = getOrCreateSheet(CONFIG.SHEETS.PURCHASES);
   sheet.clear();
 
-  const headers = ['Purchase_ID', 'Date', 'Supplier_ID', 'Supplier_Name', 'Total_Amount',
-                   'Payment_Status', 'Payment_Method', 'Paid_Amount', 'Balance', 'Recorded_By'];
+  const headers = ['Purchase_ID', 'Date', 'Supplier_ID', 'Supplier_Name',
+                   'Item_ID', 'Item_Name', 'Qty', 'Cost_Price', 'Line_Total',
+                   'Total_Amount', 'Payment_Status', 'Payment_Method',
+                   'Paid_Amount', 'Balance', 'Recorded_By'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 
   formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
@@ -382,198 +367,58 @@ function createPurchasesSheet() {
   sheet.setColumnWidth(2, 150);  // Date
   sheet.setColumnWidth(3, 120);  // Supplier_ID
   sheet.setColumnWidth(4, 200);  // Supplier_Name
-  sheet.setColumnWidth(5, 130);  // Total_Amount
-  sheet.setColumnWidth(6, 140);  // Payment_Status
-  sheet.setColumnWidth(7, 140);  // Payment_Method
-  sheet.setColumnWidth(8, 130);  // Paid_Amount
-  sheet.setColumnWidth(9, 120);  // Balance
-  sheet.setColumnWidth(10, 120); // Recorded_By
+  sheet.setColumnWidth(5, 100);  // Item_ID
+  sheet.setColumnWidth(6, 250);  // Item_Name
+  sheet.setColumnWidth(7, 80);   // Qty
+  sheet.setColumnWidth(8, 120);  // Cost_Price
+  sheet.setColumnWidth(9, 120);  // Line_Total
+  sheet.setColumnWidth(10, 130); // Total_Amount
+  sheet.setColumnWidth(11, 140); // Payment_Status
+  sheet.setColumnWidth(12, 140); // Payment_Method
+  sheet.setColumnWidth(13, 130); // Paid_Amount
+  sheet.setColumnWidth(14, 120); // Balance
+  sheet.setColumnWidth(15, 120); // Recorded_By
 
-  Logger.log('Created Purchases sheet');
+  Logger.log('Created Purchases sheet (merged structure)');
   return sheet;
 }
 
 /**
- * Create Purchase_Items sheet
- */
-function createPurchaseItemsSheet() {
-  const sheet = getOrCreateSheet(CONFIG.SHEETS.PURCHASE_ITEMS);
-  sheet.clear();
-
-  const headers = ['Purchase_ID', 'Item_ID', 'Item_Name', 'Qty', 'Cost_Price', 'Line_Total'];
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-
-  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
-
-  sheet.setColumnWidth(1, 120); // Purchase_ID
-  sheet.setColumnWidth(2, 100); // Item_ID
-  sheet.setColumnWidth(3, 250); // Item_Name
-  sheet.setColumnWidth(4, 80);  // Qty
-  sheet.setColumnWidth(5, 120); // Cost_Price
-  sheet.setColumnWidth(6, 120); // Line_Total
-
-  Logger.log('Created Purchase_Items sheet');
-  return sheet;
-}
-
-/**
- * Create Quotations sheet
- */
-function createQuotationsSheet() {
-  const sheet = getOrCreateSheet(CONFIG.SHEETS.QUOTATIONS);
-  sheet.clear();
-
-  const headers = ['Quote_ID', 'Date', 'Customer_ID', 'Customer_Name', 'Valid_Until',
-                   'Subtotal', 'Delivery', 'Discount', 'Total', 'Status',
-                   'Prepared_By', 'Converted_Sale_ID'];
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-
-  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
-
-  sheet.setColumnWidth(1, 100);  // Quote_ID
-  sheet.setColumnWidth(2, 150);  // Date
-  sheet.setColumnWidth(3, 120);  // Customer_ID
-  sheet.setColumnWidth(4, 180);  // Customer_Name
-  sheet.setColumnWidth(5, 150);  // Valid_Until
-  sheet.setColumnWidth(6, 120);  // Subtotal
-  sheet.setColumnWidth(7, 100);  // Delivery
-  sheet.setColumnWidth(8, 100);  // Discount
-  sheet.setColumnWidth(9, 120);  // Total
-  sheet.setColumnWidth(10, 100); // Status
-  sheet.setColumnWidth(11, 120); // Prepared_By
-  sheet.setColumnWidth(12, 150); // Converted_Sale_ID
-
-  Logger.log('Created Quotations sheet');
-  return sheet;
-}
-
-/**
- * Create Quotation_Items sheet
- */
-function createQuotationItemsSheet() {
-  const sheet = getOrCreateSheet(CONFIG.SHEETS.QUOTATION_ITEMS);
-  sheet.clear();
-
-  const headers = ['Quote_ID', 'Item_ID', 'Item_Name', 'Qty', 'Unit_Price', 'Line_Total'];
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-
-  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
-
-  sheet.setColumnWidth(1, 100); // Quote_ID
-  sheet.setColumnWidth(2, 100); // Item_ID
-  sheet.setColumnWidth(3, 250); // Item_Name
-  sheet.setColumnWidth(4, 80);  // Qty
-  sheet.setColumnWidth(5, 120); // Unit_Price
-  sheet.setColumnWidth(6, 120); // Line_Total
-
-  Logger.log('Created Quotation_Items sheet');
-  return sheet;
-}
-
-/**
- * Create Customer_Transactions sheet
- */
-function createCustomerTransactionsSheet() {
-  const sheet = getOrCreateSheet(CONFIG.SHEETS.CUSTOMER_TRANSACTIONS);
-  sheet.clear();
-
-  const headers = ['Transaction_ID', 'Customer_ID', 'Date', 'Type', 'Reference',
-                   'Amount', 'Balance', 'Description', 'User'];
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-
-  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
-
-  sheet.setColumnWidth(1, 140); // Transaction_ID
-  sheet.setColumnWidth(2, 120); // Customer_ID
-  sheet.setColumnWidth(3, 150); // Date
-  sheet.setColumnWidth(4, 120); // Type
-  sheet.setColumnWidth(5, 120); // Reference
-  sheet.setColumnWidth(6, 120); // Amount
-  sheet.setColumnWidth(7, 120); // Balance
-  sheet.setColumnWidth(8, 250); // Description
-  sheet.setColumnWidth(9, 120); // User
-
-  Logger.log('Created Customer_Transactions sheet');
-  return sheet;
-}
-
-/**
- * Create Financials sheet
+ * Create Financials sheet (merged: Customer_Transactions + Financials + Expenses)
+ * Universal transaction sheet for all financial movements
  */
 function createFinancialsSheet() {
   const sheet = getOrCreateSheet(CONFIG.SHEETS.FINANCIALS);
   sheet.clear();
 
-  const headers = ['DateTime', 'Transaction_ID', 'Type', 'Account', 'Description',
-                   'Debit', 'Credit', 'Balance', 'User', 'Reference'];
+  const headers = ['Transaction_ID', 'DateTime', 'Type', 'Customer_ID', 'Category',
+                   'Account', 'Description', 'Amount', 'Debit', 'Credit', 'Balance',
+                   'Payment_Method', 'Payee', 'Receipt_No', 'Reference',
+                   'Status', 'Approved_By', 'User'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 
   formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
 
-  sheet.setColumnWidth(1, 150);  // DateTime
-  sheet.setColumnWidth(2, 140);  // Transaction_ID
-  sheet.setColumnWidth(3, 120);  // Type
-  sheet.setColumnWidth(4, 120);  // Account
-  sheet.setColumnWidth(5, 250);  // Description
-  sheet.setColumnWidth(6, 120);  // Debit
-  sheet.setColumnWidth(7, 120);  // Credit
-  sheet.setColumnWidth(8, 120);  // Balance
-  sheet.setColumnWidth(9, 120);  // User
-  sheet.setColumnWidth(10, 140); // Reference
+  sheet.setColumnWidth(1, 140);  // Transaction_ID
+  sheet.setColumnWidth(2, 150);  // DateTime
+  sheet.setColumnWidth(3, 150);  // Type (Customer_Payment/Cash_In/Cash_Out/Bank/M-PESA/Expense)
+  sheet.setColumnWidth(4, 120);  // Customer_ID
+  sheet.setColumnWidth(5, 150);  // Category (for expenses)
+  sheet.setColumnWidth(6, 120);  // Account (Cash/Bank/M-PESA)
+  sheet.setColumnWidth(7, 250);  // Description
+  sheet.setColumnWidth(8, 120);  // Amount
+  sheet.setColumnWidth(9, 120);  // Debit
+  sheet.setColumnWidth(10, 120); // Credit
+  sheet.setColumnWidth(11, 120); // Balance
+  sheet.setColumnWidth(12, 140); // Payment_Method
+  sheet.setColumnWidth(13, 150); // Payee
+  sheet.setColumnWidth(14, 120); // Receipt_No
+  sheet.setColumnWidth(15, 140); // Reference
+  sheet.setColumnWidth(16, 100); // Status
+  sheet.setColumnWidth(17, 120); // Approved_By
+  sheet.setColumnWidth(18, 120); // User
 
-  Logger.log('Created Financials sheet');
-  return sheet;
-}
-
-/**
- * Create Expenses sheet
- */
-function createExpensesSheet() {
-  const sheet = getOrCreateSheet(CONFIG.SHEETS.EXPENSES);
-  sheet.clear();
-
-  const headers = ['Expense_ID', 'Date', 'Category', 'Description', 'Amount',
-                   'Payment_Method', 'Account', 'Payee', 'Receipt_No', 'Status',
-                   'Approved_By', 'Recorded_By'];
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-
-  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
-
-  sheet.setColumnWidth(1, 120);  // Expense_ID
-  sheet.setColumnWidth(2, 150);  // Date
-  sheet.setColumnWidth(3, 150);  // Category
-  sheet.setColumnWidth(4, 250);  // Description
-  sheet.setColumnWidth(5, 120);  // Amount
-  sheet.setColumnWidth(6, 140);  // Payment_Method
-  sheet.setColumnWidth(7, 120);  // Account
-  sheet.setColumnWidth(8, 150);  // Payee
-  sheet.setColumnWidth(9, 120);  // Receipt_No
-  sheet.setColumnWidth(10, 100); // Status
-  sheet.setColumnWidth(11, 120); // Approved_By
-  sheet.setColumnWidth(12, 120); // Recorded_By
-
-  Logger.log('Created Expenses sheet');
-  return sheet;
-}
-
-/**
- * Create Expense_Categories sheet
- */
-function createExpenseCategoriesSheet() {
-  const sheet = getOrCreateSheet(CONFIG.SHEETS.EXPENSE_CATEGORIES);
-  sheet.clear();
-
-  const headers = ['Category_ID', 'Category_Name', 'Monthly_Budget', 'Status'];
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-
-  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
-
-  sheet.setColumnWidth(1, 120); // Category_ID
-  sheet.setColumnWidth(2, 200); // Category_Name
-  sheet.setColumnWidth(3, 150); // Monthly_Budget
-  sheet.setColumnWidth(4, 100); // Status
-
-  Logger.log('Created Expense_Categories sheet');
+  Logger.log('Created Financials sheet (merged structure)');
   return sheet;
 }
 
@@ -604,7 +449,7 @@ function createAuditTrailSheet() {
 }
 
 /**
- * Create Settings sheet
+ * Create Settings sheet (now includes Expense Categories)
  */
 function createSettingsSheet() {
   const sheet = getOrCreateSheet(CONFIG.SHEETS.SETTINGS);
@@ -618,7 +463,7 @@ function createSettingsSheet() {
   sheet.setColumnWidth(1, 250); // Setting_Key
   sheet.setColumnWidth(2, 350); // Setting_Value
 
-  // Add default settings
+  // Add default settings including expense categories
   const settings = [
     ['Shop_Name', CONFIG.SHOP_NAME],
     ['Admin_Email', CONFIG.ADMIN_EMAIL],
@@ -628,15 +473,25 @@ function createSettingsSheet() {
     ['Timezone', 'Africa/Mogadishu'],
     ['PIN_Length', CONFIG.PIN_LENGTH],
     ['Use_Token_Auth', CONFIG.USE_TOKEN_AUTH],
-    ['System_Version', '1.0.0'],
+    ['System_Version', '2.0.0'],
     ['Last_Updated', new Date()],
-    ['Initialized_By', CONFIG.ADMIN_EMAIL]
+    ['Initialized_By', CONFIG.ADMIN_EMAIL],
+    ['', ''],  // Separator
+    ['=== EXPENSE CATEGORIES ===', ''],
+    ['Expense_Category_Rent', '50000'],
+    ['Expense_Category_Utilities', '15000'],
+    ['Expense_Category_Salaries', '100000'],
+    ['Expense_Category_Marketing', '20000'],
+    ['Expense_Category_Supplies', '10000'],
+    ['Expense_Category_Transport', '15000'],
+    ['Expense_Category_Maintenance', '10000'],
+    ['Expense_Category_Other', '10000']
   ];
 
   if (sheet.getLastRow() === 1) {
     sheet.getRange(2, 1, settings.length, 2).setValues(settings);
   }
 
-  Logger.log('Created Settings sheet');
+  Logger.log('Created Settings sheet (with expense categories)');
   return sheet;
 }

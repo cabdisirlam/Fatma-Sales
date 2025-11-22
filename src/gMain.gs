@@ -228,12 +228,10 @@ function checkSystemHealth() {
       issues.push('✗ Cannot connect to spreadsheet: ' + e.message);
     }
 
-    // 2. Check all required sheets exist
+    // 2. Check all required sheets exist (9-sheet reorganized structure)
     const requiredSheets = [
-      'Users', 'Customers', 'Suppliers', 'Inventory',
-      'Sales_Data', 'Sales_Items', 'Purchases', 'Purchase_Items',
-      'Quotations', 'Quotation_Items', 'Customer_Transactions',
-      'Financials', 'Expenses', 'Expense_Categories',
+      'Users', 'Suppliers', 'Customers', 'Inventory',
+      'Sales', 'Purchases', 'Financials',
       'Audit_Trail', 'Settings'
     ];
 
