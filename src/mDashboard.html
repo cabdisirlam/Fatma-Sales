@@ -1892,6 +1892,8 @@
       const container = document.getElementById('section-inventory');
       if (!container) return;
 
+      const getStockQty = (item) => (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
+
       let html = `
         <div class="row mb-4">
           <div class="col-md-3">
@@ -1903,19 +1905,19 @@
           <div class="col-md-3">
             <div class="stat-card">
               <h6>Low Stock</h6>
-              <h3 class="text-warning">${data.filter(i => i.Stock_Qty > 0 && i.Stock_Qty <= (i.Reorder_Level || 10)).length}</h3>
+              <h3 class="text-warning">${data.filter(i => getStockQty(i) > 0 && getStockQty(i) <= (i.Reorder_Level || 10)).length}</h3>
             </div>
           </div>
           <div class="col-md-3">
             <div class="stat-card">
               <h6>Out of Stock</h6>
-              <h3 class="text-danger">${data.filter(i => i.Stock_Qty <= 0).length}</h3>
+              <h3 class="text-danger">${data.filter(i => getStockQty(i) <= 0).length}</h3>
             </div>
           </div>
           <div class="col-md-3">
             <div class="stat-card">
               <h6>Total Value</h6>
-              <h3>${formatCurrency(data.reduce((sum, i) => sum + (i.Stock_Qty * i.Cost_Price || 0), 0))}</h3>
+              <h3>${formatCurrency(data.reduce((sum, i) => sum + (getStockQty(i) * i.Cost_Price || 0), 0))}</h3>
             </div>
           </div>
         </div>
@@ -1944,9 +1946,11 @@
       } else {
         data.slice(0, 50).forEach(function(item) {
           let statusBadge = '';
-          if (item.Stock_Qty <= 0) {
+          const stockQty = getStockQty(item);
+
+          if (stockQty <= 0) {
             statusBadge = '<span class="badge bg-danger">Out of Stock</span>';
-          } else if (item.Stock_Qty <= (item.Reorder_Level || 10)) {
+          } else if (stockQty <= (item.Reorder_Level || 10)) {
             statusBadge = '<span class="badge bg-warning text-dark">Low Stock</span>';
           } else {
             statusBadge = '<span class="badge bg-success">In Stock</span>';
@@ -1957,7 +1961,7 @@
               <td>${item.Item_ID || ''}</td>
               <td><strong>${item.Item_Name || ''}</strong></td>
               <td>${item.Category || ''}</td>
-              <td>${item.Stock_Qty || 0}</td>
+              <td>${stockQty}</td>
               <td>${item.Unit || ''}</td>
               <td>${formatCurrency(item.Cost_Price)}</td>
               <td>${formatCurrency(item.Selling_Price)}</td>

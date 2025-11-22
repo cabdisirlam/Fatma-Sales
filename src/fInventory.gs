@@ -30,6 +30,9 @@ function getInventory(filters) {
         item[header] = row[index];
       });
 
+      // Backwards compatibility: expose Stock_Qty for UIs expecting this field
+      item.Stock_Qty = item.Current_Qty;
+
       // Apply filters if provided
       if (filters) {
         let matches = true;
@@ -66,6 +69,9 @@ function getInventoryItemById(itemId) {
     if (!item) {
       throw new Error('Product not found: ' + itemId);
     }
+
+    // Backwards compatibility: expose Stock_Qty for UIs expecting this field
+    item.Stock_Qty = item.Current_Qty;
 
     item.stock_status = getStockStatus(item.Current_Qty, item.Reorder_Level);
     item.stock_value = (item.Current_Qty || 0) * (item.Cost_Price || 0);
