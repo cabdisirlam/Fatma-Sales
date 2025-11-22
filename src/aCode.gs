@@ -910,15 +910,16 @@ function resetUserPin(email, newPin) {
 }
 
 /**
- * Creates default admin user if no users exist
+ * Creates default admin users if no users exist
  */
 function createDefaultAdmin() {
   try {
     const sheet = getSheet('Users');
-    const userId = generateId('Users', 'User_ID', 'USR');
 
-    const userData = [
-      userId,
+    // Create Cabdisirlam admin user
+    const userId1 = generateId('Users', 'User_ID', 'USR');
+    const userData1 = [
+      userId1,
       'Cabdisirlam', // Username derived from email
       '2020', // Default PIN
       'Admin',
@@ -927,10 +928,23 @@ function createDefaultAdmin() {
       'Active',
       new Date()
     ];
-
-    sheet.appendRow(userData);
-
+    sheet.appendRow(userData1);
     Logger.log('Default admin user created. Email: cabdisirlam@gmail.com, PIN: 2020');
+
+    // Create generic Admin user
+    const userId2 = generateId('Users', 'User_ID', 'USR');
+    const userData2 = [
+      userId2,
+      'Admin', // Generic admin username
+      '1234', // Default PIN
+      'Admin',
+      'admin@fatma.com',
+      '',
+      'Active',
+      new Date()
+    ];
+    sheet.appendRow(userData2);
+    Logger.log('Admin user created. Email: admin@fatma.com, PIN: 1234');
 
   } catch (error) {
     logError('createDefaultAdmin', error);
