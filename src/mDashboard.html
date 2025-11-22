@@ -682,8 +682,8 @@
         </a>
       </li>
 
-      <!-- User Management with submenu (visible, controlled by role) -->
-      <li class="menu-item has-submenu" id="userManagementMenu">
+      <!-- User Management with submenu (hidden by default, shown for Admin role) -->
+      <li class="menu-item has-submenu" id="userManagementMenu" style="display: none;">
         <a href="#" onclick="handleMenuClick('userManagementMenu', 'users-list', event)">
           <i class="bi bi-person-plus-fill"></i>
           <span>User Management</span>
