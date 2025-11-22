@@ -90,7 +90,8 @@
     .menu-items {
       list-style: none;
       padding: 0;
-      flex-grow: 1;
+      flex: 1 1 auto;
+      min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
     }
@@ -682,8 +683,8 @@
         </a>
       </li>
 
-      <!-- User Management with submenu (hidden by default, shown for Admin role) -->
-      <li class="menu-item has-submenu" id="userManagementMenu" style="display: none;">
+      <!-- User Management with submenu -->
+      <li class="menu-item has-submenu" id="userManagementMenu">
         <a href="#" onclick="handleMenuClick('userManagementMenu', 'users-list', event)">
           <i class="bi bi-person-plus-fill"></i>
           <span>User Management</span>
