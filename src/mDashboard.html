@@ -34,6 +34,25 @@
       transition: all 0.3s ease;
       z-index: 1000;
       box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.3);
+      border-radius: 3px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.5);
     }
 
     .sidebar.collapsed {
@@ -347,29 +366,186 @@
       display: block;
     }
 
+    /* Navigation Buttons */
+    .navigation-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding: 15px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .nav-btn i {
+      font-size: 18px;
+    }
+
+    /* Hamburger Menu Button */
+    .hamburger-btn {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1002;
+      width: 45px;
+      height: 45px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+    }
+
+    .hamburger-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* Mobile Menu Overlay */
+    .menu-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .menu-overlay.active {
+      display: block;
+      opacity: 1;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
-      .sidebar {
-        width: 80px;
+      .hamburger-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
-      .sidebar .menu-item span,
-      .sidebar .sidebar-header h3,
-      .sidebar .sidebar-header p {
-        display: none;
+      .sidebar {
+        position: fixed;
+        left: -100%;
+        width: 280px;
+        transition: left 0.3s ease;
+        z-index: 1000;
+      }
+
+      .sidebar.mobile-open {
+        left: 0;
       }
 
       .main-content {
-        margin-left: 80px;
+        margin-left: 0;
+        padding: 80px 15px 20px;
       }
 
       .toggle-btn {
         display: none;
       }
+
+      .top-bar {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+      }
+
+      .top-bar h2 {
+        font-size: 20px;
+      }
+
+      .user-profile {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .navigation-controls {
+        flex-direction: row;
+        gap: 10px;
+      }
+
+      .nav-btn {
+        flex: 1;
+        justify-content: center;
+        font-size: 14px;
+        padding: 10px 15px;
+      }
+
+      .nav-btn span {
+        display: none;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hamburger-btn {
+        width: 40px;
+        height: 40px;
+        top: 15px;
+        left: 15px;
+      }
+
+      .main-content {
+        padding: 70px 10px 15px;
+      }
+
+      .top-bar h2 {
+        font-size: 18px;
+      }
+
+      .nav-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Hamburger Menu Button -->
+  <button class="hamburger-btn" onclick="toggleMobileMenu()" id="hamburgerBtn">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Menu Overlay -->
+  <div class="menu-overlay" id="menuOverlay" onclick="closeMobileMenu()"></div>
+
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <button class="toggle-btn" onclick="toggleSidebar()">
@@ -592,6 +768,18 @@
           </div>
         </div>
       </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Sales Sections -->
@@ -602,6 +790,18 @@
         <hr>
         <p>New sale form will be loaded here...</p>
       </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
     <div class="content-section" id="section-sales-history">
@@ -610,6 +810,18 @@
         <p class="text-muted">View and manage past sales transactions</p>
         <hr>
         <p>Sales history table will be loaded here...</p>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
 
@@ -620,6 +832,18 @@
         <hr>
         <p>Sales returns module will be loaded here...</p>
       </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
     <div class="content-section" id="section-sales-reports">
@@ -628,6 +852,18 @@
         <p class="text-muted">View detailed sales analytics and reports</p>
         <hr>
         <p>Sales reports and analytics will be loaded here...</p>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
 
@@ -639,6 +875,18 @@
         <hr>
         <p>Inventory module content will be loaded here...</p>
       </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Customers Section -->
@@ -648,6 +896,18 @@
         <p class="text-muted">Manage your customer database</p>
         <hr>
         <p>Customer module content will be loaded here...</p>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
 
@@ -659,6 +919,18 @@
         <hr>
         <p>Product module content will be loaded here...</p>
       </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Quotations Section -->
@@ -668,6 +940,18 @@
         <p class="text-muted">Create and manage price quotations</p>
         <hr>
         <p>Quotations module content will be loaded here...</p>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
 
@@ -679,6 +963,18 @@
         <hr>
         <p>Financial module content will be loaded here...</p>
       </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Reports Section -->
@@ -688,6 +984,18 @@
         <p class="text-muted">View detailed reports and analytics</p>
         <hr>
         <p>Reports module content will be loaded here...</p>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
 
@@ -699,6 +1007,18 @@
         <hr>
         <p>Suppliers list and management will be loaded here...</p>
       </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
     <div class="content-section" id="section-suppliers-add">
@@ -707,6 +1027,18 @@
         <p class="text-muted">Register a new supplier</p>
         <hr>
         <p>Add supplier form will be loaded here...</p>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
 
@@ -717,6 +1049,18 @@
         <hr>
         <p>Purchase orders management will be loaded here...</p>
       </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
     <div class="content-section" id="section-suppliers-payments">
@@ -725,6 +1069,18 @@
         <p class="text-muted">Track and manage payments to suppliers</p>
         <hr>
         <p>Supplier payments tracking will be loaded here...</p>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
 
@@ -739,6 +1095,18 @@
           <i class="bi bi-people-fill"></i> Open User Management
         </button>
       </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
     <div class="content-section" id="section-users-add">
@@ -747,6 +1115,18 @@
         <p class="text-muted">Create a new user account</p>
         <hr>
         <p>Add user form will be loaded here...</p>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
 
@@ -757,6 +1137,18 @@
         <hr>
         <p>User roles management will be loaded here...</p>
       </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
     <div class="content-section" id="section-users-permissions">
@@ -765,6 +1157,18 @@
         <p class="text-muted">Configure user permissions and access control</p>
         <hr>
         <p>User permissions configuration will be loaded here...</p>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
 
@@ -775,6 +1179,18 @@
         <p class="text-muted">Configure your system preferences</p>
         <hr>
         <p>Settings module content will be loaded here...</p>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
   </main>
@@ -910,6 +1326,109 @@
       }
     }
 
+    // Mobile menu functions
+    function toggleMobileMenu() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('menuOverlay');
+      const hamburger = document.getElementById('hamburgerBtn');
+
+      sidebar.classList.toggle('mobile-open');
+      overlay.classList.toggle('active');
+
+      // Change icon
+      const icon = hamburger.querySelector('i');
+      if (sidebar.classList.contains('mobile-open')) {
+        icon.className = 'bi bi-x';
+      } else {
+        icon.className = 'bi bi-list';
+      }
+    }
+
+    function closeMobileMenu() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('menuOverlay');
+      const hamburger = document.getElementById('hamburgerBtn');
+
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('active');
+
+      // Reset icon
+      const icon = hamburger.querySelector('i');
+      icon.className = 'bi bi-list';
+    }
+
+    // Section navigation
+    const sectionOrder = [
+      'dashboard',
+      'sales-new',
+      'sales-history',
+      'sales-returns',
+      'sales-reports',
+      'inventory',
+      'customers',
+      'products',
+      'quotations',
+      'financials',
+      'reports',
+      'suppliers-list',
+      'suppliers-add',
+      'suppliers-orders',
+      'suppliers-payments',
+      'users-list',
+      'users-add',
+      'users-roles',
+      'users-permissions',
+      'settings'
+    ];
+
+    function getCurrentSectionIndex() {
+      const activeSection = document.querySelector('.content-section.active');
+      if (activeSection) {
+        const sectionId = activeSection.id.replace('section-', '');
+        return sectionOrder.indexOf(sectionId);
+      }
+      return 0;
+    }
+
+    function navigateToNext() {
+      const currentIndex = getCurrentSectionIndex();
+      if (currentIndex < sectionOrder.length - 1) {
+        showSection(sectionOrder[currentIndex + 1]);
+        updateNavigationButtons();
+        closeMobileMenu();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function navigateToPrevious() {
+      const currentIndex = getCurrentSectionIndex();
+      if (currentIndex > 0) {
+        showSection(sectionOrder[currentIndex - 1]);
+        updateNavigationButtons();
+        closeMobileMenu();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function updateNavigationButtons() {
+      const currentIndex = getCurrentSectionIndex();
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+
+      if (prevBtn && nextBtn) {
+        prevBtn.disabled = currentIndex === 0;
+        nextBtn.disabled = currentIndex === sectionOrder.length - 1;
+      }
+    }
+
+    // Override showSection to close mobile menu and update navigation
+    const originalShowSection = showSection;
+    showSection = function(sectionName) {
+      originalShowSection.call(this, sectionName);
+      closeMobileMenu();
+      updateNavigationButtons();
+    };
+
     // Auto-initialize on page load
     window.addEventListener('DOMContentLoaded', function() {
       const userName = sessionStorage.getItem('userName');
@@ -917,6 +1436,7 @@
       if (userName && userRole) {
         initDashboard(userName, userRole);
       }
+      updateNavigationButtons();
     });
   </script>
 </body>
