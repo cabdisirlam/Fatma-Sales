@@ -9,8 +9,11 @@
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
 
+  // Check if current user has Admin role (case-sensitive)
+  const userIsAdmin = isUserAdmin();
+
   // Create custom menu
-  ui.createMenu('🏪 Fatma System')
+  const menu = ui.createMenu('🏪 Fatma System')
     .addItem('⚡ Setup Fatma System', 'setupFatmaSystem')
     .addItem('🔄 Refresh System', 'refreshSystem')
     .addSeparator()
@@ -24,9 +27,14 @@ function onOpen() {
     .addItem('💰 Financials', 'showFinancials')
     .addItem('💳 Expenses', 'showExpenses')
     .addItem('📋 Quotations', 'showQuotations')
-    .addSeparator()
-    .addItem('👤 User Management', 'showUserManagement')
-    .addItem('📈 View Reports', 'showReports')
+    .addSeparator();
+
+  // Only show admin menu items if user has "Admin" role (case-sensitive)
+  if (userIsAdmin) {
+    menu.addItem('👤 User Management', 'showUserManagement');
+  }
+
+  menu.addItem('📈 View Reports', 'showReports')
     .addItem('⚙️ Settings', 'showSettings')
     .addSeparator()
     .addItem('🔍 Check System Health', 'checkSystemHealth')
@@ -135,11 +143,59 @@ function getActiveUserEmail() {
 }
 
 /**
- * Check if user is admin
+ * Check if user is admin (legacy - checks CONFIG.ADMIN_EMAIL)
  */
 function isAdmin() {
   const userEmail = getActiveUserEmail();
   return userEmail === CONFIG.ADMIN_EMAIL;
+}
+
+/**
+ * Get the current user's role from the Users sheet
+ * Returns null if user not found
+ */
+function getCurrentUserRole() {
+  try {
+    const userEmail = getActiveUserEmail();
+    const sheet = getSheet('Users');
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length <= 1) {
+      return null; // No users in sheet
+    }
+
+    const headers = data[0];
+    const emailCol = headers.indexOf('Email');
+    const roleCol = headers.indexOf('Role');
+
+    if (emailCol === -1 || roleCol === -1) {
+      Logger.log('Email or Role column not found in Users sheet');
+      return null;
+    }
+
+    // Search for user by email
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (row[emailCol] && row[emailCol].toLowerCase() === userEmail.toLowerCase()) {
+        // Return role exactly as stored (case-sensitive)
+        return row[roleCol] || null;
+      }
+    }
+
+    return null; // User not found
+  } catch (error) {
+    Logger.log('Error getting user role: ' + error.message);
+    return null;
+  }
+}
+
+/**
+ * Check if current user has Admin role (case-sensitive)
+ */
+function isUserAdmin() {
+  const role = getCurrentUserRole();
+  // Case-sensitive check - role must be exactly "Admin"
+  return role === 'Admin';
 }
 
 /**
