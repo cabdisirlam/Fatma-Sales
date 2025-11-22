@@ -472,24 +472,36 @@ function authenticate(email, pin) {
           // Log successful login
           logAudit(username, 'Authentication', 'Login', 'User logged in successfully with email: ' + email, sessionId, '', '');
 
-          // Return user data
+          // Return user data - ensure all values are serializable
           const userData = {};
           headers.forEach((header, index) => {
             if (header !== 'PIN') { // Don't send PIN back
-              userData[header] = row[index];
+              const value = row[index];
+              // Convert dates to ISO strings, ensure all values are properly serializable
+              if (value instanceof Date) {
+                userData[header] = value.toISOString();
+              } else if (value === null || value === undefined) {
+                userData[header] = '';
+              } else {
+                userData[header] = value;
+              }
             }
           });
 
           const duration = new Date() - startTime;
           Logger.log(logPrefix + ' SUCCESS: Authentication completed in ' + duration + 'ms');
+          Logger.log(logPrefix + ' Returning user data: ' + JSON.stringify(userData));
 
-          return {
+          const result = {
             success: true,
             user: userData,
             sessionId: sessionId,
             token: token,
             timestamp: new Date().toISOString()
           };
+
+          Logger.log(logPrefix + ' Final result object: ' + JSON.stringify(result));
+          return result;
         } else {
           Logger.log(logPrefix + ' FAILED: PIN does not match for user');
           Logger.log(logPrefix + ' Expected PIN: "' + storedPin + '", Got PIN: "' + enteredPin + '"');
@@ -813,12 +825,48 @@ function logout(token) {
  * This is the most basic test - if this returns null, there's a fundamental connection issue
  */
 function testConnection() {
-  return {
-    success: true,
-    message: 'Google Apps Script is responding',
-    timestamp: new Date().toISOString(),
-    test: 'ping'
-  };
+  try {
+    const result = {
+      success: true,
+      message: 'Google Apps Script is responding',
+      timestamp: new Date().toISOString(),
+      test: 'ping',
+      spreadsheetId: getSpreadsheet().getId(),
+      spreadsheetName: getSpreadsheet().getName()
+    };
+    Logger.log('testConnection result: ' + JSON.stringify(result));
+    return result;
+  } catch (error) {
+    Logger.log('testConnection ERROR: ' + error.message);
+    return {
+      success: false,
+      message: 'Error: ' + error.message,
+      timestamp: new Date().toISOString()
+    };
+  }
+}
+
+/**
+ * Test authentication with debugging
+ */
+function testAuth(email, pin) {
+  Logger.log('===== TEST AUTH START =====');
+  Logger.log('Email: ' + email);
+  Logger.log('PIN length: ' + (pin ? pin.toString().length : 0));
+
+  try {
+    const result = authenticate(email, pin);
+    Logger.log('Authentication result: ' + JSON.stringify(result));
+    return result;
+  } catch (error) {
+    Logger.log('Authentication ERROR: ' + error.message);
+    Logger.log(error.stack);
+    return {
+      success: false,
+      message: 'Error: ' + error.message,
+      stack: error.stack
+    };
+  }
 }
 
 /**

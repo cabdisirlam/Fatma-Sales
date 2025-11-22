@@ -223,6 +223,32 @@
             setLoading(false);
 
             console.log('Login response:', response);
+            console.log('Response type:', typeof response);
+            console.log('Response is null:', response === null);
+            console.log('Response is undefined:', response === undefined);
+
+            // Check if response is null or undefined
+            if (response === null || response === undefined) {
+                console.error('CRITICAL: Response is null/undefined - Google Apps Script may not be properly deployed');
+                showAlert('Connection error: No response from server. Please check system configuration.', 'danger');
+
+                // Try to test connection
+                console.log('Testing basic connection...');
+                google.script.run
+                    .withSuccessHandler(function(testResult) {
+                        console.log('Connection test result:', testResult);
+                        if (testResult && testResult.success) {
+                            showAlert('Server is responding but authentication failed. Please check logs.', 'warning');
+                        } else {
+                            showAlert('Server connection issue detected. Contact administrator.', 'danger');
+                        }
+                    })
+                    .withFailureHandler(function(error) {
+                        console.error('Connection test failed:', error);
+                    })
+                    .testConnection();
+                return;
+            }
 
             if (response && response.success) {
                 // Store user data in sessionStorage
@@ -242,6 +268,13 @@
             } else {
                 // Show error message
                 const message = response && response.message ? response.message : 'Login failed';
+                console.log('Login failed with message:', message);
+                if (response && response.debugInfo) {
+                    console.log('Debug info:', response.debugInfo);
+                }
+                if (response && response.technicalDetails) {
+                    console.log('Technical details:', response.technicalDetails);
+                }
                 showAlert(message, 'danger');
             }
         }
