@@ -36,28 +36,34 @@ function reorganizeExistingSheetsToV2() {
     Logger.log('=== Starting Workbook Reorganization to v2.0 ===');
     Logger.log('Current workbook: ' + ss.getName());
 
-    // Show confirmation dialog
-    const ui = SpreadsheetApp.getUi();
-    const response = ui.alert(
-      'Reorganize to 9-Sheet Structure?',
-      'This will reorganize your workbook from 16 sheets to 9 sheets.\n\n' +
-      'KEPT (with data): Users\n' +
-      'RECREATED: Suppliers, Customers, Inventory, Audit_Trail, Settings\n' +
-      'NEW MERGED: Sales, Purchases, Financials\n' +
-      'DELETED: Sales_Data, Sales_Items, Purchase_Items, Quotations, Quotation_Items, Customer_Transactions, Expenses, Expense_Categories\n\n' +
-      '⚠️ WARNING: Old sheets will be deleted!\n' +
-      'Make sure you have backed up your data.\n\n' +
-      'Continue?',
-      ui.ButtonSet.YES_NO
-    );
+    // Try to show confirmation dialog (only if UI is available)
+    let userConfirmed = true; // Default to proceed if UI not available
+    try {
+      const ui = SpreadsheetApp.getUi();
+      const response = ui.alert(
+        'Reorganize to 9-Sheet Structure?',
+        'This will reorganize your workbook from 16 sheets to 9 sheets.\n\n' +
+        'KEPT (with data): Users\n' +
+        'RECREATED: Suppliers, Customers, Inventory, Audit_Trail, Settings\n' +
+        'NEW MERGED: Sales, Purchases, Financials\n' +
+        'DELETED: Sales_Data, Sales_Items, Purchase_Items, Quotations, Quotation_Items, Customer_Transactions, Expenses, Expense_Categories\n\n' +
+        '⚠️ WARNING: Old sheets will be deleted!\n' +
+        'Make sure you have backed up your data.\n\n' +
+        'Continue?',
+        ui.ButtonSet.YES_NO
+      );
 
-    if (response !== ui.Button.YES) {
-      Logger.log('User cancelled reorganization');
-      ui.alert('Reorganization cancelled');
-      return { success: false, message: 'Cancelled by user' };
+      if (response !== ui.Button.YES) {
+        Logger.log('User cancelled reorganization');
+        ui.alert('Reorganization cancelled');
+        return { success: false, message: 'Cancelled by user' };
+      }
+      Logger.log('User confirmed reorganization');
+    } catch (uiError) {
+      // UI not available (triggered programmatically or from a trigger)
+      Logger.log('UI not available - proceeding automatically with reorganization');
+      Logger.log('⚠️ WARNING: Proceeding without user confirmation');
     }
-
-    Logger.log('User confirmed reorganization');
 
     // Step 1: Delete old sheets that are no longer needed
     const sheetsToDelete = [
@@ -172,23 +178,29 @@ function reorganizeExistingSheetsToV2() {
     Logger.log('New structure: 9 sheets');
     Logger.log('Spreadsheet URL: ' + ss.getUrl());
 
-    // Show success message
-    ui.alert(
-      'Success!',
-      'Workbook reorganized to 9-sheet structure (v2.0)\n\n' +
-      'New sheets created:\n' +
-      '✓ Sales (merged: Sales_Data + Sales_Items + Quotations + Quotation_Items)\n' +
-      '✓ Purchases (merged: Purchases + Purchase_Items)\n' +
-      '✓ Financials (merged: Customer_Transactions + Financials + Expenses)\n' +
-      '✓ Settings (now includes expense categories)\n\n' +
-      'Old sheets deleted:\n' +
-      '✗ Sales_Data, Sales_Items, Purchase_Items\n' +
-      '✗ Quotations, Quotation_Items, Customer_Transactions\n' +
-      '✗ Expenses, Expense_Categories\n\n' +
-      'Your Users sheet data has been preserved!\n\n' +
-      'Note: You now have empty sheets that need to be populated with data.',
-      ui.ButtonSet.OK
-    );
+    // Show success message (if UI is available)
+    try {
+      const ui = SpreadsheetApp.getUi();
+      ui.alert(
+        'Success!',
+        'Workbook reorganized to 9-sheet structure (v2.0)\n\n' +
+        'New sheets created:\n' +
+        '✓ Sales (merged: Sales_Data + Sales_Items + Quotations + Quotation_Items)\n' +
+        '✓ Purchases (merged: Purchases + Purchase_Items)\n' +
+        '✓ Financials (merged: Customer_Transactions + Financials + Expenses)\n' +
+        '✓ Settings (now includes expense categories)\n\n' +
+        'Old sheets deleted:\n' +
+        '✗ Sales_Data, Sales_Items, Purchase_Items\n' +
+        '✗ Quotations, Quotation_Items, Customer_Transactions\n' +
+        '✗ Expenses, Expense_Categories\n\n' +
+        'Your Users sheet data has been preserved!\n\n' +
+        'Note: You now have empty sheets that need to be populated with data.',
+        ui.ButtonSet.OK
+      );
+    } catch (uiError) {
+      // UI not available - success message already logged
+      Logger.log('✓ Reorganization completed successfully (UI not available for alert)');
+    }
 
     return {
       success: true,
