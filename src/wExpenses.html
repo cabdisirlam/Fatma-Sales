@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expenses Management</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f6fa;
+      padding: 20px;
+    }
+
+    .header-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .header-section h2 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .header-section p {
+      margin: 10px 0 0 0;
+      opacity: 0.9;
+    }
+
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 15px 15px 0 0 !important;
+      padding: 20px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-success {
+      border-radius: 8px;
+      padding: 10px 20px;
+    }
+
+    .table {
+      margin: 0;
+    }
+
+    .table thead {
+      background: #f8f9fa;
+    }
+
+    .table th {
+      border-bottom: 2px solid #dee2e6;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #e74c3c;
+      margin: 10px 0;
+    }
+
+    .stat-label {
+      color: #7f8c8d;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #7f8c8d;
+    }
+
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    .filter-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 8px;
+    }
+
+    .form-control, .form-select {
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      padding: 10px 15px;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .expense-amount {
+      color: #e74c3c;
+      font-weight: 600;
+    }
+
+    .category-chart {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .category-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #ecf0f1;
+    }
+
+    .category-item:last-child {
+      border-bottom: none;
+    }
+
+    .category-bar {
+      height: 8px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 4px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-section">
+    <h2><i class="bi bi-wallet2"></i> Expenses Management</h2>
+    <p>Record and track your business expenses</p>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row" id="statsSection">
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-label">Today's Expenses</div>
+        <div class="stat-value" id="todayExpenses">$0</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-label">This Month</div>
+        <div class="stat-value" id="monthExpenses">$0</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-label">Total Expenses</div>
+        <div class="stat-value" id="totalExpenses">$0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expense Categories -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="category-chart">
+        <h5 class="mb-3"><i class="bi bi-pie-chart-fill"></i> Expenses by Category</h5>
+        <div id="categoryBreakdown">
+          <!-- Category breakdown will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filter-section">
+    <div class="row">
+      <div class="col-md-3">
+        <label for="dateFrom" class="form-label">From Date</label>
+        <input type="date" class="form-control" id="dateFrom">
+      </div>
+      <div class="col-md-3">
+        <label for="dateTo" class="form-label">To Date</label>
+        <input type="date" class="form-control" id="dateTo">
+      </div>
+      <div class="col-md-2">
+        <label for="categoryFilter" class="form-label">Category</label>
+        <select class="form-select" id="categoryFilter">
+          <option value="">All Categories</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">&nbsp;</label>
+        <button class="btn btn-primary w-100" onclick="loadExpenses()">
+          <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">&nbsp;</label>
+        <button class="btn btn-success w-100" onclick="showAddExpenseForm()">
+          <i class="bi bi-plus-circle"></i> Add New
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Expense Form (Initially Hidden) -->
+  <div class="card" id="addExpenseForm" style="display: none;">
+    <div class="card-header">
+      <i class="bi bi-plus-circle"></i> Record New Expense
+    </div>
+    <div class="card-body">
+      <form id="expenseForm" onsubmit="handleAddExpense(event)">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="expenseCategory" class="form-label">Category *</label>
+            <select class="form-select" id="expenseCategory" required>
+              <option value="">Select Category</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="expenseAmount" class="form-label">Amount *</label>
+            <input type="number" class="form-control" id="expenseAmount" step="0.01" required>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="expenseAccount" class="form-label">Payment Account *</label>
+            <select class="form-select" id="expenseAccount" required>
+              <option value="Cash">Cash</option>
+              <option value="Bank">Bank</option>
+              <option value="Mobile Money">Mobile Money</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="expenseDate" class="form-label">Date *</label>
+            <input type="date" class="form-control" id="expenseDate" required>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label for="expenseDescription" class="form-label">Description</label>
+            <textarea class="form-control" id="expenseDescription" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Record Expense
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="hideAddExpenseForm()">
+            <i class="bi bi-x-circle"></i> Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Expenses Table -->
+  <div class="card">
+    <div class="card-header">
+      <i class="bi bi-list-ul"></i> Expense History
+    </div>
+    <div class="card-body">
+      <div id="loadingIndicator" class="loading">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Loading expenses...</p>
+      </div>
+
+      <div id="expensesTableContainer" style="display: none;">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Account</th>
+                <th>Amount</th>
+                <th>Recorded By</th>
+              </tr>
+            </thead>
+            <tbody id="expensesTableBody">
+              <!-- Data will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="noDataMessage" style="display: none;" class="text-center text-muted py-4">
+        <i class="bi bi-inbox" style="font-size: 48px;"></i>
+        <p class="mt-3">No expenses found</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Load expenses on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set default date range (last 30 days)
+      const today = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+
+      document.getElementById('dateTo').valueAsDate = today;
+      document.getElementById('dateFrom').valueAsDate = thirtyDaysAgo;
+      document.getElementById('expenseDate').valueAsDate = today;
+
+      loadExpenses();
+      loadExpenseCategories();
+    });
+
+    let expensesData = [];
+
+    function loadExpenses() {
+      document.getElementById('loadingIndicator').style.display = 'block';
+      document.getElementById('expensesTableContainer').style.display = 'none';
+      document.getElementById('noDataMessage').style.display = 'none';
+
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+      const category = document.getElementById('categoryFilter').value;
+
+      const filters = {
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        category: category
+      };
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          expensesData = data;
+          displayExpenses(data);
+          updateStats(data);
+          updateCategoryBreakdown(data);
+          document.getElementById('loadingIndicator').style.display = 'none';
+        })
+        .withFailureHandler(function(error) {
+          document.getElementById('loadingIndicator').innerHTML =
+            '<div class="alert alert-danger">Error loading expenses: ' + error.message + '</div>';
+        })
+        .getExpenses(filters);
+    }
+
+    function loadExpenseCategories() {
+      google.script.run
+        .withSuccessHandler(function(categories) {
+          const categoryFilter = document.getElementById('categoryFilter');
+          const expenseCategory = document.getElementById('expenseCategory');
+
+          categories.forEach(function(category) {
+            const option1 = document.createElement('option');
+            option1.value = category;
+            option1.textContent = category;
+            categoryFilter.appendChild(option1);
+
+            const option2 = document.createElement('option');
+            option2.value = category;
+            option2.textContent = category;
+            expenseCategory.appendChild(option2);
+          });
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading categories:', error);
+        })
+        .getExpenseCategories();
+    }
+
+    function displayExpenses(data) {
+      const tbody = document.getElementById('expensesTableBody');
+      tbody.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        document.getElementById('noDataMessage').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('expensesTableContainer').style.display = 'block';
+
+      // Sort by date descending
+      data.sort((a, b) => new Date(b.DateTime) - new Date(a.DateTime));
+
+      data.forEach(function(expense) {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+          <td>${formatDateTime(expense.DateTime)}</td>
+          <td><span class="badge bg-primary">${expense.Category || ''}</span></td>
+          <td>${expense.Description || '-'}</td>
+          <td>${expense.Account || ''}</td>
+          <td class="expense-amount">$${parseFloat(expense.Amount || 0).toFixed(2)}</td>
+          <td>${expense.Recorded_By || '-'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function updateStats(data) {
+      if (!data || data.length === 0) {
+        return;
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      let todayTotal = 0;
+      let monthTotal = 0;
+      let overallTotal = 0;
+
+      data.forEach(function(expense) {
+        const expenseDate = new Date(expense.DateTime);
+        const amount = parseFloat(expense.Amount || 0);
+
+        overallTotal += amount;
+
+        expenseDate.setHours(0, 0, 0, 0);
+        if (expenseDate.getTime() === today.getTime()) {
+          todayTotal += amount;
+        }
+
+        if (expenseDate >= firstOfMonth) {
+          monthTotal += amount;
+        }
+      });
+
+      document.getElementById('todayExpenses').textContent = '$' + todayTotal.toFixed(2);
+      document.getElementById('monthExpenses').textContent = '$' + monthTotal.toFixed(2);
+      document.getElementById('totalExpenses').textContent = '$' + overallTotal.toFixed(2);
+    }
+
+    function updateCategoryBreakdown(data) {
+      const categoryTotals = {};
+      let total = 0;
+
+      data.forEach(function(expense) {
+        const category = expense.Category || 'Uncategorized';
+        const amount = parseFloat(expense.Amount || 0);
+
+        if (!categoryTotals[category]) {
+          categoryTotals[category] = 0;
+        }
+        categoryTotals[category] += amount;
+        total += amount;
+      });
+
+      const breakdown = document.getElementById('categoryBreakdown');
+      breakdown.innerHTML = '';
+
+      if (total === 0) {
+        breakdown.innerHTML = '<p class="text-muted">No expense data available</p>';
+        return;
+      }
+
+      // Sort by amount descending
+      const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+
+      sortedCategories.forEach(function([category, amount]) {
+        const percentage = (amount / total * 100).toFixed(1);
+
+        const item = document.createElement('div');
+        item.className = 'category-item';
+        item.innerHTML = `
+          <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between;">
+              <strong>${category}</strong>
+              <span class="expense-amount">$${amount.toFixed(2)} (${percentage}%)</span>
+            </div>
+            <div class="category-bar" style="width: ${percentage}%"></div>
+          </div>
+        `;
+        breakdown.appendChild(item);
+      });
+    }
+
+    function formatDateTime(dateTime) {
+      if (!dateTime) return '';
+      const date = new Date(dateTime);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    function showAddExpenseForm() {
+      document.getElementById('addExpenseForm').style.display = 'block';
+      document.getElementById('expenseCategory').focus();
+    }
+
+    function hideAddExpenseForm() {
+      document.getElementById('addExpenseForm').style.display = 'none';
+      document.getElementById('expenseForm').reset();
+      document.getElementById('expenseDate').valueAsDate = new Date();
+    }
+
+    function handleAddExpense(event) {
+      event.preventDefault();
+
+      const expenseData = {
+        category: document.getElementById('expenseCategory').value,
+        amount: parseFloat(document.getElementById('expenseAmount').value),
+        account: document.getElementById('expenseAccount').value,
+        date: document.getElementById('expenseDate').value,
+        description: document.getElementById('expenseDescription').value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            alert('Expense recorded successfully!');
+            hideAddExpenseForm();
+            loadExpenses();
+          } else {
+            alert('Error: ' + result.message);
+          }
+        })
+        .withFailureHandler(function(error) {
+          alert('Error recording expense: ' + error.message);
+        })
+        .recordExpense(expenseData);
+    }
+
+    // Placeholder functions - need backend implementation
+    function getExpenses(filters) {
+      return [];
+    }
+
+    function getExpenseCategories() {
+      return ['Rent', 'Utilities', 'Salaries', 'Marketing', 'Supplies', 'Transportation', 'Other'];
+    }
+  </script>
+</body>
+</html>

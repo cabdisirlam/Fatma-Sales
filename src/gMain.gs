@@ -136,6 +136,61 @@ function showUserManagement() {
 }
 
 /**
+ * Show inventory manager
+ */
+function showInventoryManager() {
+  const html = HtmlService.createHtmlOutputFromFile('tInventory')
+    .setTitle('Inventory Management')
+    .setWidth(900)
+    .setHeight(700);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Inventory Management');
+}
+
+/**
+ * Show suppliers manager
+ */
+function showSuppliersManager() {
+  const html = HtmlService.createHtmlOutputFromFile('uSuppliers')
+    .setTitle('Suppliers Management')
+    .setWidth(900)
+    .setHeight(700);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Suppliers Management');
+}
+
+/**
+ * Show financials
+ */
+function showFinancials() {
+  const html = HtmlService.createHtmlOutputFromFile('vFinancials')
+    .setTitle('Financial Overview')
+    .setWidth(1000)
+    .setHeight(700);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Financial Overview');
+}
+
+/**
+ * Show expenses
+ */
+function showExpenses() {
+  const html = HtmlService.createHtmlOutputFromFile('wExpenses')
+    .setTitle('Expenses Management')
+    .setWidth(900)
+    .setHeight(700);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Expenses Management');
+}
+
+/**
+ * Show quotations
+ */
+function showQuotations() {
+  const html = HtmlService.createHtmlOutputFromFile('xQuotations')
+    .setTitle('Quotations Management')
+    .setWidth(1000)
+    .setHeight(700);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Quotations Management');
+}
+
+/**
  * Get active user email
  */
 function getActiveUserEmail() {

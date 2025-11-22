@@ -2,10 +2,347 @@
 <html>
 <head>
   <base target="_top">
-  <title>Customers - Placeholder</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customers Management</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f6fa;
+      padding: 20px;
+    }
+
+    .header-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .header-section h2 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .header-section p {
+      margin: 10px 0 0 0;
+      opacity: 0.9;
+    }
+
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 15px 15px 0 0 !important;
+      padding: 20px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .table {
+      margin: 0;
+    }
+
+    .table thead {
+      background: #f8f9fa;
+    }
+
+    .table th {
+      border-bottom: 2px solid #dee2e6;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #667eea;
+      margin: 10px 0;
+    }
+
+    .stat-label {
+      color: #7f8c8d;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #7f8c8d;
+    }
+
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    .filter-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .balance-negative {
+      color: #e74c3c;
+      font-weight: 600;
+    }
+
+    .balance-positive {
+      color: #27ae60;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
-  <h1>Customers Module</h1>
-  <p>Placeholder for customers management.</p>
+  <div class="header-section">
+    <h2><i class="bi bi-people"></i> Customers Management</h2>
+    <p>Manage your customer database and track customer balances</p>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row" id="statsSection">
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-label">Total Customers</div>
+        <div class="stat-value" id="totalCustomers">0</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-label">Active Customers</div>
+        <div class="stat-value" id="activeCustomers">0</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-label">With Debt</div>
+        <div class="stat-value balance-negative" id="customersWithDebt">0</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-label">Total Debt</div>
+        <div class="stat-value balance-negative" id="totalDebt">$0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filter-section">
+    <div class="row">
+      <div class="col-md-5">
+        <input type="text" class="form-control" id="searchInput" placeholder="Search by name, phone, or email...">
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" id="statusFilter">
+          <option value="">All Status</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-primary" onclick="loadCustomers()">
+          <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customers Table -->
+  <div class="card">
+    <div class="card-header">
+      <i class="bi bi-list-ul"></i> Customers List
+    </div>
+    <div class="card-body">
+      <div id="loadingIndicator" class="loading">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Loading customers...</p>
+      </div>
+
+      <div id="customersTableContainer" style="display: none;">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Customer ID</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Balance</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="customersTableBody">
+              <!-- Data will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="noDataMessage" style="display: none;" class="text-center text-muted py-4">
+        <i class="bi bi-inbox" style="font-size: 48px;"></i>
+        <p class="mt-3">No customers found</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Load customers on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadCustomers();
+    });
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', filterCustomers);
+    document.getElementById('statusFilter').addEventListener('change', filterCustomers);
+
+    let customersData = [];
+
+    function loadCustomers() {
+      document.getElementById('loadingIndicator').style.display = 'block';
+      document.getElementById('customersTableContainer').style.display = 'none';
+      document.getElementById('noDataMessage').style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          customersData = data;
+          displayCustomers(data);
+          updateStats(data);
+          document.getElementById('loadingIndicator').style.display = 'none';
+        })
+        .withFailureHandler(function(error) {
+          document.getElementById('loadingIndicator').innerHTML =
+            '<div class="alert alert-danger">Error loading customers: ' + error.message + '</div>';
+        })
+        .getCustomers({});
+    }
+
+    function displayCustomers(data) {
+      const tbody = document.getElementById('customersTableBody');
+      tbody.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        document.getElementById('noDataMessage').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('customersTableContainer').style.display = 'block';
+
+      data.forEach(function(customer) {
+        const row = document.createElement('tr');
+
+        const balance = parseFloat(customer.Balance || 0);
+        const balanceClass = balance < 0 ? 'balance-negative' : balance > 0 ? 'balance-positive' : '';
+        const balanceText = balance < 0 ? 'Owes: $' + Math.abs(balance).toFixed(2) :
+                           balance > 0 ? 'Credit: $' + balance.toFixed(2) : '$0.00';
+
+        const statusBadge = customer.Status === 'Active' ?
+          '<span class="badge bg-success">Active</span>' :
+          '<span class="badge bg-secondary">Inactive</span>';
+
+        row.innerHTML = `
+          <td>${customer.Customer_ID || ''}</td>
+          <td><strong>${customer.Name || ''}</strong></td>
+          <td>${customer.Phone || '-'}</td>
+          <td>${customer.Email || '-'}</td>
+          <td class="${balanceClass}">${balanceText}</td>
+          <td>${statusBadge}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function updateStats(data) {
+      if (!data || data.length === 0) {
+        return;
+      }
+
+      const totalCustomers = data.length;
+      const activeCustomers = data.filter(c => c.Status === 'Active').length;
+      let customersWithDebt = 0;
+      let totalDebt = 0;
+
+      data.forEach(function(customer) {
+        const balance = parseFloat(customer.Balance || 0);
+        if (balance < 0) {
+          customersWithDebt++;
+          totalDebt += Math.abs(balance);
+        }
+      });
+
+      document.getElementById('totalCustomers').textContent = totalCustomers;
+      document.getElementById('activeCustomers').textContent = activeCustomers;
+      document.getElementById('customersWithDebt').textContent = customersWithDebt;
+      document.getElementById('totalDebt').textContent = '$' + totalDebt.toFixed(2);
+    }
+
+    function filterCustomers() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+
+      const filtered = customersData.filter(function(customer) {
+        const matchesSearch = !searchTerm ||
+          (customer.Name && customer.Name.toLowerCase().includes(searchTerm)) ||
+          (customer.Phone && customer.Phone.includes(searchTerm)) ||
+          (customer.Email && customer.Email.toLowerCase().includes(searchTerm)) ||
+          (customer.Customer_ID && customer.Customer_ID.toLowerCase().includes(searchTerm));
+
+        const matchesStatus = !statusFilter || customer.Status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+      });
+
+      displayCustomers(filtered);
+      updateStats(filtered);
+    }
+  </script>
 </body>
 </html>
