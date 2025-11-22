@@ -49,6 +49,9 @@ function getInventory(filters) {
       item.stock_status = getStockStatus(item.Current_Qty, item.Reorder_Level);
       item.stock_value = (item.Current_Qty || 0) * (item.Cost_Price || 0);
 
+      // Add compatibility alias for frontend (Stock_Qty -> Current_Qty)
+      item.Stock_Qty = item.Current_Qty;
+
       items.push(item);
     }
 
@@ -75,6 +78,9 @@ function getInventoryItemById(itemId) {
 
     item.stock_status = getStockStatus(item.Current_Qty, item.Reorder_Level);
     item.stock_value = (item.Current_Qty || 0) * (item.Cost_Price || 0);
+
+    // Add compatibility alias for frontend (Stock_Qty -> Current_Qty)
+    item.Stock_Qty = item.Current_Qty;
 
     return item;
   } catch (error) {
