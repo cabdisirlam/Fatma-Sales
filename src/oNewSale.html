@@ -71,26 +71,86 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // Get current user from session or server
+    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+
     document.addEventListener('DOMContentLoaded', function() {
+      // Try to get current user from backend if not in session
+      if (!sessionStorage.getItem('userName')) {
+        google.script.run.withSuccessHandler(function(email) {
+          currentUser = email || 'SYSTEM';
+        }).getActiveUserEmail();
+      }
+
+      // Load customers
       google.script.run.withSuccessHandler(function(data) {
         const select = document.getElementById('customerSelect');
-        data.forEach(c => { const o = document.createElement('option'); o.value = c.Customer_ID; o.textContent = c.Name; select.appendChild(o); });
+        data.forEach(c => {
+          const o = document.createElement('option');
+          o.value = c.Customer_ID;
+          o.textContent = c.Name;
+          select.appendChild(o);
+        });
       }).getCustomers({status: 'Active'});
+
+      // Load inventory items
       google.script.run.withSuccessHandler(function(data) {
         const select = document.getElementById('itemSelect');
-        data.forEach(i => { if (i.Stock_Qty > 0) { const o = document.createElement('option'); o.value = i.Item_ID; o.textContent = i.Item_Name + ' - $' + i.Selling_Price; select.appendChild(o); }});
+        data.forEach(i => {
+          if (i.Stock_Qty > 0) {
+            const o = document.createElement('option');
+            o.value = i.Item_ID;
+            o.textContent = i.Item_Name + ' - $' + i.Selling_Price + ' (Stock: ' + i.Stock_Qty + ')';
+            select.appendChild(o);
+          }
+        });
       }).getInventory({});
     });
+
     document.getElementById('saleForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const formData = Object.fromEntries(new FormData(e.target));
-      google.script.run.withSuccessHandler(function(result) {
-        const alert = document.getElementById('saleFormAlert');
-        alert.className = result.success ? 'alert alert-success mt-3' : 'alert alert-danger mt-3';
-        alert.textContent = result.success ? 'Sale processed! ID: ' + result.transactionId : 'Error: ' + result.message;
-        alert.style.display = 'block';
-        if (result.success) e.target.reset();
-      }).createSale(formData);
+
+      // Transform form data to match backend expectations
+      const saleData = {
+        items: [{
+          Item_ID: formData.itemId,
+          Qty: parseFloat(formData.quantity)
+        }],
+        Customer_ID: formData.customerId || 'WALK-IN',
+        Customer_Name: formData.customerId ?
+          document.getElementById('customerSelect').selectedOptions[0].textContent :
+          'Walk-in Customer',
+        Payment_Mode: formData.paymentMode,
+        User: currentUser,
+        Location: '',
+        KRA_PIN: '',
+        Delivery_Charge: 0,
+        Discount: 0
+      };
+
+      // Handle Sale vs Quotation
+      const isQuotation = formData.type === 'Quotation';
+      const backendFunction = isQuotation ? 'createQuotation' : 'createSale';
+
+      const alert = document.getElementById('saleFormAlert');
+      alert.style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          alert.className = result.success ? 'alert alert-success mt-3' : 'alert alert-danger mt-3';
+          alert.textContent = result.success ?
+            (isQuotation ? 'Quotation created! ID: ' : 'Sale processed! ID: ') + result.transactionId +
+            ' | Total: $' + (result.grandTotal || 0).toFixed(2) :
+            'Error: ' + result.message;
+          alert.style.display = 'block';
+          if (result.success) e.target.reset();
+        })
+        .withFailureHandler(function(error) {
+          alert.className = 'alert alert-danger mt-3';
+          alert.textContent = 'Error: ' + error.message;
+          alert.style.display = 'block';
+        })[backendFunction](saleData);
     });
   </script>
 </body>

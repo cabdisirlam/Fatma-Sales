@@ -212,8 +212,11 @@
 
   <!-- Inventory Table -->
   <div class="card">
-    <div class="card-header">
-      <i class="bi bi-list-ul"></i> Inventory Items
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-list-ul"></i> Inventory Items</span>
+      <button class="btn btn-primary btn-sm" onclick="showAddProductModal()">
+        <i class="bi bi-plus-circle"></i> Add New Product
+      </button>
     </div>
     <div class="card-body">
       <div id="loadingIndicator" class="loading">
@@ -237,6 +240,7 @@
                 <th>Selling Price</th>
                 <th>Reorder Level</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="inventoryTableBody">
@@ -249,6 +253,175 @@
       <div id="noDataMessage" style="display: none;" class="text-center text-muted py-4">
         <i class="bi bi-inbox" style="font-size: 48px;"></i>
         <p class="mt-3">No inventory items found</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Product Modal -->
+  <div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addProductForm">
+            <div class="mb-3">
+              <label class="form-label">Item Name *</label>
+              <input type="text" class="form-control" name="Item_Name" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Category</label>
+              <input type="text" class="form-control" name="Category" placeholder="e.g., Electronics, Food, Clothing">
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cost Price *</label>
+                <input type="number" class="form-control" name="Cost_Price" step="0.01" min="0" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Selling Price *</label>
+                <input type="number" class="form-control" name="Selling_Price" step="0.01" min="0" required>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Initial Quantity *</label>
+                <input type="number" class="form-control" name="Current_Qty" min="0" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Reorder Level</label>
+                <input type="number" class="form-control" name="Reorder_Level" value="10" min="0">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Unit</label>
+              <input type="text" class="form-control" name="Unit" placeholder="e.g., pcs, kg, liter">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Supplier</label>
+              <input type="text" class="form-control" name="Supplier">
+            </div>
+          </form>
+          <div id="addProductAlert" class="alert mt-3" style="display: none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitAddProduct()">
+            <i class="bi bi-check-circle"></i> Add Product
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Product Modal -->
+  <div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editProductForm">
+            <input type="hidden" id="editItemId" name="Item_ID">
+            <div class="mb-3">
+              <label class="form-label">Item Name</label>
+              <input type="text" class="form-control" id="editItemName" name="Item_Name">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Category</label>
+              <input type="text" class="form-control" id="editCategory" name="Category">
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cost Price</label>
+                <input type="number" class="form-control" id="editCostPrice" name="Cost_Price" step="0.01" min="0">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Selling Price</label>
+                <input type="number" class="form-control" id="editSellingPrice" name="Selling_Price" step="0.01" min="0">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Reorder Level</label>
+                <input type="number" class="form-control" id="editReorderLevel" name="Reorder_Level" min="0">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Unit</label>
+                <input type="text" class="form-control" id="editUnit" name="Unit">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Supplier</label>
+              <input type="text" class="form-control" id="editSupplier" name="Supplier">
+            </div>
+          </form>
+          <div id="editProductAlert" class="alert mt-3" style="display: none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitEditProduct()">
+            <i class="bi bi-save"></i> Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adjust Stock Modal -->
+  <div class="modal fade" id="adjustStockModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-arrows-move"></i> Adjust Stock</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info mb-3">
+            <strong id="adjustItemName"></strong> (Current Stock: <span id="adjustCurrentStock"></span>)
+          </div>
+          <form id="adjustStockForm">
+            <input type="hidden" id="adjustItemId" name="Item_ID">
+            <div class="mb-3">
+              <label class="form-label">Adjustment Type</label>
+              <select class="form-select" id="adjustmentType" onchange="updateAdjustmentSign()">
+                <option value="increase">Increase Stock (+)</option>
+                <option value="decrease">Decrease Stock (-)</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Quantity *</label>
+              <input type="number" class="form-control" id="adjustmentQty" name="Quantity" min="1" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Reason *</label>
+              <select class="form-select" id="adjustmentReason" name="Reason" required>
+                <option value="">Select reason...</option>
+                <option value="Stock Take">Stock Take Correction</option>
+                <option value="Damaged">Damaged Goods</option>
+                <option value="Lost">Lost/Stolen</option>
+                <option value="Returned">Customer Return</option>
+                <option value="Found">Found Stock</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="mb-3" id="otherReasonDiv" style="display: none;">
+              <label class="form-label">Specify Reason</label>
+              <input type="text" class="form-control" id="otherReason">
+            </div>
+          </form>
+          <div id="adjustStockAlert" class="alert mt-3" style="display: none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitAdjustStock()">
+            <i class="bi bi-check-circle"></i> Adjust Stock
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -304,10 +477,12 @@
         let stockStatus = '';
         let statusBadge = '';
 
-        if (item.Stock_Qty <= 0) {
+        const stockQty = item.Current_Qty || item.Stock_Qty || 0;
+
+        if (stockQty <= 0) {
           stockStatus = 'stock-out';
           statusBadge = '<span class="badge bg-danger">Out of Stock</span>';
-        } else if (item.Stock_Qty <= (item.Reorder_Level || 10)) {
+        } else if (stockQty <= (item.Reorder_Level || 10)) {
           stockStatus = 'stock-low';
           statusBadge = '<span class="badge bg-warning">Low Stock</span>';
         } else {
@@ -319,12 +494,23 @@
           <td>${item.Item_ID || ''}</td>
           <td><strong>${item.Item_Name || ''}</strong></td>
           <td>${item.Category || ''}</td>
-          <td class="${stockStatus}">${item.Stock_Qty || 0}</td>
+          <td class="${stockStatus}">${stockQty}</td>
           <td>${item.Unit || ''}</td>
           <td>$${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
           <td>$${parseFloat(item.Selling_Price || 0).toFixed(2)}</td>
           <td>${item.Reorder_Level || 10}</td>
           <td>${statusBadge}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1" onclick='showAdjustStockModal(${JSON.stringify(item)})' title="Adjust Stock">
+              <i class="bi bi-arrows-move"></i>
+            </button>
+            <button class="btn btn-sm btn-primary me-1" onclick='showEditProductModal(${JSON.stringify(item)})' title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="deleteProductConfirm('${item.Item_ID}', '${item.Item_Name}')" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
         `;
         tbody.appendChild(row);
       });
@@ -341,7 +527,7 @@
       let totalValue = 0;
 
       data.forEach(function(item) {
-        const qty = parseFloat(item.Stock_Qty || 0);
+        const qty = parseFloat(item.Current_Qty || item.Stock_Qty || 0);
         const costPrice = parseFloat(item.Cost_Price || 0);
         const reorderLevel = parseFloat(item.Reorder_Level || 10);
 
@@ -391,13 +577,14 @@
 
         const matchesCategory = !categoryFilter || item.Category === categoryFilter;
 
+        const qty = item.Current_Qty || item.Stock_Qty || 0;
         let matchesStock = true;
         if (stockFilter === 'low') {
-          matchesStock = item.Stock_Qty > 0 && item.Stock_Qty <= (item.Reorder_Level || 10);
+          matchesStock = qty > 0 && qty <= (item.Reorder_Level || 10);
         } else if (stockFilter === 'out') {
-          matchesStock = item.Stock_Qty <= 0;
+          matchesStock = qty <= 0;
         } else if (stockFilter === 'ok') {
-          matchesStock = item.Stock_Qty > (item.Reorder_Level || 10);
+          matchesStock = qty > (item.Reorder_Level || 10);
         }
 
         return matchesSearch && matchesCategory && matchesStock;
@@ -405,6 +592,211 @@
 
       displayInventory(filtered);
       updateStats(filtered);
+    }
+
+    // Get current user from session or server
+    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+    if (!sessionStorage.getItem('userName')) {
+      google.script.run.withSuccessHandler(function(email) {
+        currentUser = email || 'SYSTEM';
+      }).getActiveUserEmail();
+    }
+
+    // ===== ADD PRODUCT MODAL =====
+    function showAddProductModal() {
+      document.getElementById('addProductForm').reset();
+      document.getElementById('addProductAlert').style.display = 'none';
+      const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
+      modal.show();
+    }
+
+    function submitAddProduct() {
+      const form = document.getElementById('addProductForm');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const formData = new FormData(form);
+      const productData = Object.fromEntries(formData);
+      productData.User = currentUser;
+
+      const alertDiv = document.getElementById('addProductAlert');
+      alertDiv.style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            alertDiv.className = 'alert alert-success mt-3';
+            alertDiv.textContent = 'Product added successfully! ID: ' + result.itemId;
+            alertDiv.style.display = 'block';
+            form.reset();
+            setTimeout(function() {
+              bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+              loadInventory();
+            }, 1500);
+          } else {
+            alertDiv.className = 'alert alert-danger mt-3';
+            alertDiv.textContent = 'Error: ' + result.message;
+            alertDiv.style.display = 'block';
+          }
+        })
+        .withFailureHandler(function(error) {
+          alertDiv.className = 'alert alert-danger mt-3';
+          alertDiv.textContent = 'Error: ' + error.message;
+          alertDiv.style.display = 'block';
+        })
+        .addProduct(productData);
+    }
+
+    // ===== EDIT PRODUCT MODAL =====
+    function showEditProductModal(item) {
+      document.getElementById('editItemId').value = item.Item_ID;
+      document.getElementById('editItemName').value = item.Item_Name || '';
+      document.getElementById('editCategory').value = item.Category || '';
+      document.getElementById('editCostPrice').value = item.Cost_Price || '';
+      document.getElementById('editSellingPrice').value = item.Selling_Price || '';
+      document.getElementById('editReorderLevel').value = item.Reorder_Level || 10;
+      document.getElementById('editUnit').value = item.Unit || '';
+      document.getElementById('editSupplier').value = item.Supplier || '';
+      document.getElementById('editProductAlert').style.display = 'none';
+
+      const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+      modal.show();
+    }
+
+    function submitEditProduct() {
+      const itemId = document.getElementById('editItemId').value;
+      const form = document.getElementById('editProductForm');
+      const formData = new FormData(form);
+      const productData = Object.fromEntries(formData);
+      productData.User = currentUser;
+
+      const alertDiv = document.getElementById('editProductAlert');
+      alertDiv.style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            alertDiv.className = 'alert alert-success mt-3';
+            alertDiv.textContent = 'Product updated successfully!';
+            alertDiv.style.display = 'block';
+            setTimeout(function() {
+              bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+              loadInventory();
+            }, 1500);
+          } else {
+            alertDiv.className = 'alert alert-danger mt-3';
+            alertDiv.textContent = 'Error: ' + result.message;
+            alertDiv.style.display = 'block';
+          }
+        })
+        .withFailureHandler(function(error) {
+          alertDiv.className = 'alert alert-danger mt-3';
+          alertDiv.textContent = 'Error: ' + error.message;
+          alertDiv.style.display = 'block';
+        })
+        .updateProduct(itemId, productData);
+    }
+
+    // ===== DELETE PRODUCT =====
+    function deleteProductConfirm(itemId, itemName) {
+      if (confirm('Are you sure you want to delete "' + itemName + '"?\n\nThis action cannot be undone.')) {
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result.success) {
+              alert('Product deleted successfully!');
+              loadInventory();
+            } else {
+              alert('Error deleting product: ' + result.message);
+            }
+          })
+          .withFailureHandler(function(error) {
+            alert('Error deleting product: ' + error.message);
+          })
+          .deleteProduct(itemId, currentUser);
+      }
+    }
+
+    // ===== ADJUST STOCK MODAL =====
+    function showAdjustStockModal(item) {
+      document.getElementById('adjustItemId').value = item.Item_ID;
+      document.getElementById('adjustItemName').textContent = item.Item_Name;
+      document.getElementById('adjustCurrentStock').textContent = item.Current_Qty || item.Stock_Qty || 0;
+      document.getElementById('adjustmentType').value = 'increase';
+      document.getElementById('adjustmentQty').value = '';
+      document.getElementById('adjustmentReason').value = '';
+      document.getElementById('otherReason').value = '';
+      document.getElementById('otherReasonDiv').style.display = 'none';
+      document.getElementById('adjustStockAlert').style.display = 'none';
+
+      const modal = new bootstrap.Modal(document.getElementById('adjustStockModal'));
+      modal.show();
+    }
+
+    function updateAdjustmentSign() {
+      // This is called when adjustment type changes (just for UI feedback)
+    }
+
+    // Show "Other" reason text field when "Other" is selected
+    document.getElementById('adjustmentReason').addEventListener('change', function() {
+      const otherDiv = document.getElementById('otherReasonDiv');
+      otherDiv.style.display = this.value === 'Other' ? 'block' : 'none';
+    });
+
+    function submitAdjustStock() {
+      const itemId = document.getElementById('adjustItemId').value;
+      const type = document.getElementById('adjustmentType').value;
+      const qty = parseFloat(document.getElementById('adjustmentQty').value);
+      let reason = document.getElementById('adjustmentReason').value;
+
+      if (!qty || qty <= 0) {
+        alert('Please enter a valid quantity');
+        return;
+      }
+
+      if (!reason) {
+        alert('Please select a reason');
+        return;
+      }
+
+      if (reason === 'Other') {
+        const otherReason = document.getElementById('otherReason').value.trim();
+        if (!otherReason) {
+          alert('Please specify the reason');
+          return;
+        }
+        reason = otherReason;
+      }
+
+      // Adjust quantity sign based on type
+      const adjustmentQty = type === 'increase' ? qty : -qty;
+
+      const alertDiv = document.getElementById('adjustStockAlert');
+      alertDiv.style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            alertDiv.className = 'alert alert-success mt-3';
+            alertDiv.textContent = 'Stock adjusted successfully! New stock: ' + (result.newQty || 'N/A');
+            alertDiv.style.display = 'block';
+            setTimeout(function() {
+              bootstrap.Modal.getInstance(document.getElementById('adjustStockModal')).hide();
+              loadInventory();
+            }, 1500);
+          } else {
+            alertDiv.className = 'alert alert-danger mt-3';
+            alertDiv.textContent = 'Error: ' + result.message;
+            alertDiv.style.display = 'block';
+          }
+        })
+        .withFailureHandler(function(error) {
+          alertDiv.className = 'alert alert-danger mt-3';
+          alertDiv.textContent = 'Error: ' + error.message;
+          alertDiv.style.display = 'block';
+        })
+        .adjustStock(itemId, adjustmentQty, reason, currentUser);
     }
   </script>
 </body>
