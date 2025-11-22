@@ -284,20 +284,53 @@
             const userName = sessionStorage.getItem('userName');
             const userRole = sessionStorage.getItem('userRole');
 
-            // Replace entire body with dashboard
+            // Show loading state if needed
+            // setLoading(true);
+
             google.script.run
                 .withSuccessHandler(function(dashboardHtml) {
-                    // Replace page content with dashboard
-                    document.body.innerHTML = dashboardHtml;
+                    // 1. Parse the returned HTML string into a real DOM document
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(dashboardHtml, 'text/html');
 
-                    // Wait for DOM to be ready, then initialize dashboard
+                    // 2. Move Styles: Copy <style> and <link> tags from the dashboard's head to the current page
+                    // This ensures your sidebar and dashboard CSS is applied
+                    const newStyles = doc.querySelectorAll('head style, head link[rel="stylesheet"]');
+                    newStyles.forEach(element => {
+                        document.head.appendChild(element);
+                    });
+
+                    // 3. Replace Body: Update the visible content
+                    // We use doc.body.innerHTML to get just the content inside <body>
+                    document.body.innerHTML = doc.body.innerHTML;
+
+                    // 4. EXECUTE SCRIPTS: This is the critical fix
+                    // We must recreate every <script> tag to force the browser to run it
+                    const scripts = doc.querySelectorAll('script');
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        
+                        // Copy attributes (like src if it's an external script)
+                        Array.from(oldScript.attributes).forEach(attr => {
+                            newScript.setAttribute(attr.name, attr.value);
+                        });
+                        
+                        // Copy the actual JavaScript code inside the tag
+                        newScript.textContent = oldScript.textContent;
+                        
+                        // Append to the document to trigger execution
+                        document.body.appendChild(newScript);
+                    });
+
+                    // 5. Initialize dashboard now that scripts are loaded
                     setTimeout(function() {
                         if (typeof initDashboard === 'function') {
                             initDashboard(userName, userRole);
                         } else {
-                            console.error('initDashboard function not found');
+                            console.error('initDashboard function not found - script injection failed');
+                            alert('System Error: Dashboard scripts failed to load. Please refresh.');
                         }
-                    }, 100);
+                    }, 200); // Slight delay to ensure scripts finish parsing
                 })
                 .withFailureHandler(function(error) {
                     alert('Error loading dashboard: ' + error.message);
