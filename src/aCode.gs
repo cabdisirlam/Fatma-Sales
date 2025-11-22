@@ -725,6 +725,197 @@ function updateUserPIN(username, oldPIN, newPIN) {
 }
 
 /**
+ * Updates user information (for admin)
+ */
+function updateUser(userData) {
+  try {
+    if (!userData.User_ID && !userData.Email) {
+      throw new Error('User ID or Email is required to update user');
+    }
+
+    const sheet = getSheet('Users');
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+
+    // Find user row
+    let userRowIndex = -1;
+    for (let i = 1; i < data.length; i++) {
+      const emailIndex = headers.indexOf('Email');
+      const userIdIndex = headers.indexOf('User_ID');
+
+      if ((userData.Email && data[i][emailIndex] === userData.Email) ||
+          (userData.User_ID && data[i][userIdIndex] === userData.User_ID)) {
+        userRowIndex = i;
+        break;
+      }
+    }
+
+    if (userRowIndex === -1) {
+      throw new Error('User not found');
+    }
+
+    // Get old values for audit
+    const oldValues = {};
+    headers.forEach((header, index) => {
+      oldValues[header] = data[userRowIndex][index];
+    });
+
+    // Update fields (preserve PIN and User_ID, Created_Date)
+    const updateData = [];
+    headers.forEach((header, index) => {
+      if (header === 'PIN' || header === 'User_ID' || header === 'Created_Date') {
+        updateData.push(data[userRowIndex][index]); // Keep original
+      } else if (userData[header] !== undefined) {
+        updateData.push(userData[header]); // Update with new value
+      } else {
+        updateData.push(data[userRowIndex][index]); // Keep original
+      }
+    });
+
+    // Write updated row
+    const range = sheet.getRange(userRowIndex + 1, 1, 1, headers.length);
+    range.setValues([updateData]);
+
+    logAudit(
+      Session.getActiveUser().getEmail() || 'ADMIN',
+      'Users',
+      'Update',
+      'User updated: ' + userData.Username,
+      JSON.stringify(oldValues),
+      JSON.stringify(userData),
+      ''
+    );
+
+    return {
+      success: true,
+      message: 'User updated successfully'
+    };
+
+  } catch (error) {
+    logError('updateUser', error);
+    throw new Error('Error updating user: ' + error.message);
+  }
+}
+
+/**
+ * Deletes a user (admin only)
+ */
+function deleteUser(email) {
+  try {
+    if (!email) {
+      throw new Error('Email is required to delete user');
+    }
+
+    // Don't allow deleting the default admin
+    if (email === 'cabdisirlam@gmail.com') {
+      throw new Error('Cannot delete the default admin account');
+    }
+
+    const sheet = getSheet('Users');
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const emailIndex = headers.indexOf('Email');
+
+    // Find user row
+    let userRowIndex = -1;
+    let userData = null;
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][emailIndex] === email) {
+        userRowIndex = i;
+        userData = data[i];
+        break;
+      }
+    }
+
+    if (userRowIndex === -1) {
+      throw new Error('User not found');
+    }
+
+    // Delete the row
+    sheet.deleteRow(userRowIndex + 1);
+
+    logAudit(
+      Session.getActiveUser().getEmail() || 'ADMIN',
+      'Users',
+      'Delete',
+      'User deleted: ' + email,
+      JSON.stringify(userData),
+      '',
+      ''
+    );
+
+    return {
+      success: true,
+      message: 'User deleted successfully'
+    };
+
+  } catch (error) {
+    logError('deleteUser', error);
+    throw new Error('Error deleting user: ' + error.message);
+  }
+}
+
+/**
+ * Resets user PIN (admin only, no old PIN required)
+ */
+function resetUserPin(email, newPin) {
+  try {
+    // Validate new PIN is 4 digits
+    if (!newPin || newPin.toString().length !== CONFIG.PIN_LENGTH) {
+      throw new Error('New PIN must be exactly ' + CONFIG.PIN_LENGTH + ' digits');
+    }
+
+    // Validate new PIN is numeric
+    if (!/^\d{4}$/.test(newPin.toString())) {
+      throw new Error('PIN must contain only numbers');
+    }
+
+    const sheet = getSheet('Users');
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const emailIndex = headers.indexOf('Email');
+    const pinIndex = headers.indexOf('PIN');
+
+    // Find user row
+    let userRowIndex = -1;
+    let username = '';
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][emailIndex] === email) {
+        userRowIndex = i;
+        username = data[i][headers.indexOf('Username')];
+        break;
+      }
+    }
+
+    if (userRowIndex === -1) {
+      throw new Error('User not found');
+    }
+
+    // Update PIN
+    sheet.getRange(userRowIndex + 1, pinIndex + 1).setValue(newPin);
+
+    logAudit(
+      Session.getActiveUser().getEmail() || 'ADMIN',
+      'Users',
+      'Reset PIN',
+      'Admin reset PIN for user: ' + username,
+      '',
+      'PIN changed',
+      ''
+    );
+
+    return {
+      success: true,
+      message: 'PIN reset successfully'
+    };
+
+  } catch (error) {
+    logError('resetUserPin', error);
+    throw new Error('Error resetting PIN: ' + error.message);
+  }
+}
+
+/**
  * Creates default admin user if no users exist
  */
 function createDefaultAdmin() {

@@ -111,6 +111,65 @@
       display: none;
     }
 
+    /* Submenu Styles */
+    .submenu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .submenu.active {
+      max-height: 500px;
+    }
+
+    .submenu-item {
+      margin: 0;
+    }
+
+    .submenu-item a {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px 10px 50px;
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .submenu-item a:hover {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      transform: translateX(5px);
+    }
+
+    .submenu-item a.active {
+      background: rgba(255,255,255,0.15);
+      color: white;
+    }
+
+    .submenu-item i {
+      font-size: 16px;
+      min-width: 20px;
+    }
+
+    .menu-item.has-submenu > a .bi-chevron-down {
+      margin-left: auto;
+      transition: transform 0.3s ease;
+    }
+
+    .menu-item.has-submenu.open > a .bi-chevron-down {
+      transform: rotate(180deg);
+    }
+
+    .sidebar.collapsed .submenu {
+      display: none;
+    }
+
     .toggle-btn {
       position: absolute;
       top: 20px;
@@ -329,12 +388,42 @@
           <span>Dashboard</span>
         </a>
       </li>
-      <li class="menu-item">
-        <a href="#" onclick="showSection('sales')">
+
+      <!-- Sales with submenu -->
+      <li class="menu-item has-submenu" id="salesMenu">
+        <a href="#" onclick="toggleSubmenu('salesMenu', event)">
           <i class="bi bi-cart-check"></i>
           <span>Sales</span>
+          <i class="bi bi-chevron-down"></i>
         </a>
+        <ul class="submenu" id="salesSubmenu">
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('sales-new')">
+              <i class="bi bi-plus-circle"></i>
+              <span>New Sale</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('sales-history')">
+              <i class="bi bi-clock-history"></i>
+              <span>Sales History</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('sales-returns')">
+              <i class="bi bi-arrow-return-left"></i>
+              <span>Sales Returns</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('sales-reports')">
+              <i class="bi bi-file-earmark-bar-graph"></i>
+              <span>Sales Reports</span>
+            </a>
+          </li>
+        </ul>
       </li>
+
       <li class="menu-item">
         <a href="#" onclick="showSection('inventory')">
           <i class="bi bi-box-seam"></i>
@@ -371,6 +460,15 @@
           <span>Reports</span>
         </a>
       </li>
+
+      <!-- User Management (Admin only) -->
+      <li class="menu-item" id="userManagementMenu" style="display: none;">
+        <a href="#" onclick="showSection('user-management')">
+          <i class="bi bi-people-fill"></i>
+          <span>User Management</span>
+        </a>
+      </li>
+
       <li class="menu-item">
         <a href="#" onclick="showSection('settings')">
           <i class="bi bi-gear"></i>
@@ -434,13 +532,40 @@
       </div>
     </div>
 
-    <!-- Sales Section -->
-    <div class="content-section" id="section-sales">
+    <!-- Sales Sections -->
+    <div class="content-section" id="section-sales-new">
       <div class="dashboard-content">
-        <h3><i class="bi bi-cart-check"></i> Sales Management</h3>
-        <p class="text-muted">Manage your sales transactions and orders</p>
+        <h3><i class="bi bi-plus-circle"></i> New Sale</h3>
+        <p class="text-muted">Create a new sales transaction</p>
         <hr>
-        <p>Sales module content will be loaded here...</p>
+        <p>New sale form will be loaded here...</p>
+      </div>
+    </div>
+
+    <div class="content-section" id="section-sales-history">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-clock-history"></i> Sales History</h3>
+        <p class="text-muted">View and manage past sales transactions</p>
+        <hr>
+        <p>Sales history table will be loaded here...</p>
+      </div>
+    </div>
+
+    <div class="content-section" id="section-sales-returns">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-arrow-return-left"></i> Sales Returns</h3>
+        <p class="text-muted">Process sales returns and refunds</p>
+        <hr>
+        <p>Sales returns module will be loaded here...</p>
+      </div>
+    </div>
+
+    <div class="content-section" id="section-sales-reports">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-file-earmark-bar-graph"></i> Sales Reports</h3>
+        <p class="text-muted">View detailed sales analytics and reports</p>
+        <hr>
+        <p>Sales reports and analytics will be loaded here...</p>
       </div>
     </div>
 
@@ -504,6 +629,19 @@
       </div>
     </div>
 
+    <!-- User Management Section -->
+    <div class="content-section" id="section-user-management">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-people-fill"></i> User Management</h3>
+        <p class="text-muted">Manage system users, roles, and permissions</p>
+        <hr>
+        <p>User management module content will be loaded here...</p>
+        <button class="btn btn-primary" onclick="openUserManagement()">
+          <i class="bi bi-people-fill"></i> Open User Management
+        </button>
+      </div>
+    </div>
+
     <!-- Settings Section -->
     <div class="content-section" id="section-settings">
       <div class="dashboard-content">
@@ -526,6 +664,11 @@
       const avatar = document.getElementById('userAvatar');
       if (userName) {
         avatar.innerHTML = userName.charAt(0).toUpperCase();
+      }
+
+      // Show user management menu if admin
+      if (userRole === 'Admin') {
+        document.getElementById('userManagementMenu').style.display = 'block';
       }
 
       // Load dashboard stats (placeholder values for now)
@@ -557,6 +700,21 @@
       }
     }
 
+    // Toggle submenu
+    function toggleSubmenu(menuId, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      const menuItem = document.getElementById(menuId);
+      const submenu = menuItem.querySelector('.submenu');
+
+      // Toggle open class
+      menuItem.classList.toggle('open');
+      submenu.classList.toggle('active');
+    }
+
     // Show section
     function showSection(sectionName) {
       // Hide all sections
@@ -565,8 +723,8 @@
         section.classList.remove('active');
       });
 
-      // Remove active class from all menu items
-      const menuItems = document.querySelectorAll('.menu-item a');
+      // Remove active class from all menu items and submenu items
+      const menuItems = document.querySelectorAll('.menu-item a, .submenu-item a');
       menuItems.forEach(item => {
         item.classList.remove('active');
       });
@@ -578,22 +736,37 @@
       }
 
       // Add active class to clicked menu item
-      event.target.closest('a').classList.add('active');
+      if (event && event.target) {
+        event.target.closest('a').classList.add('active');
+      }
 
       // Update page title
       const titles = {
         'dashboard': 'Dashboard',
-        'sales': 'Sales Management',
+        'sales-new': 'New Sale',
+        'sales-history': 'Sales History',
+        'sales-returns': 'Sales Returns',
+        'sales-reports': 'Sales Reports',
         'inventory': 'Inventory Management',
         'customers': 'Customer Management',
         'products': 'Product Management',
         'quotations': 'Quotations',
         'financials': 'Financial Management',
         'reports': 'Reports & Analytics',
+        'user-management': 'User Management',
         'settings': 'System Settings'
       };
 
       document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
+    }
+
+    // Open User Management (calls backend function)
+    function openUserManagement() {
+      google.script.run
+        .withFailureHandler(function(error) {
+          alert('Error opening user management: ' + error.message);
+        })
+        .showUserManagement();
     }
 
     // Logout function

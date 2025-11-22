@@ -117,6 +117,17 @@ function showSettings() {
 }
 
 /**
+ * Show user management
+ */
+function showUserManagement() {
+  const html = HtmlService.createHtmlOutputFromFile('sUserManagement')
+    .setTitle('User Management')
+    .setWidth(1000)
+    .setHeight(700);
+  SpreadsheetApp.getUi().showModalDialog(html, 'User Management');
+}
+
+/**
  * Get active user email
  */
 function getActiveUserEmail() {
