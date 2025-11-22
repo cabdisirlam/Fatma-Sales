@@ -30,12 +30,14 @@
       height: 100vh;
       width: 260px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 20px 0;
+      padding: 20px 0 20px 0;
       transition: all 0.3s ease;
       z-index: 1000;
       box-shadow: 4px 0 10px rgba(0,0,0,0.1);
       overflow-y: auto;
       overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     .sidebar::-webkit-scrollbar {
@@ -88,6 +90,9 @@
     .menu-items {
       list-style: none;
       padding: 0;
+      flex-grow: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
     .menu-item {
@@ -559,40 +564,40 @@
 
     <ul class="menu-items">
       <li class="menu-item">
-        <a href="#" class="active" onclick="showSection('dashboard')">
+        <a href="#" class="active" onclick="showSection('dashboard'); event.preventDefault();">
           <i class="bi bi-speedometer2"></i>
           <span>Dashboard</span>
         </a>
       </li>
 
-      <!-- Sales with submenu -->
+      <!-- Sales with clickable main item + submenu -->
       <li class="menu-item has-submenu" id="salesMenu">
-        <a href="#" onclick="toggleSubmenu('salesMenu', event)">
+        <a href="#" onclick="handleMenuClick('salesMenu', 'sales', event)">
           <i class="bi bi-cart-check"></i>
           <span>Sales</span>
           <i class="bi bi-chevron-down"></i>
         </a>
         <ul class="submenu" id="salesSubmenu">
           <li class="submenu-item">
-            <a href="#" onclick="showSection('sales-new')">
+            <a href="#" onclick="showSection('sales-new'); event.preventDefault();">
               <i class="bi bi-plus-circle"></i>
               <span>New Sale</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('sales-history')">
+            <a href="#" onclick="showSection('sales-history'); event.preventDefault();">
               <i class="bi bi-clock-history"></i>
               <span>Sales History</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('sales-returns')">
+            <a href="#" onclick="showSection('sales-returns'); event.preventDefault();">
               <i class="bi bi-arrow-return-left"></i>
               <span>Sales Returns</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('sales-reports')">
+            <a href="#" onclick="showSection('sales-reports'); event.preventDefault();">
               <i class="bi bi-file-earmark-bar-graph"></i>
               <span>Sales Reports</span>
             </a>
@@ -601,70 +606,54 @@
       </li>
 
       <li class="menu-item">
-        <a href="#" onclick="showSection('inventory')">
+        <a href="#" onclick="showSection('inventory'); event.preventDefault();">
           <i class="bi bi-box-seam"></i>
           <span>Inventory</span>
         </a>
       </li>
+
       <li class="menu-item">
-        <a href="#" onclick="showSection('customers')">
-          <i class="bi bi-people"></i>
-          <span>Customers</span>
-        </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" onclick="showSection('products')">
+        <a href="#" onclick="showSection('products'); event.preventDefault();">
           <i class="bi bi-bag"></i>
           <span>Products</span>
         </a>
       </li>
+
       <li class="menu-item">
-        <a href="#" onclick="showSection('quotations')">
-          <i class="bi bi-file-text"></i>
-          <span>Quotations</span>
-        </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" onclick="showSection('financials')">
-          <i class="bi bi-currency-dollar"></i>
-          <span>Financials</span>
-        </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" onclick="showSection('reports')">
-          <i class="bi bi-bar-chart"></i>
-          <span>Reports</span>
+        <a href="#" onclick="showSection('customers'); event.preventDefault();">
+          <i class="bi bi-people"></i>
+          <span>Customers</span>
         </a>
       </li>
 
       <!-- Suppliers with submenu -->
       <li class="menu-item has-submenu" id="suppliersMenu">
-        <a href="#" onclick="toggleSubmenu('suppliersMenu', event)">
+        <a href="#" onclick="handleMenuClick('suppliersMenu', 'suppliers-list', event)">
           <i class="bi bi-truck"></i>
           <span>Suppliers</span>
           <i class="bi bi-chevron-down"></i>
         </a>
         <ul class="submenu" id="suppliersSubmenu">
           <li class="submenu-item">
-            <a href="#" onclick="showSection('suppliers-list')">
+            <a href="#" onclick="showSection('suppliers-list'); event.preventDefault();">
               <i class="bi bi-list-ul"></i>
               <span>Suppliers List</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('suppliers-add')">
+            <a href="#" onclick="showSection('suppliers-add'); event.preventDefault();">
               <i class="bi bi-plus-circle"></i>
               <span>Add Supplier</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('suppliers-orders')">
+            <a href="#" onclick="showSection('suppliers-orders'); event.preventDefault();">
               <i class="bi bi-cart-plus"></i>
               <span>Purchase Orders</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('suppliers-payments')">
+            <a href="#" onclick="showSection('suppliers-payments'); event.preventDefault();">
               <i class="bi bi-credit-card"></i>
               <span>Supplier Payments</span>
             </a>
@@ -672,34 +661,55 @@
         </ul>
       </li>
 
-      <!-- User Management (Admin only) with submenu -->
-      <li class="menu-item has-submenu" id="userManagementMenu" style="display: none;">
-        <a href="#" onclick="toggleSubmenu('userManagementMenu', event)">
-          <i class="bi bi-people-fill"></i>
+      <li class="menu-item">
+        <a href="#" onclick="showSection('quotations'); event.preventDefault();">
+          <i class="bi bi-file-text"></i>
+          <span>Quotations</span>
+        </a>
+      </li>
+
+      <li class="menu-item">
+        <a href="#" onclick="showSection('financials'); event.preventDefault();">
+          <i class="bi bi-currency-dollar"></i>
+          <span>Financials</span>
+        </a>
+      </li>
+
+      <li class="menu-item">
+        <a href="#" onclick="showSection('reports'); event.preventDefault();">
+          <i class="bi bi-bar-chart"></i>
+          <span>Reports</span>
+        </a>
+      </li>
+
+      <!-- User Management with submenu (visible, controlled by role) -->
+      <li class="menu-item has-submenu" id="userManagementMenu">
+        <a href="#" onclick="handleMenuClick('userManagementMenu', 'users-list', event)">
+          <i class="bi bi-person-plus-fill"></i>
           <span>User Management</span>
           <i class="bi bi-chevron-down"></i>
         </a>
         <ul class="submenu" id="userManagementSubmenu">
           <li class="submenu-item">
-            <a href="#" onclick="showSection('users-list')">
+            <a href="#" onclick="showSection('users-list'); event.preventDefault();">
               <i class="bi bi-people"></i>
               <span>Users List</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('users-add')">
+            <a href="#" onclick="showSection('users-add'); event.preventDefault();">
               <i class="bi bi-person-plus"></i>
-              <span>Add User</span>
+              <span>Create New User</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('users-roles')">
+            <a href="#" onclick="showSection('users-roles'); event.preventDefault();">
               <i class="bi bi-shield-check"></i>
               <span>User Roles</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('users-permissions')">
+            <a href="#" onclick="showSection('users-permissions'); event.preventDefault();">
               <i class="bi bi-key"></i>
               <span>Permissions</span>
             </a>
@@ -708,7 +718,7 @@
       </li>
 
       <li class="menu-item">
-        <a href="#" onclick="showSection('settings')">
+        <a href="#" onclick="showSection('settings'); event.preventDefault();">
           <i class="bi bi-gear"></i>
           <span>Settings</span>
         </a>
@@ -765,6 +775,53 @@
             <i class="bi bi-currency-dollar"></i>
             <h3 id="totalRevenue">$0</h3>
             <p>Total Revenue</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sales Main Section -->
+    <div class="content-section" id="section-sales">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-cart-check"></i> Sales Overview</h3>
+        <p class="text-muted">Manage all sales operations</p>
+        <hr>
+        <div class="row g-3 mt-3">
+          <div class="col-md-6">
+            <div class="card p-3" style="cursor: pointer;" onclick="showSection('sales-new')">
+              <h5><i class="bi bi-plus-circle"></i> New Sale</h5>
+              <p class="text-muted mb-0">Create a new sales transaction</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3" style="cursor: pointer;" onclick="showSection('sales-history')">
+              <h5><i class="bi bi-clock-history"></i> Sales History</h5>
+              <p class="text-muted mb-0">View past sales transactions</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3" style="cursor: pointer;" onclick="showSection('sales-returns')">
+              <h5><i class="bi bi-arrow-return-left"></i> Sales Returns</h5>
+              <p class="text-muted mb-0">Process sales returns and refunds</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3" style="cursor: pointer;" onclick="showSection('sales-reports')">
+              <h5><i class="bi bi-file-earmark-bar-graph"></i> Sales Reports</h5>
+              <p class="text-muted mb-0">View sales analytics and reports</p>
+            </div>
           </div>
         </div>
       </div>
@@ -1257,6 +1314,30 @@
       submenu.classList.toggle('active');
     }
 
+    // Handle menu click for items with submenu (both navigate and toggle)
+    function handleMenuClick(menuId, sectionName, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      const menuItem = document.getElementById(menuId);
+      const submenu = menuItem.querySelector('.submenu');
+      const isOpen = menuItem.classList.contains('open');
+
+      // Navigate to section
+      showSection(sectionName);
+
+      // Toggle submenu
+      if (!isOpen) {
+        menuItem.classList.add('open');
+        submenu.classList.add('active');
+      } else {
+        menuItem.classList.remove('open');
+        submenu.classList.remove('active');
+      }
+    }
+
     // Show section
     function showSection(sectionName) {
       // Hide all sections
@@ -1285,6 +1366,7 @@
       // Update page title
       const titles = {
         'dashboard': 'Dashboard',
+        'sales': 'Sales Overview',
         'sales-new': 'New Sale',
         'sales-history': 'Sales History',
         'sales-returns': 'Sales Returns',
@@ -1300,7 +1382,7 @@
         'suppliers-orders': 'Purchase Orders',
         'suppliers-payments': 'Supplier Payments',
         'users-list': 'Users List',
-        'users-add': 'Add New User',
+        'users-add': 'Create New User',
         'users-roles': 'User Roles',
         'users-permissions': 'User Permissions',
         'settings': 'System Settings'
@@ -1360,20 +1442,21 @@
     // Section navigation
     const sectionOrder = [
       'dashboard',
+      'sales',
       'sales-new',
       'sales-history',
       'sales-returns',
       'sales-reports',
       'inventory',
-      'customers',
       'products',
-      'quotations',
-      'financials',
-      'reports',
+      'customers',
       'suppliers-list',
       'suppliers-add',
       'suppliers-orders',
       'suppliers-payments',
+      'quotations',
+      'financials',
+      'reports',
       'users-list',
       'users-add',
       'users-roles',
