@@ -1571,8 +1571,64 @@
         }
       }
 
+      if (sectionName === 'inventory') {
+        loadInventorySection();
+      }
+
+      if (sectionName === 'products') {
+        loadProductsSection();
+      }
+
+      if (sectionName === 'customers') {
+        loadCustomersSection();
+      }
+
+      if (sectionName === 'quotations') {
+        loadQuotationsSection();
+      }
+
+      if (sectionName === 'financials') {
+        loadFinancialsSection();
+      }
+
+      if (sectionName === 'reports') {
+        loadReportsSection();
+      }
+
+      if (sectionName === 'suppliers-list') {
+        loadSuppliersList();
+      }
+
+      if (sectionName === 'suppliers-add') {
+        loadAddSupplier();
+      }
+
+      if (sectionName === 'suppliers-orders') {
+        loadPurchaseOrders();
+      }
+
+      if (sectionName === 'suppliers-payments') {
+        loadSupplierPayments();
+      }
+
       if (sectionName === 'users-list') {
         loadUsersList();
+      }
+
+      if (sectionName === 'users-add') {
+        loadCreateUser();
+      }
+
+      if (sectionName === 'users-roles') {
+        loadUserRoles();
+      }
+
+      if (sectionName === 'users-permissions') {
+        loadUserPermissions();
+      }
+
+      if (sectionName === 'settings') {
+        loadSettingsSection();
       }
 
       // Update page title
@@ -1812,6 +1868,1089 @@
           showSalesAlert('Error loading reports: ' + error.message, 'danger');
         })
         .getSalesReport();
+    }
+
+    // Inventory Section
+    function loadInventorySection() {
+      const container = document.getElementById('section-inventory');
+      if (!container) return;
+
+      const contentDiv = container.querySelector('.placeholder-content') || container;
+      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading inventory...</p></div>';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          displayInventory(data);
+        })
+        .withFailureHandler(function(error) {
+          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading inventory: ' + error.message + '</div>';
+        })
+        .getInventory({});
+    }
+
+    function displayInventory(data) {
+      const container = document.getElementById('section-inventory');
+      if (!container) return;
+
+      let html = `
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Total Items</h6>
+              <h3>${data.length}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Low Stock</h6>
+              <h3 class="text-warning">${data.filter(i => i.Stock_Qty > 0 && i.Stock_Qty <= (i.Reorder_Level || 10)).length}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Out of Stock</h6>
+              <h3 class="text-danger">${data.filter(i => i.Stock_Qty <= 0).length}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Total Value</h6>
+              <h3>${formatCurrency(data.reduce((sum, i) => sum + (i.Stock_Qty * i.Cost_Price || 0), 0))}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><i class="bi bi-box-seam"></i> Inventory Items</div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Item ID</th>
+                    <th>Item Name</th>
+                    <th>Category</th>
+                    <th>Stock</th>
+                    <th>Unit</th>
+                    <th>Cost Price</th>
+                    <th>Selling Price</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+      `;
+
+      if (!data || data.length === 0) {
+        html += '<tr><td colspan="8" class="text-center text-muted py-4">No inventory items found</td></tr>';
+      } else {
+        data.slice(0, 50).forEach(function(item) {
+          let statusBadge = '';
+          if (item.Stock_Qty <= 0) {
+            statusBadge = '<span class="badge bg-danger">Out of Stock</span>';
+          } else if (item.Stock_Qty <= (item.Reorder_Level || 10)) {
+            statusBadge = '<span class="badge bg-warning text-dark">Low Stock</span>';
+          } else {
+            statusBadge = '<span class="badge bg-success">In Stock</span>';
+          }
+
+          html += `
+            <tr>
+              <td>${item.Item_ID || ''}</td>
+              <td><strong>${item.Item_Name || ''}</strong></td>
+              <td>${item.Category || ''}</td>
+              <td>${item.Stock_Qty || 0}</td>
+              <td>${item.Unit || ''}</td>
+              <td>${formatCurrency(item.Cost_Price)}</td>
+              <td>${formatCurrency(item.Selling_Price)}</td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        });
+      }
+
+      html += `
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Products Section
+    function loadProductsSection() {
+      loadInventorySection(); // Products and Inventory use same data
+    }
+
+    // Customers Section
+    function loadCustomersSection() {
+      const container = document.getElementById('section-customers');
+      if (!container) return;
+
+      const contentDiv = container.querySelector('.placeholder-content') || container;
+      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading customers...</p></div>';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          displayCustomers(data);
+        })
+        .withFailureHandler(function(error) {
+          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading customers: ' + error.message + '</div>';
+        })
+        .getCustomers({});
+    }
+
+    function displayCustomers(data) {
+      const container = document.getElementById('section-customers');
+      if (!container) return;
+
+      const activeCustomers = data.filter(c => c.Status === 'Active').length;
+      const customersWithDebt = data.filter(c => parseFloat(c.Balance || 0) < 0).length;
+      const totalDebt = data.reduce((sum, c) => {
+        const balance = parseFloat(c.Balance || 0);
+        return sum + (balance < 0 ? Math.abs(balance) : 0);
+      }, 0);
+
+      let html = `
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Total Customers</h6>
+              <h3>${data.length}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Active Customers</h6>
+              <h3 class="text-success">${activeCustomers}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>With Debt</h6>
+              <h3 class="text-warning">${customersWithDebt}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Total Debt</h6>
+              <h3 class="text-danger">${formatCurrency(totalDebt)}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><i class="bi bi-people"></i> Customers List</div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Customer ID</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Balance</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+      `;
+
+      if (!data || data.length === 0) {
+        html += '<tr><td colspan="6" class="text-center text-muted py-4">No customers found</td></tr>';
+      } else {
+        data.slice(0, 50).forEach(function(customer) {
+          const balance = parseFloat(customer.Balance || 0);
+          const balanceClass = balance < 0 ? 'text-danger' : balance > 0 ? 'text-success' : '';
+          const balanceText = balance < 0 ? 'Owes: ' + formatCurrency(Math.abs(balance)) :
+                             balance > 0 ? 'Credit: ' + formatCurrency(balance) : formatCurrency(0);
+          const statusBadge = customer.Status === 'Active' ?
+            '<span class="badge bg-success">Active</span>' :
+            '<span class="badge bg-secondary">Inactive</span>';
+
+          html += `
+            <tr>
+              <td>${customer.Customer_ID || ''}</td>
+              <td><strong>${customer.Name || ''}</strong></td>
+              <td>${customer.Phone || '-'}</td>
+              <td>${customer.Email || '-'}</td>
+              <td class="${balanceClass}">${balanceText}</td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        });
+      }
+
+      html += `
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Quotations Section
+    function loadQuotationsSection() {
+      const container = document.getElementById('section-quotations');
+      if (!container) return;
+
+      const contentDiv = container.querySelector('.placeholder-content') || container;
+      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading quotations...</p></div>';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          displayQuotations(data);
+        })
+        .withFailureHandler(function(error) {
+          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading quotations: ' + error.message + '</div>';
+        })
+        .getQuotations({});
+    }
+
+    function displayQuotations(data) {
+      const container = document.getElementById('section-quotations');
+      if (!container) return;
+
+      const pending = data.filter(q => q.Status === 'Pending').length;
+      const converted = data.filter(q => q.Status === 'Converted').length;
+      const totalValue = data.reduce((sum, q) => sum + parseFloat(q.Total_Amount || 0), 0);
+
+      let html = `
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Total Quotations</h6>
+              <h3>${data.length}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Pending</h6>
+              <h3 class="text-warning">${pending}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Converted</h6>
+              <h3 class="text-success">${converted}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Total Value</h6>
+              <h3>${formatCurrency(totalValue)}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><i class="bi bi-file-text"></i> Quotations List</div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Quotation ID</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Valid Until</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+      `;
+
+      if (!data || data.length === 0) {
+        html += '<tr><td colspan="6" class="text-center text-muted py-4">No quotations found</td></tr>';
+      } else {
+        data.slice(0, 50).forEach(function(quotation) {
+          let statusBadge = '';
+          switch(quotation.Status) {
+            case 'Pending': statusBadge = '<span class="badge bg-warning text-dark">Pending</span>'; break;
+            case 'Accepted': statusBadge = '<span class="badge bg-info">Accepted</span>'; break;
+            case 'Converted': statusBadge = '<span class="badge bg-success">Converted</span>'; break;
+            case 'Rejected': statusBadge = '<span class="badge bg-danger">Rejected</span>'; break;
+            case 'Expired': statusBadge = '<span class="badge bg-secondary">Expired</span>'; break;
+            default: statusBadge = '<span class="badge bg-secondary">' + (quotation.Status || 'Unknown') + '</span>';
+          }
+
+          html += `
+            <tr>
+              <td><strong>${quotation.Transaction_ID || ''}</strong></td>
+              <td>${quotation.Date ? new Date(quotation.Date).toLocaleDateString() : ''}</td>
+              <td>${quotation.Customer_Name || quotation.Customer_ID || '-'}</td>
+              <td>${formatCurrency(quotation.Total_Amount)}</td>
+              <td>${quotation.Valid_Until ? new Date(quotation.Valid_Until).toLocaleDateString() : '-'}</td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        });
+      }
+
+      html += `
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Financials Section
+    function loadFinancialsSection() {
+      const container = document.getElementById('section-financials');
+      if (!container) return;
+
+      const contentDiv = container.querySelector('.placeholder-content') || container;
+      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading financial data...</p></div>';
+
+      google.script.run
+        .withSuccessHandler(function(summary) {
+          displayFinancials(summary);
+        })
+        .withFailureHandler(function(error) {
+          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading financials: ' + error.message + '</div>';
+        })
+        .getFinancialSummary();
+    }
+
+    function displayFinancials(summary) {
+      const container = document.getElementById('section-financials');
+      if (!container) return;
+
+      const netProfit = (summary.totalRevenue || 0) - (summary.totalExpenses || 0);
+      const profitClass = netProfit >= 0 ? 'text-success' : 'text-danger';
+
+      let html = `
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Total Revenue</h6>
+              <h3 class="text-success">${formatCurrency(summary.totalRevenue)}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Total Expenses</h6>
+              <h3 class="text-danger">${formatCurrency(summary.totalExpenses)}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Net Profit</h6>
+              <h3 class="${profitClass}">${formatCurrency(netProfit)}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Account Balance</h6>
+              <h3>${formatCurrency(summary.currentBalance)}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card mb-4">
+              <div class="card-header"><i class="bi bi-bar-chart"></i> Income Breakdown</div>
+              <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Sales Revenue:</span>
+                  <strong class="text-success">${formatCurrency(summary.salesRevenue || 0)}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Customer Payments:</span>
+                  <strong class="text-success">${formatCurrency(summary.customerPayments || 0)}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Other Income:</span>
+                  <strong class="text-success">${formatCurrency(summary.otherIncome || 0)}</strong>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                  <strong>Total Income:</strong>
+                  <strong class="text-success">${formatCurrency(summary.totalRevenue)}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card mb-4">
+              <div class="card-header"><i class="bi bi-pie-chart"></i> Expense Breakdown</div>
+              <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Operating Expenses:</span>
+                  <strong class="text-danger">${formatCurrency(summary.operatingExpenses || 0)}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Supplier Payments:</span>
+                  <strong class="text-danger">${formatCurrency(summary.supplierPayments || 0)}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Other Expenses:</span>
+                  <strong class="text-danger">${formatCurrency(summary.otherExpenses || 0)}</strong>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                  <strong>Total Expenses:</strong>
+                  <strong class="text-danger">${formatCurrency(summary.totalExpenses)}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Reports Section
+    function loadReportsSection() {
+      loadSalesReports(); // Use existing sales reports
+    }
+
+    // Suppliers List Section
+    function loadSuppliersList() {
+      const container = document.getElementById('section-suppliers-list');
+      if (!container) return;
+
+      const contentDiv = container.querySelector('.placeholder-content') || container;
+      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading suppliers...</p></div>';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          displaySuppliers(data);
+        })
+        .withFailureHandler(function(error) {
+          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading suppliers: ' + error.message + '</div>';
+        })
+        .getSuppliers({});
+    }
+
+    function displaySuppliers(data) {
+      const container = document.getElementById('section-suppliers-list');
+      if (!container) return;
+
+      const activeSuppliers = data.filter(s => s.Status === 'Active').length;
+      const totalPayable = data.reduce((sum, s) => {
+        const balance = parseFloat(s.Balance || 0);
+        return sum + (balance < 0 ? Math.abs(balance) : 0);
+      }, 0);
+
+      let html = `
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h6>Total Suppliers</h6>
+              <h3>${data.length}</h3>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h6>Active Suppliers</h6>
+              <h3 class="text-success">${activeSuppliers}</h3>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h6>Total Payable</h6>
+              <h3 class="text-danger">${formatCurrency(totalPayable)}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><i class="bi bi-building"></i> Suppliers List</div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Supplier ID</th>
+                    <th>Name</th>
+                    <th>Contact</th>
+                    <th>Phone</th>
+                    <th>Balance</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+      `;
+
+      if (!data || data.length === 0) {
+        html += '<tr><td colspan="6" class="text-center text-muted py-4">No suppliers found</td></tr>';
+      } else {
+        data.slice(0, 50).forEach(function(supplier) {
+          const balance = parseFloat(supplier.Balance || 0);
+          const balanceClass = balance < 0 ? 'text-danger' : balance > 0 ? 'text-success' : '';
+          const balanceText = balance < 0 ? 'Payable: ' + formatCurrency(Math.abs(balance)) :
+                             balance > 0 ? 'Receivable: ' + formatCurrency(balance) : formatCurrency(0);
+          const statusBadge = supplier.Status === 'Active' ?
+            '<span class="badge bg-success">Active</span>' :
+            '<span class="badge bg-secondary">Inactive</span>';
+
+          html += `
+            <tr>
+              <td>${supplier.Supplier_ID || ''}</td>
+              <td><strong>${supplier.Name || ''}</strong></td>
+              <td>${supplier.Contact_Person || '-'}</td>
+              <td>${supplier.Phone || '-'}</td>
+              <td class="${balanceClass}">${balanceText}</td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        });
+      }
+
+      html += `
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Add Supplier Section
+    function loadAddSupplier() {
+      const container = document.getElementById('section-suppliers-add');
+      if (!container) return;
+
+      let html = `
+        <div class="card">
+          <div class="card-header"><i class="bi bi-plus-circle"></i> Add New Supplier</div>
+          <div class="card-body">
+            <form id="addSupplierForm" onsubmit="handleAddSupplier(event)">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Supplier Name *</label>
+                  <input type="text" class="form-control" name="name" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Contact Person</label>
+                  <input type="text" class="form-control" name="contactPerson">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Phone</label>
+                  <input type="tel" class="form-control" name="phone">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Email</label>
+                  <input type="email" class="form-control" name="email">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <label class="form-label">Address</label>
+                  <textarea class="form-control" name="address" rows="2"></textarea>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Payment Terms</label>
+                  <input type="text" class="form-control" name="paymentTerms" placeholder="e.g., Net 30">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Status</label>
+                  <select class="form-select" name="status">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i> Save Supplier
+              </button>
+            </form>
+            <div id="supplierFormAlert" class="alert mt-3" style="display: none;"></div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    function handleAddSupplier(event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      const supplierData = Object.fromEntries(formData);
+
+      const alertDiv = document.getElementById('supplierFormAlert');
+      alertDiv.style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            alertDiv.className = 'alert alert-success mt-3';
+            alertDiv.textContent = 'Supplier added successfully!';
+            alertDiv.style.display = 'block';
+            form.reset();
+          } else {
+            alertDiv.className = 'alert alert-danger mt-3';
+            alertDiv.textContent = 'Error: ' + result.message;
+            alertDiv.style.display = 'block';
+          }
+        })
+        .withFailureHandler(function(error) {
+          alertDiv.className = 'alert alert-danger mt-3';
+          alertDiv.textContent = 'Error: ' + error.message;
+          alertDiv.style.display = 'block';
+        })
+        .addSupplier(supplierData);
+    }
+
+    // Purchase Orders Section
+    function loadPurchaseOrders() {
+      const container = document.getElementById('section-suppliers-orders');
+      if (!container) return;
+
+      const contentDiv = container.querySelector('.placeholder-content') || container;
+      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading purchase orders...</p></div>';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          displayPurchaseOrders(data);
+        })
+        .withFailureHandler(function(error) {
+          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading purchase orders: ' + error.message + '</div>';
+        })
+        .getPurchases({});
+    }
+
+    function displayPurchaseOrders(data) {
+      const container = document.getElementById('section-suppliers-orders');
+      if (!container) return;
+
+      const totalOrders = data.length;
+      const totalValue = data.reduce((sum, p) => sum + parseFloat(p.Total_Amount || 0), 0);
+      const pendingPayment = data.filter(p => p.Payment_Status !== 'Paid').length;
+
+      let html = `
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h6>Total Orders</h6>
+              <h3>${totalOrders}</h3>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h6>Pending Payment</h6>
+              <h3 class="text-warning">${pendingPayment}</h3>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h6>Total Value</h6>
+              <h3>${formatCurrency(totalValue)}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><i class="bi bi-cart"></i> Purchase Orders</div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Purchase ID</th>
+                    <th>Date</th>
+                    <th>Supplier</th>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Amount</th>
+                    <th>Payment Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+      `;
+
+      if (!data || data.length === 0) {
+        html += '<tr><td colspan="7" class="text-center text-muted py-4">No purchase orders found</td></tr>';
+      } else {
+        data.slice(0, 50).forEach(function(purchase) {
+          const statusBadge = purchase.Payment_Status === 'Paid' ?
+            '<span class="badge bg-success">Paid</span>' :
+            '<span class="badge bg-warning text-dark">Pending</span>';
+
+          html += `
+            <tr>
+              <td><strong>${purchase.Purchase_ID || ''}</strong></td>
+              <td>${purchase.Date ? new Date(purchase.Date).toLocaleDateString() : ''}</td>
+              <td>${purchase.Supplier_Name || purchase.Supplier_ID || '-'}</td>
+              <td>${purchase.Item_Name || purchase.Item_ID || '-'}</td>
+              <td>${purchase.Qty || 0}</td>
+              <td>${formatCurrency(purchase.Total_Amount)}</td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        });
+      }
+
+      html += `
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Supplier Payments Section
+    function loadSupplierPayments() {
+      const container = document.getElementById('section-suppliers-payments');
+      if (!container) return;
+
+      container.innerHTML = `
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          Supplier payment tracking feature. This section will display payment history and allow recording new payments to suppliers.
+        </div>
+        <div class="card">
+          <div class="card-header"><i class="bi bi-cash"></i> Recent Supplier Payments</div>
+          <div class="card-body">
+            <p class="text-muted">Payment tracking functionality coming soon...</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Create New User Section
+    function loadCreateUser() {
+      const container = document.getElementById('section-users-add');
+      if (!container) return;
+
+      let html = `
+        <div class="card">
+          <div class="card-header"><i class="bi bi-person-plus"></i> Create New User</div>
+          <div class="card-body">
+            <form id="createUserForm" onsubmit="handleCreateUser(event)">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Username *</label>
+                  <input type="text" class="form-control" name="username" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Email *</label>
+                  <input type="email" class="form-control" name="email" required>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">4-Digit PIN *</label>
+                  <input type="password" class="form-control" name="pin" pattern="[0-9]{4}" maxlength="4" required>
+                  <small class="form-text text-muted">Enter a 4-digit numeric PIN</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Role *</label>
+                  <select class="form-select" name="role" required>
+                    <option value="">Select Role</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Sales">Sales</option>
+                    <option value="Cashier">Cashier</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Phone</label>
+                  <input type="tel" class="form-control" name="phone">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Status</label>
+                  <select class="form-select" name="status">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i> Create User
+              </button>
+            </form>
+            <div id="createUserAlert" class="alert mt-3" style="display: none;"></div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    function handleCreateUser(event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      const userData = Object.fromEntries(formData);
+
+      const alertDiv = document.getElementById('createUserAlert');
+      alertDiv.style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            alertDiv.className = 'alert alert-success mt-3';
+            alertDiv.textContent = 'User created successfully!';
+            alertDiv.style.display = 'block';
+            form.reset();
+          } else {
+            alertDiv.className = 'alert alert-danger mt-3';
+            alertDiv.textContent = 'Error: ' + result.message;
+            alertDiv.style.display = 'block';
+          }
+        })
+        .withFailureHandler(function(error) {
+          alertDiv.className = 'alert alert-danger mt-3';
+          alertDiv.textContent = 'Error: ' + error.message;
+          alertDiv.style.display = 'block';
+        })
+        .createUser(userData);
+    }
+
+    // User Roles Section
+    function loadUserRoles() {
+      const container = document.getElementById('section-users-roles');
+      if (!container) return;
+
+      let html = `
+        <div class="card">
+          <div class="card-header"><i class="bi bi-shield-check"></i> User Roles & Responsibilities</div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-star-fill text-warning"></i> Admin</h5>
+                    <p class="card-text">Full system access including:</p>
+                    <ul>
+                      <li>User management</li>
+                      <li>System settings</li>
+                      <li>All financial reports</li>
+                      <li>Data management</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-briefcase-fill text-primary"></i> Manager</h5>
+                    <p class="card-text">Management access including:</p>
+                    <ul>
+                      <li>Sales oversight</li>
+                      <li>Inventory management</li>
+                      <li>Customer management</li>
+                      <li>Reports viewing</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-cart-fill text-success"></i> Sales</h5>
+                    <p class="card-text">Sales operations including:</p>
+                    <ul>
+                      <li>Process sales</li>
+                      <li>Create quotations</li>
+                      <li>Manage customers</li>
+                      <li>View inventory</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-cash-coin text-info"></i> Cashier</h5>
+                    <p class="card-text">Cashier operations including:</p>
+                    <ul>
+                      <li>Process payments</li>
+                      <li>Issue receipts</li>
+                      <li>View sales</li>
+                      <li>Handle returns</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // User Permissions Section
+    function loadUserPermissions() {
+      const container = document.getElementById('section-users-permissions');
+      if (!container) return;
+
+      let html = `
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          User permissions are managed by assigning roles. Each role has predefined access levels as shown in the User Roles section.
+        </div>
+        <div class="card">
+          <div class="card-header"><i class="bi bi-key"></i> Permission Matrix</div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Feature</th>
+                    <th>Admin</th>
+                    <th>Manager</th>
+                    <th>Sales</th>
+                    <th>Cashier</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>User Management</td>
+                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
+                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
+                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
+                  </tr>
+                  <tr>
+                    <td>Sales Processing</td>
+                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                  </tr>
+                  <tr>
+                    <td>Inventory Management</td>
+                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                    <td><i class="bi bi-dash-circle-fill text-warning"></i> View Only</td>
+                    <td><i class="bi bi-dash-circle-fill text-warning"></i> View Only</td>
+                  </tr>
+                  <tr>
+                    <td>Financial Reports</td>
+                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                    <td><i class="bi bi-dash-circle-fill text-warning"></i> Limited</td>
+                    <td><i class="bi bi-dash-circle-fill text-warning"></i> Limited</td>
+                  </tr>
+                  <tr>
+                    <td>System Settings</td>
+                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
+                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
+                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Settings Section
+    function loadSettingsSection() {
+      const container = document.getElementById('section-settings');
+      if (!container) return;
+
+      let html = `
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-header"><i class="bi bi-gear"></i> General Settings</div>
+              <div class="card-body">
+                <form>
+                  <div class="mb-3">
+                    <label class="form-label">Shop Name</label>
+                    <input type="text" class="form-control" value="Fatma Sales">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Currency</label>
+                    <select class="form-select">
+                      <option>USD - US Dollar</option>
+                      <option>EUR - Euro</option>
+                      <option>GBP - British Pound</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Tax Rate (%)</label>
+                    <input type="number" class="form-control" value="0" step="0.01">
+                  </div>
+                  <button type="button" class="btn btn-primary">Save Settings</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-header"><i class="bi bi-receipt"></i> Receipt Settings</div>
+              <div class="card-body">
+                <form>
+                  <div class="mb-3">
+                    <label class="form-label">Receipt Header</label>
+                    <textarea class="form-control" rows="2">Fatma Sales Management System</textarea>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Receipt Footer</label>
+                    <textarea class="form-control" rows="2">Thank you for your business!</textarea>
+                  </div>
+                  <div class="mb-3">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" checked>
+                      <label class="form-check-label">Include Shop Logo</label>
+                    </div>
+                  </div>
+                  <button type="button" class="btn btn-primary">Save Settings</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header"><i class="bi bi-tags"></i> Expense Categories</div>
+              <div class="card-body">
+                <p class="text-muted">Manage expense categories for better financial tracking</p>
+                <div class="d-flex flex-wrap gap-2">
+                  <span class="badge bg-primary">Rent</span>
+                  <span class="badge bg-primary">Utilities</span>
+                  <span class="badge bg-primary">Salaries</span>
+                  <span class="badge bg-primary">Marketing</span>
+                  <span class="badge bg-primary">Supplies</span>
+                  <span class="badge bg-primary">Transportation</span>
+                  <span class="badge bg-primary">Other</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-3">
+                  <i class="bi bi-plus"></i> Add Category
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Expenses Section (if separate from Financials)
+    function loadExpensesSection() {
+      // This can reuse financial data or have its own implementation
+      loadFinancialsSection();
     }
 
     // Logout function
