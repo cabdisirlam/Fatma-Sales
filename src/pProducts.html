@@ -268,6 +268,10 @@
 
     let inventoryData = [];
 
+    function getStockQty(item) {
+      return (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
+    }
+
     function loadInventory() {
       document.getElementById('loadingIndicator').style.display = 'block';
       document.getElementById('inventoryTableContainer').style.display = 'none';
@@ -304,10 +308,12 @@
         let stockStatus = '';
         let statusBadge = '';
 
-        if (item.Stock_Qty <= 0) {
+        const stockQty = getStockQty(item);
+
+        if (stockQty <= 0) {
           stockStatus = 'stock-out';
           statusBadge = '<span class="badge bg-danger">Out of Stock</span>';
-        } else if (item.Stock_Qty <= (item.Reorder_Level || 10)) {
+        } else if (stockQty <= (item.Reorder_Level || 10)) {
           stockStatus = 'stock-low';
           statusBadge = '<span class="badge bg-warning">Low Stock</span>';
         } else {
@@ -319,7 +325,7 @@
           <td>${item.Item_ID || ''}</td>
           <td><strong>${item.Item_Name || ''}</strong></td>
           <td>${item.Category || ''}</td>
-          <td class="${stockStatus}">${item.Stock_Qty || 0}</td>
+          <td class="${stockStatus}">${stockQty}</td>
           <td>${item.Unit || ''}</td>
           <td>$${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
           <td>$${parseFloat(item.Selling_Price || 0).toFixed(2)}</td>
@@ -341,7 +347,7 @@
       let totalValue = 0;
 
       data.forEach(function(item) {
-        const qty = parseFloat(item.Stock_Qty || 0);
+        const qty = getStockQty(item);
         const costPrice = parseFloat(item.Cost_Price || 0);
         const reorderLevel = parseFloat(item.Reorder_Level || 10);
 
@@ -393,11 +399,12 @@
 
         let matchesStock = true;
         if (stockFilter === 'low') {
-          matchesStock = item.Stock_Qty > 0 && item.Stock_Qty <= (item.Reorder_Level || 10);
+          const qty = getStockQty(item);
+          matchesStock = qty > 0 && qty <= (item.Reorder_Level || 10);
         } else if (stockFilter === 'out') {
-          matchesStock = item.Stock_Qty <= 0;
+          matchesStock = getStockQty(item) <= 0;
         } else if (stockFilter === 'ok') {
-          matchesStock = item.Stock_Qty > (item.Reorder_Level || 10);
+          matchesStock = getStockQty(item) > (item.Reorder_Level || 10);
         }
 
         return matchesSearch && matchesCategory && matchesStock;

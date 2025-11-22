@@ -97,10 +97,11 @@
       google.script.run.withSuccessHandler(function(data) {
         const select = document.getElementById('itemSelect');
         data.forEach(i => {
-          if (i.Stock_Qty > 0) {
+          const stockQty = (i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty) || 0;
+          if (stockQty > 0) {
             const o = document.createElement('option');
             o.value = i.Item_ID;
-            o.textContent = i.Item_Name + ' - $' + i.Selling_Price + ' (Stock: ' + i.Stock_Qty + ')';
+            o.textContent = i.Item_Name + ' - $' + i.Selling_Price + ' (Stock: ' + stockQty + ')';
             select.appendChild(o);
           }
         });
