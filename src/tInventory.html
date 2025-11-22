@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Management</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f6fa;
+      padding: 20px;
+    }
+
+    .header-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .header-section h2 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .header-section p {
+      margin: 10px 0 0 0;
+      opacity: 0.9;
+    }
+
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 15px 15px 0 0 !important;
+      padding: 20px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .table {
+      margin: 0;
+    }
+
+    .table thead {
+      background: #f8f9fa;
+    }
+
+    .table th {
+      border-bottom: 2px solid #dee2e6;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #667eea;
+      margin: 10px 0;
+    }
+
+    .stat-label {
+      color: #7f8c8d;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #7f8c8d;
+    }
+
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    .search-box {
+      margin-bottom: 20px;
+    }
+
+    .filter-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .stock-low {
+      color: #e74c3c;
+      font-weight: 600;
+    }
+
+    .stock-ok {
+      color: #27ae60;
+      font-weight: 600;
+    }
+
+    .stock-out {
+      background-color: #e74c3c;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-section">
+    <h2><i class="bi bi-box-seam"></i> Inventory Management</h2>
+    <p>Manage your product inventory, stock levels, and pricing</p>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row" id="statsSection">
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-label">Total Items</div>
+        <div class="stat-value" id="totalItems">0</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-label">Low Stock</div>
+        <div class="stat-value stock-low" id="lowStock">0</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-label">Out of Stock</div>
+        <div class="stat-value stock-out" id="outOfStock" style="background: none; color: #e74c3c;">0</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-label">Total Value</div>
+        <div class="stat-value" id="totalValue">$0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filter-section">
+    <div class="row">
+      <div class="col-md-4">
+        <input type="text" class="form-control" id="searchInput" placeholder="Search by item name or ID...">
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" id="categoryFilter">
+          <option value="">All Categories</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" id="stockFilter">
+          <option value="">All Stock Levels</option>
+          <option value="low">Low Stock</option>
+          <option value="out">Out of Stock</option>
+          <option value="ok">In Stock</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100" onclick="loadInventory()">
+          <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory Table -->
+  <div class="card">
+    <div class="card-header">
+      <i class="bi bi-list-ul"></i> Inventory Items
+    </div>
+    <div class="card-body">
+      <div id="loadingIndicator" class="loading">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Loading inventory...</p>
+      </div>
+
+      <div id="inventoryTableContainer" style="display: none;">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Item ID</th>
+                <th>Item Name</th>
+                <th>Category</th>
+                <th>Stock Qty</th>
+                <th>Unit</th>
+                <th>Cost Price</th>
+                <th>Selling Price</th>
+                <th>Reorder Level</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryTableBody">
+              <!-- Data will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="noDataMessage" style="display: none;" class="text-center text-muted py-4">
+        <i class="bi bi-inbox" style="font-size: 48px;"></i>
+        <p class="mt-3">No inventory items found</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Load inventory on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadInventory();
+      loadCategories();
+    });
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', filterInventory);
+    document.getElementById('categoryFilter').addEventListener('change', filterInventory);
+    document.getElementById('stockFilter').addEventListener('change', filterInventory);
+
+    let inventoryData = [];
+
+    function loadInventory() {
+      document.getElementById('loadingIndicator').style.display = 'block';
+      document.getElementById('inventoryTableContainer').style.display = 'none';
+      document.getElementById('noDataMessage').style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          inventoryData = data;
+          displayInventory(data);
+          updateStats(data);
+          document.getElementById('loadingIndicator').style.display = 'none';
+        })
+        .withFailureHandler(function(error) {
+          document.getElementById('loadingIndicator').innerHTML =
+            '<div class="alert alert-danger">Error loading inventory: ' + error.message + '</div>';
+        })
+        .getInventory({});
+    }
+
+    function displayInventory(data) {
+      const tbody = document.getElementById('inventoryTableBody');
+      tbody.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        document.getElementById('noDataMessage').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('inventoryTableContainer').style.display = 'block';
+
+      data.forEach(function(item) {
+        const row = document.createElement('tr');
+
+        let stockStatus = '';
+        let statusBadge = '';
+
+        if (item.Stock_Qty <= 0) {
+          stockStatus = 'stock-out';
+          statusBadge = '<span class="badge bg-danger">Out of Stock</span>';
+        } else if (item.Stock_Qty <= (item.Reorder_Level || 10)) {
+          stockStatus = 'stock-low';
+          statusBadge = '<span class="badge bg-warning">Low Stock</span>';
+        } else {
+          stockStatus = 'stock-ok';
+          statusBadge = '<span class="badge bg-success">In Stock</span>';
+        }
+
+        row.innerHTML = `
+          <td>${item.Item_ID || ''}</td>
+          <td><strong>${item.Item_Name || ''}</strong></td>
+          <td>${item.Category || ''}</td>
+          <td class="${stockStatus}">${item.Stock_Qty || 0}</td>
+          <td>${item.Unit || ''}</td>
+          <td>$${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
+          <td>$${parseFloat(item.Selling_Price || 0).toFixed(2)}</td>
+          <td>${item.Reorder_Level || 10}</td>
+          <td>${statusBadge}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function updateStats(data) {
+      if (!data || data.length === 0) {
+        return;
+      }
+
+      const totalItems = data.length;
+      let lowStockCount = 0;
+      let outOfStockCount = 0;
+      let totalValue = 0;
+
+      data.forEach(function(item) {
+        const qty = parseFloat(item.Stock_Qty || 0);
+        const costPrice = parseFloat(item.Cost_Price || 0);
+        const reorderLevel = parseFloat(item.Reorder_Level || 10);
+
+        totalValue += qty * costPrice;
+
+        if (qty <= 0) {
+          outOfStockCount++;
+        } else if (qty <= reorderLevel) {
+          lowStockCount++;
+        }
+      });
+
+      document.getElementById('totalItems').textContent = totalItems;
+      document.getElementById('lowStock').textContent = lowStockCount;
+      document.getElementById('outOfStock').textContent = outOfStockCount;
+      document.getElementById('totalValue').textContent = '$' + totalValue.toFixed(2);
+    }
+
+    function loadCategories() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          const categoryFilter = document.getElementById('categoryFilter');
+          const categories = [...new Set(data.map(item => item.Category).filter(cat => cat))];
+
+          categories.forEach(function(category) {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            categoryFilter.appendChild(option);
+          });
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading categories:', error);
+        })
+        .getInventory({});
+    }
+
+    function filterInventory() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const categoryFilter = document.getElementById('categoryFilter').value;
+      const stockFilter = document.getElementById('stockFilter').value;
+
+      const filtered = inventoryData.filter(function(item) {
+        const matchesSearch = !searchTerm ||
+          (item.Item_Name && item.Item_Name.toLowerCase().includes(searchTerm)) ||
+          (item.Item_ID && item.Item_ID.toLowerCase().includes(searchTerm));
+
+        const matchesCategory = !categoryFilter || item.Category === categoryFilter;
+
+        let matchesStock = true;
+        if (stockFilter === 'low') {
+          matchesStock = item.Stock_Qty > 0 && item.Stock_Qty <= (item.Reorder_Level || 10);
+        } else if (stockFilter === 'out') {
+          matchesStock = item.Stock_Qty <= 0;
+        } else if (stockFilter === 'ok') {
+          matchesStock = item.Stock_Qty > (item.Reorder_Level || 10);
+        }
+
+        return matchesSearch && matchesCategory && matchesStock;
+      });
+
+      displayInventory(filtered);
+      updateStats(filtered);
+    }
+  </script>
+</body>
+</html>
