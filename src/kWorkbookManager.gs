@@ -6,7 +6,7 @@
  * 1. Run the function: createFatmaSystem()
  * 2. The system will automatically create a new spreadsheet named "Fatma System"
  * 3. All required sheets will be created and formatted
- * 4. Default admin user will be created (username: admin, PIN: 1234)
+ * 4. Default admin user will be created (email: cabdisirlam@gmail.com, username: Cabdisirlam, PIN: 2020)
  */
 
 /**
@@ -96,13 +96,14 @@ function setupFatmaSystem() {
         'Spreadsheet URL: ' + ss.getUrl() + '\n\n' +
         'All sheets have been created and formatted.\n\n' +
         'Default admin user created:\n' +
-        'Username: admin\n' +
-        'PIN: 1234\n\n' +
+        'Email: cabdisirlam@gmail.com\n' +
+        'Username: Cabdisirlam\n' +
+        'PIN: 2020\n\n' +
         'Please change the PIN after first login.',
         SpreadsheetApp.getUi().ButtonSet.OK
       );
     } catch (e) {
-      Logger.log('Setup completed. Default admin: username=admin, PIN=1234');
+      Logger.log('Setup completed. Default admin: email=cabdisirlam@gmail.com, username=Cabdisirlam, PIN=2020');
       Logger.log('Spreadsheet URL: ' + ss.getUrl());
     }
 

@@ -91,7 +91,7 @@ The Fatma System now **automatically creates and configures everything** for you
    - ✅ Create a new spreadsheet named "Fatma System"
    - ✅ Create all necessary sheets (Users, Suppliers, Customers, Inventory, Sales, etc.)
    - ✅ Set up proper formatting and headers
-   - ✅ Create a default admin user with username `admin` and PIN `1234`
+   - ✅ Create a default admin user (email: cabdisirlam@gmail.com, username: Cabdisirlam, PIN: 2020)
    - ✅ Initialize default settings and expense categories
    - ✅ Return the spreadsheet URL in the logs
 
@@ -102,8 +102,9 @@ The Fatma System now **automatically creates and configures everything** for you
 5. **Deploy as Web App** to access the full UI
 
 6. **First Login**:
-   - Username: `admin`
-   - PIN: `1234`
+   - Email: `cabdisirlam@gmail.com`
+   - Username: `Cabdisirlam`
+   - PIN: `2020`
    - **IMPORTANT**: Change the PIN after first login for security
 
 For detailed step-by-step instructions, see [SETUP_GUIDE.md](SETUP_GUIDE.md).
@@ -430,7 +431,14 @@ This project is proprietary software for Fatma Sales.
 
 ## Version
 
-Current Version: 2.0.0
+Current Version: 2.1.0
+
+**Major Changes in v2.1.0**:
+- 🔧 Fixed PIN mismatch bug (default PIN is now correctly documented as 2020)
+- 🧹 Cleaned up and minimized module files (placeholders for future development)
+- 📦 Reduced codebase size by ~90% (most modules now under 500 bytes)
+- ✅ Kept core authentication and workbook setup functionality intact
+- 📝 Updated documentation to reflect correct default credentials
 
 **Major Changes in v2.0.0**:
 - Fixed circular dependency in core functions

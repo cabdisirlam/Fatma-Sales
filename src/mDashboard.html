@@ -6,420 +6,92 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fatma Dashboard</title>
 
-  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
   <style>
-    :root {
-      --primary-color: #2c3e50;
-      --secondary-color: #3498db;
-    }
-
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f7fa;
-      margin: 0;
-      padding: 0;
-    }
-
-    /* Top Navigation Bar */
-    .top-nav {
-      background: white;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      padding: 15px 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-
-    .logo-section {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .logo-section i {
-      font-size: 32px;
-      color: var(--secondary-color);
-    }
-
-    .logo-section h1 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--primary-color);
-    }
-
-    .user-section {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .user-info {
-      text-align: right;
-    }
-
-    .user-name {
-      font-weight: 600;
-      color: var(--primary-color);
-      margin: 0;
-    }
-
-    .user-role {
-      font-size: 13px;
-      color: #7f8c8d;
-      margin: 0;
-    }
-
-    .btn-logout {
-      background: #e74c3c;
-      color: white;
-      border: none;
-      padding: 8px 20px;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .btn-logout:hover {
-      background: #c0392b;
-      transform: translateY(-2px);
-    }
-
-    /* Main Container */
-    .container-fluid {
-      padding: 30px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    /* Welcome Section */
-    .welcome-section {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 30px;
-      border-radius: 15px;
-      margin-bottom: 30px;
-      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-    }
-
-    .welcome-section h2 {
-      margin: 0 0 10px 0;
-      font-size: 32px;
-      font-weight: 700;
-    }
-
-    .welcome-section p {
-      margin: 0;
-      opacity: 0.95;
-      font-size: 16px;
-    }
-
-    /* Feature Grid */
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 25px;
-      margin-bottom: 30px;
-    }
-
-    .feature-card {
-      background: white;
-      border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      transition: all 0.3s;
-      cursor: pointer;
-      border: 2px solid transparent;
-    }
-
-    .feature-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-      border-color: var(--secondary-color);
-    }
-
-    .feature-card.disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .feature-card.disabled:hover {
-      transform: none;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      border-color: transparent;
-    }
-
-    .feature-icon {
-      width: 60px;
-      height: 60px;
-      border-radius: 12px;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
-      color: white;
+    }
+
+    .dashboard-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      padding: 60px 40px;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    .welcome-icon {
+      font-size: 80px;
+      color: #3498db;
       margin-bottom: 20px;
     }
 
-    .feature-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--primary-color);
-      margin: 0 0 10px 0;
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 15px;
     }
 
-    .feature-description {
-      font-size: 14px;
-      color: #7f8c8d;
-      margin: 0;
-      line-height: 1.6;
+    .user-info {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 30px 0;
     }
 
-    .feature-badge {
-      display: inline-block;
-      background: #f39c12;
-      color: white;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 20px;
-      margin-top: 10px;
-      text-transform: uppercase;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .top-nav {
-        flex-direction: column;
-        gap: 15px;
-        padding: 15px 20px;
-      }
-
-      .logo-section h1 {
-        font-size: 20px;
-      }
-
-      .user-section {
-        width: 100%;
-        justify-content: space-between;
-      }
-
-      .welcome-section h2 {
-        font-size: 24px;
-      }
-
-      .feature-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
-      }
-
-      .feature-card {
-        padding: 20px;
-      }
+    .logout-btn {
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <!-- Top Navigation -->
-  <div class="top-nav">
-    <div class="logo-section">
-      <i class="bi bi-shop"></i>
-      <h1>Fatma System</h1>
-    </div>
-    <div class="user-section">
-      <div class="user-info">
-        <p class="user-name" id="userName">User</p>
-        <p class="user-role" id="userRole">Role</p>
-      </div>
-      <button class="btn-logout" onclick="logout()">
-        <i class="bi bi-box-arrow-right"></i> Logout
-      </button>
-    </div>
-  </div>
+  <div class="dashboard-card">
+    <i class="bi bi-check-circle-fill welcome-icon"></i>
+    <h1>Welcome to Fatma System!</h1>
+    <p class="lead">You've successfully logged in.</p>
 
-  <!-- Main Content -->
-  <div class="container-fluid">
-    <!-- Welcome Section -->
-    <div class="welcome-section">
-      <h2>Welcome back, <span id="welcomeName">User</span>!</h2>
-      <p>Your sales management dashboard • Today is <span id="currentDate"></span></p>
+    <div class="user-info">
+      <p><strong>Email:</strong> <span id="userEmail"></span></p>
+      <p><strong>Username:</strong> <span id="userName"></span></p>
+      <p><strong>Role:</strong> <span id="userRole"></span></p>
     </div>
 
-    <!-- Feature Grid -->
-    <div class="feature-grid" id="featureGrid">
-      <!-- Features will be loaded based on user role -->
-    </div>
+    <p class="text-muted">Dashboard modules are placeholders for now.</p>
+
+    <button class="btn btn-danger logout-btn" onclick="logout()">
+      <i class="bi bi-box-arrow-right"></i> Logout
+    </button>
   </div>
 
   <script>
-    // Feature definitions with role access
-    const features = [
-      {
-        id: 'dashboard',
-        title: 'Dashboard',
-        description: 'View sales statistics and business overview',
-        icon: 'bi-speedometer2',
-        color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        roles: ['Admin', 'Manager', 'Staff'],
-        enabled: false // Placeholder
-      },
-      {
-        id: 'sales',
-        title: 'New Sale',
-        description: 'Record a new sale transaction',
-        icon: 'bi-cart-check-fill',
-        color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-        roles: ['Admin', 'Manager', 'Staff'],
-        enabled: false // Placeholder
-      },
-      {
-        id: 'inventory',
-        title: 'Inventory',
-        description: 'Manage products and stock levels',
-        icon: 'bi-box-seam',
-        color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-        roles: ['Admin', 'Manager'],
-        enabled: false // Placeholder
-      },
-      {
-        id: 'customers',
-        title: 'Customers',
-        description: 'Manage customer information and accounts',
-        icon: 'bi-people-fill',
-        color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-        roles: ['Admin', 'Manager'],
-        enabled: false // Placeholder
-      },
-      {
-        id: 'suppliers',
-        title: 'Suppliers',
-        description: 'Track suppliers and purchase orders',
-        icon: 'bi-truck',
-        color: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
-        roles: ['Admin', 'Manager'],
-        enabled: false // Placeholder
-      },
-      {
-        id: 'financials',
-        title: 'Financials',
-        description: 'View cash, M-PESA, and bank balances',
-        icon: 'bi-cash-coin',
-        color: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-        roles: ['Admin', 'Manager'],
-        enabled: false // Placeholder
-      },
-      {
-        id: 'expenses',
-        title: 'Expenses',
-        description: 'Record and track business expenses',
-        icon: 'bi-wallet2',
-        color: 'linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%)',
-        roles: ['Admin', 'Manager'],
-        enabled: false // Placeholder
-      },
-      {
-        id: 'quotations',
-        title: 'Quotations',
-        description: 'Create and manage sales quotations',
-        icon: 'bi-file-earmark-text-fill',
-        color: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)',
-        roles: ['Admin', 'Manager'],
-        enabled: false // Placeholder
-      },
-      {
-        id: 'reports',
-        title: 'Reports',
-        description: 'Generate business reports and analytics',
-        icon: 'bi-graph-up-arrow',
-        color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-        roles: ['Admin', 'Manager'],
-        enabled: false // Placeholder
-      },
-      {
-        id: 'settings',
-        title: 'Settings',
-        description: 'System configuration and user management',
-        icon: 'bi-gear-fill',
-        color: 'linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%)',
-        roles: ['Admin'],
-        enabled: false // Placeholder
-      }
-    ];
-
-    // Initialize dashboard with user data
     function initDashboard(userName, userRole) {
-      // Default values if not provided
-      userName = userName || sessionStorage.getItem('userName') || 'User';
-      userRole = userRole || sessionStorage.getItem('userRole') || 'Staff';
-
-      // Set user info
-      document.getElementById('userName').textContent = userName;
-      document.getElementById('welcomeName').textContent = userName;
-      document.getElementById('userRole').textContent = userRole;
-
-      // Set current date
-      const today = new Date();
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
-
-      // Load features based on role
-      loadFeatures(userRole);
+      const userEmail = sessionStorage.getItem('userEmail');
+      document.getElementById('userEmail').textContent = userEmail || 'N/A';
+      document.getElementById('userName').textContent = userName || 'N/A';
+      document.getElementById('userRole').textContent = userRole || 'N/A';
     }
 
-    // Load features based on user role
-    function loadFeatures(role) {
-      const grid = document.getElementById('featureGrid');
-      grid.innerHTML = '';
-
-      features.forEach(feature => {
-        // Check if feature is available for this role
-        if (!feature.roles.includes(role)) {
-          return; // Skip features not available for this role
-        }
-
-        const card = document.createElement('div');
-        card.className = 'feature-card' + (feature.enabled ? '' : ' disabled');
-        card.onclick = feature.enabled ? () => openFeature(feature.id) : null;
-
-        card.innerHTML = `
-          <div class="feature-icon" style="background: ${feature.color}">
-            <i class="${feature.icon}"></i>
-          </div>
-          <h3 class="feature-title">${feature.title}</h3>
-          <p class="feature-description">${feature.description}</p>
-          ${!feature.enabled ? '<span class="feature-badge">Coming Soon</span>' : ''}
-        `;
-
-        grid.appendChild(card);
-      });
-    }
-
-    // Open feature
-    function openFeature(featureId) {
-      alert('Opening ' + featureId + ' - This will be implemented next!');
-    }
-
-    // Logout function
     function logout() {
-      if (confirm('Are you sure you want to logout?')) {
-        // Clear session
-        sessionStorage.clear();
-
-        // Reload page (will show login screen)
-        window.location.reload();
-      }
+      sessionStorage.clear();
+      location.reload();
     }
 
-    // Initialize on load
-    document.addEventListener('DOMContentLoaded', initDashboard);
+    // Auto-initialize if session data exists
+    window.addEventListener('DOMContentLoaded', function() {
+      const userName = sessionStorage.getItem('userName');
+      const userRole = sessionStorage.getItem('userRole');
+      if (userName && userRole) {
+        initDashboard(userName, userRole);
+      }
+    });
   </script>
 </body>
 </html>
