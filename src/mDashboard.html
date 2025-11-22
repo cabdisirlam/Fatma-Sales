@@ -1771,7 +1771,11 @@
     }
 
     function openNewSaleDialog() {
-      google.script.run.showNewSaleDialog();
+      // Cannot open a new modal dialog from within an existing modal dialog
+      // Close this dashboard and instruct user to use the menu
+      if (confirm('To create a new sale, please use the menu: Fatma System > New Sale\n\nClick OK to close this dashboard.')) {
+        google.script.host.close();
+      }
     }
 
     function loadSalesOverview() {

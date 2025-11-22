@@ -64,11 +64,27 @@ function showDashboard() {
  * Show new sale dialog
  */
 function showNewSaleDialog() {
-  const html = HtmlService.createHtmlOutputFromFile('oNewSale')
-    .setTitle('New Sale')
-    .setWidth(600)
-    .setHeight(500);
-  SpreadsheetApp.getUi().showModalDialog(html, 'New Sale');
+  // Try to get UI - check if available
+  try {
+    const html = HtmlService.createHtmlOutputFromFile('oNewSale')
+      .setTitle('New Sale')
+      .setWidth(600)
+      .setHeight(500);
+    SpreadsheetApp.getUi().showModalDialog(html, 'New Sale');
+    return { success: true };
+  } catch (e) {
+    // If UI not available (called from restricted context), return signal
+    Logger.log('showNewSaleDialog called from restricted context: ' + e.message);
+    return { success: false, error: 'UI_NOT_AVAILABLE', message: e.message };
+  }
+}
+
+/**
+ * Delayed show new sale dialog - for use after closing another dialog
+ */
+function delayedShowNewSaleDialog() {
+  Utilities.sleep(100); // Brief delay to ensure previous dialog closes
+  return showNewSaleDialog();
 }
 
 /**
