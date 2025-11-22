@@ -565,7 +565,7 @@
 
     <ul class="menu-items">
       <li class="menu-item">
-        <a href="#" class="active" onclick="showSection('dashboard'); event.preventDefault();">
+        <a href="#" class="active" id="menu-dashboard" onclick="showSection('dashboard', event);">
           <i class="bi bi-speedometer2"></i>
           <span>Dashboard</span>
         </a>
@@ -573,32 +573,32 @@
 
       <!-- Sales with clickable main item + submenu -->
       <li class="menu-item has-submenu" id="salesMenu">
-        <a href="#" onclick="handleMenuClick('salesMenu', 'sales', event)">
+        <a href="#" id="menu-sales" onclick="handleMenuClick('salesMenu', 'sales', event)">
           <i class="bi bi-cart-check"></i>
           <span>Sales</span>
           <i class="bi bi-chevron-down"></i>
         </a>
         <ul class="submenu" id="salesSubmenu">
           <li class="submenu-item">
-            <a href="#" onclick="showSection('sales-new'); event.preventDefault();">
+            <a href="#" id="menu-sales-new" onclick="showSection('sales-new', event);">
               <i class="bi bi-plus-circle"></i>
               <span>New Sale</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('sales-history'); event.preventDefault();">
+            <a href="#" id="menu-sales-history" onclick="showSection('sales-history', event);">
               <i class="bi bi-clock-history"></i>
               <span>Sales History</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('sales-returns'); event.preventDefault();">
+            <a href="#" id="menu-sales-returns" onclick="showSection('sales-returns', event);">
               <i class="bi bi-arrow-return-left"></i>
               <span>Sales Returns</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('sales-reports'); event.preventDefault();">
+            <a href="#" id="menu-sales-reports" onclick="showSection('sales-reports', event);">
               <i class="bi bi-file-earmark-bar-graph"></i>
               <span>Sales Reports</span>
             </a>
@@ -607,21 +607,21 @@
       </li>
 
       <li class="menu-item">
-        <a href="#" onclick="showSection('inventory'); event.preventDefault();">
+        <a href="#" id="menu-inventory" onclick="showSection('inventory', event);">
           <i class="bi bi-box-seam"></i>
           <span>Inventory</span>
         </a>
       </li>
 
       <li class="menu-item">
-        <a href="#" onclick="showSection('products'); event.preventDefault();">
+        <a href="#" id="menu-products" onclick="showSection('products', event);">
           <i class="bi bi-bag"></i>
           <span>Products</span>
         </a>
       </li>
 
       <li class="menu-item">
-        <a href="#" onclick="showSection('customers'); event.preventDefault();">
+        <a href="#" id="menu-customers" onclick="showSection('customers', event);">
           <i class="bi bi-people"></i>
           <span>Customers</span>
         </a>
@@ -629,32 +629,32 @@
 
       <!-- Suppliers with submenu -->
       <li class="menu-item has-submenu" id="suppliersMenu">
-        <a href="#" onclick="handleMenuClick('suppliersMenu', 'suppliers-list', event)">
+        <a href="#" id="menu-suppliers" onclick="handleMenuClick('suppliersMenu', 'suppliers-list', event)">
           <i class="bi bi-truck"></i>
           <span>Suppliers</span>
           <i class="bi bi-chevron-down"></i>
         </a>
         <ul class="submenu" id="suppliersSubmenu">
           <li class="submenu-item">
-            <a href="#" onclick="showSection('suppliers-list'); event.preventDefault();">
+            <a href="#" id="menu-suppliers-list" onclick="showSection('suppliers-list', event);">
               <i class="bi bi-list-ul"></i>
               <span>Suppliers List</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('suppliers-add'); event.preventDefault();">
+            <a href="#" id="menu-suppliers-add" onclick="showSection('suppliers-add', event);">
               <i class="bi bi-plus-circle"></i>
               <span>Add Supplier</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('suppliers-orders'); event.preventDefault();">
+            <a href="#" id="menu-suppliers-orders" onclick="showSection('suppliers-orders', event);">
               <i class="bi bi-cart-plus"></i>
               <span>Purchase Orders</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('suppliers-payments'); event.preventDefault();">
+            <a href="#" id="menu-suppliers-payments" onclick="showSection('suppliers-payments', event);">
               <i class="bi bi-credit-card"></i>
               <span>Supplier Payments</span>
             </a>
@@ -663,21 +663,21 @@
       </li>
 
       <li class="menu-item">
-        <a href="#" onclick="showSection('quotations'); event.preventDefault();">
+        <a href="#" id="menu-quotations" onclick="showSection('quotations', event);">
           <i class="bi bi-file-text"></i>
           <span>Quotations</span>
         </a>
       </li>
 
       <li class="menu-item">
-        <a href="#" onclick="showSection('financials'); event.preventDefault();">
+        <a href="#" id="menu-financials" onclick="showSection('financials', event);">
           <i class="bi bi-currency-dollar"></i>
           <span>Financials</span>
         </a>
       </li>
 
       <li class="menu-item">
-        <a href="#" onclick="showSection('reports'); event.preventDefault();">
+        <a href="#" id="menu-reports" onclick="showSection('reports', event);">
           <i class="bi bi-bar-chart"></i>
           <span>Reports</span>
         </a>
@@ -685,32 +685,32 @@
 
       <!-- User Management with submenu -->
       <li class="menu-item has-submenu" id="userManagementMenu">
-        <a href="#" onclick="handleMenuClick('userManagementMenu', 'users-list', event)">
+        <a href="#" id="menu-users" onclick="handleMenuClick('userManagementMenu', 'users-list', event)">
           <i class="bi bi-person-plus-fill"></i>
           <span>User Management</span>
           <i class="bi bi-chevron-down"></i>
         </a>
         <ul class="submenu" id="userManagementSubmenu">
           <li class="submenu-item">
-            <a href="#" onclick="showSection('users-list'); event.preventDefault();">
+            <a href="#" id="menu-users-list" onclick="showSection('users-list', event);">
               <i class="bi bi-people"></i>
               <span>Users List</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('users-add'); event.preventDefault();">
+            <a href="#" id="menu-users-add" onclick="showSection('users-add', event);">
               <i class="bi bi-person-plus"></i>
               <span>Create New User</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('users-roles'); event.preventDefault();">
+            <a href="#" id="menu-users-roles" onclick="showSection('users-roles', event);">
               <i class="bi bi-shield-check"></i>
               <span>User Roles</span>
             </a>
           </li>
           <li class="submenu-item">
-            <a href="#" onclick="showSection('users-permissions'); event.preventDefault();">
+            <a href="#" id="menu-users-permissions" onclick="showSection('users-permissions', event);">
               <i class="bi bi-key"></i>
               <span>Permissions</span>
             </a>
@@ -719,7 +719,7 @@
       </li>
 
       <li class="menu-item">
-        <a href="#" onclick="showSection('settings'); event.preventDefault();">
+        <a href="#" id="menu-settings" onclick="showSection('settings', event);">
           <i class="bi bi-gear"></i>
           <span>Settings</span>
         </a>
@@ -1358,9 +1358,9 @@
       const isOpen = menuItem.classList.contains('open');
 
       // Navigate to section
-      showSection(sectionName);
+      showSection(sectionName, event);
 
-      // Toggle submenu
+      // Toggle submenu state
       if (!isOpen) {
         menuItem.classList.add('open');
         submenu.classList.add('active');
@@ -1370,8 +1370,59 @@
       }
     }
 
+    const menuSectionMap = {
+      'dashboard': { linkId: 'menu-dashboard' },
+      'sales': { linkId: 'menu-sales', menuItemId: 'salesMenu' },
+      'sales-new': { linkId: 'menu-sales-new', menuItemId: 'salesMenu' },
+      'sales-history': { linkId: 'menu-sales-history', menuItemId: 'salesMenu' },
+      'sales-returns': { linkId: 'menu-sales-returns', menuItemId: 'salesMenu' },
+      'sales-reports': { linkId: 'menu-sales-reports', menuItemId: 'salesMenu' },
+      'inventory': { linkId: 'menu-inventory' },
+      'customers': { linkId: 'menu-customers' },
+      'products': { linkId: 'menu-products' },
+      'suppliers-list': { linkId: 'menu-suppliers-list', menuItemId: 'suppliersMenu' },
+      'suppliers-add': { linkId: 'menu-suppliers-add', menuItemId: 'suppliersMenu' },
+      'suppliers-orders': { linkId: 'menu-suppliers-orders', menuItemId: 'suppliersMenu' },
+      'suppliers-payments': { linkId: 'menu-suppliers-payments', menuItemId: 'suppliersMenu' },
+      'quotations': { linkId: 'menu-quotations' },
+      'financials': { linkId: 'menu-financials' },
+      'reports': { linkId: 'menu-reports' },
+      'users-list': { linkId: 'menu-users-list', menuItemId: 'userManagementMenu' },
+      'users-add': { linkId: 'menu-users-add', menuItemId: 'userManagementMenu' },
+      'users-roles': { linkId: 'menu-users-roles', menuItemId: 'userManagementMenu' },
+      'users-permissions': { linkId: 'menu-users-permissions', menuItemId: 'userManagementMenu' },
+      'settings': { linkId: 'menu-settings' }
+    };
+
+    function openMappedSubmenu(menuItemId) {
+      const submenuItems = document.querySelectorAll('.menu-item.has-submenu');
+      submenuItems.forEach(item => {
+        item.classList.remove('open');
+        const submenu = item.querySelector('.submenu');
+        if (submenu) {
+          submenu.classList.remove('active');
+        }
+      });
+
+      if (menuItemId) {
+        const targetItem = document.getElementById(menuItemId);
+        if (targetItem) {
+          targetItem.classList.add('open');
+          const submenu = targetItem.querySelector('.submenu');
+          if (submenu) {
+            submenu.classList.add('active');
+          }
+        }
+      }
+    }
+
     // Show section
-    function showSection(sectionName) {
+    function showSection(sectionName, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
       // Hide all sections
       const sections = document.querySelectorAll('.content-section');
       sections.forEach(section => {
@@ -1384,15 +1435,22 @@
         item.classList.remove('active');
       });
 
+      // Ensure submenu visibility aligns with the selected section
+      const mappedMenu = menuSectionMap[sectionName];
+      openMappedSubmenu(mappedMenu ? mappedMenu.menuItemId : null);
+
       // Show selected section
       const selectedSection = document.getElementById('section-' + sectionName);
       if (selectedSection) {
         selectedSection.classList.add('active');
       }
 
-      // Add active class to clicked menu item
-      if (event && event.target) {
-        event.target.closest('a').classList.add('active');
+      // Mark the mapped menu item as active
+      if (mappedMenu && mappedMenu.linkId) {
+        const mappedLink = document.getElementById(mappedMenu.linkId);
+        if (mappedLink) {
+          mappedLink.classList.add('active');
+        }
       }
 
       // Load data for specific sections
@@ -1632,8 +1690,8 @@
 
     // Override showSection to close mobile menu and update navigation
     const originalShowSection = showSection;
-    showSection = function(sectionName) {
-      originalShowSection.call(this, sectionName);
+    showSection = function(sectionName, event) {
+      originalShowSection.call(this, sectionName, event);
       closeMobileMenu();
       updateNavigationButtons();
     };
