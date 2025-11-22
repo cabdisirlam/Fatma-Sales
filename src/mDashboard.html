@@ -461,12 +461,74 @@
         </a>
       </li>
 
-      <!-- User Management (Admin only) -->
-      <li class="menu-item" id="userManagementMenu" style="display: none;">
-        <a href="#" onclick="showSection('user-management')">
+      <!-- Suppliers with submenu -->
+      <li class="menu-item has-submenu" id="suppliersMenu">
+        <a href="#" onclick="toggleSubmenu('suppliersMenu', event)">
+          <i class="bi bi-truck"></i>
+          <span>Suppliers</span>
+          <i class="bi bi-chevron-down"></i>
+        </a>
+        <ul class="submenu" id="suppliersSubmenu">
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('suppliers-list')">
+              <i class="bi bi-list-ul"></i>
+              <span>Suppliers List</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('suppliers-add')">
+              <i class="bi bi-plus-circle"></i>
+              <span>Add Supplier</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('suppliers-orders')">
+              <i class="bi bi-cart-plus"></i>
+              <span>Purchase Orders</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('suppliers-payments')">
+              <i class="bi bi-credit-card"></i>
+              <span>Supplier Payments</span>
+            </a>
+          </li>
+        </ul>
+      </li>
+
+      <!-- User Management (Admin only) with submenu -->
+      <li class="menu-item has-submenu" id="userManagementMenu" style="display: none;">
+        <a href="#" onclick="toggleSubmenu('userManagementMenu', event)">
           <i class="bi bi-people-fill"></i>
           <span>User Management</span>
+          <i class="bi bi-chevron-down"></i>
         </a>
+        <ul class="submenu" id="userManagementSubmenu">
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('users-list')">
+              <i class="bi bi-people"></i>
+              <span>Users List</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('users-add')">
+              <i class="bi bi-person-plus"></i>
+              <span>Add User</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('users-roles')">
+              <i class="bi bi-shield-check"></i>
+              <span>User Roles</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" onclick="showSection('users-permissions')">
+              <i class="bi bi-key"></i>
+              <span>Permissions</span>
+            </a>
+          </li>
+        </ul>
       </li>
 
       <li class="menu-item">
@@ -629,16 +691,80 @@
       </div>
     </div>
 
-    <!-- User Management Section -->
-    <div class="content-section" id="section-user-management">
+    <!-- Suppliers Sections -->
+    <div class="content-section" id="section-suppliers-list">
       <div class="dashboard-content">
-        <h3><i class="bi bi-people-fill"></i> User Management</h3>
-        <p class="text-muted">Manage system users, roles, and permissions</p>
+        <h3><i class="bi bi-truck"></i> Suppliers List</h3>
+        <p class="text-muted">View and manage all suppliers</p>
         <hr>
-        <p>User management module content will be loaded here...</p>
+        <p>Suppliers list and management will be loaded here...</p>
+      </div>
+    </div>
+
+    <div class="content-section" id="section-suppliers-add">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-plus-circle"></i> Add New Supplier</h3>
+        <p class="text-muted">Register a new supplier</p>
+        <hr>
+        <p>Add supplier form will be loaded here...</p>
+      </div>
+    </div>
+
+    <div class="content-section" id="section-suppliers-orders">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-cart-plus"></i> Purchase Orders</h3>
+        <p class="text-muted">Manage purchase orders from suppliers</p>
+        <hr>
+        <p>Purchase orders management will be loaded here...</p>
+      </div>
+    </div>
+
+    <div class="content-section" id="section-suppliers-payments">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-credit-card"></i> Supplier Payments</h3>
+        <p class="text-muted">Track and manage payments to suppliers</p>
+        <hr>
+        <p>Supplier payments tracking will be loaded here...</p>
+      </div>
+    </div>
+
+    <!-- User Management Sections -->
+    <div class="content-section" id="section-users-list">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-people"></i> Users List</h3>
+        <p class="text-muted">View and manage all system users</p>
+        <hr>
+        <p>Users list and management will be loaded here...</p>
         <button class="btn btn-primary" onclick="openUserManagement()">
           <i class="bi bi-people-fill"></i> Open User Management
         </button>
+      </div>
+    </div>
+
+    <div class="content-section" id="section-users-add">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-person-plus"></i> Add New User</h3>
+        <p class="text-muted">Create a new user account</p>
+        <hr>
+        <p>Add user form will be loaded here...</p>
+      </div>
+    </div>
+
+    <div class="content-section" id="section-users-roles">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-shield-check"></i> User Roles</h3>
+        <p class="text-muted">Manage user roles and access levels</p>
+        <hr>
+        <p>User roles management will be loaded here...</p>
+      </div>
+    </div>
+
+    <div class="content-section" id="section-users-permissions">
+      <div class="dashboard-content">
+        <h3><i class="bi bi-key"></i> User Permissions</h3>
+        <p class="text-muted">Configure user permissions and access control</p>
+        <hr>
+        <p>User permissions configuration will be loaded here...</p>
       </div>
     </div>
 
@@ -753,7 +879,14 @@
         'quotations': 'Quotations',
         'financials': 'Financial Management',
         'reports': 'Reports & Analytics',
-        'user-management': 'User Management',
+        'suppliers-list': 'Suppliers List',
+        'suppliers-add': 'Add New Supplier',
+        'suppliers-orders': 'Purchase Orders',
+        'suppliers-payments': 'Supplier Payments',
+        'users-list': 'Users List',
+        'users-add': 'Add New User',
+        'users-roles': 'User Roles',
+        'users-permissions': 'User Permissions',
         'settings': 'System Settings'
       };
 
