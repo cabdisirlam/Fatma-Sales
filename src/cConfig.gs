@@ -11,24 +11,17 @@ const CONFIG = {
   // Workbook Configuration
   WORKBOOK_NAME: 'Fatma System',
 
-  // Sheet Names
+  // Sheet Names - Reorganized to 9 sheets for simplified management
   SHEETS: {
     USERS: 'Users',
     SUPPLIERS: 'Suppliers',
     CUSTOMERS: 'Customers',
     INVENTORY: 'Inventory',
-    SALES_DATA: 'Sales_Data',
-    SALES_ITEMS: 'Sales_Items',
-    PURCHASES: 'Purchases',
-    PURCHASE_ITEMS: 'Purchase_Items',
-    QUOTATIONS: 'Quotations',
-    QUOTATION_ITEMS: 'Quotation_Items',
-    CUSTOMER_TRANSACTIONS: 'Customer_Transactions',
-    FINANCIALS: 'Financials',
-    EXPENSES: 'Expenses',
-    EXPENSE_CATEGORIES: 'Expense_Categories',
+    SALES: 'Sales',              // Merged: Sales_Data + Sales_Items + Quotations + Quotation_Items
+    PURCHASES: 'Purchases',      // Merged: Purchases + Purchase_Items
+    FINANCIALS: 'Financials',    // Merged: Customer_Transactions + Financials + Expenses
     AUDIT_TRAIL: 'Audit_Trail',
-    SETTINGS: 'Settings'
+    SETTINGS: 'Settings'         // Now includes Expense_Categories as settings
   },
 
   // Colors (Fatma Brand Colors)
