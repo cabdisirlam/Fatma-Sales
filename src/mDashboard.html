@@ -797,34 +797,59 @@
     <div class="content-section" id="section-sales">
       <div class="dashboard-content">
         <h3><i class="bi bi-cart-check"></i> Sales Overview</h3>
-        <p class="text-muted">Manage all sales operations</p>
+        <p class="text-muted">Manage all sales operations and monitor revenue performance.</p>
         <hr>
         <div class="row g-3 mt-3">
-          <div class="col-md-6">
-            <div class="card p-3" style="cursor: pointer;" onclick="showSection('sales-new')">
-              <h5><i class="bi bi-plus-circle"></i> New Sale</h5>
-              <p class="text-muted mb-0">Create a new sales transaction</p>
+          <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">Total Revenue</h5>
+                <h3 class="mb-1" id="salesTotalRevenue">--</h3>
+                <p class="text-muted small">Across all completed sales</p>
+                <div class="d-grid">
+                  <button class="btn btn-primary" onclick="showSection('sales-reports')">View Reports</button>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="card p-3" style="cursor: pointer;" onclick="showSection('sales-history')">
-              <h5><i class="bi bi-clock-history"></i> Sales History</h5>
-              <p class="text-muted mb-0">View past sales transactions</p>
+          <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">Total Sales</h5>
+                <h3 class="mb-1" id="salesCount">--</h3>
+                <p class="text-muted small">Unique sale transactions</p>
+                <div class="d-grid">
+                  <button class="btn btn-outline-primary" onclick="showSection('sales-history')">Sales History</button>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="card p-3" style="cursor: pointer;" onclick="showSection('sales-returns')">
-              <h5><i class="bi bi-arrow-return-left"></i> Sales Returns</h5>
-              <p class="text-muted mb-0">Process sales returns and refunds</p>
+          <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">Credit Sales</h5>
+                <h3 class="mb-1" id="salesCreditCount">--</h3>
+                <p class="text-muted small">Sales marked as credit</p>
+                <div class="d-grid">
+                  <button class="btn btn-outline-warning" onclick="showSection('sales-returns')">View Returns</button>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="card p-3" style="cursor: pointer;" onclick="showSection('sales-reports')">
-              <h5><i class="bi bi-file-earmark-bar-graph"></i> Sales Reports</h5>
-              <p class="text-muted mb-0">View sales analytics and reports</p>
+          <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">Avg. Order Value</h5>
+                <h3 class="mb-1" id="salesAverageOrder">--</h3>
+                <p class="text-muted small">Based on completed sales</p>
+                <div class="d-grid">
+                  <button class="btn btn-outline-success" onclick="showSection('sales-new')">Create Sale</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+        <div class="alert alert-info mt-3 mb-0" id="salesOverviewAlert" style="display: none;"></div>
       </div>
 
       <!-- Navigation Controls -->
@@ -843,10 +868,16 @@
     <!-- Sales Sections -->
     <div class="content-section" id="section-sales-new">
       <div class="dashboard-content">
-        <h3><i class="bi bi-plus-circle"></i> New Sale</h3>
-        <p class="text-muted">Create a new sales transaction</p>
-        <hr>
-        <p>New sale form will be loaded here...</p>
+        <div class="d-flex align-items-center mb-3">
+          <div class="flex-grow-1">
+            <h3 class="mb-0"><i class="bi bi-plus-circle"></i> New Sale</h3>
+            <p class="text-muted mb-0">Use the button below to open the sale entry form.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openNewSaleDialog()">
+            <i class="bi bi-cart-plus"></i> Create Sale
+          </button>
+        </div>
+        <div class="alert alert-secondary">The detailed sale entry form opens in a modal so you can complete the transaction without leaving the dashboard.</div>
       </div>
 
       <!-- Navigation Controls -->
@@ -864,10 +895,27 @@
 
     <div class="content-section" id="section-sales-history">
       <div class="dashboard-content">
-        <h3><i class="bi bi-clock-history"></i> Sales History</h3>
-        <p class="text-muted">View and manage past sales transactions</p>
-        <hr>
-        <p>Sales history table will be loaded here...</p>
+        <h3 class="d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-clock-history"></i> Sales History</span>
+          <small class="text-muted">Most recent transactions</small>
+        </h3>
+        <div class="table-responsive mt-3">
+          <table class="table table-striped align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Transaction</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Payment</th>
+                <th class="text-end">Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="salesHistoryBody">
+              <tr><td colspan="6" class="text-center text-muted py-4">Loading sales history...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Navigation Controls -->
@@ -885,10 +933,27 @@
 
     <div class="content-section" id="section-sales-returns">
       <div class="dashboard-content">
-        <h3><i class="bi bi-arrow-return-left"></i> Sales Returns</h3>
-        <p class="text-muted">Process sales returns and refunds</p>
-        <hr>
-        <p>Sales returns module will be loaded here...</p>
+        <h3 class="d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-arrow-return-left"></i> Sales Returns</span>
+          <small class="text-muted">Items marked as returned</small>
+        </h3>
+        <div class="table-responsive mt-3">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Transaction</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Item</th>
+                <th>Qty</th>
+                <th class="text-end">Total</th>
+              </tr>
+            </thead>
+            <tbody id="salesReturnsBody">
+              <tr><td colspan="6" class="text-center text-muted py-4">Loading return data...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Navigation Controls -->
@@ -907,9 +972,48 @@
     <div class="content-section" id="section-sales-reports">
       <div class="dashboard-content">
         <h3><i class="bi bi-file-earmark-bar-graph"></i> Sales Reports</h3>
-        <p class="text-muted">View detailed sales analytics and reports</p>
-        <hr>
-        <p>Sales reports and analytics will be loaded here...</p>
+        <p class="text-muted">High level metrics to understand your performance.</p>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <p class="text-muted mb-1">Total Revenue</p>
+                <h4 id="reportTotalRevenue">--</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <p class="text-muted mb-1">Total Sales</p>
+                <h4 id="reportTotalSales">--</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <p class="text-muted mb-1">Credit Sales</p>
+                <h4 id="reportCreditSales">--</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <p class="text-muted mb-1">Avg Order Value</p>
+                <h4 id="reportAverageOrder">--</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card shadow-sm mt-3">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Last 30 Days Revenue</h5>
+            <p class="display-6" id="report30DayRevenue">--</p>
+            <p class="text-muted mb-0">Shows the total revenue generated in the last 30 days.</p>
+          </div>
+        </div>
       </div>
 
       <!-- Navigation Controls -->
@@ -1454,6 +1558,19 @@
       }
 
       // Load data for specific sections
+      if (sectionName.startsWith('sales')) {
+        loadSalesOverview();
+        if (sectionName === 'sales-history') {
+          loadSalesHistory();
+        }
+        if (sectionName === 'sales-returns') {
+          loadSalesReturns();
+        }
+        if (sectionName === 'sales-reports') {
+          loadSalesReports();
+        }
+      }
+
       if (sectionName === 'users-list') {
         loadUsersList();
       }
@@ -1582,6 +1699,119 @@
       if (confirm('Are you sure you want to delete this user?')) {
         showUsersAlert('Delete user functionality will be implemented here', 'info');
       }
+    }
+
+    // Sales helpers
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0);
+    }
+
+    function showSalesAlert(message, type) {
+      const alert = document.getElementById('salesOverviewAlert');
+      if (!alert) return;
+      alert.textContent = message;
+      alert.className = 'alert alert-' + (type || 'info');
+      alert.style.display = 'block';
+    }
+
+    function openNewSaleDialog() {
+      google.script.run.showNewSaleDialog();
+    }
+
+    function loadSalesOverview() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          document.getElementById('salesTotalRevenue').textContent = formatCurrency(data.totalRevenue);
+          document.getElementById('salesCount').textContent = data.saleCount || 0;
+          document.getElementById('salesCreditCount').textContent = data.creditCount || 0;
+          document.getElementById('salesAverageOrder').textContent = formatCurrency(data.averageOrder);
+          showSalesAlert('Today\'s revenue: ' + formatCurrency(data.todayRevenue), 'info');
+        })
+        .withFailureHandler(function(error) {
+          showSalesAlert('Error loading sales overview: ' + error.message, 'danger');
+        })
+        .getSalesOverview();
+    }
+
+    function loadSalesHistory() {
+      const tbody = document.getElementById('salesHistoryBody');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Loading sales history...</td></tr>';
+
+      google.script.run
+        .withSuccessHandler(function(rows) {
+          if (!rows || rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No sales found</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = rows.map(function(row) {
+            const statusBadge = row.Status === 'Returned'
+              ? '<span class="badge bg-warning text-dark">Returned</span>'
+              : '<span class="badge bg-success">Completed</span>';
+
+            return `
+              <tr>
+                <td>${row.Transaction_ID}</td>
+                <td>${new Date(row.DateTime).toLocaleString()}</td>
+                <td>${row.Customer_Name || 'Walk-in'}</td>
+                <td>${row.Payment_Mode || 'N/A'}</td>
+                <td class="text-end">${formatCurrency(row.Grand_Total)}</td>
+                <td>${statusBadge}</td>
+              </tr>
+            `;
+          }).join('');
+        })
+        .withFailureHandler(function(error) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-4">' + error.message + '</td></tr>';
+        })
+        .getSalesHistory(25);
+    }
+
+    function loadSalesReturns() {
+      const tbody = document.getElementById('salesReturnsBody');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Loading return data...</td></tr>';
+
+      google.script.run
+        .withSuccessHandler(function(rows) {
+          if (!rows || rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No returns found</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = rows.map(function(row) {
+            return `
+              <tr>
+                <td>${row.Transaction_ID}</td>
+                <td>${new Date(row.DateTime).toLocaleString()}</td>
+                <td>${row.Customer_Name || 'Walk-in'}</td>
+                <td>${row.Item_Name || row.Item_ID}</td>
+                <td>${row.Qty || ''}</td>
+                <td class="text-end">${formatCurrency(row.Grand_Total)}</td>
+              </tr>
+            `;
+          }).join('');
+        })
+        .withFailureHandler(function(error) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-4">' + error.message + '</td></tr>';
+        })
+        .getSalesReturns();
+    }
+
+    function loadSalesReports() {
+      google.script.run
+        .withSuccessHandler(function(report) {
+          document.getElementById('reportTotalRevenue').textContent = formatCurrency(report.totalRevenue);
+          document.getElementById('reportTotalSales').textContent = report.totalSales || 0;
+          document.getElementById('reportCreditSales').textContent = report.creditSales || 0;
+          document.getElementById('reportAverageOrder').textContent = formatCurrency(report.averageOrder);
+          document.getElementById('report30DayRevenue').textContent = formatCurrency(report.revenue30);
+        })
+        .withFailureHandler(function(error) {
+          showSalesAlert('Error loading reports: ' + error.message, 'danger');
+        })
+        .getSalesReport();
     }
 
     // Logout function
