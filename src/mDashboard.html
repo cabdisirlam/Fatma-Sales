@@ -1832,17 +1832,17 @@
     }
 
     function openNewSaleFallback() {
+      const showErrorAlert = () => alert('Unable to open the New Sale window. Please try again from the Fatma System menu.');
+
       google.script.run
         .withSuccessHandler(function(url) {
           if (url) {
             window.open(url + '?view=newSale', '_blank');
           } else {
-            alert('Unable to open the New Sale window. Please try again from the Fatma System menu.');
+            showErrorAlert();
           }
         })
-        .withFailureHandler(function() {
-          alert('Unable to open the New Sale window. Please try again from the Fatma System menu.');
-        })
+        .withFailureHandler(showErrorAlert)
         .getWebAppUrl();
     }
 
