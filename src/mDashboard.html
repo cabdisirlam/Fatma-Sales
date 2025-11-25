@@ -140,6 +140,15 @@
       transition: all 0.3s ease;
     }
 
+    .menu-label {
+      margin: 15px 15px 5px;
+      padding-left: 15px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.08em;
+    }
+
     .sidebar.collapsed .menu-item span {
       display: none;
     }
@@ -424,6 +433,30 @@
       font-size: 18px;
     }
 
+    .quick-add-card {
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+      padding: 16px;
+      background: #fff;
+    }
+
+    .quick-add-card h6 {
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .quick-add-card .form-control,
+    .quick-add-card .form-select {
+      border-radius: 10px;
+    }
+
+    #newSaleFrame {
+      border: 0;
+      width: 100%;
+      height: 100%;
+    }
+
     /* Hamburger Menu Button */
     .hamburger-btn {
       display: none;
@@ -588,39 +621,36 @@
         </a>
       </li>
 
-      <!-- Sales with clickable main item + submenu -->
-      <li class="menu-item has-submenu" id="salesMenu">
-        <a href="#" id="menu-sales" onclick="handleMenuClick('salesMenu', 'sales', event)">
+      <li class="menu-label">Sales</li>
+      <li class="menu-item" id="salesMenu">
+        <a href="#" id="menu-sales" onclick="showSection('sales', event);">
           <i class="bi bi-cart-check"></i>
-          <span>Sales</span>
-          <i class="bi bi-chevron-down"></i>
+          <span>Sales Overview</span>
         </a>
-        <ul class="submenu" id="salesSubmenu">
-          <li class="submenu-item">
-            <a href="#" id="menu-sales-new" onclick="startNewSale(event);">
-              <i class="bi bi-plus-circle"></i>
-              <span>New Sale</span>
-            </a>
-          </li>
-          <li class="submenu-item">
-            <a href="#" id="menu-sales-history" onclick="showSection('sales-history', event);">
-              <i class="bi bi-clock-history"></i>
-              <span>Sales History</span>
-            </a>
-          </li>
-          <li class="submenu-item">
-            <a href="#" id="menu-sales-returns" onclick="showSection('sales-returns', event);">
-              <i class="bi bi-arrow-return-left"></i>
-              <span>Sales Returns</span>
-            </a>
-          </li>
-          <li class="submenu-item">
-            <a href="#" id="menu-sales-reports" onclick="showSection('sales-reports', event);">
-              <i class="bi bi-file-earmark-bar-graph"></i>
-              <span>Sales Reports</span>
-            </a>
-          </li>
-        </ul>
+      </li>
+      <li class="menu-item">
+        <a href="#" id="menu-sales-new" onclick="startNewSale(event);">
+          <i class="bi bi-plus-circle"></i>
+          <span>Create Sale</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="#" id="menu-sales-history" onclick="showSection('sales-history', event);">
+          <i class="bi bi-clock-history"></i>
+          <span>Sales History</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="#" id="menu-sales-returns" onclick="showSection('sales-returns', event);">
+          <i class="bi bi-arrow-return-left"></i>
+          <span>Sales Returns</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="#" id="menu-sales-reports" onclick="showSection('sales-reports', event);">
+          <i class="bi bi-file-earmark-bar-graph"></i>
+          <span>Sales Reports</span>
+        </a>
       </li>
 
       <li class="menu-item">
@@ -644,39 +674,30 @@
         </a>
       </li>
 
-      <!-- Suppliers with submenu -->
-      <li class="menu-item has-submenu" id="suppliersMenu">
-        <a href="#" id="menu-suppliers" onclick="handleMenuClick('suppliersMenu', 'suppliers-list', event)">
+      <li class="menu-label">Suppliers</li>
+      <li class="menu-item" id="suppliersMenu">
+        <a href="#" id="menu-suppliers" onclick="showSection('suppliers-list', event);">
           <i class="bi bi-truck"></i>
-          <span>Suppliers</span>
-          <i class="bi bi-chevron-down"></i>
+          <span>Suppliers List</span>
         </a>
-        <ul class="submenu" id="suppliersSubmenu">
-          <li class="submenu-item">
-            <a href="#" id="menu-suppliers-list" onclick="showSection('suppliers-list', event);">
-              <i class="bi bi-list-ul"></i>
-              <span>Suppliers List</span>
-            </a>
-          </li>
-          <li class="submenu-item">
-            <a href="#" id="menu-suppliers-add" onclick="showSection('suppliers-add', event);">
-              <i class="bi bi-plus-circle"></i>
-              <span>Add Supplier</span>
-            </a>
-          </li>
-          <li class="submenu-item">
-            <a href="#" id="menu-suppliers-orders" onclick="showSection('suppliers-orders', event);">
-              <i class="bi bi-cart-plus"></i>
-              <span>Purchase Orders</span>
-            </a>
-          </li>
-          <li class="submenu-item">
-            <a href="#" id="menu-suppliers-payments" onclick="showSection('suppliers-payments', event);">
-              <i class="bi bi-credit-card"></i>
-              <span>Supplier Payments</span>
-            </a>
-          </li>
-        </ul>
+      </li>
+      <li class="menu-item">
+        <a href="#" id="menu-suppliers-add" onclick="showSection('suppliers-add', event);">
+          <i class="bi bi-plus-circle"></i>
+          <span>Add Supplier</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="#" id="menu-suppliers-orders" onclick="showSection('suppliers-orders', event);">
+          <i class="bi bi-cart-plus"></i>
+          <span>Purchase Orders</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="#" id="menu-suppliers-payments" onclick="showSection('suppliers-payments', event);">
+          <i class="bi bi-credit-card"></i>
+          <span>Supplier Payments</span>
+        </a>
       </li>
 
       <li class="menu-item">
@@ -700,39 +721,30 @@
         </a>
       </li>
 
-      <!-- User Management with submenu -->
-      <li class="menu-item has-submenu" id="userManagementMenu">
-        <a href="#" id="menu-users" onclick="handleMenuClick('userManagementMenu', 'users-list', event)">
-          <i class="bi bi-person-plus-fill"></i>
-          <span>User Management</span>
-          <i class="bi bi-chevron-down"></i>
+      <li class="menu-label">User Management</li>
+      <li class="menu-item" id="userManagementMenu">
+        <a href="#" id="menu-users-list" onclick="showSection('users-list', event);">
+          <i class="bi bi-people"></i>
+          <span>Users List</span>
         </a>
-        <ul class="submenu" id="userManagementSubmenu">
-          <li class="submenu-item">
-            <a href="#" id="menu-users-list" onclick="showSection('users-list', event);">
-              <i class="bi bi-people"></i>
-              <span>Users List</span>
-            </a>
-          </li>
-          <li class="submenu-item">
-            <a href="#" id="menu-users-add" onclick="showSection('users-add', event);">
-              <i class="bi bi-person-plus"></i>
-              <span>Create New User</span>
-            </a>
-          </li>
-          <li class="submenu-item">
-            <a href="#" id="menu-users-roles" onclick="showSection('users-roles', event);">
-              <i class="bi bi-shield-check"></i>
-              <span>User Roles</span>
-            </a>
-          </li>
-          <li class="submenu-item">
-            <a href="#" id="menu-users-permissions" onclick="showSection('users-permissions', event);">
-              <i class="bi bi-key"></i>
-              <span>Permissions</span>
-            </a>
-          </li>
-        </ul>
+      </li>
+      <li class="menu-item">
+        <a href="#" id="menu-users-add" onclick="showSection('users-add', event);">
+          <i class="bi bi-person-plus"></i>
+          <span>Create New User</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="#" id="menu-users-roles" onclick="showSection('users-roles', event);">
+          <i class="bi bi-shield-check"></i>
+          <span>User Roles</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="#" id="menu-users-permissions" onclick="showSection('users-permissions', event);">
+          <i class="bi bi-key"></i>
+          <span>Permissions</span>
+        </a>
       </li>
 
       <li class="menu-item">
@@ -804,11 +816,11 @@
 
       <!-- Navigation Controls -->
       <div class="navigation-controls">
-        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+        <button class="nav-btn" onclick="navigateToPrevious()">
           <i class="bi bi-chevron-left"></i>
           <span>Previous</span>
         </button>
-        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+        <button class="nav-btn" onclick="navigateToNext()">
           <span>Next</span>
           <i class="bi bi-chevron-right"></i>
         </button>
@@ -876,11 +888,11 @@
 
       <!-- Navigation Controls -->
       <div class="navigation-controls">
-        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+        <button class="nav-btn" onclick="navigateToPrevious()">
           <i class="bi bi-chevron-left"></i>
           <span>Previous</span>
         </button>
-        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+        <button class="nav-btn" onclick="navigateToNext()">
           <span>Next</span>
           <i class="bi bi-chevron-right"></i>
         </button>
@@ -890,24 +902,33 @@
     <div class="content-section" id="section-sales-new">
       <div class="dashboard-content">
         <h3 class="d-flex justify-content-between align-items-center">
-          <span><i class="bi bi-cart-plus"></i> New Sale</span>
-          <small class="text-muted">Process a sale without leaving the dashboard</small>
+          <span><i class="bi bi-cart-plus"></i> Instant Sale</span>
+          <small class="text-muted">Create a sale without ever leaving the dashboard</small>
         </h3>
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button class="btn btn-primary" onclick="loadNewSaleInDashboard()">
+            <i class="bi bi-play-circle"></i> Open Sale Form
+          </button>
+          <button class="btn btn-outline-secondary" onclick="showSection('sales')">
+            <i class="bi bi-speedometer2"></i> Sales Overview
+          </button>
+        </div>
 
         <div id="newSaleEmbedAlert" class="alert alert-info mb-3" style="display: none;"></div>
 
         <div class="ratio ratio-4x3 rounded border bg-white shadow-sm">
-          <iframe id="newSaleFrame" title="New Sale" style="border: 0; width: 100%; height: 100%;"></iframe>
+          <iframe id="newSaleFrame" title="New Sale"></iframe>
         </div>
       </div>
 
       <!-- Navigation Controls -->
       <div class="navigation-controls">
-        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+        <button class="nav-btn" onclick="navigateToPrevious()">
           <i class="bi bi-chevron-left"></i>
           <span>Previous</span>
         </button>
-        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+        <button class="nav-btn" onclick="navigateToNext()">
           <span>Next</span>
           <i class="bi bi-chevron-right"></i>
         </button>
@@ -942,11 +963,11 @@
 
       <!-- Navigation Controls -->
       <div class="navigation-controls">
-        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+        <button class="nav-btn" onclick="navigateToPrevious()">
           <i class="bi bi-chevron-left"></i>
           <span>Previous</span>
         </button>
-        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+        <button class="nav-btn" onclick="navigateToNext()">
           <span>Next</span>
           <i class="bi bi-chevron-right"></i>
         </button>
@@ -980,11 +1001,11 @@
 
       <!-- Navigation Controls -->
       <div class="navigation-controls">
-        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+        <button class="nav-btn" onclick="navigateToPrevious()">
           <i class="bi bi-chevron-left"></i>
           <span>Previous</span>
         </button>
-        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+        <button class="nav-btn" onclick="navigateToNext()">
           <span>Next</span>
           <i class="bi bi-chevron-right"></i>
         </button>
@@ -1040,11 +1061,11 @@
 
       <!-- Navigation Controls -->
       <div class="navigation-controls">
-        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+        <button class="nav-btn" onclick="navigateToPrevious()">
           <i class="bi bi-chevron-left"></i>
           <span>Previous</span>
         </button>
-        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+        <button class="nav-btn" onclick="navigateToNext()">
           <span>Next</span>
           <i class="bi bi-chevron-right"></i>
         </button>
@@ -1526,25 +1547,25 @@
 
     const menuSectionMap = {
       'dashboard': { linkId: 'menu-dashboard' },
-      'sales': { linkId: 'menu-sales', menuItemId: 'salesMenu' },
-      'sales-new': { linkId: 'menu-sales-new', menuItemId: 'salesMenu' },
-      'sales-history': { linkId: 'menu-sales-history', menuItemId: 'salesMenu' },
-      'sales-returns': { linkId: 'menu-sales-returns', menuItemId: 'salesMenu' },
-      'sales-reports': { linkId: 'menu-sales-reports', menuItemId: 'salesMenu' },
+      'sales': { linkId: 'menu-sales' },
+      'sales-new': { linkId: 'menu-sales-new' },
+      'sales-history': { linkId: 'menu-sales-history' },
+      'sales-returns': { linkId: 'menu-sales-returns' },
+      'sales-reports': { linkId: 'menu-sales-reports' },
       'inventory': { linkId: 'menu-inventory' },
       'customers': { linkId: 'menu-customers' },
       'products': { linkId: 'menu-products' },
-      'suppliers-list': { linkId: 'menu-suppliers-list', menuItemId: 'suppliersMenu' },
-      'suppliers-add': { linkId: 'menu-suppliers-add', menuItemId: 'suppliersMenu' },
-      'suppliers-orders': { linkId: 'menu-suppliers-orders', menuItemId: 'suppliersMenu' },
-      'suppliers-payments': { linkId: 'menu-suppliers-payments', menuItemId: 'suppliersMenu' },
+      'suppliers-list': { linkId: 'menu-suppliers' },
+      'suppliers-add': { linkId: 'menu-suppliers-add' },
+      'suppliers-orders': { linkId: 'menu-suppliers-orders' },
+      'suppliers-payments': { linkId: 'menu-suppliers-payments' },
       'quotations': { linkId: 'menu-quotations' },
       'financials': { linkId: 'menu-financials' },
       'reports': { linkId: 'menu-reports' },
-      'users-list': { linkId: 'menu-users-list', menuItemId: 'userManagementMenu' },
-      'users-add': { linkId: 'menu-users-add', menuItemId: 'userManagementMenu' },
-      'users-roles': { linkId: 'menu-users-roles', menuItemId: 'userManagementMenu' },
-      'users-permissions': { linkId: 'menu-users-permissions', menuItemId: 'userManagementMenu' },
+      'users-list': { linkId: 'menu-users-list' },
+      'users-add': { linkId: 'menu-users-add' },
+      'users-roles': { linkId: 'menu-users-roles' },
+      'users-permissions': { linkId: 'menu-users-permissions' },
       'settings': { linkId: 'menu-settings' }
     };
 
@@ -1830,6 +1851,35 @@
       alert.style.display = 'block';
     }
 
+    function capitalizeType(type) {
+      return type.charAt(0).toUpperCase() + type.slice(1);
+    }
+
+    function toggleQuickAdd(type) {
+      const card = document.getElementById('quickAdd' + capitalizeType(type));
+      if (card) {
+        card.classList.toggle('d-none');
+      }
+    }
+
+    function handleQuickAdd(event, type) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      const alertBox = document.getElementById('quickAdd' + capitalizeType(type) + 'Alert');
+      if (alertBox) {
+        alertBox.classList.remove('d-none');
+        alertBox.className = 'alert alert-success mt-3';
+        alertBox.textContent = 'Saved ' + type + ' details right from the dashboard.';
+
+        setTimeout(() => {
+          alertBox.classList.add('d-none');
+        }, 3500);
+      }
+    }
+
     function startNewSale(event) {
       if (event) {
         event.preventDefault();
@@ -1852,6 +1902,14 @@
       alertBox.style.display = 'block';
       alertBox.className = 'alert alert-info mb-3';
       alertBox.textContent = 'Loading New Sale form...';
+
+      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        frame.srcdoc = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:Segoe UI;">New sale form preview will appear here when connected to the app.</div>';
+        newSaleFrameLoaded = true;
+        alertBox.className = 'alert alert-warning mb-3';
+        alertBox.textContent = 'Connect to the live app to load the full sale form.';
+        return;
+      }
 
       google.script.run
         .withSuccessHandler(function(url) {
@@ -2071,6 +2129,56 @@
       const getStockQty = (item) => (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
 
       let html = `
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button class="btn btn-primary" onclick="toggleQuickAdd('product')">
+            <i class="bi bi-plus-circle"></i> Add Product
+          </button>
+          <button class="btn btn-outline-secondary" onclick="loadInventorySection(true)">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+        <div id="quickAddProduct" class="quick-add-card d-none mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-lightning-charge"></i> Quick Add Product</h6>
+            <button class="btn btn-sm btn-link text-decoration-none" onclick="toggleQuickAdd('product')">Close</button>
+          </div>
+          <form class="mt-2" onsubmit="handleQuickAdd(event, 'product')">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="form-label">Item Name</label>
+                <input type="text" class="form-control" name="itemName" placeholder="e.g., Coffee Beans" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Category</label>
+                <input type="text" class="form-control" name="category" placeholder="Beverages">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Cost</label>
+                <input type="number" class="form-control" name="cost" min="0" step="0.01">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Price</label>
+                <input type="number" class="form-control" name="price" min="0" step="0.01">
+              </div>
+            </div>
+            <div class="row g-2 mt-2">
+              <div class="col-md-3">
+                <label class="form-label">Quantity</label>
+                <input type="number" class="form-control" name="qty" min="0" value="0">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Unit</label>
+                <input type="text" class="form-control" name="unit" placeholder="pcs">
+              </div>
+              <div class="col-md-6 d-flex align-items-end justify-content-end">
+                <button class="btn btn-success" type="submit">
+                  <i class="bi bi-check-circle"></i> Save Product
+                </button>
+              </div>
+            </div>
+            <div id="quickAddProductAlert" class="alert alert-success mt-3 d-none"></div>
+          </form>
+        </div>
         <div class="row mb-4">
           <div class="col-md-3">
             <div class="stat-card">
@@ -2203,6 +2311,48 @@
       }, 0);
 
       let html = `
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button class="btn btn-primary" onclick="toggleQuickAdd('customer')">
+            <i class="bi bi-person-plus"></i> Add Customer
+          </button>
+          <button class="btn btn-outline-secondary" onclick="loadCustomersSection(true)">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+        <div id="quickAddCustomer" class="quick-add-card d-none mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-stars"></i> Quick Add Customer</h6>
+            <button class="btn btn-sm btn-link text-decoration-none" onclick="toggleQuickAdd('customer')">Close</button>
+          </div>
+          <form class="mt-2" onsubmit="handleQuickAdd(event, 'customer')">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-control" name="name" placeholder="Jane Doe" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-control" name="phone" placeholder="07xx xxx xxx">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" name="email" placeholder="name@example.com">
+              </div>
+            </div>
+            <div class="row g-2 mt-2">
+              <div class="col-md-4">
+                <label class="form-label">Opening Balance</label>
+                <input type="number" class="form-control" name="balance" step="0.01">
+              </div>
+              <div class="col-md-8 d-flex align-items-end justify-content-end">
+                <button class="btn btn-success" type="submit">
+                  <i class="bi bi-check-circle"></i> Save Customer
+                </button>
+              </div>
+            </div>
+            <div id="quickAddCustomerAlert" class="alert alert-success mt-3 d-none"></div>
+          </form>
+        </div>
         <div class="row mb-4">
           <div class="col-md-3">
             <div class="stat-card">
@@ -2320,6 +2470,11 @@
       const totalValue = data.reduce((sum, q) => sum + parseFloat(q.Total_Amount || 0), 0);
 
       let html = `
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button class="btn btn-outline-secondary" onclick="loadQuotationsSection(true)">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
         <div class="row mb-4">
           <div class="col-md-3">
             <div class="stat-card">
@@ -2428,6 +2583,11 @@
       const profitClass = netProfit >= 0 ? 'text-success' : 'text-danger';
 
       let html = `
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button class="btn btn-outline-secondary" onclick="loadFinancialsSection()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
         <div class="row mb-4">
           <div class="col-md-3">
             <div class="stat-card">
@@ -2543,6 +2703,51 @@
       }, 0);
 
       let html = `
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button class="btn btn-primary" onclick="toggleQuickAdd('supplier')">
+            <i class="bi bi-plus-circle"></i> Add Supplier
+          </button>
+          <button class="btn btn-outline-secondary" onclick="loadSuppliersList()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+          <button class="btn btn-outline-primary" onclick="showSection('suppliers-add')">
+            <i class="bi bi-pen"></i> Full Supplier Form
+          </button>
+        </div>
+        <div id="quickAddSupplier" class="quick-add-card d-none mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-truck"></i> Quick Add Supplier</h6>
+            <button class="btn btn-sm btn-link text-decoration-none" onclick="toggleQuickAdd('supplier')">Close</button>
+          </div>
+          <form class="mt-2" onsubmit="handleQuickAdd(event, 'supplier')">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="form-label">Supplier Name</label>
+                <input type="text" class="form-control" name="supplier" placeholder="ABC Distributors" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Contact</label>
+                <input type="text" class="form-control" name="contact" placeholder="Contact person">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-control" name="phone" placeholder="07xx xxx xxx">
+              </div>
+            </div>
+            <div class="row g-2 mt-2">
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" name="email" placeholder="orders@example.com">
+              </div>
+              <div class="col-md-6 d-flex align-items-end justify-content-end">
+                <button class="btn btn-success" type="submit">
+                  <i class="bi bi-check-circle"></i> Save Supplier
+                </button>
+              </div>
+            </div>
+            <div id="quickAddSupplierAlert" class="alert alert-success mt-3 d-none"></div>
+          </form>
+        </div>
         <div class="row mb-4">
           <div class="col-md-4">
             <div class="stat-card">
@@ -3198,6 +3403,7 @@
     const sectionOrder = [
       'dashboard',
       'sales',
+      'sales-new',
       'sales-history',
       'sales-returns',
       'sales-reports',
@@ -3249,11 +3455,17 @@
 
     function updateNavigationButtons() {
       const currentIndex = getCurrentSectionIndex();
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
+      const activeSection = document.querySelector('.content-section.active');
+      const navControls = activeSection ? activeSection.querySelector('.navigation-controls') : null;
+      const buttons = navControls ? navControls.querySelectorAll('.nav-btn') : [];
+      const prevBtn = buttons[0];
+      const nextBtn = buttons[1];
 
-      if (prevBtn && nextBtn) {
+      if (prevBtn) {
         prevBtn.disabled = currentIndex === 0;
+      }
+
+      if (nextBtn) {
         nextBtn.disabled = currentIndex === sectionOrder.length - 1;
       }
     }
