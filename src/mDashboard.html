@@ -887,6 +887,33 @@
       </div>
     </div>
 
+    <div class="content-section" id="section-sales-new">
+      <div class="dashboard-content">
+        <h3 class="d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-cart-plus"></i> New Sale</span>
+          <small class="text-muted">Process a sale without leaving the dashboard</small>
+        </h3>
+
+        <div id="newSaleEmbedAlert" class="alert alert-info mb-3" style="display: none;"></div>
+
+        <div class="ratio ratio-4x3 rounded border bg-white shadow-sm">
+          <iframe id="newSaleFrame" title="New Sale" style="border: 0; width: 100%; height: 100%;"></iframe>
+        </div>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()" id="prevBtn">
+          <i class="bi bi-chevron-left"></i>
+          <span>Previous</span>
+        </button>
+        <button class="nav-btn" onclick="navigateToNext()" id="nextBtn">
+          <span>Next</span>
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
     <div class="content-section" id="section-sales-history">
       <div class="dashboard-content">
         <h3 class="d-flex justify-content-between align-items-center">
@@ -1500,6 +1527,7 @@
     const menuSectionMap = {
       'dashboard': { linkId: 'menu-dashboard' },
       'sales': { linkId: 'menu-sales', menuItemId: 'salesMenu' },
+      'sales-new': { linkId: 'menu-sales-new', menuItemId: 'salesMenu' },
       'sales-history': { linkId: 'menu-sales-history', menuItemId: 'salesMenu' },
       'sales-returns': { linkId: 'menu-sales-returns', menuItemId: 'salesMenu' },
       'sales-reports': { linkId: 'menu-sales-reports', menuItemId: 'salesMenu' },
@@ -1545,11 +1573,6 @@
     // Show section
     // Updated showSection: Splits logic - Navigation vs Loading
     function showSection(sectionName, event) {
-      if (sectionName === 'sales-new') {
-        startNewSale(event);
-        return;
-      }
-
       if (event) {
         event.preventDefault();
         event.stopPropagation();
@@ -1635,6 +1658,7 @@
       const titles = {
         'dashboard': 'Dashboard',
         'sales': 'Sales Overview',
+        'sales-new': 'New Sale',
         'sales-history': 'Sales History',
         'sales-returns': 'Sales Returns',
         'sales-reports': 'Sales Reports',
@@ -1669,6 +1693,7 @@
     function loadSectionData(sectionName) {
       if (sectionName.startsWith('sales')) {
         loadSalesOverview();
+        if (sectionName === 'sales-new') loadNewSaleInDashboard();
         if (sectionName === 'sales-history') loadSalesHistory();
         if (sectionName === 'sales-returns') loadSalesReturns();
         if (sectionName === 'sales-reports') loadSalesReports();
@@ -1812,37 +1837,37 @@
       }
 
       closeMobileMenu();
-      openNewSaleDialog();
+      showSection('sales-new');
+      loadNewSaleInDashboard();
     }
 
-    function openNewSaleDialog() {
-      // Close the dashboard modal then open the New Sale dialog
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (result && result.success === false && result.error === 'UI_NOT_AVAILABLE') {
-            openNewSaleFallback();
-          }
-        })
-        .withFailureHandler(function(error) {
-          alert('Could not open the New Sale window: ' + error.message);
-        })
-        .delayedShowNewSaleDialog();
+    let newSaleFrameLoaded = false;
+    function loadNewSaleInDashboard() {
+      if (newSaleFrameLoaded) return;
 
-      google.script.host.close();
-    }
+      const alertBox = document.getElementById('newSaleEmbedAlert');
+      const frame = document.getElementById('newSaleFrame');
+      if (!alertBox || !frame) return;
 
-    function openNewSaleFallback() {
-      const showErrorAlert = () => alert('Unable to open the New Sale window. Please try again from the Fatma System menu.');
+      alertBox.style.display = 'block';
+      alertBox.className = 'alert alert-info mb-3';
+      alertBox.textContent = 'Loading New Sale form...';
 
       google.script.run
         .withSuccessHandler(function(url) {
           if (url) {
-            window.open(url + '?view=newSale', '_blank');
+            frame.src = url + '?view=newSale';
+            newSaleFrameLoaded = true;
+            alertBox.style.display = 'none';
           } else {
-            showErrorAlert();
+            alertBox.className = 'alert alert-danger mb-3';
+            alertBox.textContent = 'Unable to load the New Sale form. Please try again from the Fatma System menu.';
           }
         })
-        .withFailureHandler(showErrorAlert)
+        .withFailureHandler(function(error) {
+          alertBox.className = 'alert alert-danger mb-3';
+          alertBox.textContent = 'Unable to load the New Sale form. ' + (error && error.message ? error.message : error);
+        })
         .getWebAppUrl();
     }
 
