@@ -535,7 +535,7 @@ function checkStock(itemId, requiredQty) {
 function sendLowStockAlert() {
   try {
     const lowStockItems = getLowStockItems();
-    const outOfStockItems = getOutOfStockItems();
+    const outOfStockItems = lowStockItems.filter(item => (parseFloat(item.Current_Qty) || 0) === 0);
 
     if (lowStockItems.length === 0 && outOfStockItems.length === 0) {
       Logger.log('No low stock items found');

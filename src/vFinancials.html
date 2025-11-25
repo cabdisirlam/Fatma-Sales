@@ -326,6 +326,11 @@
         </div>
       </div>
 
+      <!-- Validation Message Area -->
+      <div id="statementValidationMessage" class="alert alert-warning" style="display: none;" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> <span id="statementValidationText"></span>
+      </div>
+
       <!-- Statement Summary -->
       <div id="accountSummarySection" style="display: none;">
         <div class="summary-card">
@@ -565,17 +570,23 @@
       const startDate = document.getElementById('statementDateFrom').value;
       const endDate = document.getElementById('statementDateTo').value;
 
+      // Clear previous validation message
+      document.getElementById('statementValidationMessage').style.display = 'none';
+
       if (!account) {
-        alert('Please select an account');
+        document.getElementById('statementValidationText').textContent = 'Please select an account';
+        document.getElementById('statementValidationMessage').style.display = 'block';
         return;
       }
 
       if (!startDate || !endDate) {
-        alert('Please select date range');
+        document.getElementById('statementValidationText').textContent = 'Please select date range';
+        document.getElementById('statementValidationMessage').style.display = 'block';
         return;
       }
 
-      // Show loading state
+      // Hide validation message and show loading state
+      document.getElementById('statementValidationMessage').style.display = 'none';
       document.getElementById('noStatementMessage').innerHTML =
         '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Loading statement...</p>';
 

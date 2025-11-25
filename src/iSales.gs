@@ -62,8 +62,43 @@ function createSale(saleData) {
     const discount = parseFloat(saleData.Discount) || 0;
     const grandTotal = subtotal + deliveryCharge - discount;
 
-    // --- PAYMENT PROCESSING ---
+    // --- CALCULATE PAYMENT AMOUNT (WITHOUT RECORDING YET) ---
     let totalPaid = 0;
+
+    // 1. Handle Split Payments
+    if (saleData.Payment_Mode === 'Split' && saleData.Split_Payments) {
+      for (const payment of saleData.Split_Payments) {
+        if (payment.amount > 0) {
+          totalPaid += parseFloat(payment.amount);
+        }
+      }
+    }
+    // 2. Handle Credit Sales (0 Payment)
+    else if (saleData.Payment_Mode === 'Credit') {
+      totalPaid = 0;
+    }
+    // 3. Handle Standard/Part Payments
+    else {
+      // Use provided Paid_Amount or default to Grand Total
+      const amountToPay = (saleData.Paid_Amount !== undefined && saleData.Paid_Amount !== null)
+                          ? parseFloat(saleData.Paid_Amount)
+                          : grandTotal;
+
+      if (amountToPay > 0) {
+        totalPaid = amountToPay;
+      }
+    }
+
+    // Calculate Balance/Credit
+    const creditAmount = grandTotal - totalPaid;
+
+    // Validate Credit for Walk-in Customers BEFORE recording any payments
+    if (creditAmount > 0 && (!saleData.Customer_ID || saleData.Customer_ID === 'WALK-IN')) {
+      throw new Error("Walk-in customers cannot have outstanding balances. Please register the customer.");
+    }
+
+    // --- NOW RECORD PAYMENTS (validation passed) ---
+    totalPaid = 0; // Reset to track actual recorded payments
 
     // 1. Handle Split Payments
     if (saleData.Payment_Mode === 'Split' && saleData.Split_Payments) {
@@ -89,14 +124,6 @@ function createSale(saleData) {
         recordSalePayment(transactionId, saleData.Payment_Mode, amountToPay, saleData.Customer_ID, saleData.User);
         totalPaid += amountToPay;
       }
-    }
-
-    // Calculate Balance/Credit
-    const creditAmount = grandTotal - totalPaid;
-
-    // Validate Credit for Walk-in Customers
-    if (creditAmount > 0 && (!saleData.Customer_ID || saleData.Customer_ID === 'WALK-IN')) {
-      throw new Error("Walk-in customers cannot have outstanding balances. Please register the customer.");
     }
 
     // Determine Delivery Status (for "Store until pickup")
@@ -180,7 +207,7 @@ function cancelSale(transactionId, reason, user) {
 
     // 2. Find and Refund Payments
     const financials = sheetToObjects('Financials');
-    const payments = financials.filter(f => f.Reference === transactionId && f.Debit === 0); // Find credits (money in)
+    const payments = financials.filter(f => f.Reference === transactionId && f.Type === 'Sale_Payment'); // Find sale payments (money in)
 
     let totalPaid = 0;
     payments.forEach(payment => {
@@ -238,11 +265,46 @@ function cancelSale(transactionId, reason, user) {
 }
 
 /**
+ * Update sale status
+ */
+function updateSaleStatus(transactionId, status, user) {
+  try {
+    const sheet = getSheet('Sales');
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+
+    const transIdCol = headers.indexOf('Transaction_ID');
+    const statusCol = headers.indexOf('Status');
+
+    // Update all rows with this transaction ID
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][transIdCol] === transactionId) {
+        sheet.getRange(i + 1, statusCol + 1).setValue(status);
+      }
+    }
+
+    logAudit(
+      user || 'SYSTEM',
+      'Sales',
+      'Update Sale',
+      'Sale ' + transactionId + ' status updated to: ' + status,
+      '',
+      '',
+      ''
+    );
+
+  } catch (error) {
+    logError('updateSaleStatus', error);
+    throw error;
+  }
+}
+
+/**
  * Mark sale as picked up (change status from Pending Pickup to Completed)
  */
 function markAsPickedUp(transactionId, user) {
   try {
-    updateQuotationStatus(transactionId, 'Completed', null, user);
+    updateSaleStatus(transactionId, 'Completed', user);
     return { success: true, message: 'Sale marked as picked up' };
   } catch (error) {
     logError('markAsPickedUp', error);

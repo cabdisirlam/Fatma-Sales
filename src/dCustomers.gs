@@ -509,8 +509,10 @@ function getOrCreateWalkInCustomer() {
 
 /**
  * Send payment reminder to a specific customer
+ * @param {string} customerId - Customer ID
+ * @param {string} businessName - Optional business name (to avoid repeated Settings reads)
  */
-function sendPaymentReminder(customerId) {
+function sendPaymentReminder(customerId, businessName) {
   try {
     const customer = getCustomerById(customerId);
     const balance = parseFloat(customer.Current_Balance) || 0;
@@ -524,10 +526,12 @@ function sendPaymentReminder(customerId) {
       return { success: false, message: 'Customer has no email address' };
     }
 
-    // Get business name from settings
-    const settings = sheetToObjects('Settings');
-    const businessNameSetting = settings.find(s => s.Setting_Key === 'Business_Name');
-    const businessName = businessNameSetting ? businessNameSetting.Setting_Value : 'Fatma Sales';
+    // Get business name from settings if not provided
+    if (!businessName) {
+      const settings = sheetToObjects('Settings');
+      const businessNameSetting = settings.find(s => s.Setting_Key === 'Business_Name');
+      businessName = businessNameSetting ? businessNameSetting.Setting_Value : 'Fatma Sales';
+    }
 
     // Build email content
     let emailBody = '<html><body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">';
@@ -606,6 +610,13 @@ function sendAllPaymentReminders() {
       return { success: true, message: 'No customers with debt', count: 0 };
     }
 
+    // Read settings once for efficiency
+    const settings = sheetToObjects('Settings');
+    const businessNameSetting = settings.find(s => s.Setting_Key === 'Business_Name');
+    const businessName = businessNameSetting ? businessNameSetting.Setting_Value : 'Fatma Sales';
+    const adminEmailSetting = settings.find(s => s.Setting_Key === 'Admin_Email');
+    const adminEmail = adminEmailSetting ? adminEmailSetting.Setting_Value : Session.getActiveUser().getEmail();
+
     let sentCount = 0;
     let failedCount = 0;
     const results = [];
@@ -614,7 +625,7 @@ function sendAllPaymentReminders() {
       // Only send to customers with email addresses
       if (customer.Email && customer.Email !== '') {
         try {
-          const result = sendPaymentReminder(customer.Customer_ID);
+          const result = sendPaymentReminder(customer.Customer_ID, businessName);
           if (result.success) {
             sentCount++;
           } else {
@@ -639,9 +650,6 @@ function sendAllPaymentReminders() {
     });
 
     // Send summary to admin
-    const settings = sheetToObjects('Settings');
-    const adminEmailSetting = settings.find(s => s.Setting_Key === 'Admin_Email');
-    const adminEmail = adminEmailSetting ? adminEmailSetting.Setting_Value : Session.getActiveUser().getEmail();
 
     let summaryEmail = '<html><body style="font-family: Arial, sans-serif;">';
     summaryEmail += '<h2 style="color: #667eea;">📧 Payment Reminders Summary</h2>';
