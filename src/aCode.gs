@@ -1529,12 +1529,14 @@ function setSettingValue(key, value) {
 
 /**
  * Validates required fields
+ * Fixed to properly handle numeric 0 values
  */
 function validateRequired(data, requiredFields) {
   const missing = [];
 
   requiredFields.forEach(field => {
-    if (!data[field] || data[field] === '') {
+    // Check if field is missing or empty string, but allow 0 (zero) as valid value
+    if (data[field] === undefined || data[field] === null || data[field] === '') {
       missing.push(field);
     }
   });

@@ -2150,7 +2150,14 @@
             <div class="row g-2 mt-2">
               <div class="col-md-3">
                 <label class="form-label">Supplier</label>
-                <input type="text" class="form-control" name="supplier" placeholder="Supplier Name" required>
+                <div class="input-group">
+                  <select class="form-select" name="supplier" id="supplierDropdown" required>
+                    <option value="">Loading suppliers...</option>
+                  </select>
+                  <button class="btn btn-outline-secondary" type="button" onclick="showSection('suppliers', event)" title="Add Supplier">
+                    <i class="bi bi-plus-circle"></i>
+                  </button>
+                </div>
               </div>
               <div class="col-md-2">
                 <label class="form-label">Quantity</label>
@@ -2260,6 +2267,41 @@
       `;
 
       container.innerHTML = html;
+
+      // Load suppliers into the dropdown
+      loadSuppliersForDropdown();
+    }
+
+    // Load suppliers and populate the supplier dropdown
+    function loadSuppliersForDropdown() {
+      const dropdown = document.getElementById('supplierDropdown');
+      if (!dropdown) return;
+
+      google.script.run
+        .withSuccessHandler(function(suppliers) {
+          dropdown.innerHTML = '<option value="">-- Select Supplier --</option>';
+
+          if (!suppliers || suppliers.length === 0) {
+            dropdown.innerHTML = '<option value="">No suppliers found</option>';
+            dropdown.disabled = true;
+            return;
+          }
+
+          suppliers.forEach(function(supplier) {
+            const option = document.createElement('option');
+            option.value = supplier.Supplier_Name;
+            option.textContent = supplier.Supplier_Name;
+            dropdown.appendChild(option);
+          });
+
+          dropdown.disabled = false;
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading suppliers:', error);
+          dropdown.innerHTML = '<option value="">Error loading suppliers</option>';
+          dropdown.disabled = true;
+        })
+        .getSuppliers();
     }
 
     // Products Section
