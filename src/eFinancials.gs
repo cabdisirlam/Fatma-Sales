@@ -424,3 +424,101 @@ function getExpenseCategories() {
     return ['Rent', 'Utilities', 'Salaries', 'Marketing', 'Supplies', 'Transport', 'Maintenance', 'Other'];
   }
 }
+
+/**
+ * Get financial transactions with optional filters
+ */
+function getFinancialTransactions(filters) {
+  try {
+    let transactions = sheetToObjects('Financials');
+
+    // Apply filters if provided
+    if (filters) {
+      if (filters.dateFrom) {
+        const fromDate = new Date(filters.dateFrom);
+        transactions = transactions.filter(t => new Date(t.DateTime) >= fromDate);
+      }
+      if (filters.dateTo) {
+        const toDate = new Date(filters.dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        transactions = transactions.filter(t => new Date(t.DateTime) <= toDate);
+      }
+      if (filters.account) {
+        transactions = transactions.filter(t => t.Account === filters.account);
+      }
+    }
+
+    // Sort by date descending
+    transactions.sort((a, b) => new Date(b.DateTime) - new Date(a.DateTime));
+
+    return transactions;
+
+  } catch (error) {
+    logError('getFinancialTransactions', error);
+    return [];
+  }
+}
+
+/**
+ * Get detailed report for a specific account
+ * Tracks Opening, Inflow, Outflow, and Closing for a date range
+ */
+function getAccountReport(accountName, startDate, endDate) {
+  try {
+    const financials = sheetToObjects('Financials');
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    let openingBalance = 0;
+    let totalCredits = 0; // Money In
+    let totalDebits = 0;  // Money Out
+    const transactions = [];
+
+    // Sort transactions by date
+    financials.sort((a, b) => new Date(a.DateTime) - new Date(b.DateTime));
+
+    financials.forEach(txn => {
+      if (txn.Account !== accountName) return;
+
+      const txnDate = new Date(txn.DateTime);
+      const credit = parseFloat(txn.Credit) || 0;
+      const debit = parseFloat(txn.Debit) || 0;
+
+      // Calculate Opening Balance (transactions before start date)
+      if (txnDate < start) {
+        openingBalance += (credit - debit);
+      }
+      // Calculate Period Totals (transactions within range)
+      else if (txnDate <= end) {
+        totalCredits += credit;
+        totalDebits += debit;
+
+        transactions.push({
+          date: txnDate,
+          type: txn.Type,
+          description: txn.Description,
+          in: credit,
+          out: debit,
+          balance: openingBalance + totalCredits - totalDebits // Running balance
+        });
+      }
+    });
+
+    const closingBalance = openingBalance + totalCredits - totalDebits;
+
+    return {
+      account: accountName,
+      period: { start: startDate, end: endDate },
+      openingBalance: openingBalance,
+      totalAdditions: totalCredits,
+      totalPayments: totalDebits,
+      closingBalance: closingBalance,
+      transactions: transactions
+    };
+
+  } catch (error) {
+    logError('getAccountReport', error);
+    throw new Error('Error generating account report: ' + error.message);
+  }
+}

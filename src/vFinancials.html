@@ -294,6 +294,90 @@
     </div>
   </div>
 
+  <!-- Account Statement Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <i class="bi bi-bank"></i> Account Statement
+    </div>
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label for="accountSelect" class="form-label">Select Account</label>
+          <select class="form-select" id="accountSelect">
+            <option value="">-- Select Account --</option>
+            <option value="Cash">Cash</option>
+            <option value="M-Pesa">M-Pesa</option>
+            <option value="Equity Bank">Equity Bank</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="statementDateFrom" class="form-label">From Date</label>
+          <input type="date" class="form-control" id="statementDateFrom">
+        </div>
+        <div class="col-md-3">
+          <label for="statementDateTo" class="form-label">To Date</label>
+          <input type="date" class="form-control" id="statementDateTo">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">&nbsp;</label>
+          <button class="btn btn-primary w-100" onclick="loadAccountStatement()">
+            <i class="bi bi-file-text"></i> Generate
+          </button>
+        </div>
+      </div>
+
+      <!-- Statement Summary -->
+      <div id="accountSummarySection" style="display: none;">
+        <div class="summary-card">
+          <h5 class="mb-3"><i class="bi bi-wallet2"></i> Account Summary: <span id="selectedAccountName"></span></h5>
+          <div class="summary-item">
+            <span>Opening Balance</span>
+            <span id="openingBal">$0.00</span>
+          </div>
+          <div class="summary-item">
+            <span>Total Additions (Money In)</span>
+            <span class="income" id="additions">$0.00</span>
+          </div>
+          <div class="summary-item">
+            <span>Total Payments (Money Out)</span>
+            <span class="expense" id="payments">$0.00</span>
+          </div>
+          <div class="summary-item">
+            <span>Closing Balance</span>
+            <span id="closingBal">$0.00</span>
+          </div>
+        </div>
+
+        <!-- Statement Transactions -->
+        <div class="mt-3">
+          <h6>Detailed Transactions</h6>
+          <div class="table-responsive">
+            <table class="table table-hover table-sm">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                  <th>Money In</th>
+                  <th>Money Out</th>
+                  <th>Balance</th>
+                </tr>
+              </thead>
+              <tbody id="statementTransactionsBody">
+                <!-- Data will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="noStatementMessage" class="text-center text-muted py-4">
+        <i class="bi bi-info-circle" style="font-size: 32px;"></i>
+        <p class="mt-2">Select an account and date range to generate statement</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Transactions Table -->
   <div class="card">
     <div class="card-header">
@@ -470,6 +554,98 @@
       const date = new Date(dateTime);
       return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
+
+    function formatCurrency(amount) {
+      return '$' + parseFloat(amount || 0).toFixed(2);
+    }
+
+    // Load Account Statement
+    function loadAccountStatement() {
+      const account = document.getElementById('accountSelect').value;
+      const startDate = document.getElementById('statementDateFrom').value;
+      const endDate = document.getElementById('statementDateTo').value;
+
+      if (!account) {
+        alert('Please select an account');
+        return;
+      }
+
+      if (!startDate || !endDate) {
+        alert('Please select date range');
+        return;
+      }
+
+      // Show loading state
+      document.getElementById('noStatementMessage').innerHTML =
+        '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Loading statement...</p>';
+
+      google.script.run
+        .withSuccessHandler(function(report) {
+          displayAccountStatement(report);
+        })
+        .withFailureHandler(function(error) {
+          document.getElementById('noStatementMessage').innerHTML =
+            '<div class="alert alert-danger">Error loading statement: ' + error.message + '</div>';
+          document.getElementById('accountSummarySection').style.display = 'none';
+        })
+        .getAccountReport(account, startDate, endDate);
+    }
+
+    function displayAccountStatement(report) {
+      if (!report) {
+        document.getElementById('noStatementMessage').innerHTML =
+          '<div class="alert alert-warning">No data found for the selected period</div>';
+        document.getElementById('accountSummarySection').style.display = 'none';
+        return;
+      }
+
+      // Hide no data message and show summary
+      document.getElementById('noStatementMessage').style.display = 'none';
+      document.getElementById('accountSummarySection').style.display = 'block';
+
+      // Update account name
+      document.getElementById('selectedAccountName').textContent = report.account;
+
+      // Update summary figures
+      document.getElementById('openingBal').textContent = formatCurrency(report.openingBalance);
+      document.getElementById('additions').textContent = formatCurrency(report.totalAdditions);
+      document.getElementById('payments').textContent = formatCurrency(report.totalPayments);
+      document.getElementById('closingBal').textContent = formatCurrency(report.closingBalance);
+
+      // Display transactions
+      const tbody = document.getElementById('statementTransactionsBody');
+      tbody.innerHTML = '';
+
+      if (!report.transactions || report.transactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No transactions in this period</td></tr>';
+        return;
+      }
+
+      report.transactions.forEach(function(txn) {
+        const row = document.createElement('tr');
+        const moneyIn = txn.in > 0 ? formatCurrency(txn.in) : '-';
+        const moneyOut = txn.out > 0 ? formatCurrency(txn.out) : '-';
+
+        row.innerHTML = `
+          <td>${formatDateTime(txn.date)}</td>
+          <td>${txn.type || ''}</td>
+          <td>${txn.description || ''}</td>
+          <td class="transaction-credit">${moneyIn}</td>
+          <td class="transaction-debit">${moneyOut}</td>
+          <td><strong>${formatCurrency(txn.balance)}</strong></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Initialize statement date fields on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date();
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      document.getElementById('statementDateFrom').valueAsDate = firstDayOfMonth;
+      document.getElementById('statementDateTo').valueAsDate = today;
+    });
 
     // Placeholder function - needs backend implementation
     function getFinancialTransactions(filters) {

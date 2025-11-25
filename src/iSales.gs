@@ -8,7 +8,7 @@
 // =====================================================
 
 /**
- * Create a new sale
+ * Create a new sale with Part Payment support
  * @param saleData Object containing:
  *   - items: Array of {Item_ID, Qty, Unit_Price}
  *   - Customer_ID: Customer identifier
@@ -18,13 +18,14 @@
  *   - Delivery_Charge: Delivery cost
  *   - Discount: Discount amount
  *   - Payment_Mode: Payment method (Cash/M-Pesa/Bank/Credit/Split)
+ *   - Paid_Amount: Amount paid (for partial payments)
  *   - Split_Payments: For split payments [{method, amount}]
+ *   - Delivery_Status: Status (Completed/Pending Pickup)
  *   - User: Username of seller
  */
 function createSale(saleData) {
   try {
     validateRequired(saleData, ['items', 'Customer_ID', 'Payment_Mode', 'User']);
-
     if (!saleData.items || saleData.items.length === 0) {
       throw new Error('Sale must have at least one item');
     }
@@ -33,15 +34,14 @@ function createSale(saleData) {
     const transactionId = generateId('Sales', 'Transaction_ID', 'SALE');
     const dateTime = new Date();
 
-    // Calculate totals
+    // Calculate totals and validate stock
     let subtotal = 0;
     const items = [];
 
-    // Check stock and calculate subtotal
     for (const item of saleData.items) {
       const stockCheck = checkStock(item.Item_ID, item.Qty);
       if (!stockCheck.sufficient) {
-        throw new Error('Insufficient stock for ' + item.Item_ID + '. Available: ' + stockCheck.available + ', Required: ' + stockCheck.required);
+        throw new Error('Insufficient stock for ' + item.Item_ID + '. Available: ' + stockCheck.available);
       }
 
       const product = getInventoryItemById(item.Item_ID);
@@ -55,13 +55,52 @@ function createSale(saleData) {
         Unit_Price: parseFloat(unitPrice),
         Line_Total: lineTotal
       });
-
       subtotal += lineTotal;
     }
 
     const deliveryCharge = parseFloat(saleData.Delivery_Charge) || 0;
     const discount = parseFloat(saleData.Discount) || 0;
     const grandTotal = subtotal + deliveryCharge - discount;
+
+    // --- PAYMENT PROCESSING ---
+    let totalPaid = 0;
+
+    // 1. Handle Split Payments
+    if (saleData.Payment_Mode === 'Split' && saleData.Split_Payments) {
+      for (const payment of saleData.Split_Payments) {
+        if (payment.amount > 0) {
+          recordSalePayment(transactionId, payment.method, payment.amount, saleData.Customer_ID, saleData.User);
+          totalPaid += parseFloat(payment.amount);
+        }
+      }
+    }
+    // 2. Handle Credit Sales (0 Payment)
+    else if (saleData.Payment_Mode === 'Credit') {
+      totalPaid = 0;
+    }
+    // 3. Handle Standard/Part Payments
+    else {
+      // Use provided Paid_Amount or default to Grand Total
+      const amountToPay = (saleData.Paid_Amount !== undefined && saleData.Paid_Amount !== null)
+                          ? parseFloat(saleData.Paid_Amount)
+                          : grandTotal;
+
+      if (amountToPay > 0) {
+        recordSalePayment(transactionId, saleData.Payment_Mode, amountToPay, saleData.Customer_ID, saleData.User);
+        totalPaid += amountToPay;
+      }
+    }
+
+    // Calculate Balance/Credit
+    const creditAmount = grandTotal - totalPaid;
+
+    // Validate Credit for Walk-in Customers
+    if (creditAmount > 0 && (!saleData.Customer_ID || saleData.Customer_ID === 'WALK-IN')) {
+      throw new Error("Walk-in customers cannot have outstanding balances. Please register the customer.");
+    }
+
+    // Determine Delivery Status (for "Store until pickup")
+    const deliveryStatus = saleData.Delivery_Status || 'Completed';
 
     // Add each line item to Sales sheet
     items.forEach(item => {
@@ -84,63 +123,130 @@ function createSale(saleData) {
         saleData.User,
         saleData.Location || '',
         saleData.KRA_PIN || '',
-        'Completed',
-        '', // Valid_Until (for quotations)
-        ''  // Converted_Sale_ID (for quotations converted to sales)
+        deliveryStatus, // Status column now tracks Delivery/Pickup status
+        '',
+        ''
       ];
-
       sheet.appendRow(saleRow);
     });
 
-    // Decrease stock for each item
+    // Decrease Stock
     for (const item of items) {
       decreaseStock(item.Item_ID, item.Qty, saleData.User);
     }
 
-    // Record financial transaction(s)
-    if (saleData.Payment_Mode === 'Split' && saleData.Split_Payments) {
-      // Handle split payment
-      for (const payment of saleData.Split_Payments) {
-        recordSalePayment(transactionId, payment.method, payment.amount, saleData.Customer_ID, saleData.User);
-      }
-    } else if (saleData.Payment_Mode !== 'Credit') {
-      // Record single payment (not credit)
-      recordSalePayment(transactionId, saleData.Payment_Mode, grandTotal, saleData.Customer_ID, saleData.User);
-    }
-
-    // Update customer stats
+    // Update Customer Stats & Debt
     if (saleData.Customer_ID && saleData.Customer_ID !== 'WALK-IN') {
+      // Add to total purchases stats
       updateCustomerPurchaseStats(saleData.Customer_ID, grandTotal, saleData.User);
 
-      // If credit sale, update customer balance
-      if (saleData.Payment_Mode === 'Credit') {
-        updateCustomerBalance(saleData.Customer_ID, grandTotal, saleData.User);
+      // If there is an outstanding balance, add to customer debt
+      if (creditAmount > 0) {
+        updateCustomerBalance(saleData.Customer_ID, creditAmount, saleData.User);
       }
     }
 
-    // Log audit
-    logAudit(
-      saleData.User,
-      'Sales',
-      'Create Sale',
-      'Sale created: ' + transactionId + ' for ' + formatCurrency(grandTotal),
-      '',
-      '',
-      JSON.stringify({transactionId, grandTotal, items: items.length})
-    );
+    logAudit(saleData.User, 'Sales', 'Create Sale', 'Sale ' + transactionId + ' created. Paid: ' + totalPaid + ', Credit: ' + creditAmount, '', '', '');
 
     return {
       success: true,
       transactionId: transactionId,
       grandTotal: grandTotal,
-      subtotal: subtotal,
-      items: items,
-      message: 'Sale completed successfully'
+      paidAmount: totalPaid,
+      balance: creditAmount,
+      message: creditAmount > 0 ? 'Sale recorded with partial payment.' : 'Sale completed successfully'
     };
 
   } catch (error) {
     logError('createSale', error);
     throw new Error('Error creating sale: ' + error.message);
+  }
+}
+
+/**
+ * Cancel a Sale (Reverses Inventory & Financials)
+ */
+function cancelSale(transactionId, reason, user) {
+  try {
+    const sale = getSaleById(transactionId);
+    if (!sale) throw new Error('Sale not found');
+    if (sale.Type !== 'Sale') throw new Error('Invalid transaction type');
+    if (sale.Status === 'Cancelled') throw new Error('Sale is already cancelled');
+
+    // 1. Reverse Inventory (Add stock back)
+    sale.items.forEach(item => {
+      increaseStock(item.Item_ID, item.Qty, user);
+    });
+
+    // 2. Find and Refund Payments
+    const financials = sheetToObjects('Financials');
+    const payments = financials.filter(f => f.Reference === transactionId && f.Debit === 0); // Find credits (money in)
+
+    let totalPaid = 0;
+    payments.forEach(payment => {
+      const amount = parseFloat(payment.Amount);
+      totalPaid += amount;
+
+      // Record refund transaction
+      const sheet = getSheet('Financials');
+      const refundId = generateId('Financials', 'Transaction_ID', 'REF');
+      sheet.appendRow([
+        refundId, new Date(), 'Sale_Cancellation', sale.Customer_ID, 'Sales',
+        payment.Account, 'Refund for cancelled sale ' + transactionId,
+        amount, amount, 0, 0, // Debit the account (money out)
+        payment.Account, sale.Customer_Name, transactionId, transactionId, 'Approved', user, user
+      ]);
+
+      // Update account balance
+      updateAccountBalance(payment.Account, -amount, user);
+    });
+
+    // 3. Reverse Customer Debt (if any)
+    const grandTotal = parseFloat(sale.Grand_Total);
+    const debtAmount = grandTotal - totalPaid;
+
+    if (debtAmount > 0 && sale.Customer_ID !== 'WALK-IN') {
+      // Reduce customer debt
+      updateCustomerBalance(sale.Customer_ID, -debtAmount, user);
+    }
+
+    // 4. Reverse Customer Purchase Stats
+    if (sale.Customer_ID !== 'WALK-IN') {
+       updateCustomerPurchaseStats(sale.Customer_ID, -grandTotal, user);
+    }
+
+    // 5. Update Sale Status to Cancelled
+    const sheet = getSheet('Sales');
+    const data = sheet.getDataRange().getValues();
+    const idCol = data[0].indexOf('Transaction_ID');
+    const statusCol = data[0].indexOf('Status');
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][idCol] === transactionId) {
+        sheet.getRange(i + 1, statusCol + 1).setValue('Cancelled');
+      }
+    }
+
+    logAudit(user, 'Sales', 'Cancel Sale', 'Cancelled sale ' + transactionId + '. Reason: ' + reason, '', '', '');
+
+    return { success: true, message: 'Sale cancelled, inventory returned, and payments refunded.' };
+
+  } catch (error) {
+    logError('cancelSale', error);
+    throw new Error('Error cancelling sale: ' + error.message);
+  }
+}
+
+/**
+ * Mark sale as picked up (change status from Pending Pickup to Completed)
+ */
+function markAsPickedUp(transactionId, user) {
+  try {
+    updateQuotationStatus(transactionId, 'Completed', null, user);
+    return { success: true, message: 'Sale marked as picked up' };
+  } catch (error) {
+    logError('markAsPickedUp', error);
+    throw new Error('Error marking sale as picked up: ' + error.message);
   }
 }
 
