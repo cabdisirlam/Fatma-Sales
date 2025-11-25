@@ -158,7 +158,7 @@ function getProductCategories() {
  */
 function addProduct(productData) {
   try {
-    validateRequired(productData, ['Item_Name', 'Cost_Price', 'Selling_Price', 'Current_Qty']);
+    validateRequired(productData, ['Item_Name', 'Cost_Price', 'Current_Qty', 'Supplier']);
 
     const sheet = getSheet('Inventory');
     const itemId = generateId('Inventory', 'Item_ID', 'ITEM');
