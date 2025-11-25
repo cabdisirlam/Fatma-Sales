@@ -622,18 +622,22 @@
           return;
         }
 
-        dropdown.disabled = false;
-        dropdown.innerHTML = '<option value="">-- Select Supplier --</option>';
-
         // Only show active suppliers
         const activeSuppliers = suppliersData.filter(s => s.Status === 'Active');
 
-        activeSuppliers.forEach(function(supplier) {
-          const option = document.createElement('option');
-          option.value = supplier.Supplier_Name;
-          option.textContent = supplier.Supplier_Name;
-          dropdown.appendChild(option);
-        });
+        if (activeSuppliers.length === 0) {
+          dropdown.innerHTML = '<option value="">No active suppliers available</option>';
+          dropdown.disabled = true;
+        } else {
+          dropdown.disabled = false;
+          dropdown.innerHTML = '<option value="">-- Select Supplier --</option>';
+          activeSuppliers.forEach(function(supplier) {
+            const option = document.createElement('option');
+            option.value = supplier.Supplier_Name;
+            option.textContent = supplier.Supplier_Name;
+            dropdown.appendChild(option);
+          });
+        }
       });
     }
 
