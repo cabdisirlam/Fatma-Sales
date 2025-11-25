@@ -670,13 +670,6 @@
       </li>
 
       <li class="menu-item">
-        <a href="#" id="menu-products" onclick="showSection('products', event);">
-          <i class="bi bi-bag"></i>
-          <span>Products</span>
-        </a>
-      </li>
-
-      <li class="menu-item">
         <a href="#" id="menu-customers" onclick="showSection('customers', event);">
           <i class="bi bi-people"></i>
           <span>Customers</span>
@@ -1143,28 +1136,6 @@
       </div>
     </div>
 
-    <!-- Products Section -->
-    <div class="content-section" id="section-products">
-      <div class="dashboard-content">
-        <h3><i class="bi bi-bag"></i> Product Management</h3>
-        <p class="text-muted">Manage your product catalog</p>
-        <hr>
-        <p>Product module content will be loaded here...</p>
-      </div>
-
-      <!-- Navigation Controls -->
-      <div class="navigation-controls">
-        <button class="nav-btn" onclick="navigateToPrevious()">
-          <i class="bi bi-chevron-left"></i>
-          <span>Previous</span>
-        </button>
-        <button class="nav-btn" onclick="navigateToNext()">
-          <span>Next</span>
-          <i class="bi bi-chevron-right"></i>
-        </button>
-      </div>
-    </div>
-
     <!-- Quotations Section -->
     <div class="content-section" id="section-quotations">
       <div class="dashboard-content">
@@ -1581,7 +1552,6 @@
       'sales-reports': { linkId: 'menu-sales-reports', menuItemId: 'salesMenu' },
       'inventory': { linkId: 'menu-inventory' },
       'customers': { linkId: 'menu-customers' },
-      'products': { linkId: 'menu-products' },
       'suppliers-list': { linkId: 'menu-suppliers-list', menuItemId: 'suppliersMenu' },
       'suppliers-add': { linkId: 'menu-suppliers-add', menuItemId: 'suppliersMenu' },
       'suppliers-orders': { linkId: 'menu-suppliers-orders', menuItemId: 'suppliersMenu' },
@@ -1712,7 +1682,6 @@
         'sales-reports': 'Sales Reports',
         'inventory': 'Inventory Management',
         'customers': 'Customer Management',
-        'products': 'Product Management',
         'quotations': 'Quotations',
         'financials': 'Financial Management',
         'reports': 'Reports & Analytics',
@@ -1741,14 +1710,13 @@
     function loadSectionData(sectionName) {
       if (sectionName.startsWith('sales')) {
         loadSalesOverview();
-        if (sectionName === 'sales-new') loadNewSaleInDashboard();
-        if (sectionName === 'sales-history') loadSalesHistory();
-        if (sectionName === 'sales-returns') loadSalesReturns();
-        if (sectionName === 'sales-reports') loadSalesReports();
-      }
-      else if (sectionName === 'inventory') loadInventorySection();
-      else if (sectionName === 'products') loadProductsSection();
-      else if (sectionName === 'customers') loadCustomersSection();
+      if (sectionName === 'sales-new') loadNewSaleInDashboard();
+      if (sectionName === 'sales-history') loadSalesHistory();
+      if (sectionName === 'sales-returns') loadSalesReturns();
+      if (sectionName === 'sales-reports') loadSalesReports();
+    }
+    else if (sectionName === 'inventory') loadInventorySection();
+    else if (sectionName === 'customers') loadCustomersSection();
       else if (sectionName === 'quotations') loadQuotationsSection();
       else if (sectionName === 'financials') loadFinancialsSection();
       else if (sectionName === 'reports') loadReportsSection();
@@ -3435,7 +3403,6 @@
       'sales-returns',
       'sales-reports',
       'inventory',
-      'products',
       'customers',
       'suppliers-list',
       'suppliers-add',
