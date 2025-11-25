@@ -82,9 +82,22 @@ function showNewSaleDialog() {
 /**
  * Delayed show new sale dialog - for use after closing another dialog
  */
-function delayedShowNewSaleDialog() {
-  Utilities.sleep(100); // Brief delay to ensure previous dialog closes
-  return showNewSaleDialog();
+function delayedShowNewSaleDialog(attempt) {
+  const maxAttempts = 3;
+  const delayMs = 500;
+  const currentAttempt = attempt || 1;
+
+  // Give the previous dialog a moment to close before attempting to open a new one
+  Utilities.sleep(delayMs);
+
+  const result = showNewSaleDialog();
+
+  // If the UI wasn't available because another dialog was still closing, retry once more
+  if (result && result.success === false && result.error === 'UI_NOT_AVAILABLE' && currentAttempt < maxAttempts) {
+    return delayedShowNewSaleDialog(currentAttempt + 1);
+  }
+
+  return result;
 }
 
 /**
