@@ -12,14 +12,12 @@
  */
 function doGet(e) {
   try {
-    const view = e && e.parameter ? e.parameter.view : '';
-    let htmlFile = 'nIndex';
-    let title = 'Fatma System';
-
-    if (view === 'newSale') {
-      htmlFile = 'oNewSale';
-      title = 'New Sale';
-    }
+    const viewName = e?.parameter?.view;
+    const viewRoutes = {
+      newSale: { htmlFile: 'oNewSale', title: 'New Sale' }
+    };
+    const defaultRoute = { htmlFile: 'nIndex', title: 'Fatma System' };
+    const { htmlFile, title } = viewRoutes[viewName] || defaultRoute;
 
     return HtmlService.createHtmlOutputFromFile(htmlFile)
       .setTitle(title)
