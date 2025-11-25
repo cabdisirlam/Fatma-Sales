@@ -149,12 +149,62 @@
       display: flex;
       gap: 5px;
     }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #667eea;
+      margin: 10px 0;
+    }
+
+    .stat-label {
+      color: #7f8c8d;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
   </style>
 </head>
 <body>
   <div class="header-section">
     <h2><i class="bi bi-people-fill"></i> User Management</h2>
     <p>Manage system users, roles, and permissions</p>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row" id="statsSection">
+    <div class="col-md-3">
+      <div class="stat-card text-center">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value" id="totalUsers">0</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card text-center">
+        <div class="stat-label">Active Users</div>
+        <div class="stat-value" style="color: #27ae60;" id="activeUsers">0</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card text-center">
+        <div class="stat-label">Admin Users</div>
+        <div class="stat-value" style="color: #e74c3c;" id="adminUsers">0</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card text-center">
+        <div class="stat-label">Inactive Users</div>
+        <div class="stat-value" style="color: #7f8c8d;" id="inactiveUsers">0</div>
+      </div>
+    </div>
   </div>
 
   <div class="container-fluid">
@@ -390,6 +440,23 @@
         .getUsers();
     }
 
+    // Update statistics
+    function updateStats(users) {
+      if (!users || users.length === 0) {
+        return;
+      }
+
+      const totalUsers = users.length;
+      const activeUsers = users.filter(u => u.Status === 'Active').length;
+      const adminUsers = users.filter(u => u.Role === 'Admin').length;
+      const inactiveUsers = users.filter(u => u.Status !== 'Active').length;
+
+      document.getElementById('totalUsers').textContent = totalUsers;
+      document.getElementById('activeUsers').textContent = activeUsers;
+      document.getElementById('adminUsers').textContent = adminUsers;
+      document.getElementById('inactiveUsers').textContent = inactiveUsers;
+    }
+
     // Display users in table
     function displayUsers(users) {
       usersData = users;
@@ -406,6 +473,9 @@
         `;
         return;
       }
+
+      // Update statistics
+      updateStats(users);
 
       tbody.innerHTML = users.map(user => {
         const initial = user.Username ? user.Username.charAt(0).toUpperCase() : 'U';

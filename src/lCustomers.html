@@ -167,7 +167,7 @@
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Debt</div>
-        <div class="stat-value balance-negative" id="totalDebt">$0</div>
+        <div class="stat-value balance-negative" id="totalDebt">Ksh 0.00</div>
       </div>
     </div>
   </div>
@@ -220,8 +220,10 @@
                 <th>Name</th>
                 <th>Phone</th>
                 <th>Email</th>
+                <th>Location</th>
                 <th>Balance</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="customersTableBody">
@@ -340,10 +342,10 @@
       data.forEach(function(customer) {
         const row = document.createElement('tr');
 
-        const balance = parseFloat(customer.Balance || 0);
+        const balance = parseFloat(customer.Current_Balance || customer.Balance || 0);
         const balanceClass = balance < 0 ? 'balance-negative' : balance > 0 ? 'balance-positive' : '';
-        const balanceText = balance < 0 ? 'Owes: $' + Math.abs(balance).toFixed(2) :
-                           balance > 0 ? 'Credit: $' + balance.toFixed(2) : '$0.00';
+        const balanceText = balance < 0 ? 'Owes: Ksh ' + Math.abs(balance).toFixed(2) :
+                           balance > 0 ? 'Credit: Ksh ' + balance.toFixed(2) : 'Ksh 0.00';
 
         const statusBadge = customer.Status === 'Active' ?
           '<span class="badge bg-success">Active</span>' :
@@ -351,11 +353,23 @@
 
         row.innerHTML = `
           <td>${customer.Customer_ID || ''}</td>
-          <td><strong>${customer.Name || ''}</strong></td>
+          <td><strong>${customer.Customer_Name || customer.Name || ''}</strong></td>
           <td>${customer.Phone || '-'}</td>
           <td>${customer.Email || '-'}</td>
+          <td>${customer.Location || '-'}</td>
           <td class="${balanceClass}">${balanceText}</td>
           <td>${statusBadge}</td>
+          <td>
+            <button class="btn btn-sm btn-primary me-1" onclick='viewCustomer("${customer.Customer_ID}")' title="View Details">
+              <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-success me-1" onclick='recordPayment("${customer.Customer_ID}")' title="Record Payment" ${balance >= 0 ? 'disabled' : ''}>
+              <i class="bi bi-cash"></i>
+            </button>
+            <button class="btn btn-sm btn-warning" onclick='editCustomer("${customer.Customer_ID}")' title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </td>
         `;
         tbody.appendChild(row);
       });
@@ -372,7 +386,7 @@
       let totalDebt = 0;
 
       data.forEach(function(customer) {
-        const balance = parseFloat(customer.Balance || 0);
+        const balance = parseFloat(customer.Current_Balance || customer.Balance || 0);
         if (balance < 0) {
           customersWithDebt++;
           totalDebt += Math.abs(balance);
@@ -382,7 +396,7 @@
       document.getElementById('totalCustomers').textContent = totalCustomers;
       document.getElementById('activeCustomers').textContent = activeCustomers;
       document.getElementById('customersWithDebt').textContent = customersWithDebt;
-      document.getElementById('totalDebt').textContent = '$' + totalDebt.toFixed(2);
+      document.getElementById('totalDebt').textContent = 'Ksh ' + totalDebt.toFixed(2);
     }
 
     function filterCustomers() {
@@ -470,6 +484,43 @@
       alertDiv.className = 'alert alert-' + type + ' mt-3';
       alertDiv.textContent = message;
       alertDiv.style.display = 'block';
+    }
+
+    // View customer details
+    function viewCustomer(customerId) {
+      alert('View customer details for: ' + customerId + '\n\nThis feature will show detailed customer information, purchase history, and payment records.');
+    }
+
+    // Record payment
+    function recordPayment(customerId) {
+      const amount = prompt('Enter payment amount (Ksh):');
+      if (amount && !isNaN(amount) && parseFloat(amount) > 0) {
+        const paymentData = {
+          Customer_ID: customerId,
+          Amount: parseFloat(amount),
+          Payment_Method: 'Cash',
+          User: currentUser
+        };
+
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result.success) {
+              alert('Payment recorded successfully!');
+              loadCustomers();
+            } else {
+              alert('Error: ' + result.message);
+            }
+          })
+          .withFailureHandler(function(error) {
+            alert('Error recording payment: ' + error.message);
+          })
+          .recordCustomerPayment(paymentData);
+      }
+    }
+
+    // Edit customer
+    function editCustomer(customerId) {
+      alert('Edit customer: ' + customerId + '\n\nThis feature will allow you to update customer information.');
     }
   </script>
 </body>

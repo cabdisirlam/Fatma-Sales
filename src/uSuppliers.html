@@ -171,22 +171,28 @@
 
   <!-- Statistics Cards -->
   <div class="row" id="statsSection">
-    <div class="col-md-4">
+    <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Suppliers</div>
         <div class="stat-value" id="totalSuppliers">0</div>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Active Suppliers</div>
         <div class="stat-value" id="activeSuppliers">0</div>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Payable</div>
-        <div class="stat-value balance-negative" id="totalPayable">$0</div>
+        <div class="stat-value balance-negative" id="totalPayable">Ksh 0.00</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-label">Total Purchased</div>
+        <div class="stat-value" id="totalPurchased">Ksh 0.00</div>
       </div>
     </div>
   </div>
@@ -301,6 +307,7 @@
                 <th>Balance</th>
                 <th>Payment Terms</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="suppliersTableBody">
@@ -363,10 +370,10 @@
       data.forEach(function(supplier) {
         const row = document.createElement('tr');
 
-        const balance = parseFloat(supplier.Balance || 0);
+        const balance = parseFloat(supplier.Current_Balance || supplier.Balance || 0);
         const balanceClass = balance < 0 ? 'balance-negative' : balance > 0 ? 'balance-positive' : '';
-        const balanceText = balance < 0 ? 'Payable: $' + Math.abs(balance).toFixed(2) :
-                           balance > 0 ? 'Receivable: $' + balance.toFixed(2) : '$0.00';
+        const balanceText = balance < 0 ? 'Payable: Ksh ' + Math.abs(balance).toFixed(2) :
+                           balance > 0 ? 'Receivable: Ksh ' + balance.toFixed(2) : 'Ksh 0.00';
 
         const statusBadge = supplier.Status === 'Active' ?
           '<span class="badge bg-success">Active</span>' :
@@ -374,13 +381,24 @@
 
         row.innerHTML = `
           <td>${supplier.Supplier_ID || ''}</td>
-          <td><strong>${supplier.Name || ''}</strong></td>
+          <td><strong>${supplier.Supplier_Name || supplier.Name || ''}</strong></td>
           <td>${supplier.Contact_Person || '-'}</td>
           <td>${supplier.Phone || '-'}</td>
           <td>${supplier.Email || '-'}</td>
           <td class="${balanceClass}">${balanceText}</td>
           <td>${supplier.Payment_Terms || '-'}</td>
           <td>${statusBadge}</td>
+          <td>
+            <button class="btn btn-sm btn-primary me-1" onclick='createPurchase("${supplier.Supplier_ID}")' title="New Purchase">
+              <i class="bi bi-cart-plus"></i>
+            </button>
+            <button class="btn btn-sm btn-success me-1" onclick='makePayment("${supplier.Supplier_ID}")' title="Make Payment" ${balance >= 0 ? 'disabled' : ''}>
+              <i class="bi bi-cash"></i>
+            </button>
+            <button class="btn btn-sm btn-warning" onclick='editSupplier("${supplier.Supplier_ID}")' title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </td>
         `;
         tbody.appendChild(row);
       });
@@ -394,17 +412,23 @@
       const totalSuppliers = data.length;
       const activeSuppliers = data.filter(s => s.Status === 'Active').length;
       let totalPayable = 0;
+      let totalPurchased = 0;
 
       data.forEach(function(supplier) {
-        const balance = parseFloat(supplier.Balance || 0);
+        const balance = parseFloat(supplier.Current_Balance || supplier.Balance || 0);
+        const purchased = parseFloat(supplier.Total_Purchased || 0);
+
         if (balance < 0) {
           totalPayable += Math.abs(balance);
         }
+
+        totalPurchased += purchased;
       });
 
       document.getElementById('totalSuppliers').textContent = totalSuppliers;
       document.getElementById('activeSuppliers').textContent = activeSuppliers;
-      document.getElementById('totalPayable').textContent = '$' + totalPayable.toFixed(2);
+      document.getElementById('totalPayable').textContent = 'Ksh ' + totalPayable.toFixed(2);
+      document.getElementById('totalPurchased').textContent = 'Ksh ' + totalPurchased.toFixed(2);
     }
 
     function filterSuppliers() {
@@ -465,6 +489,38 @@
           alert('Error adding supplier: ' + error.message);
         })
         .addSupplier(supplierData);
+    }
+
+    // Create new purchase order
+    function createPurchase(supplierId) {
+      alert('Create Purchase Order for supplier: ' + supplierId + '\n\nThis will open the purchase order form where you can add items from inventory.');
+    }
+
+    // Make payment to supplier
+    function makePayment(supplierId) {
+      const amount = prompt('Enter payment amount (Ksh):');
+      if (amount && !isNaN(amount) && parseFloat(amount) > 0) {
+        const user = sessionStorage.getItem('userName') || 'SYSTEM';
+
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result.success) {
+              alert('Payment recorded successfully!');
+              loadSuppliers();
+            } else {
+              alert('Error: ' + result.message);
+            }
+          })
+          .withFailureHandler(function(error) {
+            alert('Error recording payment: ' + error.message);
+          })
+          .updateSupplierPayment(supplierId, parseFloat(amount), user);
+      }
+    }
+
+    // Edit supplier
+    function editSupplier(supplierId) {
+      alert('Edit supplier: ' + supplierId + '\n\nThis feature will allow you to update supplier information.');
     }
   </script>
 </body>
