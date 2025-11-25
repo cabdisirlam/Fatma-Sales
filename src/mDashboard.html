@@ -1815,11 +1815,11 @@
 
     // Sales helpers
     function formatCurrency(value) {
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0);
-    }
-
-    function formatCurrencyKes(value) {
-      return 'KES ' + (parseFloat(value) || 0).toLocaleString();
+      return new Intl.NumberFormat('en-KE', {
+        style: 'currency',
+        currency: 'KES',
+        currencyDisplay: 'narrowSymbol'
+      }).format(parseFloat(value) || 0);
     }
 
     function showSalesAlert(message, type) {
@@ -1831,11 +1831,19 @@
     }
 
     function openNewSaleDialog() {
-      // Cannot open a new modal dialog from within an existing modal dialog
-      // Close this dashboard and instruct user to use the menu
-      if (confirm('To create a new sale, please use the menu: Fatma System > New Sale\n\nClick OK to close this dashboard.')) {
-        google.script.host.close();
-      }
+      // Close the dashboard modal then open the New Sale dialog
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result && result.success === false && result.error === 'UI_NOT_AVAILABLE') {
+            alert('Unable to open the New Sale window. Please try again from the Fatma System menu.');
+          }
+        })
+        .withFailureHandler(function(error) {
+          alert('Could not open the New Sale window: ' + error.message);
+        })
+        .delayedShowNewSaleDialog();
+
+      google.script.host.close();
     }
 
     function loadSalesOverview() {

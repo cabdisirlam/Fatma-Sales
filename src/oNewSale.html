@@ -101,7 +101,10 @@
           if (stockQty > 0) {
             const o = document.createElement('option');
             o.value = i.Item_ID;
-            o.textContent = i.Item_Name + ' - $' + i.Selling_Price + ' (Stock: ' + stockQty + ')';
+            o.textContent = i.Item_Name + ' - Ksh ' + Number(i.Selling_Price || 0).toLocaleString('en-KE', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            }) + ' (Stock: ' + stockQty + ')';
             select.appendChild(o);
           }
         });
@@ -142,7 +145,10 @@
           alert.className = result.success ? 'alert alert-success mt-3' : 'alert alert-danger mt-3';
           alert.textContent = result.success ?
             (isQuotation ? 'Quotation created! ID: ' : 'Sale processed! ID: ') + result.transactionId +
-            ' | Total: $' + (result.grandTotal || 0).toFixed(2) :
+            ' | Total: Ksh ' + Number(result.grandTotal || 0).toLocaleString('en-KE', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            }) :
             'Error: ' + result.message;
           alert.style.display = 'block';
           if (result.success) e.target.reset();
