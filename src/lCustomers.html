@@ -175,19 +175,24 @@
   <!-- Filter Section -->
   <div class="filter-section">
     <div class="row">
-      <div class="col-md-5">
+      <div class="col-md-4">
         <input type="text" class="form-control" id="searchInput" placeholder="Search by name, phone, or email...">
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <select class="form-select" id="statusFilter">
           <option value="">All Status</option>
           <option value="Active">Active</option>
           <option value="Inactive">Inactive</option>
         </select>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <button class="btn btn-primary" onclick="loadCustomers()">
           <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-success w-100" onclick="showAddCustomerModal()">
+          <i class="bi bi-person-plus"></i> Add Customer
         </button>
       </div>
     </div>
@@ -229,6 +234,62 @@
       <div id="noDataMessage" style="display: none;" class="text-center text-muted py-4">
         <i class="bi bi-inbox" style="font-size: 48px;"></i>
         <p class="mt-3">No customers found</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Customer Modal -->
+  <div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus"></i> Add New Customer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addCustomerForm" onsubmit="event.preventDefault(); submitCustomer();">
+            <div class="mb-3">
+              <label for="custName" class="form-label">Customer Name *</label>
+              <input type="text" class="form-control" id="custName" required>
+            </div>
+            <div class="mb-3">
+              <label for="custPhone" class="form-label">Phone Number *</label>
+              <input type="text" class="form-control" id="custPhone" required>
+            </div>
+            <div class="mb-3">
+              <label for="custEmail" class="form-label">Email</label>
+              <input type="email" class="form-control" id="custEmail">
+            </div>
+            <div class="mb-3">
+              <label for="custLocation" class="form-label">Location</label>
+              <input type="text" class="form-control" id="custLocation">
+            </div>
+            <div class="mb-3">
+              <label for="custKRAPin" class="form-label">KRA PIN</label>
+              <input type="text" class="form-control" id="custKRAPin">
+            </div>
+            <div class="mb-3">
+              <label for="custType" class="form-label">Customer Type</label>
+              <select class="form-select" id="custType">
+                <option value="Walk-in">Walk-in</option>
+                <option value="Regular">Regular</option>
+                <option value="Corporate">Corporate</option>
+                <option value="Wholesale">Wholesale</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="custCreditLimit" class="form-label">Credit Limit (KSh)</label>
+              <input type="number" class="form-control" id="custCreditLimit" value="0" min="0" step="0.01">
+            </div>
+          </form>
+          <div id="addCustomerAlert" class="alert mt-3" style="display: none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" onclick="submitCustomer()">
+            <i class="bi bi-save"></i> Save Customer
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -342,6 +403,72 @@
 
       displayCustomers(filtered);
       updateStats(filtered);
+    }
+
+    // Get current user
+    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+
+    // Show Add Customer Modal
+    function showAddCustomerModal() {
+      document.getElementById('addCustomerForm').reset();
+      document.getElementById('addCustomerAlert').style.display = 'none';
+      const modal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
+      modal.show();
+    }
+
+    // Submit Customer
+    function submitCustomer() {
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      const email = document.getElementById('custEmail').value.trim();
+      const location = document.getElementById('custLocation').value.trim();
+      const kraPin = document.getElementById('custKRAPin').value.trim();
+      const type = document.getElementById('custType').value;
+      const creditLimit = document.getElementById('custCreditLimit').value;
+
+      if (!name || !phone) {
+        showCustomerAlert('Please fill in all required fields (Name and Phone)', 'warning');
+        return;
+      }
+
+      const customerData = {
+        Customer_Name: name,
+        Phone: phone,
+        Email: email,
+        Location: location,
+        KRA_PIN: kraPin,
+        Customer_Type: type,
+        Credit_Limit: parseFloat(creditLimit) || 0,
+        Created_By: currentUser
+      };
+
+      // Show loading state
+      showCustomerAlert('Adding customer...', 'info');
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            showCustomerAlert('Customer added successfully!', 'success');
+            setTimeout(function() {
+              bootstrap.Modal.getInstance(document.getElementById('addCustomerModal')).hide();
+              loadCustomers(); // Refresh the customer list
+            }, 1500);
+          } else {
+            showCustomerAlert('Error: ' + result.message, 'danger');
+          }
+        })
+        .withFailureHandler(function(error) {
+          showCustomerAlert('Error: ' + error.message, 'danger');
+        })
+        .addCustomer(customerData);
+    }
+
+    // Helper function to show alerts in customer modal
+    function showCustomerAlert(message, type) {
+      const alertDiv = document.getElementById('addCustomerAlert');
+      alertDiv.className = 'alert alert-' + type + ' mt-3';
+      alertDiv.textContent = message;
+      alertDiv.style.display = 'block';
     }
   </script>
 </body>

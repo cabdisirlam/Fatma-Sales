@@ -522,3 +522,75 @@ function getAccountReport(accountName, startDate, endDate) {
     throw new Error('Error generating account report: ' + error.message);
   }
 }
+
+/**
+ * Set Opening Balance for an Account
+ * This should only be used once per account when setting up the system
+ */
+function setOpeningBalance(accountName, amount, user) {
+  try {
+    const sheet = getSheet('Financials');
+    const data = sheet.getDataRange().getValues();
+
+    // Check for existing opening balance
+    const exists = data.some(row => row[5] === accountName && row[2] === 'Opening_Balance');
+    if (exists) {
+      return { success: false, message: "Opening balance already set for " + accountName };
+    }
+
+    const txnId = generateId('Financials', 'Transaction_ID', 'OPN');
+    const numAmount = parseFloat(amount);
+
+    if (isNaN(numAmount) || numAmount < 0) {
+      return { success: false, message: "Invalid amount. Must be a positive number." };
+    }
+
+    // Row Structure matches Financials sheet
+    // [Transaction_ID, DateTime, Type, Customer_ID, Category, Account, Description,
+    //  Amount, Debit, Credit, Balance, Payment_Method, Payee, Receipt_No, Reference,
+    //  Status, Approved_By, Created_By]
+    const row = [
+      txnId,
+      new Date(),
+      'Opening_Balance',
+      '', // Customer
+      'Equity', // Category
+      accountName, // Account (Cash, M-Pesa, Equity Bank)
+      'Initial Opening Balance',
+      numAmount,
+      0, // Debit (Money Out)
+      numAmount, // Credit (Money In)
+      0, // Balance (will be calculated)
+      'System', // Payment_Method
+      '', // Payee
+      '', // Receipt_No
+      '', // Reference
+      'Approved',
+      user || 'SYSTEM',
+      user || 'SYSTEM'
+    ];
+
+    sheet.appendRow(row);
+    updateAccountBalance(accountName, numAmount, user || 'SYSTEM');
+
+    logAudit(
+      user || 'SYSTEM',
+      'Financials',
+      'Opening Balance',
+      'Opening balance set for ' + accountName + ': ' + formatCurrency(numAmount),
+      '',
+      '',
+      JSON.stringify({txnId, account: accountName, amount: numAmount})
+    );
+
+    return {
+      success: true,
+      message: "Opening balance set successfully for " + accountName,
+      txnId: txnId,
+      amount: numAmount
+    };
+  } catch(e) {
+    logError('setOpeningBalance', e);
+    return { success: false, message: e.message };
+  }
+}

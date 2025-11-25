@@ -296,8 +296,11 @@
 
   <!-- Account Statement Section -->
   <div class="card mb-4">
-    <div class="card-header">
-      <i class="bi bi-bank"></i> Account Statement
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-bank"></i> Account Statement</span>
+      <button class="btn btn-outline-light btn-sm" onclick="showOpeningBalanceModal()">
+        <i class="bi bi-bank"></i> Set Opening Balance
+      </button>
     </div>
     <div class="card-body">
       <div class="row mb-3">
@@ -421,6 +424,47 @@
       <div id="noDataMessage" style="display: none;" class="text-center text-muted py-4">
         <i class="bi bi-inbox" style="font-size: 48px;"></i>
         <p class="mt-3">No financial transactions found</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Opening Balance Modal -->
+  <div class="modal fade" id="openingBalanceModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-bank"></i> Set Opening Balance</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            Set the initial balance for an account when starting to use this system. This can only be done once per account.
+          </div>
+          <form id="openingBalForm" onsubmit="event.preventDefault(); submitOpeningBalance();">
+            <div class="mb-3">
+              <label for="obAccount" class="form-label">Account *</label>
+              <select class="form-select" id="obAccount" required>
+                <option value="">Select Account...</option>
+                <option value="Cash">Cash</option>
+                <option value="Equity Bank">Equity Bank</option>
+                <option value="M-Pesa">M-Pesa</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="obAmount" class="form-label">Opening Amount (KSh) *</label>
+              <input type="number" class="form-control" id="obAmount" step="0.01" min="0" required>
+              <small class="text-muted">Enter the balance that exists in this account right now</small>
+            </div>
+          </form>
+          <div id="openingBalanceAlert" class="alert mt-3" style="display: none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" onclick="submitOpeningBalance()">
+            <i class="bi bi-save"></i> Save Opening Balance
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -663,6 +707,61 @@
       // This would call the backend to get filtered transactions
       // For now, return empty array
       return [];
+    }
+
+    // Get current user
+    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+
+    // Show Opening Balance Modal
+    function showOpeningBalanceModal() {
+      document.getElementById('openingBalForm').reset();
+      document.getElementById('openingBalanceAlert').style.display = 'none';
+      const modal = new bootstrap.Modal(document.getElementById('openingBalanceModal'));
+      modal.show();
+    }
+
+    // Submit Opening Balance
+    function submitOpeningBalance() {
+      const account = document.getElementById('obAccount').value;
+      const amount = document.getElementById('obAmount').value;
+
+      if (!account || !amount) {
+        showAlert('openingBalanceAlert', 'Please fill in all required fields', 'warning');
+        return;
+      }
+
+      if (parseFloat(amount) < 0) {
+        showAlert('openingBalanceAlert', 'Amount must be a positive number', 'warning');
+        return;
+      }
+
+      // Show loading state
+      showAlert('openingBalanceAlert', 'Setting opening balance...', 'info');
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            showAlert('openingBalanceAlert', result.message, 'success');
+            setTimeout(function() {
+              bootstrap.Modal.getInstance(document.getElementById('openingBalanceModal')).hide();
+              loadFinancials(); // Refresh the financial data
+            }, 1500);
+          } else {
+            showAlert('openingBalanceAlert', result.message, 'danger');
+          }
+        })
+        .withFailureHandler(function(error) {
+          showAlert('openingBalanceAlert', 'Error: ' + error.message, 'danger');
+        })
+        .setOpeningBalance(account, amount, currentUser);
+    }
+
+    // Helper function to show alerts in modals
+    function showAlert(elementId, message, type) {
+      const alertDiv = document.getElementById(elementId);
+      alertDiv.className = 'alert alert-' + type + ' mt-3';
+      alertDiv.textContent = message;
+      alertDiv.style.display = 'block';
     }
   </script>
 </body>
