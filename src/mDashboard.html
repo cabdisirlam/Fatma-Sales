@@ -20,6 +20,10 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #f5f6fa;
       overflow-x: hidden;
+      /* Prevent "pull-to-refresh" effect which feels like hanging */
+      overscroll-behavior-y: none;
+      /* Enable smooth scrolling on iOS */
+      -webkit-overflow-scrolling: touch;
     }
 
     /* Sidebar Styles */
@@ -27,17 +31,20 @@
       position: fixed;
       top: 0;
       left: 0;
-      height: 100vh;
+      height: 100%; /* Use 100% instead of 100vh for mobile browsers */
       width: 260px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       padding: 20px 0 20px 0;
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease; /* Use transform instead of left/width for performance */
       z-index: 1000;
       box-shadow: 4px 0 10px rgba(0,0,0,0.1);
       overflow-y: auto;
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
+      /* Hardware acceleration to prevent lag */
+      transform: translateX(0);
+      -webkit-overflow-scrolling: touch; /* Smooth scroll on mobile */
     }
 
     .sidebar::-webkit-scrollbar {
@@ -58,6 +65,7 @@
     }
 
     .sidebar.collapsed {
+      transform: translateX(-180px); /* Move off-screen slightly */
       width: 80px;
     }
 
@@ -463,20 +471,25 @@
       }
 
       .sidebar {
-        position: fixed;
-        left: -100%;
+        transform: translateX(-100%); /* Completely hidden by default on mobile */
         width: 280px;
-        transition: left 0.3s ease;
+        transition: transform 0.3s ease;
         z-index: 1000;
       }
 
       .sidebar.mobile-open {
-        left: 0;
+        transform: translateX(0); /* Slide in smoothly */
+        box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+      }
+
+      /* Prevent body scrolling when menu is open to stop "hanging" feel */
+      body.menu-open {
+        overflow: hidden;
       }
 
       .main-content {
-        margin-left: 0;
-        padding: 80px 15px 20px;
+        margin-left: 0 !important; /* Force full width on mobile */
+        padding: 80px 15px 20px; /* Space for top bar */
       }
 
       .toggle-btn {
@@ -1389,6 +1402,9 @@
   </main>
 
   <script>
+    // Global cache object to prevent redundant server calls
+    const DATA_CACHE = {};
+
     // Initialize dashboard
     function initDashboard(userName, userRole) {
       const userEmail = sessionStorage.getItem('userEmail');
@@ -1521,11 +1537,24 @@
     }
 
     // Show section
+    // Updated showSection: Splits logic - Navigation vs Loading
     function showSection(sectionName, event) {
       if (event) {
         event.preventDefault();
         event.stopPropagation();
       }
+
+      // Push new state to browser history
+      // This creates a "breadcrumb" so the Back button works
+      history.pushState({section: sectionName}, '', '#' + sectionName);
+
+      loadSectionInternal(sectionName);
+    }
+
+    // Internal function that actually switches the view
+    function loadSectionInternal(sectionName) {
+      // Close mobile menu automatically when navigating
+      closeMobileMenu();
 
       // Hide all sections
       const sections = document.querySelectorAll('.content-section');
@@ -1539,15 +1568,15 @@
         item.classList.remove('active');
       });
 
+      // Show Target Section
+      const targetSection = document.getElementById('section-' + sectionName);
+      if (targetSection) {
+        targetSection.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
       // Ensure submenu visibility aligns with the selected section
       const mappedMenu = menuSectionMap[sectionName];
-      openMappedSubmenu(mappedMenu ? mappedMenu.menuItemId : null);
-
-      // Show selected section
-      const selectedSection = document.getElementById('section-' + sectionName);
-      if (selectedSection) {
-        selectedSection.classList.add('active');
-      }
 
       // Mark the mapped menu item as active
       if (mappedMenu && mappedMenu.linkId) {
@@ -1555,80 +1584,18 @@
         if (mappedLink) {
           mappedLink.classList.add('active');
         }
+        // Expand submenu if needed
+        if (mappedMenu.menuItemId) openMappedSubmenu(mappedMenu.menuItemId);
       }
 
-      // Load data for specific sections
-      if (sectionName.startsWith('sales')) {
-        loadSalesOverview();
-        if (sectionName === 'sales-history') {
-          loadSalesHistory();
-        }
-        if (sectionName === 'sales-returns') {
-          loadSalesReturns();
-        }
-        if (sectionName === 'sales-reports') {
-          loadSalesReports();
-        }
-      }
+      // DATA LOADING STRATEGY (Prevent Hanging)
+      // Only load data if the container is empty OR explicitly requested.
+      // This prevents the "freeze" every time you press Back.
+      const container = document.getElementById('section-' + sectionName);
+      const hasContent = container && (container.querySelector('table') || container.querySelector('.stat-card'));
 
-      if (sectionName === 'inventory') {
-        loadInventorySection();
-      }
-
-      if (sectionName === 'products') {
-        loadProductsSection();
-      }
-
-      if (sectionName === 'customers') {
-        loadCustomersSection();
-      }
-
-      if (sectionName === 'quotations') {
-        loadQuotationsSection();
-      }
-
-      if (sectionName === 'financials') {
-        loadFinancialsSection();
-      }
-
-      if (sectionName === 'reports') {
-        loadReportsSection();
-      }
-
-      if (sectionName === 'suppliers-list') {
-        loadSuppliersList();
-      }
-
-      if (sectionName === 'suppliers-add') {
-        loadAddSupplier();
-      }
-
-      if (sectionName === 'suppliers-orders') {
-        loadPurchaseOrders();
-      }
-
-      if (sectionName === 'suppliers-payments') {
-        loadSupplierPayments();
-      }
-
-      if (sectionName === 'users-list') {
-        loadUsersList();
-      }
-
-      if (sectionName === 'users-add') {
-        loadCreateUser();
-      }
-
-      if (sectionName === 'users-roles') {
-        loadUserRoles();
-      }
-
-      if (sectionName === 'users-permissions') {
-        loadUserPermissions();
-      }
-
-      if (sectionName === 'settings') {
-        loadSettingsSection();
+      if (!hasContent) {
+        loadSectionData(sectionName);
       }
 
       // Update page title
@@ -1657,6 +1624,31 @@
       };
 
       document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
+    }
+
+    // Centralized Data Loader (Called only when needed)
+    function loadSectionData(sectionName) {
+      if (sectionName.startsWith('sales')) {
+        loadSalesOverview();
+        if (sectionName === 'sales-history') loadSalesHistory();
+        if (sectionName === 'sales-returns') loadSalesReturns();
+        if (sectionName === 'sales-reports') loadSalesReports();
+      }
+      else if (sectionName === 'inventory') loadInventorySection();
+      else if (sectionName === 'products') loadProductsSection();
+      else if (sectionName === 'customers') loadCustomersSection();
+      else if (sectionName === 'quotations') loadQuotationsSection();
+      else if (sectionName === 'financials') loadFinancialsSection();
+      else if (sectionName === 'reports') loadReportsSection();
+      else if (sectionName === 'suppliers-list') loadSuppliersList();
+      else if (sectionName === 'suppliers-add') loadAddSupplier();
+      else if (sectionName === 'suppliers-orders') loadPurchaseOrders();
+      else if (sectionName === 'suppliers-payments') loadSupplierPayments();
+      else if (sectionName === 'users-list') loadUsersList();
+      else if (sectionName === 'users-add') loadCreateUser();
+      else if (sectionName === 'users-roles') loadUserRoles();
+      else if (sectionName === 'users-permissions') loadUserPermissions();
+      else if (sectionName === 'settings') loadSettingsSection();
     }
 
     // Load users list
@@ -1875,15 +1867,25 @@
     }
 
     // Inventory Section
-    function loadInventorySection() {
+    function loadInventorySection(forceRefresh = false) {
       const container = document.getElementById('section-inventory');
       if (!container) return;
 
+      // 1. Check Cache: If we have data and aren't forcing a refresh, use it!
+      if (!forceRefresh && DATA_CACHE['inventory']) {
+        console.log("Loading Inventory from Cache (Fast!)");
+        displayInventory(DATA_CACHE['inventory']);
+        return;
+      }
+
+      // 2. Show loading spinner only if fetching from server
       const contentDiv = container.querySelector('.placeholder-content') || container;
       contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading inventory...</p></div>';
 
       google.script.run
         .withSuccessHandler(function(data) {
+          // 3. Save to Cache
+          DATA_CACHE['inventory'] = data;
           displayInventory(data);
         })
         .withFailureHandler(function(error) {
@@ -1992,15 +1994,25 @@
     }
 
     // Customers Section
-    function loadCustomersSection() {
+    function loadCustomersSection(forceRefresh = false) {
       const container = document.getElementById('section-customers');
       if (!container) return;
 
+      // Check Cache: If we have data and aren't forcing a refresh, use it!
+      if (!forceRefresh && DATA_CACHE['customers']) {
+        console.log("Loading Customers from Cache (Fast!)");
+        displayCustomers(DATA_CACHE['customers']);
+        return;
+      }
+
+      // Show loading spinner only if fetching from server
       const contentDiv = container.querySelector('.placeholder-content') || container;
       contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading customers...</p></div>';
 
       google.script.run
         .withSuccessHandler(function(data) {
+          // Save to Cache
+          DATA_CACHE['customers'] = data;
           displayCustomers(data);
         })
         .withFailureHandler(function(error) {
@@ -2102,15 +2114,25 @@
     }
 
     // Quotations Section
-    function loadQuotationsSection() {
+    function loadQuotationsSection(forceRefresh = false) {
       const container = document.getElementById('section-quotations');
       if (!container) return;
 
+      // Check Cache: If we have data and aren't forcing a refresh, use it!
+      if (!forceRefresh && DATA_CACHE['quotations']) {
+        console.log("Loading Quotations from Cache (Fast!)");
+        displayQuotations(DATA_CACHE['quotations']);
+        return;
+      }
+
+      // Show loading spinner only if fetching from server
       const contentDiv = container.querySelector('.placeholder-content') || container;
       contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading quotations...</p></div>';
 
       google.script.run
         .withSuccessHandler(function(data) {
+          // Save to Cache
+          DATA_CACHE['quotations'] = data;
           displayQuotations(data);
         })
         .withFailureHandler(function(error) {
@@ -2977,6 +2999,7 @@
 
       sidebar.classList.toggle('mobile-open');
       overlay.classList.toggle('active');
+      document.body.classList.toggle('menu-open'); // Prevent body scrolling when menu is open
 
       // Change icon
       const icon = hamburger.querySelector('i');
@@ -2994,6 +3017,7 @@
 
       sidebar.classList.remove('mobile-open');
       overlay.classList.remove('active');
+      document.body.classList.remove('menu-open'); // Re-enable body scrolling
 
       // Reset icon
       const icon = hamburger.querySelector('i');
@@ -3073,6 +3097,17 @@
       updateNavigationButtons();
     };
 
+    // Handle Browser Back Button
+    window.onpopstate = function(event) {
+      if (event.state && event.state.section) {
+        // Load the section WITHOUT pushing to history again
+        loadSectionInternal(event.state.section);
+      } else {
+        // Fallback to dashboard if history is empty
+        loadSectionInternal('dashboard');
+      }
+    };
+
     // Auto-initialize on page load
     window.addEventListener('DOMContentLoaded', function() {
       const userName = sessionStorage.getItem('userName');
@@ -3081,6 +3116,9 @@
         initDashboard(userName, userRole);
       }
       updateNavigationButtons();
+
+      // Initialize History API: Replace current state so we have a starting point
+      history.replaceState({section: 'dashboard'}, 'Dashboard', '#dashboard');
     });
   </script>
 </body>

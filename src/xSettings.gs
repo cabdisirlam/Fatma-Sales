@@ -4,6 +4,39 @@
  */
 
 /**
+ * List of allowed setting keys to prevent arbitrary key/value injection
+ */
+const ALLOWED_SETTINGS_KEYS = [
+  'Shop_Name',
+  'Admin_Email',
+  'Currency',
+  'Currency_Symbol',
+  'Date_Format',
+  'Timezone',
+  'System_Version',
+  'Tax_Rate',
+  'Low_Stock_Threshold',
+  'Receipt_Footer',
+  'Receipt_Header',
+  'Enable_SMS',
+  'Enable_Email',
+  'Backup_Enabled',
+  'Auto_Backup_Days'
+];
+
+/**
+ * Validate if a setting key is allowed
+ */
+function isValidSettingKey(key) {
+  // Allow expense categories (they start with 'Expense_Category_')
+  if (key && key.startsWith('Expense_Category_')) {
+    return true;
+  }
+  // Check if key is in allowed list
+  return ALLOWED_SETTINGS_KEYS.includes(key);
+}
+
+/**
  * Get setting value by key
  */
 function getSetting(key) {
@@ -15,6 +48,11 @@ function getSetting(key) {
  */
 function updateSetting(key, value, user) {
   try {
+    // Validate setting key
+    if (!isValidSettingKey(key)) {
+      throw new Error('Invalid setting key: ' + key + '. Only predefined settings can be modified.');
+    }
+
     setSettingValue(key, value);
 
     logAudit(
@@ -92,6 +130,19 @@ function getBusinessInfo() {
  */
 function updateBusinessInfo(businessData, user) {
   try {
+    // Validate all keys before updating
+    const invalidKeys = [];
+    for (let key in businessData) {
+      if (businessData[key] !== undefined && !isValidSettingKey(key)) {
+        invalidKeys.push(key);
+      }
+    }
+
+    if (invalidKeys.length > 0) {
+      throw new Error('Invalid setting keys: ' + invalidKeys.join(', ') + '. Only predefined settings can be modified.');
+    }
+
+    // Update valid settings
     for (let key in businessData) {
       if (businessData[key] !== undefined) {
         setSettingValue(key, businessData[key]);

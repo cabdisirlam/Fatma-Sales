@@ -22,6 +22,57 @@ function doGet(e) {
   }
 }
 
+/**
+ * Handles POST requests for external integrations
+ * Currently supports:
+ * - Webhook endpoints for payment gateways (MPESA, etc.)
+ * - External API callbacks
+ * - Third-party service integrations
+ */
+function doPost(e) {
+  try {
+    // Log the incoming request for debugging
+    Logger.log('doPost received: ' + JSON.stringify(e));
+
+    // Parse request parameters
+    const params = e.parameter || {};
+    const postData = e.postData ? JSON.parse(e.postData.contents) : {};
+
+    // Determine the type of request and route accordingly
+    const requestType = params.type || postData.type || 'unknown';
+
+    // Log the request to audit trail
+    logAudit(
+      'EXTERNAL_API',
+      'Webhook',
+      'POST Request',
+      'Received POST request of type: ' + requestType,
+      '',
+      '',
+      JSON.stringify({ params: params, data: postData })
+    );
+
+    // Return a success response
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: true,
+        message: 'Request received',
+        timestamp: new Date().toISOString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    logError('doPost', error);
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
 // =====================================================
 // CONFIGURATION
 // =====================================================
