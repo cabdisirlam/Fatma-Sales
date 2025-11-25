@@ -196,25 +196,25 @@
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Revenue</div>
-        <div class="stat-value income" id="totalRevenue">$0</div>
+        <div class="stat-value income" id="totalRevenue">KSh 0.00</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Expenses</div>
-        <div class="stat-value expense" id="totalExpenses">$0</div>
+        <div class="stat-value expense" id="totalExpenses">KSh 0.00</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Net Profit</div>
-        <div class="stat-value profit" id="netProfit">$0</div>
+        <div class="stat-value profit" id="netProfit">KSh 0.00</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Account Balance</div>
-        <div class="stat-value" id="accountBalance">$0</div>
+        <div class="stat-value" id="accountBalance">KSh 0.00</div>
       </div>
     </div>
   </div>
@@ -226,19 +226,19 @@
         <h5 class="mb-3"><i class="bi bi-bar-chart"></i> Income Breakdown</h5>
         <div class="summary-item">
           <span>Sales Revenue</span>
-          <span class="income" id="salesRevenue">$0</span>
+          <span class="income" id="salesRevenue">KSh 0.00</span>
         </div>
         <div class="summary-item">
           <span>Customer Payments</span>
-          <span class="income" id="customerPayments">$0</span>
+          <span class="income" id="customerPayments">KSh 0.00</span>
         </div>
         <div class="summary-item">
           <span>Other Income</span>
-          <span class="income" id="otherIncome">$0</span>
+          <span class="income" id="otherIncome">KSh 0.00</span>
         </div>
         <div class="summary-item">
           <span>Total Income</span>
-          <span class="income" id="totalIncome">$0</span>
+          <span class="income" id="totalIncome">KSh 0.00</span>
         </div>
       </div>
     </div>
@@ -247,19 +247,19 @@
         <h5 class="mb-3"><i class="bi bi-pie-chart"></i> Expense Breakdown</h5>
         <div class="summary-item">
           <span>Operating Expenses</span>
-          <span class="expense" id="operatingExpenses">$0</span>
+          <span class="expense" id="operatingExpenses">KSh 0.00</span>
         </div>
         <div class="summary-item">
           <span>Supplier Payments</span>
-          <span class="expense" id="supplierPayments">$0</span>
+          <span class="expense" id="supplierPayments">KSh 0.00</span>
         </div>
         <div class="summary-item">
           <span>Other Expenses</span>
-          <span class="expense" id="otherExpenses">$0</span>
+          <span class="expense" id="otherExpenses">KSh 0.00</span>
         </div>
         <div class="summary-item">
           <span>Total Expenses</span>
-          <span class="expense" id="totalExpensesBreakdown">$0</span>
+          <span class="expense" id="totalExpensesBreakdown">KSh 0.00</span>
         </div>
       </div>
     </div>
@@ -332,19 +332,19 @@
           <h5 class="mb-3"><i class="bi bi-wallet2"></i> Account Summary: <span id="selectedAccountName"></span></h5>
           <div class="summary-item">
             <span>Opening Balance</span>
-            <span id="openingBal">$0.00</span>
+            <span id="openingBal">KSh 0.00</span>
           </div>
           <div class="summary-item">
             <span>Total Additions (Money In)</span>
-            <span class="income" id="additions">$0.00</span>
+            <span class="income" id="additions">KSh 0.00</span>
           </div>
           <div class="summary-item">
             <span>Total Payments (Money Out)</span>
-            <span class="expense" id="payments">$0.00</span>
+            <span class="expense" id="payments">KSh 0.00</span>
           </div>
           <div class="summary-item">
             <span>Closing Balance</span>
-            <span id="closingBal">$0.00</span>
+            <span id="closingBal">KSh 0.00</span>
           </div>
         </div>
 
@@ -481,22 +481,22 @@
       if (!summary) return;
 
       // Main stats
-      document.getElementById('totalRevenue').textContent = '$' + (summary.totalRevenue || 0).toFixed(2);
-      document.getElementById('totalExpenses').textContent = '$' + (summary.totalExpenses || 0).toFixed(2);
-      document.getElementById('netProfit').textContent = '$' + (summary.netProfit || 0).toFixed(2);
-      document.getElementById('accountBalance').textContent = '$' + (summary.currentBalance || 0).toFixed(2);
+      document.getElementById('totalRevenue').textContent = formatCurrency(summary.totalRevenue || 0);
+      document.getElementById('totalExpenses').textContent = formatCurrency(summary.totalExpenses || 0);
+      document.getElementById('netProfit').textContent = formatCurrency(summary.netProfit || 0);
+      document.getElementById('accountBalance').textContent = formatCurrency(summary.currentBalance || 0);
 
       // Income breakdown
-      document.getElementById('salesRevenue').textContent = '$' + (summary.salesRevenue || 0).toFixed(2);
-      document.getElementById('customerPayments').textContent = '$' + (summary.customerPayments || 0).toFixed(2);
-      document.getElementById('otherIncome').textContent = '$' + (summary.otherIncome || 0).toFixed(2);
-      document.getElementById('totalIncome').textContent = '$' + (summary.totalRevenue || 0).toFixed(2);
+      document.getElementById('salesRevenue').textContent = formatCurrency(summary.salesRevenue || 0);
+      document.getElementById('customerPayments').textContent = formatCurrency(summary.customerPayments || 0);
+      document.getElementById('otherIncome').textContent = formatCurrency(summary.otherIncome || 0);
+      document.getElementById('totalIncome').textContent = formatCurrency(summary.totalRevenue || 0);
 
       // Expense breakdown
-      document.getElementById('operatingExpenses').textContent = '$' + (summary.operatingExpenses || 0).toFixed(2);
-      document.getElementById('supplierPayments').textContent = '$' + (summary.supplierPayments || 0).toFixed(2);
-      document.getElementById('otherExpenses').textContent = '$' + (summary.otherExpenses || 0).toFixed(2);
-      document.getElementById('totalExpensesBreakdown').textContent = '$' + (summary.totalExpenses || 0).toFixed(2);
+      document.getElementById('operatingExpenses').textContent = formatCurrency(summary.operatingExpenses || 0);
+      document.getElementById('supplierPayments').textContent = formatCurrency(summary.supplierPayments || 0);
+      document.getElementById('otherExpenses').textContent = formatCurrency(summary.otherExpenses || 0);
+      document.getElementById('totalExpensesBreakdown').textContent = formatCurrency(summary.totalExpenses || 0);
 
       // Color coding for profit/loss
       const netProfitElement = document.getElementById('netProfit');
@@ -532,8 +532,8 @@
         const credit = parseFloat(transaction.Credit || 0);
         const balance = parseFloat(transaction.Balance || 0);
 
-        const debitText = debit > 0 ? '$' + debit.toFixed(2) : '-';
-        const creditText = credit > 0 ? '$' + credit.toFixed(2) : '-';
+        const debitText = debit > 0 ? formatCurrency(debit) : '-';
+        const creditText = credit > 0 ? formatCurrency(credit) : '-';
 
         row.innerHTML = `
           <td>${transaction.Transaction_ID || ''}</td>
@@ -543,7 +543,7 @@
           <td>${transaction.Description || ''}</td>
           <td class="transaction-debit">${debitText}</td>
           <td class="transaction-credit">${creditText}</td>
-          <td><strong>$${balance.toFixed(2)}</strong></td>
+          <td><strong>${formatCurrency(balance)}</strong></td>
         `;
         tbody.appendChild(row);
       });
@@ -556,7 +556,7 @@
     }
 
     function formatCurrency(amount) {
-      return '$' + parseFloat(amount || 0).toFixed(2);
+      return 'KSh ' + parseFloat(amount || 0).toLocaleString('en-KE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 
     // Load Account Statement
