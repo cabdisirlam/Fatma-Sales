@@ -302,7 +302,9 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Supplier *</label>
-              <input type="text" class="form-control" name="Supplier" required>
+              <select class="form-select" name="Supplier" id="addSupplierDropdown" required>
+                <option value="">Loading suppliers...</option>
+              </select>
             </div>
           </form>
           <div id="addProductAlert" class="alert mt-3" style="display: none;"></div>
@@ -358,7 +360,9 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Supplier *</label>
-              <input type="text" class="form-control" id="editSupplier" name="Supplier" required>
+              <select class="form-select" id="editSupplier" name="Supplier" required>
+                <option value="">Loading suppliers...</option>
+              </select>
             </div>
           </form>
           <div id="editProductAlert" class="alert mt-3" style="display: none;"></div>
@@ -433,6 +437,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       loadInventory();
       loadCategories();
+      loadSuppliers();
     });
 
     // Search functionality
@@ -441,6 +446,7 @@
     document.getElementById('stockFilter').addEventListener('change', filterInventory);
 
     let inventoryData = [];
+    let suppliersData = [];
 
     function loadInventory() {
       document.getElementById('loadingIndicator').style.display = 'block';
@@ -589,6 +595,49 @@
         .getInventory({});
     }
 
+    function loadSuppliers() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          suppliersData = data || [];
+          populateSupplierDropdowns();
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading suppliers:', error);
+          suppliersData = [];
+          populateSupplierDropdowns();
+        })
+        .getSuppliers({});
+    }
+
+    function populateSupplierDropdowns() {
+      const addDropdown = document.getElementById('addSupplierDropdown');
+      const editDropdown = document.getElementById('editSupplier');
+
+      [addDropdown, editDropdown].forEach(function(dropdown) {
+        if (!dropdown) return;
+
+        dropdown.innerHTML = '<option value="">-- Select Supplier --</option>';
+
+        if (!suppliersData || suppliersData.length === 0) {
+          const noSupplierOption = document.createElement('option');
+          noSupplierOption.value = '';
+          noSupplierOption.textContent = 'No suppliers found - Add supplier first';
+          dropdown.appendChild(noSupplierOption);
+          return;
+        }
+
+        // Only show active suppliers
+        const activeSuppliers = suppliersData.filter(s => s.Status === 'Active');
+
+        activeSuppliers.forEach(function(supplier) {
+          const option = document.createElement('option');
+          option.value = supplier.Supplier_Name || supplier.Name;
+          option.textContent = supplier.Supplier_Name || supplier.Name;
+          dropdown.appendChild(option);
+        });
+      });
+    }
+
     function filterInventory() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
       const categoryFilter = document.getElementById('categoryFilter').value;
@@ -630,6 +679,10 @@
     function showAddProductModal() {
       document.getElementById('addProductForm').reset();
       document.getElementById('addProductAlert').style.display = 'none';
+
+      // Populate supplier dropdown
+      populateSupplierDropdowns();
+
       const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
       modal.show();
     }
@@ -675,6 +728,10 @@
 
     // ===== EDIT PRODUCT MODAL =====
     function showEditProductModal(item) {
+      // First populate the dropdowns
+      populateSupplierDropdowns();
+
+      // Then set the values
       document.getElementById('editItemId').value = item.Item_ID;
       document.getElementById('editItemName').value = item.Item_Name || '';
       document.getElementById('editCategory').value = item.Category || '';
@@ -682,7 +739,13 @@
       document.getElementById('editSellingPrice').value = item.Selling_Price || '';
       document.getElementById('editReorderLevel').value = item.Reorder_Level || 10;
       document.getElementById('editUnit').value = item.Unit || '';
-      document.getElementById('editSupplier').value = item.Supplier || '';
+
+      // Set supplier dropdown value
+      const editSupplier = document.getElementById('editSupplier');
+      if (editSupplier && item.Supplier) {
+        editSupplier.value = item.Supplier;
+      }
+
       document.getElementById('editProductAlert').style.display = 'none';
 
       const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
