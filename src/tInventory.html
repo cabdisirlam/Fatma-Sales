@@ -178,7 +178,7 @@
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Value</div>
-        <div class="stat-value" id="totalValue">$0</div>
+        <div class="stat-value" id="totalValue">Ksh 0.00</div>
       </div>
     </div>
   </div>
@@ -239,6 +239,7 @@
                 <th>Cost Price</th>
                 <th>Selling Price</th>
                 <th>Reorder Level</th>
+                <th>Supplier</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -496,9 +497,10 @@
           <td>${item.Category || ''}</td>
           <td class="${stockStatus}">${stockQty}</td>
           <td>${item.Unit || ''}</td>
-          <td>$${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
-          <td>$${parseFloat(item.Selling_Price || 0).toFixed(2)}</td>
+          <td>Ksh ${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
+          <td>Ksh ${parseFloat(item.Selling_Price || 0).toFixed(2)}</td>
           <td>${item.Reorder_Level || 10}</td>
+          <td>${item.Supplier || '-'}</td>
           <td>${statusBadge}</td>
           <td>
             <button class="btn btn-sm btn-success me-1" onclick="openRestock('${item.Item_ID}', '${item.Item_Name || ''}')" title="Add Stock">
@@ -565,7 +567,7 @@
       document.getElementById('totalItems').textContent = totalItems;
       document.getElementById('lowStock').textContent = lowStockCount;
       document.getElementById('outOfStock').textContent = outOfStockCount;
-      document.getElementById('totalValue').textContent = '$' + totalValue.toFixed(2);
+      document.getElementById('totalValue').textContent = 'Ksh ' + totalValue.toFixed(2);
     }
 
     function loadCategories() {
