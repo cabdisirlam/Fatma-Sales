@@ -213,7 +213,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <form id="addUserForm">
+          <form id="addUserForm" onsubmit="handleUserSubmit(event)">
             <div class="mb-3">
               <label for="username" class="form-label">Username</label>
               <input type="text" class="form-control" id="username" required>
@@ -263,7 +263,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" onclick="addUser()">
+          <button type="submit" class="btn btn-primary">
             <i class="bi bi-save"></i> Save User
           </button>
         </div>
@@ -465,7 +465,16 @@
     }
 
     // Add new user
-    function addUser() {
+    function handleUserSubmit(e) {
+      if (e) e.preventDefault();
+
+      const submitButton = e && e.submitter ? e.submitter : document.querySelector('#addUserForm button[type="submit"]');
+      const originalText = submitButton ? submitButton.innerText : '';
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerText = 'Saving...';
+      }
+
       const username = document.getElementById('username').value.trim();
       const email = document.getElementById('email').value.trim();
       const phone = document.getElementById('phone').value.trim();
@@ -477,16 +486,28 @@
       // Validation
       if (!username || !email || !phone || !pin || !role) {
         showAlert('Please fill in all required fields', 'danger');
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.innerText = originalText;
+        }
         return;
       }
 
       if (pin !== confirmPin) {
         showAlert('PINs do not match', 'danger');
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.innerText = originalText;
+        }
         return;
       }
 
       if (!/^\d{4}$/.test(pin)) {
         showAlert('PIN must be exactly 4 digits', 'danger');
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.innerText = originalText;
+        }
         return;
       }
 
@@ -496,19 +517,30 @@
         Phone: phone,
         PIN: pin,
         Role: role,
-        Status: status
+        Status: status || 'Active'
       };
 
-      // Show loading
-      showAlert('Adding user...', 'info');
-
       google.script.run
-        .withSuccessHandler(function(result) {
-          addUserModalInstance.hide();
-          showAlert('User added successfully!', 'success');
-          loadUsers();
+        .withSuccessHandler(function(res) {
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerText = originalText;
+          }
+
+          if (res.success) {
+            showAlert('User added successfully!', 'success');
+            document.getElementById('addUserForm').reset();
+            addUserModalInstance.hide();
+            loadUsers();
+          } else {
+            showAlert('Error: ' + res.message, 'danger');
+          }
         })
         .withFailureHandler(function(error) {
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerText = originalText;
+          }
           showAlert('Error adding user: ' + error.message, 'danger');
         })
         .addUser(userData);

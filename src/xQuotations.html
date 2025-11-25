@@ -229,6 +229,11 @@
       <i class="bi bi-list-ul"></i> Quotations List
     </div>
     <div class="card-body">
+      <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-success" onclick="createNewQuotation()">
+          <i class="bi bi-plus-circle"></i> New Quotation
+        </button>
+      </div>
       <div id="loadingIndicator" class="loading">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading...</span>
@@ -419,8 +424,19 @@
     }
 
     function createNewQuotation() {
-      alert('Create New Quotation\n\nThis will open the quotation creation form.\nYou can also use the "New Sale" dialog and select "Quotation" as the type.');
-      // In a real implementation, this would open a modal or redirect to quotation creation
+      if (window.parent && window.parent.showSection) {
+        window.parent.showSection('sales-new');
+      }
+
+      const sectionHeader = window.parent ? window.parent.document.querySelector('#section-sales-new h3') : document.querySelector('#section-sales-new h3');
+      if (sectionHeader) {
+        sectionHeader.innerText = 'New Quotation';
+      }
+
+      const typeSelect = window.parent ? window.parent.document.querySelector('select[name="type"]') : document.querySelector('select[name="type"]');
+      if (typeSelect) {
+        typeSelect.value = 'Quotation';
+      }
     }
 
     function viewQuotation(quotationId) {

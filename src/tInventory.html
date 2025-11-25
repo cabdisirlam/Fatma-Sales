@@ -477,7 +477,7 @@
         let stockStatus = '';
         let statusBadge = '';
 
-        const stockQty = item.Current_Qty || item.Stock_Qty || 0;
+        const stockQty = item.Current_Qty !== undefined ? item.Current_Qty : (item.Stock_Qty || 0);
 
         if (stockQty <= 0) {
           stockStatus = 'stock-out';
@@ -501,10 +501,10 @@
           <td>${item.Reorder_Level || 10}</td>
           <td>${statusBadge}</td>
           <td>
-            <button class="btn btn-sm btn-warning me-1" onclick='showAdjustStockModal(${JSON.stringify(item)})' title="Adjust Stock">
-              <i class="bi bi-arrows-move"></i>
+            <button class="btn btn-sm btn-success me-1" onclick="openRestock('${item.Item_ID}', '${item.Item_Name || ''}')" title="Add Stock">
+              <i class="bi bi-plus-lg"></i> Stock
             </button>
-            <button class="btn btn-sm btn-primary me-1" onclick='showEditProductModal(${JSON.stringify(item)})' title="Edit">
+            <button class="btn btn-sm btn-primary me-1" onclick="openEdit('${item.Item_ID}')" title="Edit">
               <i class="bi bi-pencil"></i>
             </button>
             <button class="btn btn-sm btn-danger" onclick="deleteProductConfirm('${item.Item_ID}', '${item.Item_Name}')" title="Delete">
@@ -514,6 +514,28 @@
         `;
         tbody.appendChild(row);
       });
+    }
+
+    function openRestock(id, name) {
+      const qty = prompt('Enter quantity to ADD for ' + name + ':');
+      if (qty && !isNaN(qty)) {
+        google.script.run
+          .withSuccessHandler(function() {
+            alert('Stock updated!');
+            loadInventory();
+          })
+          .withFailureHandler(function(error) {
+            alert('Unable to update stock: ' + error.message);
+          })
+          .adjustStock(id, parseFloat(qty), 'Manual Restock', sessionStorage.getItem('userName'));
+      }
+    }
+
+    function openEdit(id) {
+      const item = inventoryData.find(function(entry) { return entry.Item_ID === id; });
+      if (item) {
+        showEditProductModal(item);
+      }
     }
 
     function updateStats(data) {
