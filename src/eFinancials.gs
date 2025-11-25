@@ -532,8 +532,11 @@ function setOpeningBalance(accountName, amount, user) {
     const sheet = getSheet('Financials');
     const data = sheet.getDataRange().getValues();
 
-    // Check for existing opening balance
-    const exists = data.some(row => row[5] === accountName && row[2] === 'Opening_Balance');
+    // Check for existing opening balance using header-based column lookup
+    const headers = data[0];
+    const accountCol = headers.indexOf('Account');
+    const typeCol = headers.indexOf('Type');
+    const exists = data.slice(1).some(row => row[accountCol] === accountName && row[typeCol] === 'Opening_Balance');
     if (exists) {
       return { success: false, message: "Opening balance already set for " + accountName };
     }
