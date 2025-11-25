@@ -247,7 +247,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <form id="addCustomerForm" onsubmit="event.preventDefault(); submitCustomer();">
+          <form id="addCustomerForm" onsubmit="submitCustomer(event)">
             <div class="mb-3">
               <label for="custName" class="form-label">Customer Name *</label>
               <input type="text" class="form-control" id="custName" required>
@@ -417,7 +417,8 @@
     }
 
     // Submit Customer
-    function submitCustomer() {
+    function submitCustomer(event) {
+      if (event) event.preventDefault();
       const name = document.getElementById('custName').value.trim();
       const phone = document.getElementById('custPhone').value.trim();
       const email = document.getElementById('custEmail').value.trim();
