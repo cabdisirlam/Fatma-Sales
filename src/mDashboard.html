@@ -622,35 +622,44 @@
       </li>
 
       <li class="menu-label">Sales</li>
-      <li class="menu-item" id="salesMenu">
-        <a href="#" id="menu-sales" onclick="showSection('sales', event);">
+      <li class="menu-item has-submenu" id="salesMenu">
+        <a href="#" id="menu-sales" onclick="handleMenuClick('salesMenu', 'sales', event);">
           <i class="bi bi-cart-check"></i>
-          <span>Sales Overview</span>
+          <span>Sales</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
         </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" id="menu-sales-new" onclick="startNewSale(event);">
-          <i class="bi bi-plus-circle"></i>
-          <span>Create Sale</span>
-        </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" id="menu-sales-history" onclick="showSection('sales-history', event);">
-          <i class="bi bi-clock-history"></i>
-          <span>Sales History</span>
-        </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" id="menu-sales-returns" onclick="showSection('sales-returns', event);">
-          <i class="bi bi-arrow-return-left"></i>
-          <span>Sales Returns</span>
-        </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" id="menu-sales-reports" onclick="showSection('sales-reports', event);">
-          <i class="bi bi-file-earmark-bar-graph"></i>
-          <span>Sales Reports</span>
-        </a>
+        <ul class="submenu">
+          <li class="submenu-item">
+            <a href="#" id="menu-sales-overview" onclick="showSection('sales', event);">
+              <i class="bi bi-speedometer2"></i>
+              <span>Overview</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" id="menu-sales-new" onclick="startNewSale(event);">
+              <i class="bi bi-plus-circle"></i>
+              <span>Create Sale</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" id="menu-sales-history" onclick="showSection('sales-history', event);">
+              <i class="bi bi-clock-history"></i>
+              <span>Sales History</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" id="menu-sales-returns" onclick="showSection('sales-returns', event);">
+              <i class="bi bi-arrow-return-left"></i>
+              <span>Sales Returns</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" id="menu-sales-reports" onclick="showSection('sales-reports', event);">
+              <i class="bi bi-file-earmark-bar-graph"></i>
+              <span>Sales Reports</span>
+            </a>
+          </li>
+        </ul>
       </li>
 
       <li class="menu-item">
@@ -675,29 +684,38 @@
       </li>
 
       <li class="menu-label">Suppliers</li>
-      <li class="menu-item" id="suppliersMenu">
-        <a href="#" id="menu-suppliers" onclick="showSection('suppliers-list', event);">
+      <li class="menu-item has-submenu" id="suppliersMenu">
+        <a href="#" id="menu-suppliers" onclick="handleMenuClick('suppliersMenu', 'suppliers-list', event);">
           <i class="bi bi-truck"></i>
-          <span>Suppliers List</span>
+          <span>Suppliers</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
         </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" id="menu-suppliers-add" onclick="showSection('suppliers-add', event);">
-          <i class="bi bi-plus-circle"></i>
-          <span>Add Supplier</span>
-        </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" id="menu-suppliers-orders" onclick="showSection('suppliers-orders', event);">
-          <i class="bi bi-cart-plus"></i>
-          <span>Purchase Orders</span>
-        </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" id="menu-suppliers-payments" onclick="showSection('suppliers-payments', event);">
-          <i class="bi bi-credit-card"></i>
-          <span>Supplier Payments</span>
-        </a>
+        <ul class="submenu">
+          <li class="submenu-item">
+            <a href="#" id="menu-suppliers-list" onclick="showSection('suppliers-list', event);">
+              <i class="bi bi-card-list"></i>
+              <span>Suppliers List</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" id="menu-suppliers-add" onclick="showSection('suppliers-add', event);">
+              <i class="bi bi-plus-circle"></i>
+              <span>Add Supplier</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" id="menu-suppliers-orders" onclick="showSection('suppliers-orders', event);">
+              <i class="bi bi-cart-plus"></i>
+              <span>Purchase Orders</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" id="menu-suppliers-payments" onclick="showSection('suppliers-payments', event);">
+              <i class="bi bi-credit-card"></i>
+              <span>Supplier Payments</span>
+            </a>
+          </li>
+        </ul>
       </li>
 
       <li class="menu-item">
@@ -722,29 +740,38 @@
       </li>
 
       <li class="menu-label">User Management</li>
-      <li class="menu-item" id="userManagementMenu">
-        <a href="#" id="menu-users-list" onclick="showSection('users-list', event);">
+      <li class="menu-item has-submenu" id="userManagementMenu">
+        <a href="#" id="menu-users" onclick="handleMenuClick('userManagementMenu', 'users-list', event);">
           <i class="bi bi-people"></i>
-          <span>Users List</span>
+          <span>Users</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
         </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" id="menu-users-add" onclick="showSection('users-add', event);">
-          <i class="bi bi-person-plus"></i>
-          <span>Create New User</span>
-        </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" id="menu-users-roles" onclick="showSection('users-roles', event);">
-          <i class="bi bi-shield-check"></i>
-          <span>User Roles</span>
-        </a>
-      </li>
-      <li class="menu-item">
-        <a href="#" id="menu-users-permissions" onclick="showSection('users-permissions', event);">
-          <i class="bi bi-key"></i>
-          <span>Permissions</span>
-        </a>
+        <ul class="submenu">
+          <li class="submenu-item">
+            <a href="#" id="menu-users-list" onclick="showSection('users-list', event);">
+              <i class="bi bi-people"></i>
+              <span>Users List</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" id="menu-users-add" onclick="showSection('users-add', event);">
+              <i class="bi bi-person-plus"></i>
+              <span>Create New User</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" id="menu-users-roles" onclick="showSection('users-roles', event);">
+              <i class="bi bi-shield-check"></i>
+              <span>User Roles</span>
+            </a>
+          </li>
+          <li class="submenu-item">
+            <a href="#" id="menu-users-permissions" onclick="showSection('users-permissions', event);">
+              <i class="bi bi-key"></i>
+              <span>Permissions</span>
+            </a>
+          </li>
+        </ul>
       </li>
 
       <li class="menu-item">
@@ -1547,25 +1574,25 @@
 
     const menuSectionMap = {
       'dashboard': { linkId: 'menu-dashboard' },
-      'sales': { linkId: 'menu-sales' },
-      'sales-new': { linkId: 'menu-sales-new' },
-      'sales-history': { linkId: 'menu-sales-history' },
-      'sales-returns': { linkId: 'menu-sales-returns' },
-      'sales-reports': { linkId: 'menu-sales-reports' },
+      'sales': { linkId: 'menu-sales-overview', menuItemId: 'salesMenu' },
+      'sales-new': { linkId: 'menu-sales-new', menuItemId: 'salesMenu' },
+      'sales-history': { linkId: 'menu-sales-history', menuItemId: 'salesMenu' },
+      'sales-returns': { linkId: 'menu-sales-returns', menuItemId: 'salesMenu' },
+      'sales-reports': { linkId: 'menu-sales-reports', menuItemId: 'salesMenu' },
       'inventory': { linkId: 'menu-inventory' },
       'customers': { linkId: 'menu-customers' },
       'products': { linkId: 'menu-products' },
-      'suppliers-list': { linkId: 'menu-suppliers' },
-      'suppliers-add': { linkId: 'menu-suppliers-add' },
-      'suppliers-orders': { linkId: 'menu-suppliers-orders' },
-      'suppliers-payments': { linkId: 'menu-suppliers-payments' },
+      'suppliers-list': { linkId: 'menu-suppliers-list', menuItemId: 'suppliersMenu' },
+      'suppliers-add': { linkId: 'menu-suppliers-add', menuItemId: 'suppliersMenu' },
+      'suppliers-orders': { linkId: 'menu-suppliers-orders', menuItemId: 'suppliersMenu' },
+      'suppliers-payments': { linkId: 'menu-suppliers-payments', menuItemId: 'suppliersMenu' },
       'quotations': { linkId: 'menu-quotations' },
       'financials': { linkId: 'menu-financials' },
       'reports': { linkId: 'menu-reports' },
-      'users-list': { linkId: 'menu-users-list' },
-      'users-add': { linkId: 'menu-users-add' },
-      'users-roles': { linkId: 'menu-users-roles' },
-      'users-permissions': { linkId: 'menu-users-permissions' },
+      'users-list': { linkId: 'menu-users-list', menuItemId: 'userManagementMenu' },
+      'users-add': { linkId: 'menu-users-add', menuItemId: 'userManagementMenu' },
+      'users-roles': { linkId: 'menu-users-roles', menuItemId: 'userManagementMenu' },
+      'users-permissions': { linkId: 'menu-users-permissions', menuItemId: 'userManagementMenu' },
       'settings': { linkId: 'menu-settings' }
     };
 
