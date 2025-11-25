@@ -616,23 +616,22 @@
       [addDropdown, editDropdown].forEach(function(dropdown) {
         if (!dropdown) return;
 
-        dropdown.innerHTML = '<option value="">-- Select Supplier --</option>';
-
         if (!suppliersData || suppliersData.length === 0) {
-          const noSupplierOption = document.createElement('option');
-          noSupplierOption.value = '';
-          noSupplierOption.textContent = 'No suppliers found - Add supplier first';
-          dropdown.appendChild(noSupplierOption);
+          dropdown.innerHTML = '<option value="">No suppliers found - Add supplier first</option>';
+          dropdown.disabled = true;
           return;
         }
+
+        dropdown.disabled = false;
+        dropdown.innerHTML = '<option value="">-- Select Supplier --</option>';
 
         // Only show active suppliers
         const activeSuppliers = suppliersData.filter(s => s.Status === 'Active');
 
         activeSuppliers.forEach(function(supplier) {
           const option = document.createElement('option');
-          option.value = supplier.Supplier_Name || supplier.Name;
-          option.textContent = supplier.Supplier_Name || supplier.Name;
+          option.value = supplier.Supplier_Name;
+          option.textContent = supplier.Supplier_Name;
           dropdown.appendChild(option);
         });
       });
