@@ -523,3 +523,134 @@ function checkStock(itemId, requiredQty) {
     };
   }
 }
+
+// =====================================================
+// LOW STOCK ALERT FUNCTIONS
+// =====================================================
+
+/**
+ * Send low stock email alert
+ * This function should be triggered daily via a time-based trigger
+ */
+function sendLowStockAlert() {
+  try {
+    const lowStockItems = getLowStockItems();
+    const outOfStockItems = getOutOfStockItems();
+
+    if (lowStockItems.length === 0 && outOfStockItems.length === 0) {
+      Logger.log('No low stock items found');
+      return { success: true, message: 'No low stock items' };
+    }
+
+    // Get admin email from settings
+    const settings = sheetToObjects('Settings');
+    const adminEmailSetting = settings.find(s => s.Setting_Key === 'Admin_Email');
+    const adminEmail = adminEmailSetting ? adminEmailSetting.Setting_Value : Session.getActiveUser().getEmail();
+
+    // Build email content
+    let emailBody = '<html><body style="font-family: Arial, sans-serif;">';
+    emailBody += '<h2 style="color: #e74c3c;">📦 Inventory Alert - Low Stock Items</h2>';
+    emailBody += '<p>The following items require your attention:</p>';
+
+    // Out of Stock Section
+    if (outOfStockItems.length > 0) {
+      emailBody += '<h3 style="color: #c0392b;">🔴 Out of Stock (' + outOfStockItems.length + ' items)</h3>';
+      emailBody += '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">';
+      emailBody += '<tr style="background-color: #f8d7da;">';
+      emailBody += '<th>Item ID</th><th>Item Name</th><th>Category</th><th>Supplier</th><th>Reorder Level</th></tr>';
+
+      outOfStockItems.forEach(item => {
+        emailBody += '<tr>';
+        emailBody += '<td>' + item.Item_ID + '</td>';
+        emailBody += '<td><strong>' + item.Item_Name + '</strong></td>';
+        emailBody += '<td>' + (item.Category || '') + '</td>';
+        emailBody += '<td>' + (item.Supplier || '') + '</td>';
+        emailBody += '<td>' + (item.Reorder_Level || 0) + '</td>';
+        emailBody += '</tr>';
+      });
+      emailBody += '</table><br>';
+    }
+
+    // Low Stock Section
+    if (lowStockItems.length > 0) {
+      emailBody += '<h3 style="color: #e67e22;">⚠️ Low Stock (' + lowStockItems.length + ' items)</h3>';
+      emailBody += '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">';
+      emailBody += '<tr style="background-color: #fff3cd;">';
+      emailBody += '<th>Item ID</th><th>Item Name</th><th>Category</th><th>Current Qty</th><th>Reorder Level</th><th>Supplier</th></tr>';
+
+      lowStockItems.forEach(item => {
+        if (parseFloat(item.Current_Qty) > 0) { // Exclude out of stock items
+          emailBody += '<tr>';
+          emailBody += '<td>' + item.Item_ID + '</td>';
+          emailBody += '<td><strong>' + item.Item_Name + '</strong></td>';
+          emailBody += '<td>' + (item.Category || '') + '</td>';
+          emailBody += '<td style="color: #e67e22;"><strong>' + item.Current_Qty + '</strong></td>';
+          emailBody += '<td>' + (item.Reorder_Level || 0) + '</td>';
+          emailBody += '<td>' + (item.Supplier || '') + '</td>';
+          emailBody += '</tr>';
+        }
+      });
+      emailBody += '</table>';
+    }
+
+    emailBody += '<br><p style="color: #7f8c8d; font-size: 12px;">This is an automated alert from Fatma Sales Management System.</p>';
+    emailBody += '<p style="color: #7f8c8d; font-size: 12px;">Generated on: ' + new Date().toLocaleString() + '</p>';
+    emailBody += '</body></html>';
+
+    // Send email
+    MailApp.sendEmail({
+      to: adminEmail,
+      subject: '🚨 Low Stock Alert - ' + (lowStockItems.length + outOfStockItems.length) + ' items need attention',
+      htmlBody: emailBody
+    });
+
+    logAudit(
+      'SYSTEM',
+      'Inventory',
+      'Low Stock Alert',
+      'Alert sent for ' + (lowStockItems.length + outOfStockItems.length) + ' items to ' + adminEmail,
+      '',
+      '',
+      ''
+    );
+
+    return {
+      success: true,
+      message: 'Alert sent to ' + adminEmail,
+      itemCount: lowStockItems.length + outOfStockItems.length
+    };
+
+  } catch (error) {
+    logError('sendLowStockAlert', error);
+    throw new Error('Error sending low stock alert: ' + error.message);
+  }
+}
+
+/**
+ * Create time-based trigger for daily low stock alerts
+ * Run this once to set up the daily alert at 8 AM
+ */
+function createLowStockAlertTrigger() {
+  try {
+    // Delete existing triggers for this function
+    const triggers = ScriptApp.getProjectTriggers();
+    triggers.forEach(trigger => {
+      if (trigger.getHandlerFunction() === 'sendLowStockAlert') {
+        ScriptApp.deleteTrigger(trigger);
+      }
+    });
+
+    // Create new trigger for 8 AM daily
+    ScriptApp.newTrigger('sendLowStockAlert')
+      .timeBased()
+      .atHour(8)
+      .everyDays(1)
+      .create();
+
+    return { success: true, message: 'Low stock alert trigger created for 8 AM daily' };
+
+  } catch (error) {
+    logError('createLowStockAlertTrigger', error);
+    throw new Error('Error creating trigger: ' + error.message);
+  }
+}

@@ -502,3 +502,216 @@ function getOrCreateWalkInCustomer() {
     throw new Error('Error getting walk-in customer: ' + error.message);
   }
 }
+
+// =====================================================
+// PAYMENT REMINDER FUNCTIONS
+// =====================================================
+
+/**
+ * Send payment reminder to a specific customer
+ */
+function sendPaymentReminder(customerId) {
+  try {
+    const customer = getCustomerById(customerId);
+    const balance = parseFloat(customer.Current_Balance) || 0;
+
+    if (balance <= 0) {
+      return { success: false, message: 'Customer has no outstanding balance' };
+    }
+
+    // Check if customer has email
+    if (!customer.Email || customer.Email === '') {
+      return { success: false, message: 'Customer has no email address' };
+    }
+
+    // Get business name from settings
+    const settings = sheetToObjects('Settings');
+    const businessNameSetting = settings.find(s => s.Setting_Key === 'Business_Name');
+    const businessName = businessNameSetting ? businessNameSetting.Setting_Value : 'Fatma Sales';
+
+    // Build email content
+    let emailBody = '<html><body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">';
+    emailBody += '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">';
+    emailBody += '<h2 style="margin: 0;">💳 Payment Reminder</h2>';
+    emailBody += '</div>';
+    emailBody += '<div style="padding: 30px; background: #f9f9f9;">';
+    emailBody += '<p>Dear <strong>' + customer.Customer_Name + '</strong>,</p>';
+    emailBody += '<p>This is a friendly reminder that you have an outstanding balance with ' + businessName + '.</p>';
+    emailBody += '<div style="background: white; padding: 20px; border-left: 4px solid #e74c3c; margin: 20px 0;">';
+    emailBody += '<h3 style="color: #e74c3c; margin-top: 0;">Outstanding Balance</h3>';
+    emailBody += '<p style="font-size: 28px; font-weight: bold; color: #2c3e50; margin: 10px 0;">KSh ' + balance.toLocaleString('en-KE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</p>';
+    emailBody += '</div>';
+
+    emailBody += '<p>Please arrange to settle this amount at your earliest convenience.</p>';
+
+    // Payment methods section
+    emailBody += '<div style="background: white; padding: 20px; margin: 20px 0; border-radius: 8px;">';
+    emailBody += '<h4 style="color: #667eea; margin-top: 0;">Payment Methods</h4>';
+    emailBody += '<ul style="list-style: none; padding: 0;">';
+    emailBody += '<li style="padding: 5px 0;">📱 <strong>M-Pesa:</strong> Pay via M-Pesa</li>';
+    emailBody += '<li style="padding: 5px 0;">🏦 <strong>Bank Transfer:</strong> Equity Bank</li>';
+    emailBody += '<li style="padding: 5px 0;">💵 <strong>Cash:</strong> Visit our location</li>';
+    emailBody += '</ul>';
+    emailBody += '</div>';
+
+    emailBody += '<p>If you have any questions or concerns regarding this balance, please don\'t hesitate to contact us.</p>';
+    emailBody += '<p style="margin-top: 30px;">Thank you for your business!</p>';
+    emailBody += '<p><strong>' + businessName + '</strong></p>';
+    emailBody += '</div>';
+    emailBody += '<div style="background: #2c3e50; color: #bdc3c7; padding: 20px; text-align: center; font-size: 12px;">';
+    emailBody += '<p style="margin: 5px 0;">This is an automated reminder from ' + businessName + '</p>';
+    emailBody += '<p style="margin: 5px 0;">Generated on: ' + new Date().toLocaleString() + '</p>';
+    emailBody += '</div>';
+    emailBody += '</body></html>';
+
+    // Send email
+    MailApp.sendEmail({
+      to: customer.Email,
+      subject: '💳 Payment Reminder - Outstanding Balance KSh ' + balance.toLocaleString('en-KE'),
+      htmlBody: emailBody
+    });
+
+    logAudit(
+      'SYSTEM',
+      'Customers',
+      'Payment Reminder',
+      'Reminder sent to ' + customer.Customer_Name + ' for KSh ' + balance.toLocaleString('en-KE'),
+      '',
+      '',
+      customer.Customer_ID
+    );
+
+    return {
+      success: true,
+      message: 'Payment reminder sent to ' + customer.Email,
+      balance: balance
+    };
+
+  } catch (error) {
+    logError('sendPaymentReminder', error);
+    throw new Error('Error sending payment reminder: ' + error.message);
+  }
+}
+
+/**
+ * Send payment reminders to all customers with outstanding balances
+ * This function should be triggered weekly via a time-based trigger
+ */
+function sendAllPaymentReminders() {
+  try {
+    const customersWithDebt = getCustomersWithDebt();
+
+    if (customersWithDebt.length === 0) {
+      Logger.log('No customers with outstanding balances');
+      return { success: true, message: 'No customers with debt', count: 0 };
+    }
+
+    let sentCount = 0;
+    let failedCount = 0;
+    const results = [];
+
+    customersWithDebt.forEach(customer => {
+      // Only send to customers with email addresses
+      if (customer.Email && customer.Email !== '') {
+        try {
+          const result = sendPaymentReminder(customer.Customer_ID);
+          if (result.success) {
+            sentCount++;
+          } else {
+            failedCount++;
+          }
+          results.push({
+            customerId: customer.Customer_ID,
+            customerName: customer.Customer_Name,
+            balance: customer.Current_Balance,
+            result: result
+          });
+        } catch (error) {
+          failedCount++;
+          results.push({
+            customerId: customer.Customer_ID,
+            customerName: customer.Customer_Name,
+            balance: customer.Current_Balance,
+            error: error.message
+          });
+        }
+      }
+    });
+
+    // Send summary to admin
+    const settings = sheetToObjects('Settings');
+    const adminEmailSetting = settings.find(s => s.Setting_Key === 'Admin_Email');
+    const adminEmail = adminEmailSetting ? adminEmailSetting.Setting_Value : Session.getActiveUser().getEmail();
+
+    let summaryEmail = '<html><body style="font-family: Arial, sans-serif;">';
+    summaryEmail += '<h2 style="color: #667eea;">📧 Payment Reminders Summary</h2>';
+    summaryEmail += '<p><strong>Total customers with debt:</strong> ' + customersWithDebt.length + '</p>';
+    summaryEmail += '<p><strong>Reminders sent:</strong> ' + sentCount + '</p>';
+    summaryEmail += '<p><strong>Failed/No email:</strong> ' + failedCount + '</p>';
+    summaryEmail += '<hr>';
+    summaryEmail += '<h3>Details:</h3>';
+    summaryEmail += '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">';
+    summaryEmail += '<tr style="background-color: #f0f0f0;"><th>Customer</th><th>Balance (KSh)</th><th>Status</th></tr>';
+
+    results.forEach(r => {
+      const status = r.result ? (r.result.success ? '✅ Sent' : '❌ ' + r.result.message) : '❌ ' + r.error;
+      summaryEmail += '<tr>';
+      summaryEmail += '<td>' + r.customerName + '</td>';
+      summaryEmail += '<td>KSh ' + parseFloat(r.balance).toLocaleString('en-KE', {minimumFractionDigits: 2}) + '</td>';
+      summaryEmail += '<td>' + status + '</td>';
+      summaryEmail += '</tr>';
+    });
+
+    summaryEmail += '</table>';
+    summaryEmail += '<br><p style="color: #7f8c8d; font-size: 12px;">Generated on: ' + new Date().toLocaleString() + '</p>';
+    summaryEmail += '</body></html>';
+
+    MailApp.sendEmail({
+      to: adminEmail,
+      subject: '📧 Payment Reminders Summary - ' + sentCount + ' sent',
+      htmlBody: summaryEmail
+    });
+
+    return {
+      success: true,
+      message: 'Sent ' + sentCount + ' reminders',
+      sent: sentCount,
+      failed: failedCount,
+      total: customersWithDebt.length,
+      results: results
+    };
+
+  } catch (error) {
+    logError('sendAllPaymentReminders', error);
+    throw new Error('Error sending payment reminders: ' + error.message);
+  }
+}
+
+/**
+ * Create time-based trigger for weekly payment reminders
+ * Run this once to set up weekly reminders on Monday at 9 AM
+ */
+function createPaymentReminderTrigger() {
+  try {
+    // Delete existing triggers for this function
+    const triggers = ScriptApp.getProjectTriggers();
+    triggers.forEach(trigger => {
+      if (trigger.getHandlerFunction() === 'sendAllPaymentReminders') {
+        ScriptApp.deleteTrigger(trigger);
+      }
+    });
+
+    // Create new trigger for Monday at 9 AM weekly
+    ScriptApp.newTrigger('sendAllPaymentReminders')
+      .timeBased()
+      .onWeekDay(ScriptApp.WeekDay.MONDAY)
+      .atHour(9)
+      .create();
+
+    return { success: true, message: 'Payment reminder trigger created for Mondays at 9 AM' };
+
+  } catch (error) {
+    logError('createPaymentReminderTrigger', error);
+    throw new Error('Error creating trigger: ' + error.message);
+  }
+}
