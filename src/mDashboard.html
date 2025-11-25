@@ -1820,7 +1820,7 @@
       google.script.run
         .withSuccessHandler(function(result) {
           if (result && result.success === false && result.error === 'UI_NOT_AVAILABLE') {
-            alert('Unable to open the New Sale window. Please try again from the Fatma System menu.');
+            openNewSaleFallback();
           }
         })
         .withFailureHandler(function(error) {
@@ -1829,6 +1829,21 @@
         .delayedShowNewSaleDialog();
 
       google.script.host.close();
+    }
+
+    function openNewSaleFallback() {
+      google.script.run
+        .withSuccessHandler(function(url) {
+          if (url) {
+            window.open(url + '?view=newSale', '_blank');
+          } else {
+            alert('Unable to open the New Sale window. Please try again from the Fatma System menu.');
+          }
+        })
+        .withFailureHandler(function() {
+          alert('Unable to open the New Sale window. Please try again from the Fatma System menu.');
+        })
+        .getWebAppUrl();
     }
 
     function loadSalesOverview() {

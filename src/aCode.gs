@@ -12,14 +12,30 @@
  */
 function doGet(e) {
   try {
-    return HtmlService.createHtmlOutputFromFile('nIndex')
-      .setTitle('Fatma System')
+    const view = e && e.parameter ? e.parameter.view : '';
+    let htmlFile = 'nIndex';
+    let title = 'Fatma System';
+
+    if (view === 'newSale') {
+      htmlFile = 'oNewSale';
+      title = 'New Sale';
+    }
+
+    return HtmlService.createHtmlOutputFromFile(htmlFile)
+      .setTitle(title)
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   } catch (error) {
     logError('doGet', error);
     return HtmlService.createHtmlOutput('<h3>Error loading application: ' + error.message + '</h3>');
   }
+}
+
+/**
+ * Returns the published web app URL for client-side navigation
+ */
+function getWebAppUrl() {
+  return ScriptApp.getService().getUrl();
 }
 
 /**
