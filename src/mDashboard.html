@@ -619,6 +619,63 @@
         font-size: 12px;
       }
     }
+
+    /* Custom styles for supplier action buttons and dropdowns */
+    .btn-group .dropdown-menu {
+      max-width: 90vw;
+    }
+
+    .dropdown-menu .dropdown-item {
+      white-space: normal;
+      padding: 10px 15px;
+    }
+
+    .dropdown-menu .dropdown-item:active {
+      background-color: #667eea;
+    }
+
+    /* Compact summary cards */
+    .card.border-0.bg-light {
+      transition: transform 0.2s ease;
+    }
+
+    .card.border-0.bg-light:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Mobile-friendly button group in action bar */
+    @media (max-width: 576px) {
+      .d-flex.flex-wrap.gap-2 {
+        justify-content: center;
+      }
+
+      .btn-group {
+        flex: 1 1 auto;
+        min-width: calc(50% - 4px);
+      }
+
+      .btn-group .btn-sm {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+
+      .btn-sm {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+
+      /* Make dropdown menus full width on very small screens */
+      .dropdown-menu {
+        position: fixed !important;
+        left: 10px !important;
+        right: 10px !important;
+        top: auto !important;
+        width: auto !important;
+        max-width: none !important;
+        transform: none !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1447,6 +1504,79 @@
           </button>
           <button type="button" class="btn btn-success" id="submitPaymentBtn" onclick="dashboardSubmitPayment()">
             <i class="bi bi-check-circle"></i> Submit Payment
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supplier Edit Modal -->
+  <div class="modal fade" id="supplierEditModal" tabindex="-1" aria-labelledby="supplierEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title" id="supplierEditModalLabel">
+            <i class="bi bi-pencil-square"></i> Edit Supplier
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editSupplierId">
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="editSupplierName" class="form-label">Supplier Name *</label>
+              <input type="text" class="form-control" id="editSupplierName" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="editContactPerson" class="form-label">Contact Person</label>
+              <input type="text" class="form-control" id="editContactPerson">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="editPhone" class="form-label">Phone *</label>
+              <input type="tel" class="form-control" id="editPhone" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="editEmail" class="form-label">Email</label>
+              <input type="email" class="form-control" id="editEmail">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <label for="editAddress" class="form-label">Address</label>
+              <textarea class="form-control" id="editAddress" rows="2"></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="editPaymentTerms" class="form-label">Payment Terms</label>
+              <input type="text" class="form-control" id="editPaymentTerms" placeholder="e.g., Net 30">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="editStatus" class="form-label">Status</label>
+              <select class="form-select" id="editStatus">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Current Balance</label>
+              <input type="text" class="form-control" id="editBalance" readonly disabled>
+              <div class="form-text">Balance cannot be edited directly</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle"></i> Cancel
+          </button>
+          <button type="button" class="btn btn-warning" id="submitEditBtn" onclick="dashboardSubmitEdit()">
+            <i class="bi bi-check-circle"></i> Update Supplier
           </button>
         </div>
       </div>
@@ -3046,39 +3176,113 @@
       }, { active: 0, purchased: 0, paid: 0, balance: 0 });
 
       let html = `
+        <!-- Action Buttons Row -->
         <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-primary" onclick="showSection('suppliers-add')">
-            <i class="bi bi-plus-circle"></i> Add Supplier
+          <button class="btn btn-primary btn-sm" onclick="showSection('suppliers-add')">
+            <i class="bi bi-plus-circle"></i> Add
           </button>
-          <button class="btn btn-outline-secondary" onclick="loadSuppliersList()">
+
+          <!-- Edit Button with Dropdown -->
+          <div class="btn-group">
+            <button type="button" class="btn btn-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-pencil"></i> Edit
+            </button>
+            <ul class="dropdown-menu" style="max-height: 300px; overflow-y: auto; min-width: 250px;">
+              <li><h6 class="dropdown-header">Select Supplier to Edit</h6></li>
+              <li><hr class="dropdown-divider"></li>
+              ${data.filter(s => s.Status === 'Active').map(supplier => `
+                <li><a class="dropdown-item" href="#" onclick="dashboardEditSupplier('${supplier.Supplier_ID}'); return false;">
+                  <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
+                  <small class="text-muted">${supplier.Supplier_ID}</small>
+                </a></li>
+              `).join('')}
+              ${data.filter(s => s.Status === 'Active').length === 0 ? '<li><span class="dropdown-item text-muted">No active suppliers</span></li>' : ''}
+            </ul>
+          </div>
+
+          <!-- Pay Button with Dropdown -->
+          <div class="btn-group">
+            <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-cash"></i> Pay
+            </button>
+            <ul class="dropdown-menu" style="max-height: 300px; overflow-y: auto; min-width: 250px;">
+              <li><h6 class="dropdown-header">Select Supplier to Pay</h6></li>
+              <li><hr class="dropdown-divider"></li>
+              ${data.filter(s => {
+                const balance = parseFloat(s.Current_Balance || s['Current Balance'] || s.Balance || 0) || 0;
+                return s.Status === 'Active' && balance > 0;
+              }).map(supplier => {
+                const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
+                return `
+                  <li><a class="dropdown-item" href="#" onclick="dashboardMakePayment('${supplier.Supplier_ID}'); return false;">
+                    <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
+                    <small class="text-danger">Balance: ${formatCurrency(balance)}</small>
+                  </a></li>
+                `;
+              }).join('')}
+              ${data.filter(s => {
+                const balance = parseFloat(s.Current_Balance || s['Current Balance'] || s.Balance || 0) || 0;
+                return s.Status === 'Active' && balance > 0;
+              }).length === 0 ? '<li><span class="dropdown-item text-muted">No suppliers with payable balance</span></li>' : ''}
+            </ul>
+          </div>
+
+          <!-- Statement Button with Dropdown -->
+          <div class="btn-group">
+            <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-file-text"></i> Statement
+            </button>
+            <ul class="dropdown-menu" style="max-height: 300px; overflow-y: auto; min-width: 250px;">
+              <li><h6 class="dropdown-header">Select Supplier for Statement</h6></li>
+              <li><hr class="dropdown-divider"></li>
+              ${data.filter(s => s.Status === 'Active').map(supplier => `
+                <li><a class="dropdown-item" href="#" onclick="dashboardViewStatement('${supplier.Supplier_ID}'); return false;">
+                  <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
+                  <small class="text-muted">${supplier.Supplier_ID}</small>
+                </a></li>
+              `).join('')}
+              ${data.filter(s => s.Status === 'Active').length === 0 ? '<li><span class="dropdown-item text-muted">No active suppliers</span></li>' : ''}
+            </ul>
+          </div>
+
+          <button class="btn btn-outline-secondary btn-sm" onclick="loadSuppliersList()">
             <i class="bi bi-arrow-clockwise"></i> Refresh
           </button>
         </div>
-        <div class="row mb-4">
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Suppliers</h6>
-              <h3>${data.length}</h3>
-              <div class="text-muted">Active: ${supplierTotals.active}</div>
+
+        <!-- Compact Summary Cards -->
+        <div class="row g-2 mb-3">
+          <div class="col-6 col-md-3">
+            <div class="card border-0 bg-light">
+              <div class="card-body p-2">
+                <small class="text-muted d-block">Total Suppliers</small>
+                <h5 class="mb-0">${data.length} <small class="text-muted">(${supplierTotals.active} active)</small></h5>
+              </div>
             </div>
           </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Cost</h6>
-              <h3 class="text-primary">${formatCurrency(supplierTotals.purchased)}</h3>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 bg-light">
+              <div class="card-body p-2">
+                <small class="text-muted d-block">Total Cost</small>
+                <h6 class="mb-0 text-primary">${formatCurrency(supplierTotals.purchased)}</h6>
+              </div>
             </div>
           </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Payment</h6>
-              <h3 class="text-success">${formatCurrency(supplierTotals.paid)}</h3>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 bg-light">
+              <div class="card-body p-2">
+                <small class="text-muted d-block">Total Payment</small>
+                <h6 class="mb-0 text-success">${formatCurrency(supplierTotals.paid)}</h6>
+              </div>
             </div>
           </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Balance</h6>
-              <h3 class="${supplierTotals.balance > 0 ? 'text-danger' : supplierTotals.balance < 0 ? 'text-success' : ''}">${formatCurrency(supplierTotals.balance)}</h3>
-              <div class="text-muted">${supplierTotals.balance > 0 ? 'Payable' : supplierTotals.balance < 0 ? 'Credit' : 'Settled'}</div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 bg-light">
+              <div class="card-body p-2">
+                <small class="text-muted d-block">Balance</small>
+                <h6 class="mb-0 ${supplierTotals.balance > 0 ? 'text-danger' : supplierTotals.balance < 0 ? 'text-success' : ''}">${formatCurrency(supplierTotals.balance)}</h6>
+                <small class="text-muted">${supplierTotals.balance > 0 ? 'Payable' : supplierTotals.balance < 0 ? 'Credit' : 'Settled'}</small>
+              </div>
             </div>
           </div>
         </div>
@@ -3152,10 +3356,78 @@
 
     // Edit Supplier
     function dashboardEditSupplier(supplierId) {
-      // Navigate to add supplier section and populate form
-      showSection('suppliers-add');
-      // Add edit functionality here
-      alert('Edit supplier functionality - Navigate to edit form for: ' + supplierId);
+      const supplier = dashboardSuppliersData.find(s => s.Supplier_ID === supplierId);
+      if (!supplier) {
+        alert('Supplier not found');
+        return;
+      }
+
+      // Populate the edit modal with supplier data
+      document.getElementById('editSupplierId').value = supplierId;
+      document.getElementById('editSupplierName').value = supplier.Supplier_Name || supplier.Name || '';
+      document.getElementById('editContactPerson').value = supplier.Contact_Person || '';
+      document.getElementById('editPhone').value = supplier.Phone || '';
+      document.getElementById('editEmail').value = supplier.Email || '';
+      document.getElementById('editAddress').value = supplier.Address || '';
+      document.getElementById('editPaymentTerms').value = supplier.Payment_Terms || '';
+      document.getElementById('editStatus').value = supplier.Status || 'Active';
+
+      const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
+      document.getElementById('editBalance').value = 'Ksh ' + balance.toFixed(2);
+
+      const modal = new bootstrap.Modal(document.getElementById('supplierEditModal'));
+      modal.show();
+    }
+
+    // Submit Edit Supplier
+    function dashboardSubmitEdit() {
+      const supplierId = document.getElementById('editSupplierId').value;
+      const supplierName = document.getElementById('editSupplierName').value.trim();
+      const contactPerson = document.getElementById('editContactPerson').value.trim();
+      const phone = document.getElementById('editPhone').value.trim();
+      const email = document.getElementById('editEmail').value.trim();
+      const address = document.getElementById('editAddress').value.trim();
+      const paymentTerms = document.getElementById('editPaymentTerms').value.trim();
+      const status = document.getElementById('editStatus').value;
+
+      if (!supplierName || !phone) {
+        alert('Supplier Name and Phone are required');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitEditBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+
+      const updatedData = {
+        Supplier_Name: supplierName,
+        Contact_Person: contactPerson,
+        Phone: phone,
+        Email: email,
+        Address: address,
+        Payment_Terms: paymentTerms,
+        Status: status
+      };
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Update Supplier';
+
+          if (result.success) {
+            alert('Supplier updated successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('supplierEditModal')).hide();
+            loadSuppliersList();
+          } else {
+            alert('Error: ' + result.message);
+          }
+        })
+        .withFailureHandler(function(error) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Update Supplier';
+          alert('Error updating supplier: ' + error.message);
+        })
+        .updateSupplier(supplierId, updatedData);
     }
 
     // Make Payment to Supplier
