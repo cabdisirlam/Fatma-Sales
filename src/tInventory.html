@@ -234,13 +234,13 @@
                 <th>Item ID</th>
                 <th>Item Name</th>
                 <th>Category</th>
-                <th>Stock Qty</th>
-                <th>Unit</th>
                 <th>Cost Price</th>
                 <th>Selling Price</th>
+                <th>Current Qty</th>
                 <th>Reorder Level</th>
                 <th>Supplier</th>
-                <th>Status</th>
+                <th>Last Updated</th>
+                <th>Updated By</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -297,10 +297,6 @@
               </div>
             </div>
             <div class="mb-3">
-              <label class="form-label">Unit</label>
-              <input type="text" class="form-control" name="Unit" placeholder="e.g., pcs, kg, liter">
-            </div>
-            <div class="mb-3">
               <label class="form-label">Supplier *</label>
               <select class="form-select" name="Supplier" id="addSupplierDropdown" required>
                 <option value="">Loading suppliers...</option>
@@ -354,15 +350,11 @@
                 <input type="number" class="form-control" id="editReorderLevel" name="Reorder_Level" min="0">
               </div>
               <div class="col-md-6 mb-3">
-                <label class="form-label">Unit</label>
-                <input type="text" class="form-control" id="editUnit" name="Unit">
+                <label class="form-label">Supplier *</label>
+                <select class="form-select" id="editSupplier" name="Supplier" required>
+                  <option value="">Loading suppliers...</option>
+                </select>
               </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Supplier *</label>
-              <select class="form-select" id="editSupplier" name="Supplier" required>
-                <option value="">Loading suppliers...</option>
-              </select>
             </div>
           </form>
           <div id="editProductAlert" class="alert mt-3" style="display: none;"></div>
@@ -497,17 +489,21 @@
           statusBadge = '<span class="badge bg-success">In Stock</span>';
         }
 
+        const lastUpdated = item.Last_Updated ? new Date(item.Last_Updated) : null;
+        const lastUpdatedText = lastUpdated ? lastUpdated.toLocaleString() : '-';
+        const updatedBy = item.Updated_By || '-';
+
         row.innerHTML = `
           <td>${item.Item_ID || ''}</td>
           <td><strong>${item.Item_Name || ''}</strong></td>
           <td>${item.Category || ''}</td>
-          <td class="${stockStatus}">${stockQty}</td>
-          <td>${item.Unit || ''}</td>
           <td>Ksh ${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
           <td>Ksh ${parseFloat(item.Selling_Price || 0).toFixed(2)}</td>
+          <td class="${stockStatus}">${stockQty} ${statusBadge}</td>
           <td>${item.Reorder_Level || 10}</td>
           <td>${item.Supplier || '-'}</td>
-          <td>${statusBadge}</td>
+          <td>${lastUpdatedText}</td>
+          <td>${updatedBy}</td>
           <td>
             <button class="btn btn-sm btn-success me-1" onclick="openRestock('${item.Item_ID}', '${item.Item_Name || ''}')" title="Add Stock">
               <i class="bi bi-plus-lg"></i> Stock
@@ -741,7 +737,6 @@
       document.getElementById('editCostPrice').value = item.Cost_Price || '';
       document.getElementById('editSellingPrice').value = item.Selling_Price || '';
       document.getElementById('editReorderLevel').value = item.Reorder_Level || 10;
-      document.getElementById('editUnit').value = item.Unit || '';
 
       // Set supplier dropdown value
       const editSupplier = document.getElementById('editSupplier');
@@ -760,6 +755,9 @@
       const form = document.getElementById('editProductForm');
       const formData = new FormData(form);
       const productData = Object.fromEntries(formData);
+      if (productData.Selling_Price === '') delete productData.Selling_Price;
+      if (productData.Cost_Price === '') delete productData.Cost_Price;
+      if (productData.Reorder_Level === '') delete productData.Reorder_Level;
       productData.User = currentUser;
 
       const alertDiv = document.getElementById('editProductAlert');
