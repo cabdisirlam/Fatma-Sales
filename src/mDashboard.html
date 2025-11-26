@@ -1368,6 +1368,15 @@
     const navHistory = [];
     let isGoingBack = false;
 
+    // Track the active user for audit logging and attribution
+    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+    if (!sessionStorage.getItem('userName') && typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(function(email) {
+        currentUser = email || 'SYSTEM';
+        sessionStorage.setItem('userName', currentUser);
+      }).getActiveUserEmail();
+    }
+
     // Initialize dashboard
     function initDashboard(userName, userRole) {
       const userEmail = sessionStorage.getItem('userEmail');
@@ -1793,7 +1802,7 @@
           Current_Qty: parseFloat(form.qty.value) || 0,
           Reorder_Level: parseFloat(form.reorderLevel.value) || 10,
           Supplier: form.supplier.value.trim(),
-          User: currentUser ? currentUser.userId : 'SYSTEM'
+          User: currentUser || 'SYSTEM'
         };
 
         // Validate required fields
