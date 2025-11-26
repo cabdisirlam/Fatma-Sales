@@ -1753,7 +1753,9 @@
       return new Intl.NumberFormat('en-KE', {
         style: 'currency',
         currency: 'KES',
-        currencyDisplay: 'narrowSymbol'
+        currencyDisplay: 'narrowSymbol',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
       }).format(parseFloat(value) || 0);
     }
 
@@ -2789,8 +2791,8 @@
           <div class="col-md-3">
             <div class="stat-card">
               <h6>Balance</h6>
-              <h3 class="${supplierTotals.balance >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(supplierTotals.balance)}</h3>
-              <div class="text-muted">${supplierTotals.balance >= 0 ? 'Receivable' : 'Payable'}</div>
+              <h3 class="${supplierTotals.balance > 0 ? 'text-danger' : supplierTotals.balance < 0 ? 'text-success' : ''}">${formatCurrency(supplierTotals.balance)}</h3>
+              <div class="text-muted">${supplierTotals.balance > 0 ? 'Payable' : supplierTotals.balance < 0 ? 'Credit' : 'Settled'}</div>
             </div>
           </div>
         </div>
@@ -2817,9 +2819,9 @@
       } else {
         data.slice(0, 50).forEach(function(supplier) {
           const { purchased: totalPurchased, paid: totalPaid, balance } = parseSupplierTotals(supplier);
-          const balanceClass = balance < 0 ? 'text-danger' : balance > 0 ? 'text-success' : '';
-          const balanceText = balance < 0 ? 'Payable: ' + formatCurrency(Math.abs(balance)) :
-                             balance > 0 ? 'Receivable: ' + formatCurrency(balance) : formatCurrency(0);
+          const balanceClass = balance > 0 ? 'text-danger' : balance < 0 ? 'text-success' : '';
+          const balanceText = balance > 0 ? 'Payable: ' + formatCurrency(balance) :
+                             balance < 0 ? 'Credit: ' + formatCurrency(Math.abs(balance)) : formatCurrency(0);
           const statusBadge = supplier.Status === 'Active' ?
             '<span class="badge bg-success">Active</span>' :
             '<span class="badge bg-secondary">Inactive</span>';
