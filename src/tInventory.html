@@ -268,6 +268,19 @@
         <div class="modal-body">
           <form id="addProductForm">
             <div class="mb-3">
+              <label class="form-label">Stock Source</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="Stock_Source" id="sourceOpening" value="opening" checked onchange="toggleStockSourceFields()">
+                  <label class="form-check-label" for="sourceOpening">Opening Balance</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="Stock_Source" id="sourcePurchase" value="purchase" onchange="toggleStockSourceFields()">
+                  <label class="form-check-label" for="sourcePurchase">Purchase from Supplier</label>
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
               <label class="form-label">Item Name *</label>
               <input type="text" class="form-control" name="Item_Name" required>
             </div>
@@ -294,6 +307,28 @@
               <select class="form-select" name="Supplier" id="addSupplierDropdown" required>
                 <option value="">Loading suppliers...</option>
               </select>
+            </div>
+            <div id="purchaseFields" style="display: none;">
+              <div class="mb-3">
+                <label class="form-label">Payment Method</label>
+                <select class="form-select" name="Payment_Method">
+                  <option value="Cash">Cash</option>
+                  <option value="Bank">Bank</option>
+                  <option value="Mobile">Mobile</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Amount Paid Now</label>
+                <input type="number" class="form-control" name="Paid_Amount" min="0" step="0.01" placeholder="0.00">
+                <div class="form-text">Any unpaid balance will remain under the supplier account.</div>
+              </div>
+            </div>
+            <div id="openingBalanceFields" style="display: block;">
+              <div class="mb-3">
+                <label class="form-label">Opening Supplier Balance</label>
+                <input type="number" class="form-control" name="Opening_Supplier_Balance" min="0" step="0.01" placeholder="0.00">
+                <div class="form-text">Use this to capture outstanding amounts owed to the supplier for existing stock.</div>
+              </div>
             </div>
           </form>
           <div id="addProductAlert" class="alert mt-3" style="display: none;"></div>
@@ -661,9 +696,31 @@
     }
 
     // ===== ADD PRODUCT MODAL =====
+    function toggleStockSourceFields() {
+      const isPurchase = document.getElementById('sourcePurchase').checked;
+      const purchaseFields = document.getElementById('purchaseFields');
+      const openingFields = document.getElementById('openingBalanceFields');
+      const supplierDropdown = document.getElementById('addSupplierDropdown');
+
+      if (purchaseFields && openingFields) {
+        purchaseFields.style.display = isPurchase ? 'block' : 'none';
+        openingFields.style.display = isPurchase ? 'none' : 'block';
+      }
+
+      if (supplierDropdown) {
+        if (isPurchase) {
+          supplierDropdown.setAttribute('required', 'required');
+        } else {
+          supplierDropdown.removeAttribute('required');
+        }
+      }
+    }
+
     function showAddProductModal() {
       document.getElementById('addProductForm').reset();
       document.getElementById('addProductAlert').style.display = 'none';
+      document.getElementById('sourceOpening').checked = true;
+      toggleStockSourceFields();
 
       // Populate supplier dropdown
       populateSupplierDropdowns();
@@ -682,6 +739,12 @@
       const formData = new FormData(form);
       const productData = Object.fromEntries(formData);
       productData.User = currentUser;
+
+      // Additional validation for purchase flow
+      if (productData.Stock_Source === 'purchase' && !productData.Supplier) {
+        showAlert('addProductAlert', 'Please choose a supplier for this purchase', 'warning');
+        return;
+      }
 
       const alertDiv = document.getElementById('addProductAlert');
       alertDiv.style.display = 'none';
