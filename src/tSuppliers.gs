@@ -104,25 +104,33 @@ function addSupplier(supplierData) {
     validateRequired(supplierData, ['Supplier_Name', 'Phone']);
 
     const sheet = getSheet('Suppliers');
+    const headers = sheet.getDataRange().getValues()[0];
+    const hasOpeningColumn = headers.indexOf('Opening_Balance') !== -1;
+
     const supplierId = generateId('Suppliers', 'Supplier_ID', 'SUP');
-    const openingBalance = parseFloat(supplierData.Opening_Balance) || 0;
+    const openingBalance = parseFloat(supplierData.Opening_Balance || supplierData.Current_Balance) || 0;
 
-    // 2. Hard-Coded Data Mapping (must match sheet columns)
-    const newSupplier = [
-      supplierId,                            // Column 1: Supplier_ID
-      supplierData.Supplier_Name || '',      // Column 2: Supplier_Name
-      supplierData.Contact_Person || '',     // Column 3: Contact_Person
-      supplierData.Phone || '',              // Column 4: Phone
-      supplierData.Email || '',              // Column 5: Email
-      supplierData.Address || '',            // Column 6: Address
-      openingBalance,                        // Column 7: Opening_Balance
-      openingBalance,                        // Column 8: Total_Purchased
-      0,                                     // Column 9: Total_Paid
-      openingBalance,                        // Column 10: Current_Balance
-      supplierData.Payment_Terms || 'Cash',  // Column 11: Payment_Terms
-      'Active'                               // Column 12: Status
-    ];
+    // Build row data using header names to avoid creating extra columns
+    const rowData = {
+      Supplier_ID: supplierId,
+      Supplier_Name: supplierData.Supplier_Name || '',
+      Contact_Person: supplierData.Contact_Person || '',
+      Phone: supplierData.Phone || '',
+      Email: supplierData.Email || '',
+      Address: supplierData.Address || '',
+      Total_Purchased: openingBalance,
+      Total_Paid: 0,
+      Current_Balance: openingBalance,
+      Payment_Terms: supplierData.Payment_Terms || 'Cash',
+      Status: 'Active'
+    };
 
+    // Only set Opening_Balance if the column exists to prevent creating a new field
+    if (hasOpeningColumn) {
+      rowData.Opening_Balance = openingBalance;
+    }
+
+    const newSupplier = headers.map(header => rowData[header] !== undefined ? rowData[header] : '');
     sheet.appendRow(newSupplier);
 
     logAudit(
@@ -162,12 +170,19 @@ function updateSupplier(supplierId, supplierData) {
     if (supplierData.Phone !== undefined) updates.Phone = supplierData.Phone;
     if (supplierData.Email !== undefined) updates.Email = supplierData.Email;
     if (supplierData.Address !== undefined) updates.Address = supplierData.Address;
-    if (supplierData.Opening_Balance !== undefined) {
-      const newOpening = parseFloat(supplierData.Opening_Balance) || 0;
-      const existingOpening = parseFloat(currentSupplier.Opening_Balance) || 0;
+    const openingBalanceInput = supplierData.Opening_Balance !== undefined ? supplierData.Opening_Balance : supplierData.Current_Balance;
+    if (openingBalanceInput !== undefined) {
+      const sheet = getSheet('Suppliers');
+      const headers = sheet.getDataRange().getValues()[0];
+      const hasOpeningColumn = headers.indexOf('Opening_Balance') !== -1;
+
+      const newOpening = parseFloat(openingBalanceInput) || 0;
+      const existingOpening = parseFloat(currentSupplier.Opening_Balance !== undefined ? currentSupplier.Opening_Balance : currentSupplier.Current_Balance) || 0;
       const delta = newOpening - existingOpening;
 
-      updates.Opening_Balance = newOpening;
+      if (hasOpeningColumn) {
+        updates.Opening_Balance = newOpening;
+      }
       updates.Total_Purchased = (parseFloat(currentSupplier.Total_Purchased) || 0) + delta;
       updates.Current_Balance = (parseFloat(currentSupplier.Current_Balance) || 0) + delta;
     }
@@ -329,18 +344,10 @@ function applySupplierOpeningBalance(supplierId, amount, user) {
     const totalPurchased = (parseFloat(supplier.Total_Purchased) || 0) + openingAmount;
     const currentBalance = (parseFloat(supplier.Current_Balance) || 0) + openingAmount;
 
-    const sheet = getSheet('Suppliers');
-    const headers = sheet.getDataRange().getValues()[0];
-    const hasOpeningColumn = headers.indexOf('Opening_Balance') !== -1;
-
     const updates = {
       Total_Purchased: totalPurchased,
       Current_Balance: currentBalance
     };
-
-    if (hasOpeningColumn) {
-      updates.Opening_Balance = (parseFloat(supplier.Opening_Balance) || 0) + openingAmount;
-    }
 
     updateRowById('Suppliers', 'Supplier_ID', supplierId, updates);
 
@@ -358,7 +365,7 @@ function applySupplierOpeningBalance(supplierId, amount, user) {
       success: true,
       currentBalance: currentBalance,
       totalPurchased: totalPurchased,
-      openingBalance: hasOpeningColumn ? updates.Opening_Balance : openingAmount
+      openingBalance: openingAmount
     };
   } catch (error) {
     logError('applySupplierOpeningBalance', error);
