@@ -106,11 +106,17 @@ function doPost(e) {
  */
 function getSpreadsheet() {
   try {
-    // Strategy 1: Try to use explicitly configured SPREADSHEET_ID from Script Properties
+    // ALWAYS try to use the active spreadsheet first
+    const activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    if (activeSpreadsheet) {
+      return activeSpreadsheet;
+    }
+
+    // Strategy 2: Try to use explicitly configured SPREADSHEET_ID from Script Properties
     const scriptProperties = PropertiesService.getScriptProperties();
     let spreadsheetId = scriptProperties.getProperty('SPREADSHEET_ID');
 
-    // Strategy 2: If not in Script Properties, try hardcoded ID (for web app deployment)
+    // Strategy 3: If not in Script Properties, try hardcoded ID (for web app deployment)
     if (!spreadsheetId) {
       // IMPORTANT: Set this to your actual spreadsheet ID
       // You can find this in the URL: https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
@@ -125,7 +131,7 @@ function getSpreadsheet() {
       }
     }
 
-    // Strategy 3: Try to open by ID
+    // Strategy 4: Try to open by ID
     if (spreadsheetId) {
       try {
         const ss = SpreadsheetApp.openById(spreadsheetId);
@@ -135,21 +141,6 @@ function getSpreadsheet() {
         Logger.log('Cannot open spreadsheet by ID: ' + spreadsheetId + ' - Error: ' + e.message);
         // Don't throw yet, try fallback
       }
-    }
-
-    // Strategy 4: Fallback to active spreadsheet (only works in bound script context, not web app)
-    try {
-      const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-      // If we got here and have a spreadsheet, save its ID for future use
-      if (ss) {
-        const actualId = ss.getId();
-        scriptProperties.setProperty('SPREADSHEET_ID', actualId);
-        Logger.log('Using active spreadsheet and saved ID: ' + actualId);
-        return ss;
-      }
-    } catch (e) {
-      Logger.log('getActiveSpreadsheet failed (expected in web app context): ' + e.message);
     }
 
     // If we got here, we couldn't access the spreadsheet
