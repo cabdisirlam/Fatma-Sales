@@ -634,6 +634,13 @@
       background-color: #667eea;
     }
 
+    /* Supplier dropdown menu styling */
+    .supplier-dropdown-menu {
+      max-height: 300px;
+      overflow-y: auto;
+      min-width: 250px;
+    }
+
     /* Compact summary cards */
     .card.border-0.bg-light {
       transition: transform 0.2s ease;
@@ -3187,16 +3194,21 @@
             <button type="button" class="btn btn-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-pencil"></i> Edit
             </button>
-            <ul class="dropdown-menu" style="max-height: 300px; overflow-y: auto; min-width: 250px;">
+            <ul class="dropdown-menu supplier-dropdown-menu">
               <li><h6 class="dropdown-header">Select Supplier to Edit</h6></li>
               <li><hr class="dropdown-divider"></li>
-              ${data.filter(s => s.Status === 'Active').map(supplier => `
-                <li><a class="dropdown-item" href="#" onclick="dashboardEditSupplier('${supplier.Supplier_ID}'); return false;">
-                  <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
-                  <small class="text-muted">${supplier.Supplier_ID}</small>
-                </a></li>
-              `).join('')}
-              ${data.filter(s => s.Status === 'Active').length === 0 ? '<li><span class="dropdown-item text-muted">No active suppliers</span></li>' : ''}
+              ${(() => {
+                const activeSuppliers = data.filter(s => s.Status === 'Active');
+                if (activeSuppliers.length === 0) {
+                  return '<li><span class="dropdown-item text-muted">No active suppliers</span></li>';
+                }
+                return activeSuppliers.map(supplier => `
+                  <li><a class="dropdown-item" href="#" onclick="dashboardEditSupplier('${supplier.Supplier_ID}'); return false;">
+                    <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
+                    <small class="text-muted">${supplier.Supplier_ID}</small>
+                  </a></li>
+                `).join('');
+              })()}
             </ul>
           </div>
 
@@ -3205,25 +3217,29 @@
             <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-cash"></i> Pay
             </button>
-            <ul class="dropdown-menu" style="max-height: 300px; overflow-y: auto; min-width: 250px;">
+            <ul class="dropdown-menu supplier-dropdown-menu">
               <li><h6 class="dropdown-header">Select Supplier to Pay</h6></li>
               <li><hr class="dropdown-divider"></li>
-              ${data.filter(s => {
-                const balance = parseFloat(s.Current_Balance || s['Current Balance'] || s.Balance || 0) || 0;
-                return s.Status === 'Active' && balance > 0;
-              }).map(supplier => {
-                const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
-                return `
-                  <li><a class="dropdown-item" href="#" onclick="dashboardMakePayment('${supplier.Supplier_ID}'); return false;">
-                    <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
-                    <small class="text-danger">Balance: ${formatCurrency(balance)}</small>
-                  </a></li>
-                `;
-              }).join('')}
-              ${data.filter(s => {
-                const balance = parseFloat(s.Current_Balance || s['Current Balance'] || s.Balance || 0) || 0;
-                return s.Status === 'Active' && balance > 0;
-              }).length === 0 ? '<li><span class="dropdown-item text-muted">No suppliers with payable balance</span></li>' : ''}
+              ${(() => {
+                const payableSuppliers = data.filter(s => {
+                  const balance = parseFloat(s.Current_Balance || s['Current Balance'] || s.Balance || 0) || 0;
+                  return s.Status === 'Active' && balance > 0;
+                });
+
+                if (payableSuppliers.length === 0) {
+                  return '<li><span class="dropdown-item text-muted">No suppliers with payable balance</span></li>';
+                }
+
+                return payableSuppliers.map(supplier => {
+                  const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
+                  return `
+                    <li><a class="dropdown-item" href="#" onclick="dashboardMakePayment('${supplier.Supplier_ID}'); return false;">
+                      <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
+                      <small class="text-danger">Balance: ${formatCurrency(balance)}</small>
+                    </a></li>
+                  `;
+                }).join('');
+              })()}
             </ul>
           </div>
 
@@ -3232,16 +3248,21 @@
             <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-file-text"></i> Statement
             </button>
-            <ul class="dropdown-menu" style="max-height: 300px; overflow-y: auto; min-width: 250px;">
+            <ul class="dropdown-menu supplier-dropdown-menu">
               <li><h6 class="dropdown-header">Select Supplier for Statement</h6></li>
               <li><hr class="dropdown-divider"></li>
-              ${data.filter(s => s.Status === 'Active').map(supplier => `
-                <li><a class="dropdown-item" href="#" onclick="dashboardViewStatement('${supplier.Supplier_ID}'); return false;">
-                  <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
-                  <small class="text-muted">${supplier.Supplier_ID}</small>
-                </a></li>
-              `).join('')}
-              ${data.filter(s => s.Status === 'Active').length === 0 ? '<li><span class="dropdown-item text-muted">No active suppliers</span></li>' : ''}
+              ${(() => {
+                const activeSuppliers = data.filter(s => s.Status === 'Active');
+                if (activeSuppliers.length === 0) {
+                  return '<li><span class="dropdown-item text-muted">No active suppliers</span></li>';
+                }
+                return activeSuppliers.map(supplier => `
+                  <li><a class="dropdown-item" href="#" onclick="dashboardViewStatement('${supplier.Supplier_ID}'); return false;">
+                    <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
+                    <small class="text-muted">${supplier.Supplier_ID}</small>
+                  </a></li>
+                `).join('');
+              })()}
             </ul>
           </div>
 
@@ -3299,14 +3320,13 @@
                     <th>Total Payment</th>
                     <th>Balance</th>
                     <th>Status</th>
-                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
       `;
 
       if (!data || data.length === 0) {
-        html += '<tr><td colspan="7" class="text-center text-muted py-4">No suppliers found</td></tr>';
+        html += '<tr><td colspan="6" class="text-center text-muted py-4">No suppliers found</td></tr>';
       } else {
         data.slice(0, 50).forEach(function(supplier) {
           const { purchased: totalPurchased, paid: totalPaid, balance } = parseSupplierTotals(supplier);
@@ -3325,19 +3345,6 @@
               <td>${formatCurrency(totalPaid)}</td>
               <td class="${balanceClass}">${balanceText}</td>
               <td>${statusBadge}</td>
-              <td>
-                <div class="btn-group" role="group">
-                  <button class="btn btn-sm btn-warning" onclick='dashboardEditSupplier("${supplier.Supplier_ID}")' title="Edit">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button class="btn btn-sm btn-success" onclick='dashboardMakePayment("${supplier.Supplier_ID}")' title="Make Payment" ${balance <= 0 ? 'disabled' : ''}>
-                    <i class="bi bi-cash"></i>
-                  </button>
-                  <button class="btn btn-sm btn-info" onclick='dashboardViewStatement("${supplier.Supplier_ID}")' title="View Statement">
-                    <i class="bi bi-file-text"></i>
-                  </button>
-                </div>
-              </td>
             </tr>
           `;
         });
@@ -3354,6 +3361,27 @@
       container.innerHTML = html;
     }
 
+    // Helper Functions
+    function getSupplierName(supplier) {
+      return supplier.Supplier_Name || supplier.Name || '';
+    }
+
+    function getSupplierBalance(supplier) {
+      return parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
+    }
+
+    function resetEditSubmitButton() {
+      const submitBtn = document.getElementById('submitEditBtn');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Update Supplier';
+    }
+
+    function resetPaymentSubmitButton() {
+      const submitBtn = document.getElementById('submitPaymentBtn');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="bi bi-credit-card"></i> Submit Payment';
+    }
+
     // Edit Supplier
     function dashboardEditSupplier(supplierId) {
       const supplier = dashboardSuppliersData.find(s => s.Supplier_ID === supplierId);
@@ -3364,7 +3392,7 @@
 
       // Populate the edit modal with supplier data
       document.getElementById('editSupplierId').value = supplierId;
-      document.getElementById('editSupplierName').value = supplier.Supplier_Name || supplier.Name || '';
+      document.getElementById('editSupplierName').value = getSupplierName(supplier);
       document.getElementById('editContactPerson').value = supplier.Contact_Person || '';
       document.getElementById('editPhone').value = supplier.Phone || '';
       document.getElementById('editEmail').value = supplier.Email || '';
@@ -3372,8 +3400,8 @@
       document.getElementById('editPaymentTerms').value = supplier.Payment_Terms || '';
       document.getElementById('editStatus').value = supplier.Status || 'Active';
 
-      const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
-      document.getElementById('editBalance').value = 'Ksh ' + balance.toFixed(2);
+      const balance = getSupplierBalance(supplier);
+      document.getElementById('editBalance').value = formatCurrency(balance);
 
       const modal = new bootstrap.Modal(document.getElementById('supplierEditModal'));
       modal.show();
@@ -3411,8 +3439,7 @@
 
       google.script.run
         .withSuccessHandler(function(result) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Update Supplier';
+          resetEditSubmitButton();
 
           if (result.success) {
             alert('Supplier updated successfully!');
@@ -3423,8 +3450,7 @@
           }
         })
         .withFailureHandler(function(error) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Update Supplier';
+          resetEditSubmitButton();
           alert('Error updating supplier: ' + error.message);
         })
         .updateSupplier(supplierId, updatedData);
@@ -3438,10 +3464,10 @@
         return;
       }
 
-      const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
+      const balance = getSupplierBalance(supplier);
       document.getElementById('paymentSupplierId').value = supplierId;
-      document.getElementById('paymentSupplierName').textContent = supplier.Supplier_Name || supplier.Name || '';
-      document.getElementById('paymentCurrentBalance').textContent = 'Ksh ' + balance.toFixed(2);
+      document.getElementById('paymentSupplierName').textContent = getSupplierName(supplier);
+      document.getElementById('paymentCurrentBalance').textContent = formatCurrency(balance);
       document.getElementById('paymentAmount').value = balance > 0 ? balance.toFixed(2) : '';
       document.getElementById('paymentMethod').value = 'Cash';
       document.getElementById('paymentReference').value = '';
@@ -3465,10 +3491,10 @@
       }
 
       const supplier = dashboardSuppliersData.find(s => s.Supplier_ID === supplierId);
-      const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
+      const balance = getSupplierBalance(supplier);
 
       if (amount > balance) {
-        if (!confirm('Payment amount (' + amount.toFixed(2) + ') exceeds balance (' + balance.toFixed(2) + '). Continue?')) {
+        if (!confirm('Payment amount (' + formatCurrency(amount) + ') exceeds balance (' + formatCurrency(balance) + '). Continue?')) {
           return;
         }
       }
@@ -3481,11 +3507,10 @@
 
       google.script.run
         .withSuccessHandler(function(result) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Submit Payment';
+          resetPaymentSubmitButton();
 
           if (result.success) {
-            alert('Payment of Ksh ' + amount.toFixed(2) + ' recorded successfully!');
+            alert('Payment of ' + formatCurrency(amount) + ' recorded successfully!');
             bootstrap.Modal.getInstance(document.getElementById('supplierPaymentModal')).hide();
             loadSuppliersList();
           } else {
@@ -3493,8 +3518,7 @@
           }
         })
         .withFailureHandler(function(error) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Submit Payment';
+          resetPaymentSubmitButton();
           alert('Error recording payment: ' + error.message);
         })
         .recordSupplierPayment(supplierId, amount, paymentMethod, reference, notes, user);
