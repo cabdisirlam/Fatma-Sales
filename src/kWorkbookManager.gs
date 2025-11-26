@@ -437,13 +437,26 @@ function createUsersSheet() {
  */
 function createSuppliersSheet() {
   const sheet = getOrCreateSheet(CONFIG.SHEETS.SUPPLIERS);
-  sheet.clear();
+  
+  // HARD CODED HEADERS - Do not change order!
+  const headers = [
+    'Supplier_ID',
+    'Supplier_Name',
+    'Contact_Person',
+    'Phone',
+    'Email',
+    'Address',
+    'Total_Purchased',
+    'Total_Paid',
+    'Current_Balance',
+    'Payment_Terms',
+    'Status'
+  ];
 
-  const headers = ['Supplier_ID', 'Supplier_Name', 'Contact_Person', 'Phone', 'Email', 'Address',
-                   'Total_Purchased', 'Total_Paid', 'Current_Balance', 'Payment_Terms', 'Status'];
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-
-  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
+  }
 
   sheet.setColumnWidth(1, 120); // Supplier_ID
   sheet.setColumnWidth(2, 200); // Supplier_Name

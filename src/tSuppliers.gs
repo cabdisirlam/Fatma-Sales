@@ -95,27 +95,30 @@ function searchSuppliers(query) {
 }
 
 /**
- * Add new supplier
+ * Add new supplier with Hard-Coded Header Mapping
  */
 function addSupplier(supplierData) {
   try {
+    // 1. Validation: Ensure we have the minimum required data
+    // Matches the "required" fields in the HTML
     validateRequired(supplierData, ['Supplier_Name', 'Phone']);
 
     const sheet = getSheet('Suppliers');
     const supplierId = generateId('Suppliers', 'Supplier_ID', 'SUP');
 
+    // 2. Hard-Coded Data Mapping (must match sheet columns)
     const newSupplier = [
-      supplierId,
-      supplierData.Supplier_Name || '',
-      supplierData.Contact_Person || '',
-      supplierData.Phone || '',
-      supplierData.Email || '',
-      supplierData.Address || '',
-      0, // Total_Purchased (starts at 0)
-      0, // Total_Paid (starts at 0)
-      0, // Current_Balance (starts at 0)
-      supplierData.Payment_Terms || 'Cash on Delivery',
-      'Active'
+      supplierId,                            // Column 1: Supplier_ID
+      supplierData.Supplier_Name || '',      // Column 2: Supplier_Name
+      supplierData.Contact_Person || '',     // Column 3: Contact_Person
+      supplierData.Phone || '',              // Column 4: Phone
+      supplierData.Email || '',              // Column 5: Email
+      supplierData.Address || '',            // Column 6: Address
+      0,                                     // Column 7: Total_Purchased
+      0,                                     // Column 8: Total_Paid
+      0,                                     // Column 9: Current_Balance
+      supplierData.Payment_Terms || 'Cash',  // Column 10: Payment_Terms
+      'Active'                               // Column 11: Status
     ];
 
     sheet.appendRow(newSupplier);
@@ -124,21 +127,17 @@ function addSupplier(supplierData) {
       supplierData.User || 'SYSTEM',
       'Suppliers',
       'Create',
-      'New supplier added: ' + supplierData.Supplier_Name + ' (ID: ' + supplierId + ')',
+      'New supplier added: ' + supplierData.Supplier_Name,
       '',
       '',
       JSON.stringify(newSupplier)
     );
 
-    return {
-      success: true,
-      supplierId: supplierId,
-      message: 'Supplier added successfully'
-    };
+    return { success: true, supplierId: supplierId, message: 'Supplier added successfully' };
 
   } catch (error) {
     logError('addSupplier', error);
-    throw new Error('Error adding supplier: ' + error.message);
+    return { success: false, message: error.message };
   }
 }
 
