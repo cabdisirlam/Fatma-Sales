@@ -376,9 +376,9 @@
         const row = document.createElement('tr');
 
         const balance = parseFloat(supplier.Current_Balance || supplier.Balance || 0);
-        const balanceClass = balance < 0 ? 'balance-negative' : balance > 0 ? 'balance-positive' : '';
-        const balanceText = balance < 0 ? 'Payable: Ksh ' + Math.abs(balance).toFixed(2) :
-                           balance > 0 ? 'Receivable: Ksh ' + balance.toFixed(2) : 'Ksh 0.00';
+        const balanceClass = balance > 0 ? 'balance-negative' : balance < 0 ? 'balance-positive' : '';
+        const balanceText = balance > 0 ? 'Payable: Ksh ' + balance.toFixed(2) :
+                           balance < 0 ? 'Credit: Ksh ' + Math.abs(balance).toFixed(2) : 'Ksh 0.00';
 
         const statusBadge = supplier.Status === 'Active' ?
           '<span class="badge bg-success">Active</span>' :
@@ -397,7 +397,7 @@
             <button class="btn btn-sm btn-primary me-1" onclick='createPurchase("${supplier.Supplier_ID}")' title="New Purchase">
               <i class="bi bi-cart-plus"></i>
             </button>
-            <button class="btn btn-sm btn-success me-1" onclick='makePayment("${supplier.Supplier_ID}")' title="Make Payment" ${balance >= 0 ? 'disabled' : ''}>
+            <button class="btn btn-sm btn-success me-1" onclick='makePayment("${supplier.Supplier_ID}")' title="Make Payment" ${balance <= 0 ? 'disabled' : ''}>
               <i class="bi bi-cash"></i>
             </button>
             <button class="btn btn-sm btn-warning" onclick='editSupplier("${supplier.Supplier_ID}")' title="Edit">
@@ -423,8 +423,8 @@
         const balance = parseFloat(supplier.Current_Balance || supplier.Balance || 0);
         const purchased = parseFloat(supplier.Total_Purchased || 0);
 
-        if (balance < 0) {
-          totalPayable += Math.abs(balance);
+        if (balance > 0) {
+          totalPayable += balance;
         }
 
         totalPurchased += purchased;
