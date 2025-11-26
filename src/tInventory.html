@@ -323,13 +323,6 @@
                 <div class="form-text">Any unpaid balance will remain under the supplier account.</div>
               </div>
             </div>
-            <div id="openingBalanceFields" style="display: block;">
-              <div class="mb-3">
-                <label class="form-label">Opening Supplier Balance</label>
-                <input type="number" class="form-control" name="Opening_Supplier_Balance" min="0" step="0.01" placeholder="0.00">
-                <div class="form-text">Use this to capture outstanding amounts owed to the supplier for existing stock.</div>
-              </div>
-            </div>
           </form>
           <div id="addProductAlert" class="alert mt-3" style="display: none;"></div>
         </div>
@@ -462,6 +455,12 @@
     let inventoryData = [];
     let suppliersData = [];
 
+    function getSupplierDisplayName(supplierId) {
+      if (!supplierId) return '-';
+      const supplier = suppliersData.find(function(entry) { return entry.Supplier_ID === supplierId; });
+      return supplier ? supplier.Supplier_Name + ' (' + supplier.Supplier_ID + ')' : supplierId;
+    }
+
     function loadInventory() {
       document.getElementById('loadingIndicator').style.display = 'block';
       document.getElementById('inventoryTableContainer').style.display = 'none';
@@ -522,7 +521,7 @@
           <td>Ksh ${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
           <td class="${stockStatus}">${stockQty} ${statusBadge}</td>
           <td>${item.Reorder_Level || 10}</td>
-          <td>${item.Supplier || '-'}</td>
+          <td>${getSupplierDisplayName(item.Supplier)}</td>
           <td>${lastUpdatedText}</td>
           <td>${updatedBy}</td>
           <td>
@@ -650,8 +649,8 @@
           dropdown.innerHTML = '<option value="">-- Select Supplier --</option>';
           activeSuppliers.forEach(function(supplier) {
             const option = document.createElement('option');
-            option.value = supplier.Supplier_Name;
-            option.textContent = supplier.Supplier_Name;
+            option.value = supplier.Supplier_ID;
+            option.textContent = supplier.Supplier_Name + ' (' + supplier.Supplier_ID + ')';
             dropdown.appendChild(option);
           });
         }
@@ -699,12 +698,10 @@
     function toggleStockSourceFields() {
       const isPurchase = document.getElementById('sourcePurchase').checked;
       const purchaseFields = document.getElementById('purchaseFields');
-      const openingFields = document.getElementById('openingBalanceFields');
       const supplierDropdown = document.getElementById('addSupplierDropdown');
 
-      if (purchaseFields && openingFields) {
+      if (purchaseFields) {
         purchaseFields.style.display = isPurchase ? 'block' : 'none';
-        openingFields.style.display = isPurchase ? 'none' : 'block';
       }
 
       if (supplierDropdown) {
@@ -788,8 +785,21 @@
 
       // Set supplier dropdown value
       const editSupplier = document.getElementById('editSupplier');
-      if (editSupplier && item.Supplier) {
-        editSupplier.value = item.Supplier;
+      if (editSupplier) {
+        const existingId = item.Supplier || '';
+        const matchById = suppliersData.find(function(s) { return s.Supplier_ID === existingId; });
+        const matchByName = suppliersData.find(function(s) { return s.Supplier_Name === existingId; });
+        const resolvedSupplier = matchById || matchByName;
+
+        if (resolvedSupplier) {
+          editSupplier.value = resolvedSupplier.Supplier_ID;
+        } else if (existingId) {
+          const fallbackOption = document.createElement('option');
+          fallbackOption.value = existingId;
+          fallbackOption.textContent = existingId;
+          editSupplier.appendChild(fallbackOption);
+          editSupplier.value = existingId;
+        }
       }
 
       document.getElementById('editProductAlert').style.display = 'none';

@@ -199,7 +199,7 @@ function addProduct(productData) {
 
     // 1. Validation (Matches your form inputs)
     const requiredFields = ['Item_Name', 'Cost_Price', 'Current_Qty'];
-    if (isPurchase || productData.Supplier || productData.Opening_Supplier_Balance) {
+    if (isPurchase) {
       requiredFields.push('Supplier');
     }
 
@@ -210,7 +210,6 @@ function addProduct(productData) {
 
     const purchaseQty = parseFloat(productData.Current_Qty) || 0;
     const startingQty = isPurchase ? 0 : purchaseQty;
-    const openingBalanceAmount = parseFloat(productData.Opening_Supplier_Balance) || 0;
 
     // 2. HARD-CODED MAPPING (Matches your Header String Exactly)
     // Headers: Item_ID, Item_Name, Category, Cost_Price, Selling_Price, Current_Qty, Reorder_Level, Supplier, Last_Updated, Updated_By
@@ -243,15 +242,6 @@ function addProduct(productData) {
       '',
       JSON.stringify(newProduct)
     );
-
-    // If this is an opening balance and there is an outstanding amount with a supplier, register it
-    if (!isPurchase && productData.Supplier && openingBalanceAmount > 0) {
-      applySupplierOpeningBalance(
-        productData.Supplier,
-        openingBalanceAmount,
-        productData.User
-      );
-    }
 
     // If this is a purchase, create a purchase record to update supplier balances and payments
     if (isPurchase && productData.Supplier) {
