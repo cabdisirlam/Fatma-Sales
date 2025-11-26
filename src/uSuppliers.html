@@ -225,11 +225,11 @@
 
   <!-- Add Supplier Form (Initially Hidden) -->
   <div class="card" id="addSupplierForm" style="display: none;">
-    <div class="card-header">
+    <div class="card-header" id="supplierFormTitle">
       <i class="bi bi-plus-circle"></i> Add New Supplier
     </div>
     <div class="card-body">
-      <form id="supplierForm" onsubmit="handleAddSupplier(event)">
+      <form id="supplierForm" onsubmit="handleSaveSupplier(event)">
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="supplierName" class="form-label">Supplier Name *</label>
@@ -275,7 +275,7 @@
           </div>
         </div>
         <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary">
+          <button type="submit" class="btn btn-primary" id="supplierFormSubmit">
             <i class="bi bi-check-circle"></i> Save Supplier
           </button>
           <button type="button" class="btn btn-secondary" onclick="hideAddSupplierForm()">
@@ -341,6 +341,18 @@
     document.getElementById('statusFilter').addEventListener('change', filterSuppliers);
 
     let suppliersData = [];
+    let editingSupplierId = null;
+
+    function getNumericField(supplier, keys) {
+      for (let i = 0; i < keys.length; i++) {
+        const value = supplier[keys[i]];
+        const number = parseFloat(value);
+        if (!isNaN(number)) {
+          return number;
+        }
+      }
+      return 0;
+    }
 
     function loadSuppliers() {
       document.getElementById('loadingIndicator').style.display = 'block';
@@ -375,7 +387,7 @@
       data.forEach(function(supplier) {
         const row = document.createElement('tr');
 
-        const balance = parseFloat(supplier.Current_Balance || supplier.Balance || 0);
+        const balance = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Balance']);
         const balanceClass = balance > 0 ? 'balance-negative' : balance < 0 ? 'balance-positive' : '';
         const balanceText = balance > 0 ? 'Payable: Ksh ' + balance.toFixed(2) :
                            balance < 0 ? 'Credit: Ksh ' + Math.abs(balance).toFixed(2) : 'Ksh 0.00';
@@ -420,8 +432,8 @@
       let totalPurchased = 0;
 
       data.forEach(function(supplier) {
-        const balance = parseFloat(supplier.Current_Balance || supplier.Balance || 0);
-        const purchased = parseFloat(supplier.Total_Purchased || 0);
+        const balance = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Balance']);
+        const purchased = getNumericField(supplier, ['Total_Purchased', 'Total Purchased']);
 
         if (balance > 0) {
           totalPayable += balance;
@@ -457,17 +469,25 @@
       updateStats(filtered);
     }
 
+    function resetSupplierForm() {
+      editingSupplierId = null;
+      document.getElementById('supplierForm').reset();
+      document.getElementById('supplierFormTitle').innerHTML = '<i class="bi bi-plus-circle"></i> Add New Supplier';
+      document.getElementById('supplierFormSubmit').innerHTML = '<i class="bi bi-check-circle"></i> Save Supplier';
+    }
+
     function showAddSupplierForm() {
       document.getElementById('addSupplierForm').style.display = 'block';
+      resetSupplierForm();
       document.getElementById('supplierName').focus();
     }
 
     function hideAddSupplierForm() {
       document.getElementById('addSupplierForm').style.display = 'none';
-      document.getElementById('supplierForm').reset();
+      resetSupplierForm();
     }
 
-    function handleAddSupplier(event) {
+    function handleSaveSupplier(event) {
       event.preventDefault();
 
       const supplierData = {
@@ -481,20 +501,31 @@
         Status: document.getElementById('supplierStatus').value
       };
 
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) {
-            alert('Supplier added successfully!');
-            hideAddSupplierForm();
-            loadSuppliers();
-          } else {
-            alert('Error: ' + result.message);
-          }
-        })
-        .withFailureHandler(function(error) {
-          alert('Error adding supplier: ' + error.message);
-        })
-        .addSupplier(supplierData);
+      const onSuccess = function(result, actionText) {
+        if (result.success) {
+          alert('Supplier ' + actionText + ' successfully!');
+          hideAddSupplierForm();
+          loadSuppliers();
+        } else {
+          alert('Error: ' + result.message);
+        }
+      };
+
+      const onFailure = function(error) {
+        alert('Error saving supplier: ' + error.message);
+      };
+
+      if (editingSupplierId) {
+        google.script.run
+          .withSuccessHandler(function(result) { onSuccess(result, 'updated'); })
+          .withFailureHandler(onFailure)
+          .updateSupplier(editingSupplierId, supplierData);
+      } else {
+        google.script.run
+          .withSuccessHandler(function(result) { onSuccess(result, 'added'); })
+          .withFailureHandler(onFailure)
+          .addSupplier(supplierData);
+      }
     }
 
     // Create new purchase order
@@ -526,7 +557,28 @@
 
     // Edit supplier
     function editSupplier(supplierId) {
-      alert('Edit supplier: ' + supplierId + '\n\nThis feature will allow you to update supplier information.');
+      const supplier = suppliersData.find(s => s.Supplier_ID === supplierId);
+
+      if (!supplier) {
+        alert('Supplier not found');
+        return;
+      }
+
+      editingSupplierId = supplierId;
+      document.getElementById('supplierFormTitle').innerHTML = '<i class="bi bi-pencil"></i> Edit Supplier';
+      document.getElementById('supplierFormSubmit').innerHTML = '<i class="bi bi-check-circle"></i> Update Supplier';
+      document.getElementById('addSupplierForm').style.display = 'block';
+
+      document.getElementById('supplierName').value = supplier.Supplier_Name || supplier.Name || '';
+      document.getElementById('supplierContact').value = supplier.Contact_Person || '';
+      document.getElementById('supplierPhone').value = supplier.Phone || '';
+      document.getElementById('supplierEmail').value = supplier.Email || '';
+      document.getElementById('supplierAddress').value = supplier.Address || '';
+      document.getElementById('supplierPaymentTerms').value = supplier.Payment_Terms || '';
+      document.getElementById('supplierOpeningBalance').value = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Opening_Balance', 'Opening Balance']);
+      document.getElementById('supplierStatus').value = supplier.Status || 'Active';
+
+      document.getElementById('supplierName').focus();
     }
   </script>
 </body>
