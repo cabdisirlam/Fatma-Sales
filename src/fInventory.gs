@@ -166,12 +166,17 @@ function addProduct(productData) {
 
     // 2. HARD-CODED MAPPING (Matches your Header String Exactly)
     // Headers: Item_ID, Item_Name, Category, Cost_Price, Selling_Price, Current_Qty, Reorder_Level, Supplier, Last_Updated, Updated_By
+    const sellingPrice =
+      productData.Selling_Price !== undefined && productData.Selling_Price !== ''
+        ? parseFloat(productData.Selling_Price)
+        : parseFloat(productData.Cost_Price) || 0;
+
     const newProduct = [
       itemId,                                  // 1. Item_ID
       productData.Item_Name || '',             // 2. Item_Name
       productData.Category || 'General',       // 3. Category
       parseFloat(productData.Cost_Price) || 0, // 4. Cost_Price
-      0,                                       // 5. Selling_Price (HIDDEN/UNUSED but kept for column alignment)
+      sellingPrice,                            // 5. Selling_Price
       parseFloat(productData.Current_Qty) || 0,// 6. Current_Qty
       parseFloat(productData.Reorder_Level)||10,// 7. Reorder_Level
       productData.Supplier || '',              // 8. Supplier
@@ -209,10 +214,11 @@ function updateProduct(itemId, productData) {
 
     const hasCostPrice = productData.Cost_Price !== undefined && productData.Cost_Price !== '';
     if (hasCostPrice) {
-      const costPrice = parseFloat(productData.Cost_Price);
-      updates.Cost_Price = costPrice;
-      updates.Selling_Price = costPrice;
-    } else if (productData.Selling_Price !== undefined && productData.Selling_Price !== '') {
+      updates.Cost_Price = parseFloat(productData.Cost_Price);
+    }
+
+    const hasSellingPrice = productData.Selling_Price !== undefined && productData.Selling_Price !== '';
+    if (hasSellingPrice) {
       updates.Selling_Price = parseFloat(productData.Selling_Price);
     }
 
