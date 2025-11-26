@@ -2739,11 +2739,17 @@
       const container = document.getElementById('section-suppliers-list');
       if (!container) return;
 
-      const activeSuppliers = data.filter(s => s.Status === 'Active').length;
-      const totalPayable = data.reduce((sum, s) => {
-        const balance = parseFloat(s.Balance || 0);
-        return sum + (balance < 0 ? Math.abs(balance) : 0);
-      }, 0);
+      const supplierTotals = data.reduce((totals, supplier) => {
+        const purchased = parseFloat(supplier.Total_Purchased || supplier['Total Purchased'] || 0) || 0;
+        const paid = parseFloat(supplier.Total_Paid || supplier['Total Paid'] || 0) || 0;
+        const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
+
+        totals.active += supplier.Status === 'Active' ? 1 : 0;
+        totals.purchased += purchased;
+        totals.paid += paid;
+        totals.balance += balance;
+        return totals;
+      }, { active: 0, purchased: 0, paid: 0, balance: 0 });
 
       let html = `
         <div class="d-flex flex-wrap gap-2 mb-3">
@@ -2755,22 +2761,30 @@
           </button>
         </div>
         <div class="row mb-4">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="stat-card">
               <h6>Total Suppliers</h6>
               <h3>${data.length}</h3>
+              <div class="text-muted">Active: ${supplierTotals.active}</div>
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="stat-card">
-              <h6>Active Suppliers</h6>
-              <h3 class="text-success">${activeSuppliers}</h3>
+              <h6>Total Cost</h6>
+              <h3 class="text-primary">${formatCurrency(supplierTotals.purchased)}</h3>
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="stat-card">
-              <h6>Total Payable</h6>
-              <h3 class="text-danger">${formatCurrency(totalPayable)}</h3>
+              <h6>Total Payment</h6>
+              <h3 class="text-success">${formatCurrency(supplierTotals.paid)}</h3>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <h6>Balance</h6>
+              <h3 class="${supplierTotals.balance >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(supplierTotals.balance)}</h3>
+              <div class="text-muted">${supplierTotals.balance >= 0 ? 'Receivable' : 'Payable'}</div>
             </div>
           </div>
         </div>
@@ -2783,8 +2797,8 @@
                   <tr>
                     <th>Supplier ID</th>
                     <th>Name</th>
-                    <th>Contact</th>
-                    <th>Phone</th>
+                    <th>Total Cost</th>
+                    <th>Total Payment</th>
                     <th>Balance</th>
                     <th>Status</th>
                   </tr>
@@ -2796,7 +2810,9 @@
         html += '<tr><td colspan="6" class="text-center text-muted py-4">No suppliers found</td></tr>';
       } else {
         data.slice(0, 50).forEach(function(supplier) {
-          const balance = parseFloat(supplier.Balance || 0);
+          const totalPurchased = parseFloat(supplier.Total_Purchased || supplier['Total Purchased'] || 0) || 0;
+          const totalPaid = parseFloat(supplier.Total_Paid || supplier['Total Paid'] || 0) || 0;
+          const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
           const balanceClass = balance < 0 ? 'text-danger' : balance > 0 ? 'text-success' : '';
           const balanceText = balance < 0 ? 'Payable: ' + formatCurrency(Math.abs(balance)) :
                              balance > 0 ? 'Receivable: ' + formatCurrency(balance) : formatCurrency(0);
@@ -2807,9 +2823,9 @@
           html += `
             <tr>
               <td>${supplier.Supplier_ID || ''}</td>
-              <td><strong>${supplier.Name || ''}</strong></td>
-              <td>${supplier.Contact_Person || '-'}</td>
-              <td>${supplier.Phone || '-'}</td>
+              <td><strong>${supplier.Supplier_Name || supplier.Name || ''}</strong></td>
+              <td>${formatCurrency(totalPurchased)}</td>
+              <td>${formatCurrency(totalPaid)}</td>
               <td class="${balanceClass}">${balanceText}</td>
               <td>${statusBadge}</td>
             </tr>

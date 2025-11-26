@@ -354,6 +354,19 @@
       return 0;
     }
 
+    function getExistingNumericField(supplier, keys) {
+      for (let i = 0; i < keys.length; i++) {
+        const value = supplier[keys[i]];
+        if (value === undefined || value === '') continue;
+
+        const number = parseFloat(value);
+        if (!isNaN(number)) {
+          return number;
+        }
+      }
+      return null;
+    }
+
     function loadSuppliers() {
       document.getElementById('loadingIndicator').style.display = 'block';
       document.getElementById('suppliersTableContainer').style.display = 'none';
@@ -455,6 +468,7 @@
       const filtered = suppliersData.filter(function(supplier) {
         const matchesSearch = !searchTerm ||
           (supplier.Name && supplier.Name.toLowerCase().includes(searchTerm)) ||
+          (supplier.Supplier_Name && supplier.Supplier_Name.toLowerCase().includes(searchTerm)) ||
           (supplier.Supplier_ID && supplier.Supplier_ID.toLowerCase().includes(searchTerm)) ||
           (supplier.Contact_Person && supplier.Contact_Person.toLowerCase().includes(searchTerm)) ||
           (supplier.Phone && supplier.Phone.includes(searchTerm)) ||
@@ -490,16 +504,24 @@
     function handleSaveSupplier(event) {
       event.preventDefault();
 
+      const openingBalanceInput = document.getElementById('supplierOpeningBalance').value.trim();
+
       const supplierData = {
         Supplier_Name: document.getElementById('supplierName').value,
         Contact_Person: document.getElementById('supplierContact').value,
         Phone: document.getElementById('supplierPhone').value,
         Email: document.getElementById('supplierEmail').value,
         Address: document.getElementById('supplierAddress').value,
-        Current_Balance: document.getElementById('supplierOpeningBalance').value,
         Payment_Terms: document.getElementById('supplierPaymentTerms').value,
         Status: document.getElementById('supplierStatus').value
       };
+
+      if (openingBalanceInput !== '') {
+        const openingBalanceValue = parseFloat(openingBalanceInput);
+        if (!isNaN(openingBalanceValue)) {
+          supplierData.Opening_Balance = openingBalanceValue;
+        }
+      }
 
       const onSuccess = function(result, actionText) {
         if (result.success) {
@@ -575,7 +597,8 @@
       document.getElementById('supplierEmail').value = supplier.Email || '';
       document.getElementById('supplierAddress').value = supplier.Address || '';
       document.getElementById('supplierPaymentTerms').value = supplier.Payment_Terms || '';
-      document.getElementById('supplierOpeningBalance').value = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Opening_Balance', 'Opening Balance']);
+      const openingBalance = getExistingNumericField(supplier, ['Opening_Balance', 'Opening Balance']);
+      document.getElementById('supplierOpeningBalance').value = openingBalance !== null ? openingBalance : '';
       document.getElementById('supplierStatus').value = supplier.Status || 'Active';
 
       document.getElementById('supplierName').focus();
