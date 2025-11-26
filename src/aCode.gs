@@ -13,28 +13,27 @@
 function doGet(e) {
   try {
     const viewName = e?.parameter?.view;
+    
+    // Route Configuration: Maps URL parameters to HTML files
     const viewRoutes = {
-      newSale: { htmlFile: 'oNewSale', title: 'New Sale' },
-      suppliers: { htmlFile: 'uSuppliers', title: 'Suppliers' },
-      inventory: { htmlFile: 'pProducts', title: 'Inventory' },
-      products: { htmlFile: 'pProducts', title: 'Products' },
-      customers: { htmlFile: 'lCustomers', title: 'Customers' },
-      users: { htmlFile: 'sUserManagement', title: 'User Management' },
-      dashboard: { htmlFile: 'mDashboard', title: 'Dashboard' },
-      reports: { htmlFile: 'qReports', title: 'Reports' },
-      quotations: { htmlFile: 'xQuotations', title: 'Quotations' },
-      settings: { htmlFile: 'rSettings', title: 'Settings' },
-      financials: { htmlFile: 'vFinancials', title: 'Financials' }
+      newSale:     { htmlFile: 'oNewSale', title: 'New Sale' },
+      suppliers:   { htmlFile: 'uSuppliers', title: 'Suppliers Management' },
+      inventory:   { htmlFile: 'pProducts', title: 'Inventory Management' },
+      users:       { htmlFile: 'sUserManagement', title: 'User Management' },
+      dashboard:   { htmlFile: 'mDashboard', title: 'Dashboard' }
     };
+
+    // Default to Dashboard (or Login)
     const defaultRoute = { htmlFile: 'nIndex', title: 'Fatma System' };
+    
     const { htmlFile, title } = viewRoutes[viewName] || defaultRoute;
 
     return HtmlService.createHtmlOutputFromFile(htmlFile)
       .setTitle(title)
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+      
   } catch (error) {
-    logError('doGet', error);
     return HtmlService.createHtmlOutput('<h3>Error loading application: ' + error.message + '</h3>');
   }
 }
