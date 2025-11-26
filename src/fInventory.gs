@@ -195,12 +195,18 @@ function addProduct(productData) {
     const sheet = getSheet('Inventory');
     const itemId = generateId('Inventory', 'Item_ID', 'ITEM');
 
+    const costPrice = parseFloat(productData.Cost_Price) || 0;
+    const sellingPrice =
+      productData.Selling_Price !== undefined && productData.Selling_Price !== ''
+        ? parseFloat(productData.Selling_Price) || 0
+        : costPrice;
+
     const newProduct = [
       itemId,
       productData.Item_Name || '',
       productData.Category || 'General',
-      parseFloat(productData.Cost_Price) || 0,
-      parseFloat(productData.Selling_Price) || 0,
+      costPrice,
+      sellingPrice,
       parseFloat(productData.Current_Qty) || 0,
       parseFloat(productData.Reorder_Level) || 10,
       productData.Supplier || '',
@@ -248,8 +254,16 @@ function updateProduct(itemId, productData) {
     const updates = {};
     if (productData.Item_Name !== undefined) updates.Item_Name = productData.Item_Name;
     if (productData.Category !== undefined) updates.Category = productData.Category;
-    if (productData.Cost_Price !== undefined && productData.Cost_Price !== '') updates.Cost_Price = parseFloat(productData.Cost_Price);
-    if (productData.Selling_Price !== undefined && productData.Selling_Price !== '') updates.Selling_Price = parseFloat(productData.Selling_Price);
+
+    const hasCostPrice = productData.Cost_Price !== undefined && productData.Cost_Price !== '';
+    if (hasCostPrice) {
+      const costPrice = parseFloat(productData.Cost_Price);
+      updates.Cost_Price = costPrice;
+      updates.Selling_Price = costPrice;
+    } else if (productData.Selling_Price !== undefined && productData.Selling_Price !== '') {
+      updates.Selling_Price = parseFloat(productData.Selling_Price);
+    }
+
     if (productData.Reorder_Level !== undefined && productData.Reorder_Level !== '') updates.Reorder_Level = parseFloat(productData.Reorder_Level);
     if (productData.Supplier !== undefined) updates.Supplier = productData.Supplier;
 
