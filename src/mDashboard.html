@@ -2739,10 +2739,16 @@
       const container = document.getElementById('section-suppliers-list');
       if (!container) return;
 
-      const supplierTotals = data.reduce((totals, supplier) => {
+      const parseSupplierTotals = (supplier) => {
         const purchased = parseFloat(supplier.Total_Purchased || supplier['Total Purchased'] || 0) || 0;
         const paid = parseFloat(supplier.Total_Paid || supplier['Total Paid'] || 0) || 0;
         const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
+
+        return { purchased, paid, balance };
+      };
+
+      const supplierTotals = data.reduce((totals, supplier) => {
+        const { purchased, paid, balance } = parseSupplierTotals(supplier);
 
         totals.active += supplier.Status === 'Active' ? 1 : 0;
         totals.purchased += purchased;
@@ -2810,9 +2816,7 @@
         html += '<tr><td colspan="6" class="text-center text-muted py-4">No suppliers found</td></tr>';
       } else {
         data.slice(0, 50).forEach(function(supplier) {
-          const totalPurchased = parseFloat(supplier.Total_Purchased || supplier['Total Purchased'] || 0) || 0;
-          const totalPaid = parseFloat(supplier.Total_Paid || supplier['Total Paid'] || 0) || 0;
-          const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
+          const { purchased: totalPurchased, paid: totalPaid, balance } = parseSupplierTotals(supplier);
           const balanceClass = balance < 0 ? 'text-danger' : balance > 0 ? 'text-success' : '';
           const balanceText = balance < 0 ? 'Payable: ' + formatCurrency(Math.abs(balance)) :
                              balance > 0 ? 'Receivable: ' + formatCurrency(balance) : formatCurrency(0);

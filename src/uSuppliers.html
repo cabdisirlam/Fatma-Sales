@@ -516,11 +516,12 @@
         Status: document.getElementById('supplierStatus').value
       };
 
-      if (openingBalanceInput !== '') {
-        const openingBalanceValue = parseFloat(openingBalanceInput);
-        if (!isNaN(openingBalanceValue)) {
-          supplierData.Opening_Balance = openingBalanceValue;
-        }
+      const openingBalanceValue = parseFloat(openingBalanceInput);
+
+      if (openingBalanceInput === '') {
+        supplierData.Opening_Balance = 0;
+      } else if (!isNaN(openingBalanceValue)) {
+        supplierData.Opening_Balance = openingBalanceValue;
       }
 
       const onSuccess = function(result, actionText) {
