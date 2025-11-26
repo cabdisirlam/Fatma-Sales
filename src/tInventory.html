@@ -36,6 +36,25 @@
       opacity: 0.9;
     }
 
+    @media (max-width: 768px) {
+      .header-section {
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .header-section h2 {
+        font-size: 22px;
+      }
+
+      .header-section p {
+        font-size: 14px;
+      }
+
+      .filter-section .row > div {
+        margin-bottom: 10px;
+      }
+    }
+
     .card {
       border: none;
       border-radius: 15px;
@@ -77,6 +96,41 @@
       border-bottom: 2px solid #dee2e6;
       font-weight: 600;
       color: #2c3e50;
+      white-space: nowrap;
+    }
+
+    .table td {
+      vertical-align: middle;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Responsive adjustments for mobile */
+    @media (max-width: 768px) {
+      .table {
+        font-size: 14px;
+      }
+
+      .table th,
+      .table td {
+        padding: 8px 4px;
+      }
+
+      .btn-sm {
+        padding: 4px 8px;
+        font-size: 12px;
+      }
+
+      .stat-card {
+        margin-bottom: 15px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+      }
     }
 
     .badge {
@@ -254,6 +308,8 @@
         <i class="bi bi-inbox" style="font-size: 48px;"></i>
         <p class="mt-3">No inventory items found</p>
       </div>
+
+      <div id="errorMessage" style="display: none;"></div>
     </div>
   </div>
 
@@ -465,10 +521,14 @@
       document.getElementById('loadingIndicator').style.display = 'block';
       document.getElementById('inventoryTableContainer').style.display = 'none';
       document.getElementById('noDataMessage').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'none';
 
       google.script.run
         .withSuccessHandler(function(data) {
           try {
+            // Hide loading indicator first
+            document.getElementById('loadingIndicator').style.display = 'none';
+
             // Normalize the data to avoid runtime errors that leave the UI stuck on the loader
             inventoryData = Array.isArray(data) ? data : [];
 
@@ -481,23 +541,25 @@
           } catch (renderError) {
             console.error('Error rendering inventory data', renderError);
             showInventoryError('Error rendering inventory. Please try again.');
-            return;
-          } finally {
-            document.getElementById('loadingIndicator').style.display = 'none';
           }
         })
         .withFailureHandler(function(error) {
+          document.getElementById('loadingIndicator').style.display = 'none';
           showInventoryError('Error loading inventory: ' + (error && error.message ? error.message : error));
         })
         .getInventory({});
     }
 
     function showInventoryError(message) {
+      document.getElementById('loadingIndicator').style.display = 'none';
       document.getElementById('inventoryTableContainer').style.display = 'none';
       document.getElementById('noDataMessage').style.display = 'none';
-      document.getElementById('loadingIndicator').style.display = 'block';
-      document.getElementById('loadingIndicator').innerHTML =
-        '<div class="alert alert-danger">' + message + '</div>';
+
+      const errorDiv = document.getElementById('errorMessage');
+      if (errorDiv) {
+        errorDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ' + message + '</div>';
+        errorDiv.style.display = 'block';
+      }
     }
 
     function displayInventory(data) {
@@ -544,14 +606,14 @@
           <td>${getSupplierDisplayName(item.Supplier)}</td>
           <td>${lastUpdatedText}</td>
           <td>${updatedBy}</td>
-          <td>
-            <button class="btn btn-sm btn-success me-1" onclick="openRestock('${item.Item_ID}', '${item.Item_Name || ''}')" title="Add Stock">
-              <i class="bi bi-plus-lg"></i> Stock
+          <td style="white-space: nowrap;">
+            <button class="btn btn-sm btn-success me-1 mb-1" onclick="openRestock('${item.Item_ID}', '${item.Item_Name || ''}')" title="Add Stock">
+              <i class="bi bi-plus-lg"></i><span class="d-none d-md-inline"> Stock</span>
             </button>
-            <button class="btn btn-sm btn-primary me-1" onclick="openEdit('${item.Item_ID}')" title="Edit">
+            <button class="btn btn-sm btn-primary me-1 mb-1" onclick="openEdit('${item.Item_ID}')" title="Edit">
               <i class="bi bi-pencil"></i>
             </button>
-            <button class="btn btn-sm btn-danger" onclick="deleteProductConfirm('${item.Item_ID}', '${item.Item_Name}')" title="Delete">
+            <button class="btn btn-sm btn-danger mb-1" onclick="deleteProductConfirm('${item.Item_ID}', '${item.Item_Name}')" title="Delete">
               <i class="bi bi-trash"></i>
             </button>
           </td>
