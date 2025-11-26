@@ -648,67 +648,70 @@ function getDashboardHTML() {
 }
 
 /**
- * Gets all active users (for login dropdown)
+ * Gets all users (excluding PIN for security in the list view)
  */
 function getUsers() {
   try {
     const sheet = getSheet('Users');
     const data = sheet.getDataRange().getValues();
 
+    // If only headers exist, return empty list
     if (data.length <= 1) {
-      // No users exist, create default admin
-      createDefaultAdmin();
-      return getUsers(); // Recursive call after creating admin
+      return [];
     }
 
     const headers = data[0];
     const users = [];
 
+    // Map headers to find column indexes dynamically
+    const colMap = {};
+    headers.forEach((h, i) => colMap[h] = i);
+
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
-      const user = {};
-
-      headers.forEach((header, index) => {
-        if (header !== 'PIN') { // Don't send PIN
-          user[header] = row[index];
-        }
-      });
-
-      users.push(user);
+      // Only push if User_ID exists to avoid empty rows
+      if (row[colMap['User_ID']]) {
+        users.push({
+          User_ID: row[colMap['User_ID']],
+          Username: row[colMap['Username']],
+          Role: row[colMap['Role']],
+          Email: row[colMap['Email']],
+          Phone: row[colMap['Phone']],
+          Status: row[colMap['Status']],
+          // We generally don't send the PIN to the frontend list for security
+        });
+      }
     }
 
     return users;
 
   } catch (error) {
-    logError('getUsers', error);
+    Logger.log('getUsers Error: ' + error.message);
     throw new Error('Error loading users: ' + error.message);
   }
 }
 
 /**
- * Adds a new user with PIN validation
+ * Adds a new user with the specific headers provided
  */
 function addUser(userData) {
   try {
-    // Validate PIN is 4 digits
-    if (!userData.PIN || userData.PIN.toString().length !== CONFIG.PIN_LENGTH) {
-      throw new Error('PIN must be exactly ' + CONFIG.PIN_LENGTH + ' digits');
-    }
-
-    // Validate PIN is numeric
-    if (!/^\d{4}$/.test(userData.PIN.toString())) {
-      throw new Error('PIN must contain only numbers');
+    // Validate PIN
+    if (!userData.PIN || userData.PIN.toString().length !== 4) {
+      throw new Error('PIN must be exactly 4 digits');
     }
 
     const sheet = getSheet('Users');
-    const userId = generateId('Users', 'User_ID', 'USR');
-
+    const userId = generateId('Users', 'User_ID', 'USR'); // Ensure generateId exists in your utilities
+    
+    // Map data exactly to your headers: 
+    // User_ID, Username, PIN, Role, Email, Phone, Status, Created_Date
     const newUser = [
       userId,
-      userData.Username || '',
+      userData.Username,
       userData.PIN,
-      userData.Role || 'User',
-      userData.Email || '',
+      userData.Role,
+      userData.Email,
       userData.Phone || '',
       userData.Status || 'Active',
       new Date()
@@ -716,24 +719,13 @@ function addUser(userData) {
 
     sheet.appendRow(newUser);
 
-    logAudit(
-      userData.CreatedBy || 'SYSTEM',
-      'Users',
-      'Create',
-      'New user created: ' + userData.Username,
-      '',
-      '',
-      JSON.stringify(newUser)
-    );
-
     return {
       success: true,
-      userId: userId,
-      message: 'User created successfully'
+      message: 'User created successfully',
+      userId: userId
     };
-
   } catch (error) {
-    logError('addUser', error);
+    Logger.log('addUser Error: ' + error.message);
     throw new Error('Error adding user: ' + error.message);
   }
 }
