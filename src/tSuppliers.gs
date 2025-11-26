@@ -515,14 +515,31 @@ function recordSupplierPayment(supplierId, amount, paymentMethod, reference, not
     // Update account balance (decrease)
     updateAccountBalance(paymentMethod, -paymentAmount, user);
 
-    // Update supplier totals
-    updateSupplierPayment(supplierId, paymentAmount, user);
+    // Update supplier totals directly to allow overpayment
+    const oldBalance = parseFloat(supplier.Current_Balance) || 0;
+    const totalPaid = (parseFloat(supplier.Total_Paid) || 0) + paymentAmount;
+    const newSupplierBalance = oldBalance - paymentAmount;
+
+    updateRowById('Suppliers', 'Supplier_ID', supplierId, {
+      Total_Paid: totalPaid,
+      Current_Balance: newSupplierBalance
+    });
+
+    logAudit(
+      user,
+      'Suppliers',
+      'Payment',
+      'Payment made to ' + supplier.Supplier_Name + ': ' + formatCurrency(paymentAmount),
+      '',
+      'Balance: ' + oldBalance,
+      'Balance: ' + newSupplierBalance
+    );
 
     return {
       success: true,
       txnId: txnId,
       amount: paymentAmount,
-      newBalance: (parseFloat(supplier.Current_Balance) || 0) - paymentAmount,
+      newBalance: newSupplierBalance,
       message: 'Payment recorded successfully'
     };
 
