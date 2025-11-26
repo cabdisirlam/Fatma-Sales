@@ -15,6 +15,7 @@ const ALLOWED_SETTINGS_KEYS = [
   'Timezone',
   'System_Version',
   'Tax_Rate',
+  'Include_Shop_Logo',
   'Low_Stock_Threshold',
   'Receipt_Footer',
   'Receipt_Header',
