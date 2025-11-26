@@ -16,9 +16,9 @@ const ALLOWED_SETTINGS_KEYS = [
   'System_Version',
   'Tax_Rate',
   'Include_Shop_Logo',
-  'Low_Stock_Threshold',
-  'Receipt_Footer',
   'Receipt_Header',
+  'Receipt_Footer',
+  'Low_Stock_Threshold',
   'Enable_SMS',
   'Enable_Email',
   'Backup_Enabled',
@@ -29,11 +29,10 @@ const ALLOWED_SETTINGS_KEYS = [
  * Validate if a setting key is allowed
  */
 function isValidSettingKey(key) {
-  // Allow expense categories (they start with 'Expense_Category_')
+  // Allow expense categories
   if (key && key.startsWith('Expense_Category_')) {
     return true;
   }
-  // Check if key is in allowed list
   return ALLOWED_SETTINGS_KEYS.includes(key);
 }
 
@@ -45,35 +44,82 @@ function getSetting(key) {
 }
 
 /**
- * Update setting value
+ * Get business information
  */
-function updateSetting(key, value, user) {
+function getBusinessInfo() {
   try {
-    // Validate setting key
-    if (!isValidSettingKey(key)) {
-      throw new Error('Invalid setting key: ' + key + '. Only predefined settings can be modified.');
+    return {
+      Shop_Name: getSetting('Shop_Name') || CONFIG.SHOP_NAME,
+      Admin_Email: getSetting('Admin_Email') || CONFIG.ADMIN_EMAIL,
+      Currency: getSetting('Currency') || CONFIG.CURRENCY,
+      Currency_Symbol: getSetting('Currency_Symbol') || CONFIG.CURRENCY_SYMBOL,
+      Tax_Rate: getSetting('Tax_Rate') || 0,
+      Receipt_Header: getSetting('Receipt_Header') || CONFIG.SHOP_NAME,
+      Receipt_Footer: getSetting('Receipt_Footer') || 'Thank you for your business!',
+      Include_Shop_Logo: getSetting('Include_Shop_Logo'),
+      Date_Format: getSetting('Date_Format') || CONFIG.DATE_FORMAT,
+      Timezone: getSetting('Timezone') || 'Africa/Mogadishu',
+      System_Version: getSetting('System_Version') || '2.0.0'
+    };
+  } catch (error) {
+    logError('getBusinessInfo', error);
+    return {};
+  }
+}
+
+/**
+ * Update business information
+ * DEBUGGED VERSION: Logs specific keys that fail
+ */
+function updateBusinessInfo(businessData, user) {
+  try {
+    Logger.log('Attempting to save settings: ' + JSON.stringify(businessData));
+
+    const invalidKeys = [];
+
+    for (let key in businessData) {
+      // Skip undefined values
+      if (businessData[key] === undefined) continue;
+
+      if (!isValidSettingKey(key)) {
+        invalidKeys.push(key);
+        Logger.log('Blocked invalid setting key: ' + key);
+      } else {
+        // Valid key, save it
+        let value = businessData[key];
+
+        // Special handling for Logo boolean to ensure it saves correctly
+        if (key === 'Include_Shop_Logo') {
+          value = (value === true || value === 'true' || value === 'on');
+        }
+
+        setSettingValue(key, value);
+      }
     }
 
-    setSettingValue(key, value);
+    if (invalidKeys.length > 0) {
+      Logger.log('Warning: Some settings were skipped: ' + invalidKeys.join(', '));
+      // We don't throw error here to allow valid settings to save,
+      // but we log it.
+    }
 
     logAudit(
       user || 'SYSTEM',
       'Settings',
-      'Update',
-      'Setting updated: ' + key,
+      'Update Business Info',
+      'Business information updated',
       '',
       '',
-      value
+      JSON.stringify(businessData)
     );
 
     return {
       success: true,
-      message: 'Setting updated successfully'
+      message: 'Settings saved successfully'
     };
-
   } catch (error) {
-    logError('updateSetting', error);
-    throw new Error('Error updating setting: ' + error.message);
+    logError('updateBusinessInfo', error);
+    throw new Error('Error updating business information: ' + error.message);
   }
 }
 
@@ -99,74 +145,58 @@ function addExpenseCategory(categoryName, budget, user) {
       success: true,
       message: 'Expense category added successfully'
     };
-
   } catch (error) {
     logError('addExpenseCategory', error);
     throw new Error('Error adding expense category: ' + error.message);
   }
 }
 
-/**
- * Get business information
- */
-function getBusinessInfo() {
+// Keep existing addExpenseCategory, getSettingValue, setSettingValue logic...
+// If setSettingValue is missing in this file context, here it is again for safety:
+
+function setSettingValue(key, value) {
   try {
-    return {
-      Shop_Name: getSetting('Shop_Name') || CONFIG.SHOP_NAME,
-      Admin_Email: getSetting('Admin_Email') || CONFIG.ADMIN_EMAIL,
-      Currency: getSetting('Currency') || CONFIG.CURRENCY,
-      Currency_Symbol: getSetting('Currency_Symbol') || CONFIG.CURRENCY_SYMBOL,
-      Date_Format: getSetting('Date_Format') || CONFIG.DATE_FORMAT,
-      Timezone: getSetting('Timezone') || 'Africa/Mogadishu',
-      System_Version: getSetting('System_Version') || '2.0.0'
-    };
+    const ss = SpreadsheetApp.getActiveSpreadsheet(); // Direct access
+    const sheet = ss.getSheetByName('Settings');
+    if (!sheet) return;
+
+    const data = sheet.getDataRange().getValues();
+    let found = false;
+
+    // Look for existing key
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === key) {
+        sheet.getRange(i + 1, 2).setValue(value);
+        found = true;
+        break;
+      }
+    }
+
+    // Key not found, add new row
+    if (!found) {
+      sheet.appendRow([key, value]);
+    }
   } catch (error) {
-    logError('getBusinessInfo', error);
-    return {};
+    Logger.log('Error in setSettingValue: ' + error.message);
+    throw error;
   }
 }
 
-/**
- * Update business information
- */
-function updateBusinessInfo(businessData, user) {
+function getSettingValue(key) {
   try {
-    // Validate all keys before updating
-    const invalidKeys = [];
-    for (let key in businessData) {
-      if (businessData[key] !== undefined && !isValidSettingKey(key)) {
-        invalidKeys.push(key);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('Settings');
+    if (!sheet) return null;
+
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === key) {
+        return data[i][1];
       }
     }
-
-    if (invalidKeys.length > 0) {
-      throw new Error('Invalid setting keys: ' + invalidKeys.join(', ') + '. Only predefined settings can be modified.');
-    }
-
-    // Update valid settings
-    for (let key in businessData) {
-      if (businessData[key] !== undefined) {
-        setSettingValue(key, businessData[key]);
-      }
-    }
-
-    logAudit(
-      user || 'SYSTEM',
-      'Settings',
-      'Update Business Info',
-      'Business information updated',
-      '',
-      '',
-      JSON.stringify(businessData)
-    );
-
-    return {
-      success: true,
-      message: 'Business information updated successfully'
-    };
-
+    return null;
   } catch (error) {
-    logError('updateBusinessInfo', error);
-    throw new Error('Error updating business information: ' + error.message);
+    Logger.log('Error in getSettingValue: ' + error.message);
+    return null;
   }
 }

@@ -1,15 +1,15 @@
 /**
- * Fatma Sales Management System
+ * Fatma Sales Management System (Beipoa Kenya)
  * Configuration File
  */
 
 const CONFIG = {
   // Shop Information
-  SHOP_NAME: 'Fatma Sales',
+  SHOP_NAME: 'Beipoa Kenya',
   ADMIN_EMAIL: 'cabdisirlam@gmail.com',
 
   // Workbook Configuration
-  WORKBOOK_NAME: 'Fatma System',
+  WORKBOOK_NAME: 'Beipoa System',
 
   // Sheet Names - Reorganized to 9 sheets for simplified management
   SHEETS: {
@@ -38,7 +38,7 @@ const CONFIG = {
 
   // Currency
   CURRENCY: 'KES',
-  CURRENCY_SYMBOL: 'KES',
+  CURRENCY_SYMBOL: 'Ksh',
 
   // Authentication
   PIN_LENGTH: 4,
