@@ -3184,42 +3184,42 @@
 
       let html = `
         <!-- Action Buttons Row -->
-        <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-primary btn-sm" onclick="showSection('suppliers-add')">
-            <i class="bi bi-plus-circle"></i> Add
-          </button>
-
-          <!-- Edit Button with Dropdown -->
-          <div class="btn-group">
-            <button type="button" class="btn btn-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-pencil"></i> Edit
+        <div class="mb-3">
+          <!-- Add Button -->
+          <div class="mb-2">
+            <button class="btn btn-primary btn-sm" onclick="showSection('suppliers-add')">
+              <i class="bi bi-plus-circle"></i> Add
             </button>
-            <ul class="dropdown-menu supplier-dropdown-menu">
-              <li><h6 class="dropdown-header">Select Supplier to Edit</h6></li>
-              <li><hr class="dropdown-divider"></li>
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadSuppliersList()">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
+
+          <!-- Edit Supplier Row -->
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <select class="form-select form-select-sm" id="editSupplierSelect" style="max-width: 300px;" onchange="showEditButton()">
+              <option value="">-- Select Supplier to Edit --</option>
               ${(() => {
                 const activeSuppliers = data.filter(s => s.Status === 'Active');
                 if (activeSuppliers.length === 0) {
-                  return '<li><span class="dropdown-item text-muted">No active suppliers</span></li>';
+                  return '<option value="" disabled>No active suppliers</option>';
                 }
                 return activeSuppliers.map(supplier => `
-                  <li><a class="dropdown-item" href="#" onclick="dashboardEditSupplier('${supplier.Supplier_ID}'); return false;">
-                    <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
-                    <small class="text-muted">${supplier.Supplier_ID}</small>
-                  </a></li>
+                  <option value="${supplier.Supplier_ID}">
+                    ${supplier.Supplier_Name || supplier.Name} (${supplier.Supplier_ID})
+                  </option>
                 `).join('');
               })()}
-            </ul>
+            </select>
+            <button class="btn btn-warning btn-sm" id="editActionBtn" style="display: none;" onclick="executeEditSupplier()">
+              <i class="bi bi-pencil"></i> Edit
+            </button>
           </div>
 
-          <!-- Pay Button with Dropdown -->
-          <div class="btn-group">
-            <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-cash"></i> Pay
-            </button>
-            <ul class="dropdown-menu supplier-dropdown-menu">
-              <li><h6 class="dropdown-header">Select Supplier to Pay</h6></li>
-              <li><hr class="dropdown-divider"></li>
+          <!-- Pay Supplier Row -->
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <select class="form-select form-select-sm" id="paySupplierSelect" style="max-width: 300px;" onchange="showPayButton()">
+              <option value="">-- Select Supplier to Pay --</option>
               ${(() => {
                 const payableSuppliers = data.filter(s => {
                   const balance = parseFloat(s.Current_Balance || s['Current Balance'] || s.Balance || 0) || 0;
@@ -3227,48 +3227,44 @@
                 });
 
                 if (payableSuppliers.length === 0) {
-                  return '<li><span class="dropdown-item text-muted">No suppliers with payable balance</span></li>';
+                  return '<option value="" disabled>No suppliers with payable balance</option>';
                 }
 
                 return payableSuppliers.map(supplier => {
                   const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
                   return `
-                    <li><a class="dropdown-item" href="#" onclick="dashboardMakePayment('${supplier.Supplier_ID}'); return false;">
-                      <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
-                      <small class="text-danger">Balance: ${formatCurrency(balance)}</small>
-                    </a></li>
+                    <option value="${supplier.Supplier_ID}">
+                      ${supplier.Supplier_Name || supplier.Name} - Balance: ${formatCurrency(balance)}
+                    </option>
                   `;
                 }).join('');
               })()}
-            </ul>
+            </select>
+            <button class="btn btn-success btn-sm" id="payActionBtn" style="display: none;" onclick="executePaySupplier()">
+              <i class="bi bi-cash"></i> Pay
+            </button>
           </div>
 
-          <!-- Statement Button with Dropdown -->
-          <div class="btn-group">
-            <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-file-text"></i> Statement
-            </button>
-            <ul class="dropdown-menu supplier-dropdown-menu">
-              <li><h6 class="dropdown-header">Select Supplier for Statement</h6></li>
-              <li><hr class="dropdown-divider"></li>
+          <!-- Statement Supplier Row -->
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <select class="form-select form-select-sm" id="statementSupplierSelect" style="max-width: 300px;" onchange="showStatementButton()">
+              <option value="">-- Select Supplier for Statement --</option>
               ${(() => {
                 const activeSuppliers = data.filter(s => s.Status === 'Active');
                 if (activeSuppliers.length === 0) {
-                  return '<li><span class="dropdown-item text-muted">No active suppliers</span></li>';
+                  return '<option value="" disabled>No active suppliers</option>';
                 }
                 return activeSuppliers.map(supplier => `
-                  <li><a class="dropdown-item" href="#" onclick="dashboardViewStatement('${supplier.Supplier_ID}'); return false;">
-                    <strong>${supplier.Supplier_Name || supplier.Name}</strong><br>
-                    <small class="text-muted">${supplier.Supplier_ID}</small>
-                  </a></li>
+                  <option value="${supplier.Supplier_ID}">
+                    ${supplier.Supplier_Name || supplier.Name} (${supplier.Supplier_ID})
+                  </option>
                 `).join('');
               })()}
-            </ul>
+            </select>
+            <button class="btn btn-info btn-sm" id="statementActionBtn" style="display: none;" onclick="executeViewStatement()">
+              <i class="bi bi-file-text"></i> Statement
+            </button>
           </div>
-
-          <button class="btn btn-outline-secondary btn-sm" onclick="loadSuppliersList()">
-            <i class="bi bi-arrow-clockwise"></i> Refresh
-          </button>
         </div>
 
         <!-- Compact Summary Cards -->
@@ -3380,6 +3376,62 @@
       const submitBtn = document.getElementById('submitPaymentBtn');
       submitBtn.disabled = false;
       submitBtn.innerHTML = '<i class="bi bi-credit-card"></i> Submit Payment';
+    }
+
+    // Dropdown selection handlers - show action buttons when supplier is selected
+    function showEditButton() {
+      const select = document.getElementById('editSupplierSelect');
+      const button = document.getElementById('editActionBtn');
+      if (select && button) {
+        button.style.display = select.value ? 'inline-block' : 'none';
+      }
+    }
+
+    function showPayButton() {
+      const select = document.getElementById('paySupplierSelect');
+      const button = document.getElementById('payActionBtn');
+      if (select && button) {
+        button.style.display = select.value ? 'inline-block' : 'none';
+      }
+    }
+
+    function showStatementButton() {
+      const select = document.getElementById('statementSupplierSelect');
+      const button = document.getElementById('statementActionBtn');
+      if (select && button) {
+        button.style.display = select.value ? 'inline-block' : 'none';
+      }
+    }
+
+    // Execute actions - called when action buttons are clicked
+    function executeEditSupplier() {
+      const select = document.getElementById('editSupplierSelect');
+      if (select && select.value) {
+        dashboardEditSupplier(select.value);
+        // Reset dropdown after action
+        select.value = '';
+        showEditButton();
+      }
+    }
+
+    function executePaySupplier() {
+      const select = document.getElementById('paySupplierSelect');
+      if (select && select.value) {
+        dashboardMakePayment(select.value);
+        // Reset dropdown after action
+        select.value = '';
+        showPayButton();
+      }
+    }
+
+    function executeViewStatement() {
+      const select = document.getElementById('statementSupplierSelect');
+      if (select && select.value) {
+        dashboardViewStatement(select.value);
+        // Reset dropdown after action
+        select.value = '';
+        showStatementButton();
+      }
     }
 
     // Edit Supplier
