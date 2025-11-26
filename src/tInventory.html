@@ -468,16 +468,36 @@
 
       google.script.run
         .withSuccessHandler(function(data) {
-          inventoryData = data;
-          displayInventory(data);
-          updateStats(data);
-          document.getElementById('loadingIndicator').style.display = 'none';
+          try {
+            // Normalize the data to avoid runtime errors that leave the UI stuck on the loader
+            inventoryData = Array.isArray(data) ? data : [];
+
+            if (!Array.isArray(data)) {
+              console.error('Unexpected inventory payload received', data);
+            }
+
+            displayInventory(inventoryData);
+            updateStats(inventoryData);
+          } catch (renderError) {
+            console.error('Error rendering inventory data', renderError);
+            showInventoryError('Error rendering inventory. Please try again.');
+            return;
+          } finally {
+            document.getElementById('loadingIndicator').style.display = 'none';
+          }
         })
         .withFailureHandler(function(error) {
-          document.getElementById('loadingIndicator').innerHTML =
-            '<div class="alert alert-danger">Error loading inventory: ' + error.message + '</div>';
+          showInventoryError('Error loading inventory: ' + (error && error.message ? error.message : error));
         })
         .getInventory({});
+    }
+
+    function showInventoryError(message) {
+      document.getElementById('inventoryTableContainer').style.display = 'none';
+      document.getElementById('noDataMessage').style.display = 'none';
+      document.getElementById('loadingIndicator').style.display = 'block';
+      document.getElementById('loadingIndicator').innerHTML =
+        '<div class="alert alert-danger">' + message + '</div>';
     }
 
     function displayInventory(data) {
@@ -662,7 +682,7 @@
       const categoryFilter = document.getElementById('categoryFilter').value;
       const stockFilter = document.getElementById('stockFilter').value;
 
-      const filtered = inventoryData.filter(function(item) {
+      const filtered = (Array.isArray(inventoryData) ? inventoryData : []).filter(function(item) {
         const matchesSearch = !searchTerm ||
           (item.Item_Name && item.Item_Name.toLowerCase().includes(searchTerm)) ||
           (item.Item_ID && item.Item_ID.toLowerCase().includes(searchTerm));
