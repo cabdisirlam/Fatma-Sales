@@ -158,79 +158,31 @@ function getProductCategories() {
  */
 function addProduct(productData) {
   try {
+    // 1. Validation (Matches your form inputs)
     validateRequired(productData, ['Item_Name', 'Cost_Price', 'Current_Qty', 'Supplier']);
-
-    // Validate that the supplier exists (check if it's a valid Supplier_ID or Name)
-    try {
-      const supplierValue = productData.Supplier;
-      let supplierExists = false;
-
-      // Check if it's a Supplier_ID (format: SUP-XXX)
-      if (supplierValue.startsWith('SUP-')) {
-        try {
-          getSupplierById(supplierValue);
-          supplierExists = true;
-        } catch (e) {
-          // Not a valid ID, try searching by name
-        }
-      }
-
-      // If not found by ID, search by name
-      if (!supplierExists) {
-        const searchResults = searchSuppliers(supplierValue);
-        if (searchResults && searchResults.length > 0) {
-          supplierExists = true;
-          // Use the first matching supplier's ID for consistency
-          productData.Supplier = searchResults[0].Supplier_ID;
-        }
-      }
-
-      if (!supplierExists) {
-        throw new Error('Supplier "' + supplierValue + '" not found. Please add the supplier first or use an existing supplier ID.');
-      }
-    } catch (validationError) {
-      throw new Error('Supplier validation failed: ' + validationError.message);
-    }
 
     const sheet = getSheet('Inventory');
     const itemId = generateId('Inventory', 'Item_ID', 'ITEM');
 
-    const costPrice = parseFloat(productData.Cost_Price) || 0;
-    const sellingPrice =
-      productData.Selling_Price !== undefined && productData.Selling_Price !== ''
-        ? parseFloat(productData.Selling_Price) || 0
-        : costPrice;
-
+    // 2. HARD-CODED MAPPING (Matches your Header String Exactly)
+    // Headers: Item_ID, Item_Name, Category, Cost_Price, Selling_Price, Current_Qty, Reorder_Level, Supplier, Last_Updated, Updated_By
     const newProduct = [
-      itemId,
-      productData.Item_Name || '',
-      productData.Category || 'General',
-      costPrice,
-      sellingPrice,
-      parseFloat(productData.Current_Qty) || 0,
-      parseFloat(productData.Reorder_Level) || 10,
-      productData.Supplier || '',
-      new Date(),
-      productData.User || 'SYSTEM'
+      itemId,                                  // 1. Item_ID
+      productData.Item_Name || '',             // 2. Item_Name
+      productData.Category || 'General',       // 3. Category
+      parseFloat(productData.Cost_Price) || 0, // 4. Cost_Price
+      0,                                       // 5. Selling_Price (HIDDEN/UNUSED but kept for column alignment)
+      parseFloat(productData.Current_Qty) || 0,// 6. Current_Qty
+      parseFloat(productData.Reorder_Level)||10,// 7. Reorder_Level
+      productData.Supplier || '',              // 8. Supplier
+      new Date(),                              // 9. Last_Updated
+      productData.User || 'SYSTEM'             // 10. Updated_By
     ];
 
     sheet.appendRow(newProduct);
 
-    logAudit(
-      productData.User || 'SYSTEM',
-      'Inventory',
-      'Create',
-      'New product added: ' + productData.Item_Name + ' (ID: ' + itemId + ')',
-      '',
-      '',
-      JSON.stringify(newProduct)
-    );
-
-    return {
-      success: true,
-      itemId: itemId,
-      message: 'Product added successfully'
-    };
+    logAudit(productData.User || 'SYSTEM', 'Inventory', 'Create', 'Added: ' + productData.Item_Name, '', '', JSON.stringify(newProduct));
+    return { success: true, itemId: itemId, message: 'Product added successfully' };
 
   } catch (error) {
     logError('addProduct', error);
