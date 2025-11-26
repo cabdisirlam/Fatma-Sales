@@ -248,9 +248,9 @@ function updateProduct(itemId, productData) {
     const updates = {};
     if (productData.Item_Name !== undefined) updates.Item_Name = productData.Item_Name;
     if (productData.Category !== undefined) updates.Category = productData.Category;
-    if (productData.Cost_Price !== undefined) updates.Cost_Price = parseFloat(productData.Cost_Price);
-    if (productData.Selling_Price !== undefined) updates.Selling_Price = parseFloat(productData.Selling_Price);
-    if (productData.Reorder_Level !== undefined) updates.Reorder_Level = parseFloat(productData.Reorder_Level);
+    if (productData.Cost_Price !== undefined && productData.Cost_Price !== '') updates.Cost_Price = parseFloat(productData.Cost_Price);
+    if (productData.Selling_Price !== undefined && productData.Selling_Price !== '') updates.Selling_Price = parseFloat(productData.Selling_Price);
+    if (productData.Reorder_Level !== undefined && productData.Reorder_Level !== '') updates.Reorder_Level = parseFloat(productData.Reorder_Level);
     if (productData.Supplier !== undefined) updates.Supplier = productData.Supplier;
 
     // Always update Last_Updated and Updated_By

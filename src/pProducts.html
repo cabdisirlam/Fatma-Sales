@@ -234,12 +234,13 @@
                 <th>Item ID</th>
                 <th>Item Name</th>
                 <th>Category</th>
-                <th>Stock Qty</th>
-                <th>Unit</th>
                 <th>Cost Price</th>
                 <th>Selling Price</th>
+                <th>Current Qty</th>
                 <th>Reorder Level</th>
-                <th>Status</th>
+                <th>Supplier</th>
+                <th>Last Updated</th>
+                <th>Updated By</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -438,16 +439,21 @@
           statusBadge = '<span class="badge bg-success">In Stock</span>';
         }
 
+        const lastUpdated = item.Last_Updated ? new Date(item.Last_Updated) : null;
+        const lastUpdatedText = lastUpdated ? lastUpdated.toLocaleString() : '-';
+        const updatedBy = item.Updated_By || '-';
+
         row.innerHTML = `
           <td>${item.Item_ID || ''}</td>
           <td><strong>${item.Item_Name || ''}</strong></td>
           <td>${item.Category || ''}</td>
-          <td class="${stockStatus}">${stockQty}</td>
-          <td>${item.Unit || ''}</td>
           <td>$${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
           <td>$${parseFloat(item.Selling_Price || 0).toFixed(2)}</td>
+          <td class="${stockStatus}">${stockQty} ${statusBadge}</td>
           <td>${item.Reorder_Level || 10}</td>
-          <td>${statusBadge}</td>
+          <td>${item.Supplier || '-'}</td>
+          <td>${lastUpdatedText}</td>
+          <td>${updatedBy}</td>
           <td>
             <button class="btn btn-sm btn-primary" onclick="openEdit('${item.Item_ID}')">
               <i class="bi bi-pencil"></i> Edit
