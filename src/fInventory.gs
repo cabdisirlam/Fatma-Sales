@@ -160,6 +160,38 @@ function addProduct(productData) {
   try {
     validateRequired(productData, ['Item_Name', 'Cost_Price', 'Current_Qty', 'Supplier']);
 
+    // Validate that the supplier exists (check if it's a valid Supplier_ID or Name)
+    try {
+      const supplierValue = productData.Supplier;
+      let supplierExists = false;
+
+      // Check if it's a Supplier_ID (format: SUP-XXX)
+      if (supplierValue.startsWith('SUP-')) {
+        try {
+          getSupplierById(supplierValue);
+          supplierExists = true;
+        } catch (e) {
+          // Not a valid ID, try searching by name
+        }
+      }
+
+      // If not found by ID, search by name
+      if (!supplierExists) {
+        const searchResults = searchSuppliers(supplierValue);
+        if (searchResults && searchResults.length > 0) {
+          supplierExists = true;
+          // Use the first matching supplier's ID for consistency
+          productData.Supplier = searchResults[0].Supplier_ID;
+        }
+      }
+
+      if (!supplierExists) {
+        throw new Error('Supplier "' + supplierValue + '" not found. Please add the supplier first or use an existing supplier ID.');
+      }
+    } catch (validationError) {
+      throw new Error('Supplier validation failed: ' + validationError.message);
+    }
+
     const sheet = getSheet('Inventory');
     const itemId = generateId('Inventory', 'Item_ID', 'ITEM');
 

@@ -297,7 +297,10 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Supplier *</label>
-              <input type="text" class="form-control" name="Supplier" placeholder="Supplier name or ID" required>
+              <select class="form-select" name="Supplier" id="supplierSelect" required>
+                <option value="">Select Supplier</option>
+              </select>
+              <div class="form-text">Only active suppliers are shown</div>
             </div>
           </form>
           <div id="addProductAlert" class="alert mt-3" style="display: none;"></div>
@@ -348,7 +351,9 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label">Supplier *</label>
-                <input type="text" class="form-control" id="editSupplier" name="Supplier" required>
+                <select class="form-select" id="editSupplier" name="Supplier" required>
+                  <option value="">Select Supplier</option>
+                </select>
               </div>
             </div>
           </form>
@@ -370,6 +375,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       loadInventory();
       loadCategories();
+      loadSuppliers();
     });
 
     // Search functionality
@@ -499,6 +505,35 @@
           console.error('Error loading categories:', error);
         })
         .getInventory({});
+    }
+
+    function loadSuppliers() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          const supplierSelect = document.getElementById('supplierSelect');
+          const editSupplierSelect = document.getElementById('editSupplier');
+
+          // Filter only active suppliers
+          const activeSuppliers = data.filter(s => s.Status === 'Active');
+
+          activeSuppliers.forEach(function(supplier) {
+            // Add to Add Product modal dropdown
+            const option1 = document.createElement('option');
+            option1.value = supplier.Supplier_ID;
+            option1.textContent = supplier.Supplier_Name + ' (' + supplier.Supplier_ID + ')';
+            supplierSelect.appendChild(option1);
+
+            // Add to Edit Product modal dropdown
+            const option2 = document.createElement('option');
+            option2.value = supplier.Supplier_ID;
+            option2.textContent = supplier.Supplier_Name + ' (' + supplier.Supplier_ID + ')';
+            editSupplierSelect.appendChild(option2);
+          });
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading suppliers:', error);
+        })
+        .getSuppliers({Status: 'Active'});
     }
 
     function filterInventory() {

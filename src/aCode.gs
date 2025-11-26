@@ -14,7 +14,17 @@ function doGet(e) {
   try {
     const viewName = e?.parameter?.view;
     const viewRoutes = {
-      newSale: { htmlFile: 'oNewSale', title: 'New Sale' }
+      newSale: { htmlFile: 'oNewSale', title: 'New Sale' },
+      suppliers: { htmlFile: 'uSuppliers', title: 'Suppliers' },
+      inventory: { htmlFile: 'pProducts', title: 'Inventory' },
+      products: { htmlFile: 'pProducts', title: 'Products' },
+      customers: { htmlFile: 'lCustomers', title: 'Customers' },
+      users: { htmlFile: 'sUserManagement', title: 'User Management' },
+      dashboard: { htmlFile: 'mDashboard', title: 'Dashboard' },
+      reports: { htmlFile: 'qReports', title: 'Reports' },
+      quotations: { htmlFile: 'xQuotations', title: 'Quotations' },
+      settings: { htmlFile: 'rSettings', title: 'Settings' },
+      financials: { htmlFile: 'vFinancials', title: 'Financials' }
     };
     const defaultRoute = { htmlFile: 'nIndex', title: 'Fatma System' };
     const { htmlFile, title } = viewRoutes[viewName] || defaultRoute;
