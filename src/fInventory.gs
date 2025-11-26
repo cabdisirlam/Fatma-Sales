@@ -3,6 +3,9 @@
  * Handles: Product catalog, stock tracking, stock adjustments, low stock alerts
  */
 
+// Cache key for inventory list (used when no filters are applied)
+const INVENTORY_CACHE_KEY = 'inventory_cache_all';
+
 // =====================================================
 // INVENTORY FUNCTIONS
 // =====================================================
@@ -12,6 +15,20 @@
  */
 function getInventory(filters) {
   try {
+    const useCache = !filters || Object.keys(filters).length === 0;
+
+    if (useCache) {
+      try {
+        const cache = CacheService.getScriptCache();
+        const cached = cache.get(INVENTORY_CACHE_KEY);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch (cacheError) {
+        logError('getInventoryCache', cacheError);
+      }
+    }
+
     const sheet = getSheet('Inventory');
     const data = sheet.getDataRange().getValues();
 
@@ -55,11 +72,30 @@ function getInventory(filters) {
       items.push(item);
     }
 
+    if (useCache) {
+      try {
+        CacheService.getScriptCache().put(INVENTORY_CACHE_KEY, JSON.stringify(items), 300);
+      } catch (cacheError) {
+        logError('setInventoryCache', cacheError);
+      }
+    }
+
     return items;
 
   } catch (error) {
     logError('getInventory', error);
     throw new Error('Error loading inventory: ' + error.message);
+  }
+}
+
+/**
+ * Clear cached inventory data
+ */
+function clearInventoryCache() {
+  try {
+    CacheService.getScriptCache().remove(INVENTORY_CACHE_KEY);
+  } catch (error) {
+    logError('clearInventoryCache', error);
   }
 }
 
@@ -187,6 +223,7 @@ function addProduct(productData) {
     sheet.appendRow(newProduct);
 
     logAudit(productData.User || 'SYSTEM', 'Inventory', 'Create', 'Added: ' + productData.Item_Name, '', '', JSON.stringify(newProduct));
+    clearInventoryCache();
     return { success: true, itemId: itemId, message: 'Product added successfully' };
 
   } catch (error) {
@@ -241,6 +278,8 @@ function updateProduct(itemId, productData) {
       result.afterValue
     );
 
+    clearInventoryCache();
+
     return {
       success: true,
       message: 'Product updated successfully'
@@ -283,6 +322,8 @@ function deleteProduct(itemId, user) {
           JSON.stringify(item),
           ''
         );
+
+        clearInventoryCache();
 
         return {
           success: true,
@@ -343,6 +384,8 @@ function adjustStock(itemId, adjustmentQty, reason, user) {
       'Qty: ' + newQty
     );
 
+    clearInventoryCache();
+
     return {
       success: true,
       itemId: itemId,
@@ -376,6 +419,8 @@ function decreaseStock(itemId, qty, user) {
       Updated_By: user || 'SYSTEM'
     });
 
+    clearInventoryCache();
+
     return {
       success: true,
       oldQty: currentQty,
@@ -402,6 +447,8 @@ function increaseStock(itemId, qty, user) {
       Last_Updated: new Date(),
       Updated_By: user || 'SYSTEM'
     });
+
+    clearInventoryCache();
 
     return {
       success: true,
