@@ -462,6 +462,80 @@ function getSuppliersWithDebt() {
 }
 
 /**
+ * Record a direct payment to supplier (not linked to specific purchase)
+ */
+function recordSupplierPayment(supplierId, amount, paymentMethod, reference, notes, user) {
+  try {
+    validateRequired({supplierId, amount, paymentMethod, user}, ['supplierId', 'amount', 'paymentMethod', 'user']);
+
+    const supplier = getSupplierById(supplierId);
+    const paymentAmount = parseFloat(amount);
+
+    if (paymentAmount <= 0) {
+      throw new Error('Payment amount must be greater than zero');
+    }
+
+    const currentBalance = parseFloat(supplier.Current_Balance) || 0;
+    if (paymentAmount > currentBalance) {
+      // Allow overpayment but warn
+      Logger.log('Warning: Payment amount exceeds current balance');
+    }
+
+    // Create transaction in Financials sheet
+    const txnId = generateId('Financials', 'Transaction_ID', 'SPY');
+    const sheet = getSheet('Financials');
+
+    const description = 'Payment to ' + supplier.Supplier_Name +
+                       (notes ? ' - ' + notes : '') +
+                       (reference ? ' [Ref: ' + reference + ']' : '');
+
+    const txnRow = [
+      txnId,
+      new Date(),
+      'Supplier_Payment',
+      '', // Customer_ID (not applicable)
+      'Purchases',
+      paymentMethod, // Account (Cash/M-Pesa/Equity Bank)
+      description,
+      paymentAmount,
+      paymentAmount, // Debit (money out)
+      0, // Credit
+      0, // Balance (calculated separately)
+      paymentMethod,
+      supplierId, // Payee
+      reference || '', // Receipt_No
+      'Supplier: ' + supplierId, // Reference (for filtering)
+      'Approved',
+      user,
+      user
+    ];
+
+    sheet.appendRow(txnRow);
+
+    // Update account balance (decrease)
+    updateAccountBalance(paymentMethod, -paymentAmount, user);
+
+    // Update supplier totals
+    updateSupplierPayment(supplierId, paymentAmount, user);
+
+    return {
+      success: true,
+      txnId: txnId,
+      amount: paymentAmount,
+      newBalance: (parseFloat(supplier.Current_Balance) || 0) - paymentAmount,
+      message: 'Payment recorded successfully'
+    };
+
+  } catch (error) {
+    logError('recordSupplierPayment', error);
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+}
+
+/**
  * Get supplier statement (purchases + payments)
  */
 function getSupplierStatement(supplierId, startDate, endDate) {
