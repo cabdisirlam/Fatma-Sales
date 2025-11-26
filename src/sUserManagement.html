@@ -512,7 +512,7 @@
             <td>${user.Phone || 'N/A'}</td>
             <td>${roleBadge}</td>
             <td>${statusBadge}</td>
-            <td>${user.Created_Date ? new Date(user.Created_Date).toLocaleDateString() : 'N/A'}</td>
+            <td>${user.Created_Date ? new Date(user.Created_Date).toLocaleDateString() : '-'}</td>
             <td>
               <div class="action-buttons">
                 <button class="btn btn-sm btn-warning" onclick='editUser(${JSON.stringify(user)})' title="Edit User">
