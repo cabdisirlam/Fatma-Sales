@@ -1,15 +1,15 @@
 /**
- * Fatma Sales Management System (Beipoa Kenya)
+ * Fatma Sales Management System (Keipoa Kenya)
  * Configuration File
  */
 
 const CONFIG = {
   // Shop Information
-  SHOP_NAME: 'Beipoa Kenya',
+  SHOP_NAME: 'Keipoa Kenya',
   ADMIN_EMAIL: 'cabdisirlam@gmail.com',
 
   // Workbook Configuration
-  WORKBOOK_NAME: 'Beipoa System',
+  WORKBOOK_NAME: 'Keipoa System',
 
   // Sheet Names - Reorganized to 9 sheets for simplified management
   SHEETS: {

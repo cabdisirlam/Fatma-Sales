@@ -716,8 +716,8 @@ function createSettingsSheet() {
     ['Use_Token_Auth', CONFIG.USE_TOKEN_AUTH],
     ['System_Version', '2.0.0'],
     ['Include_Shop_Logo', false],
-    ['Receipt_Header', 'Beipoa Kenya'],
-    ['Receipt_Footer', 'Thank you for shopping with Beipoa Kenya!'],
+    ['Receipt_Header', 'Keipoa Kenya'],
+    ['Receipt_Footer', 'Thank you for shopping with Keipoa Kenya!'],
     ['Last_Updated', new Date()],
     ['Initialized_By', CONFIG.ADMIN_EMAIL],
     ['', ''],  // Separator
