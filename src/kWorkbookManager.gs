@@ -446,6 +446,7 @@ function createSuppliersSheet() {
     'Phone',
     'Email',
     'Address',
+    'Opening_Balance',
     'Total_Purchased',
     'Total_Paid',
     'Current_Balance',
@@ -464,11 +465,19 @@ function createSuppliersSheet() {
   sheet.setColumnWidth(4, 120); // Phone
   sheet.setColumnWidth(5, 200); // Email
   sheet.setColumnWidth(6, 250); // Address
-  sheet.setColumnWidth(7, 140); // Total_Purchased
-  sheet.setColumnWidth(8, 120); // Total_Paid
-  sheet.setColumnWidth(9, 140); // Current_Balance
-  sheet.setColumnWidth(10, 150); // Payment_Terms
-  sheet.setColumnWidth(11, 80);  // Status
+  sheet.setColumnWidth(7, 140); // Opening_Balance
+  sheet.setColumnWidth(8, 140); // Total_Purchased
+  sheet.setColumnWidth(9, 120); // Total_Paid
+  sheet.setColumnWidth(10, 140); // Current_Balance
+  sheet.setColumnWidth(11, 150); // Payment_Terms
+  sheet.setColumnWidth(12, 80);  // Status
+
+  // Ensure Opening_Balance column exists for legacy sheets
+  const existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  if (existingHeaders.indexOf('Opening_Balance') === -1) {
+    sheet.insertColumnAfter(6);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
 
   Logger.log('Created Suppliers sheet');
   return sheet;

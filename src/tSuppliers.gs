@@ -105,6 +105,7 @@ function addSupplier(supplierData) {
 
     const sheet = getSheet('Suppliers');
     const supplierId = generateId('Suppliers', 'Supplier_ID', 'SUP');
+    const openingBalance = parseFloat(supplierData.Opening_Balance) || 0;
 
     // 2. Hard-Coded Data Mapping (must match sheet columns)
     const newSupplier = [
@@ -114,11 +115,12 @@ function addSupplier(supplierData) {
       supplierData.Phone || '',              // Column 4: Phone
       supplierData.Email || '',              // Column 5: Email
       supplierData.Address || '',            // Column 6: Address
-      0,                                     // Column 7: Total_Purchased
-      0,                                     // Column 8: Total_Paid
-      0,                                     // Column 9: Current_Balance
-      supplierData.Payment_Terms || 'Cash',  // Column 10: Payment_Terms
-      'Active'                               // Column 11: Status
+      openingBalance,                        // Column 7: Opening_Balance
+      openingBalance,                        // Column 8: Total_Purchased
+      0,                                     // Column 9: Total_Paid
+      openingBalance,                        // Column 10: Current_Balance
+      supplierData.Payment_Terms || 'Cash',  // Column 11: Payment_Terms
+      'Active'                               // Column 12: Status
     ];
 
     sheet.appendRow(newSupplier);
@@ -160,6 +162,15 @@ function updateSupplier(supplierId, supplierData) {
     if (supplierData.Phone !== undefined) updates.Phone = supplierData.Phone;
     if (supplierData.Email !== undefined) updates.Email = supplierData.Email;
     if (supplierData.Address !== undefined) updates.Address = supplierData.Address;
+    if (supplierData.Opening_Balance !== undefined) {
+      const newOpening = parseFloat(supplierData.Opening_Balance) || 0;
+      const existingOpening = parseFloat(currentSupplier.Opening_Balance) || 0;
+      const delta = newOpening - existingOpening;
+
+      updates.Opening_Balance = newOpening;
+      updates.Total_Purchased = (parseFloat(currentSupplier.Total_Purchased) || 0) + delta;
+      updates.Current_Balance = (parseFloat(currentSupplier.Current_Balance) || 0) + delta;
+    }
     if (supplierData.Payment_Terms !== undefined) updates.Payment_Terms = supplierData.Payment_Terms;
     if (supplierData.Status !== undefined) updates.Status = supplierData.Status;
 

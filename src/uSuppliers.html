@@ -262,6 +262,11 @@
             <input type="text" class="form-control" id="supplierPaymentTerms" placeholder="e.g., Net 30">
           </div>
           <div class="col-md-6 mb-3">
+            <label for="supplierOpeningBalance" class="form-label">Opening Balance</label>
+            <input type="number" class="form-control" id="supplierOpeningBalance" min="0" step="0.01" placeholder="0.00">
+            <div class="form-text">Starting payable balance to carry forward.</div>
+          </div>
+          <div class="col-md-6 mb-3">
             <label for="supplierStatus" class="form-label">Status</label>
             <select class="form-select" id="supplierStatus">
               <option value="Active">Active</option>
@@ -471,6 +476,7 @@
         Phone: document.getElementById('supplierPhone').value,
         Email: document.getElementById('supplierEmail').value,
         Address: document.getElementById('supplierAddress').value,
+        Opening_Balance: document.getElementById('supplierOpeningBalance').value,
         Payment_Terms: document.getElementById('supplierPaymentTerms').value,
         Status: document.getElementById('supplierStatus').value
       };
