@@ -2865,11 +2865,16 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                   <label class="form-label">Payment Terms</label>
                   <input type="text" class="form-control" name="Payment_Terms" placeholder="e.g., Net 30">
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Opening Balance</label>
+                  <input type="number" class="form-control" name="Opening_Balance" step="0.01" min="0" placeholder="0.00">
+                  <div class="form-text">Starting payable balance to carry forward.</div>
+                </div>
+                <div class="col-md-4 mb-3">
                   <label class="form-label">Status</label>
                   <select class="form-select" name="Status">
                     <option value="Active">Active</option>
