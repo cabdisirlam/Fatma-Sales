@@ -31,12 +31,10 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Currency</label>
-              <select class="form-select" id="currency">
-                <option value="USD" data-symbol="$">USD - US Dollar ($)</option>
-                <option value="EUR" data-symbol="€">EUR - Euro (€)</option>
-                <option value="GBP" data-symbol="£">GBP - British Pound (£)</option>
-                <option value="KES" data-symbol="KSh">KES - Kenyan Shilling (KSh)</option>
+              <select class="form-select" id="currency" disabled>
+                <option value="KES" data-symbol="Ksh" selected>KES - Kenyan Shilling (Ksh)</option>
               </select>
+              <div class="form-text">Currency is locked to Kenyan Shilling.</div>
             </div>
             <div class="mb-3">
               <label class="form-label">Tax Rate (%)</label>
@@ -61,12 +59,6 @@
             <div class="mb-3">
               <label class="form-label">Receipt Footer</label>
               <textarea class="form-control" id="receipt-footer" rows="2" placeholder="Thank you for your business!"></textarea>
-            </div>
-            <div class="mb-3">
-              <div class="form-check">
-                <input class="form-check-input" id="include-logo" type="checkbox" checked>
-                <label class="form-check-label">Include Shop Logo</label>
-              </div>
             </div>
             <div class="d-grid">
               <button type="submit" class="btn btn-primary">Save Settings</button>
@@ -127,32 +119,20 @@
       document.getElementById('shop-name').value = settings.Shop_Name || '';
 
       const currencySelect = document.getElementById('currency');
-      if (settings.Currency) {
-        const matchingOption = Array.from(currencySelect.options).find(option => option.value === settings.Currency);
-        if (matchingOption) {
-          currencySelect.value = matchingOption.value;
-        }
-      } else {
-        currencySelect.value = 'KES';
-      }
+      currencySelect.value = 'KES';
 
       document.getElementById('tax-rate').value = settings.Tax_Rate || 0;
       document.getElementById('receipt-header').value = settings.Receipt_Header || 'Fatma Sales Management System';
       document.getElementById('receipt-footer').value = settings.Receipt_Footer || 'Thank you for your business!';
 
-      const includeLogoSetting = settings.Include_Shop_Logo;
-      const includeLogoCheckbox = document.getElementById('include-logo');
-      includeLogoCheckbox.checked = includeLogoSetting === undefined ? true : includeLogoSetting === true || includeLogoSetting === 'TRUE' || includeLogoSetting === 'Yes';
     }
 
     function handleGeneralSettingsSave(event) {
       event.preventDefault();
 
       const shopName = document.getElementById('shop-name').value.trim();
-      const currencySelect = document.getElementById('currency');
-      const selectedOption = currencySelect.options[currencySelect.selectedIndex];
-      const currency = selectedOption ? selectedOption.value : '';
-      const currencySymbol = selectedOption ? selectedOption.dataset.symbol : '';
+      const currency = 'KES';
+      const currencySymbol = 'Ksh';
       const taxRate = parseFloat(document.getElementById('tax-rate').value) || 0;
 
       if (!shopName) {
@@ -176,15 +156,13 @@
 
       const receiptHeader = document.getElementById('receipt-header').value.trim();
       const receiptFooter = document.getElementById('receipt-footer').value.trim();
-      const includeLogo = document.getElementById('include-logo').checked;
-
       google.script.run
         .withSuccessHandler(() => showAlert('Receipt settings saved successfully.'))
         .withFailureHandler(error => showAlert(error.message || 'Failed to save receipt settings', 'danger'))
         .updateBusinessInfo({
           Receipt_Header: receiptHeader,
           Receipt_Footer: receiptFooter,
-          Include_Shop_Logo: includeLogo
+          Include_Shop_Logo: false
         });
     }
   </script>
