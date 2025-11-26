@@ -423,6 +423,18 @@
     let usersData = [];
     let addUserModalInstance, editUserModalInstance, resetPinModalInstance;
 
+    function isAppsScriptContext() {
+      return typeof google !== 'undefined' && google.script && google.script.run;
+    }
+
+    function ensureAppsScript(message) {
+      if (!isAppsScriptContext()) {
+        showAlert(message || 'Google Apps Script context is not available. Please open this page from the Spreadsheet add-on menu.', 'danger');
+        return false;
+      }
+      return true;
+    }
+
     // Initialize modals
     document.addEventListener('DOMContentLoaded', function() {
       addUserModalInstance = new bootstrap.Modal(document.getElementById('addUserModal'));
@@ -434,6 +446,9 @@
 
     // Load all users
     function loadUsers() {
+      if (!ensureAppsScript('Cannot load users outside of Google Sheets.')) {
+        return;
+      }
       google.script.run
         .withSuccessHandler(displayUsers)
         .withFailureHandler(showError)
@@ -590,6 +605,14 @@
         Status: status || 'Active'
       };
 
+      if (!ensureAppsScript()) {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.innerText = originalText;
+        }
+        return;
+      }
+
       google.script.run
         .withSuccessHandler(function(res) {
           if (submitButton) {
@@ -653,6 +676,10 @@
 
       showAlert('Updating user...', 'info');
 
+      if (!ensureAppsScript()) {
+        return;
+      }
+
       google.script.run
         .withSuccessHandler(function(result) {
           editUserModalInstance.hide();
@@ -693,6 +720,10 @@
 
       showAlert('Resetting PIN...', 'info');
 
+      if (!ensureAppsScript()) {
+        return;
+      }
+
       google.script.run
         .withSuccessHandler(function(result) {
           resetPinModalInstance.hide();
@@ -712,6 +743,10 @@
       }
 
       showAlert('Deleting user...', 'info');
+
+      if (!ensureAppsScript()) {
+        return;
+      }
 
       google.script.run
         .withSuccessHandler(function(result) {

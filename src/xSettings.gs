@@ -48,15 +48,16 @@ function getSetting(key) {
  */
 function getBusinessInfo() {
   try {
+    const includeLogo = getSetting('Include_Shop_Logo');
     return {
       Shop_Name: getSetting('Shop_Name') || CONFIG.SHOP_NAME,
       Admin_Email: getSetting('Admin_Email') || CONFIG.ADMIN_EMAIL,
-      Currency: getSetting('Currency') || CONFIG.CURRENCY,
-      Currency_Symbol: getSetting('Currency_Symbol') || CONFIG.CURRENCY_SYMBOL,
+      Currency: 'KES',
+      Currency_Symbol: 'Ksh',
       Tax_Rate: getSetting('Tax_Rate') || 0,
       Receipt_Header: getSetting('Receipt_Header') || CONFIG.SHOP_NAME,
       Receipt_Footer: getSetting('Receipt_Footer') || 'Thank you for your business!',
-      Include_Shop_Logo: getSetting('Include_Shop_Logo'),
+      Include_Shop_Logo: includeLogo === true || includeLogo === 'true' || includeLogo === 'TRUE',
       Date_Format: getSetting('Date_Format') || CONFIG.DATE_FORMAT,
       Timezone: getSetting('Timezone') || 'Africa/Mogadishu',
       System_Version: getSetting('System_Version') || '2.0.0'
@@ -74,6 +75,11 @@ function getBusinessInfo() {
 function updateBusinessInfo(businessData, user) {
   try {
     Logger.log('Attempting to save settings: ' + JSON.stringify(businessData));
+
+    // Enforce default currency and logo policy
+    businessData.Currency = 'KES';
+    businessData.Currency_Symbol = 'Ksh';
+    businessData.Include_Shop_Logo = false;
 
     const invalidKeys = [];
 
