@@ -305,6 +305,57 @@ function updateSupplierPayment(supplierId, paymentAmount, user) {
 }
 
 /**
+ * Apply an opening balance to a supplier without recording a purchase transaction
+ */
+function applySupplierOpeningBalance(supplierId, amount, user) {
+  try {
+    const openingAmount = parseFloat(amount) || 0;
+    if (openingAmount <= 0) {
+      return { success: false, message: 'Opening balance must be greater than zero' };
+    }
+
+    const supplier = getSupplierById(supplierId);
+    const totalPurchased = (parseFloat(supplier.Total_Purchased) || 0) + openingAmount;
+    const currentBalance = (parseFloat(supplier.Current_Balance) || 0) + openingAmount;
+
+    const sheet = getSheet('Suppliers');
+    const headers = sheet.getDataRange().getValues()[0];
+    const hasOpeningColumn = headers.indexOf('Opening_Balance') !== -1;
+
+    const updates = {
+      Total_Purchased: totalPurchased,
+      Current_Balance: currentBalance
+    };
+
+    if (hasOpeningColumn) {
+      updates.Opening_Balance = (parseFloat(supplier.Opening_Balance) || 0) + openingAmount;
+    }
+
+    updateRowById('Suppliers', 'Supplier_ID', supplierId, updates);
+
+    logAudit(
+      user || 'SYSTEM',
+      'Suppliers',
+      'Opening Balance',
+      'Opening balance set for ' + supplier.Supplier_Name + ': ' + formatCurrency(openingAmount),
+      '',
+      '',
+      JSON.stringify(updates)
+    );
+
+    return {
+      success: true,
+      currentBalance: currentBalance,
+      totalPurchased: totalPurchased,
+      openingBalance: hasOpeningColumn ? updates.Opening_Balance : openingAmount
+    };
+  } catch (error) {
+    logError('applySupplierOpeningBalance', error);
+    throw new Error('Error setting opening balance: ' + error.message);
+  }
+}
+
+/**
  * Get supplier purchase history
  */
 function getSupplierPurchaseHistory(supplierId) {
@@ -400,9 +451,21 @@ function getSupplierStatement(supplierId, startDate, endDate) {
     const supplier = getSupplierById(supplierId);
     const purchases = getSupplierPurchaseHistory(supplierId);
     const payments = getSupplierPaymentHistory(supplierId);
+    const openingBalance = parseFloat(supplier.Opening_Balance) || 0;
 
     // Combine and sort by date
     const transactions = [];
+
+    if (openingBalance > 0) {
+      transactions.push({
+        date: supplier.Created_At ? new Date(supplier.Created_At) : new Date(),
+        type: 'Opening Balance',
+        description: 'Opening balance carried forward',
+        debit: openingBalance,
+        credit: 0,
+        reference: 'OPENING'
+      });
+    }
 
     purchases.forEach(purchase => {
       transactions.push({
@@ -441,7 +504,7 @@ function getSupplierStatement(supplierId, startDate, endDate) {
     filteredTransactions.sort((a, b) => a.date - b.date);
 
     // Calculate running balance
-    let balance = 0;
+    let balance = openingBalance;
     filteredTransactions.forEach(txn => {
       balance += (txn.debit - txn.credit);
       txn.balance = balance;
@@ -450,7 +513,7 @@ function getSupplierStatement(supplierId, startDate, endDate) {
     return {
       supplier: supplier,
       transactions: filteredTransactions,
-      openingBalance: 0,
+      openingBalance: openingBalance,
       closingBalance: balance,
       totalDebits: filteredTransactions.reduce((sum, t) => sum + t.debit, 0),
       totalCredits: filteredTransactions.reduce((sum, t) => sum + t.credit, 0)
