@@ -387,13 +387,13 @@
       <div class="col-md-6 mb-3">
         <label class="form-label">Actions</label>
         <div class="d-flex gap-2">
-          <button class="btn btn-warning" id="editSupplierBtn" onclick="editSelectedSupplier()" disabled>
+          <button type="button" class="btn btn-warning" id="editSupplierBtn" onclick="editSelectedSupplier()" disabled>
             <i class="bi bi-pencil"></i> Edit
           </button>
-          <button class="btn btn-success" id="paySupplierBtn" onclick="paySelectedSupplier()" disabled>
+          <button type="button" class="btn btn-success" id="paySupplierBtn" onclick="paySelectedSupplier()" disabled>
             <i class="bi bi-cash"></i> Pay
           </button>
-          <button class="btn btn-info" id="statementBtn" onclick="viewSelectedStatement()" disabled>
+          <button type="button" class="btn btn-info" id="statementBtn" onclick="viewSelectedStatement()" disabled>
             <i class="bi bi-file-text"></i> Statement
           </button>
         </div>
@@ -843,6 +843,37 @@
     // Load suppliers on page load
     document.addEventListener('DOMContentLoaded', function() {
       loadSuppliers();
+
+      // Add event listeners as backup to inline onclick handlers
+      const editBtn = document.getElementById('editSupplierBtn');
+      const payBtn = document.getElementById('paySupplierBtn');
+      const statementBtn = document.getElementById('statementBtn');
+
+      if (editBtn) {
+        editBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          editSelectedSupplier();
+        });
+      }
+
+      if (payBtn) {
+        payBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          paySelectedSupplier();
+        });
+      }
+
+      if (statementBtn) {
+        statementBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          viewSelectedStatement();
+        });
+      }
+
+      console.log('Button event listeners attached');
     });
 
     // Search functionality
@@ -935,6 +966,8 @@
       const payBtn = document.getElementById('paySupplierBtn');
       const statementBtn = document.getElementById('statementBtn');
 
+      console.log('Supplier selected:', supplierId);
+
       if (!supplierId) {
         // Disable all action buttons
         editBtn.disabled = true;
@@ -946,6 +979,7 @@
       // Find the selected supplier
       const supplier = suppliersData.find(s => s.Supplier_ID === supplierId);
       if (!supplier) {
+        console.error('Supplier not found:', supplierId);
         return;
       }
 
@@ -956,27 +990,41 @@
       // Enable pay button only if there's a balance
       const balance = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Balance']);
       payBtn.disabled = balance <= 0;
+
+      console.log('Buttons enabled - Edit:', !editBtn.disabled, 'Pay:', !payBtn.disabled, 'Statement:', !statementBtn.disabled);
     }
 
     function editSelectedSupplier() {
+      console.log('Edit button clicked');
       const supplierId = document.getElementById('supplierSelect').value;
-      if (supplierId) {
-        editSupplier(supplierId);
+      if (!supplierId) {
+        alert('Please select a supplier first');
+        return;
       }
+      console.log('Editing supplier:', supplierId);
+      editSupplier(supplierId);
     }
 
     function paySelectedSupplier() {
+      console.log('Pay button clicked');
       const supplierId = document.getElementById('supplierSelect').value;
-      if (supplierId) {
-        makePayment(supplierId);
+      if (!supplierId) {
+        alert('Please select a supplier first');
+        return;
       }
+      console.log('Opening payment for supplier:', supplierId);
+      makePayment(supplierId);
     }
 
     function viewSelectedStatement() {
+      console.log('Statement button clicked');
       const supplierId = document.getElementById('supplierSelect').value;
-      if (supplierId) {
-        viewStatement(supplierId);
+      if (!supplierId) {
+        alert('Please select a supplier first');
+        return;
       }
+      console.log('Viewing statement for supplier:', supplierId);
+      viewStatement(supplierId);
     }
 
     function displaySuppliers(data) {
