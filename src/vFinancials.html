@@ -228,6 +228,49 @@
     </div>
   </div>
 
+  <!-- Supplier Payables Section -->
+  <div class="row mb-3">
+    <div class="col-md-12">
+      <div class="summary-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0"><i class="bi bi-building"></i> Supplier Payables</h5>
+          <button class="btn btn-sm btn-primary" onclick="viewSupplierPayables()">
+            <i class="bi bi-eye"></i> View All
+          </button>
+        </div>
+        <div class="row">
+          <div class="col-md-3">
+            <div class="text-center">
+              <div class="stat-label">Total Payable</div>
+              <div class="stat-value expense" id="totalPayable" style="font-size: 24px;">Ksh 0.00</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-center">
+              <div class="stat-label">Suppliers with Balance</div>
+              <div class="stat-value" id="suppliersWithDebt" style="font-size: 24px;">0</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-center">
+              <div class="stat-label">Total Purchased</div>
+              <div class="stat-value" id="totalPurchased" style="font-size: 24px;">Ksh 0.00</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-center">
+              <div class="stat-label">Total Paid</div>
+              <div class="stat-value income" id="totalPaidToSuppliers" style="font-size: 24px;">Ksh 0.00</div>
+            </div>
+          </div>
+        </div>
+        <div id="topSuppliersList" class="mt-3">
+          <!-- Top suppliers with balances will appear here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Financial Summary -->
   <div class="row">
     <div class="col-md-6">
@@ -521,6 +564,16 @@
         })
         .getFinancialSummary();
 
+      // Load supplier payables
+      google.script.run
+        .withSuccessHandler(function(suppliers) {
+          updateSupplierPayables(suppliers);
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading supplier payables:', error);
+        })
+        .getSuppliers({});
+
       // Load transactions
       google.script.run
         .withSuccessHandler(function(data) {
@@ -533,6 +586,85 @@
             '<div class="alert alert-danger">Error loading financial data: ' + error.message + '</div>';
         })
         .getFinancialTransactions(filters);
+    }
+
+    function updateSupplierPayables(suppliers) {
+      if (!suppliers || suppliers.length === 0) {
+        document.getElementById('totalPayable').textContent = 'Ksh 0.00';
+        document.getElementById('suppliersWithDebt').textContent = '0';
+        document.getElementById('totalPurchased').textContent = 'Ksh 0.00';
+        document.getElementById('totalPaidToSuppliers').textContent = 'Ksh 0.00';
+        document.getElementById('topSuppliersList').innerHTML = '<p class="text-muted text-center mt-3">No supplier data available</p>';
+        return;
+      }
+
+      // Calculate totals
+      let totalPayable = 0;
+      let totalPurchased = 0;
+      let totalPaid = 0;
+      let suppliersWithBalance = 0;
+
+      const suppliersWithDebt = [];
+
+      suppliers.forEach(function(supplier) {
+        const balance = parseFloat(supplier.Current_Balance) || 0;
+        const purchased = parseFloat(supplier.Total_Purchased) || 0;
+        const paid = parseFloat(supplier.Total_Paid) || 0;
+
+        totalPurchased += purchased;
+        totalPaid += paid;
+
+        if (balance > 0) {
+          totalPayable += balance;
+          suppliersWithBalance++;
+          suppliersWithDebt.push({
+            id: supplier.Supplier_ID,
+            name: supplier.Supplier_Name || supplier.Name,
+            balance: balance
+          });
+        }
+      });
+
+      // Update summary cards
+      document.getElementById('totalPayable').textContent = 'Ksh ' + totalPayable.toFixed(2);
+      document.getElementById('suppliersWithDebt').textContent = suppliersWithBalance;
+      document.getElementById('totalPurchased').textContent = 'Ksh ' + totalPurchased.toFixed(2);
+      document.getElementById('totalPaidToSuppliers').textContent = 'Ksh ' + totalPaid.toFixed(2);
+
+      // Display top 5 suppliers with balances
+      const topSuppliersList = document.getElementById('topSuppliersList');
+
+      if (suppliersWithDebt.length === 0) {
+        topSuppliersList.innerHTML = '<p class="text-muted text-center mt-3">No outstanding supplier balances</p>';
+        return;
+      }
+
+      // Sort by balance descending
+      suppliersWithDebt.sort((a, b) => b.balance - a.balance);
+
+      let html = '<div class="table-responsive"><table class="table table-sm table-hover mt-3"><thead><tr><th>Supplier</th><th class="text-end">Balance Due</th></tr></thead><tbody>';
+      suppliersWithDebt.slice(0, 5).forEach(function(supplier) {
+        html += `
+          <tr>
+            <td><strong>${supplier.name}</strong><br><small class="text-muted">${supplier.id}</small></td>
+            <td class="text-end expense"><strong>Ksh ${supplier.balance.toFixed(2)}</strong></td>
+          </tr>
+        `;
+      });
+      html += '</tbody></table></div>';
+
+      if (suppliersWithDebt.length > 5) {
+        html += '<p class="text-muted text-center mb-0">Showing top 5 of ' + suppliersWithDebt.length + ' suppliers with balances</p>';
+      }
+
+      topSuppliersList.innerHTML = html;
+    }
+
+    function viewSupplierPayables() {
+      // This would open the suppliers management page
+      alert('Opening Suppliers Management...\n\nThis will show all suppliers with their balances and payment history.');
+      // In a real implementation, this would navigate to the suppliers page
+      // window.location.href = 'suppliers.html';
     }
 
     function updateFinancialSummary(summary) {
