@@ -161,6 +161,48 @@
       padding: 10px 15px;
     }
 
+    /* Action rows styling */
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .action-select {
+      flex-grow: 1;
+      border-radius: 6px;
+      border: 1px solid #dee2e6;
+      padding: 8px 12px;
+      background-color: white;
+    }
+
+    .btn-action {
+      min-width: 120px;
+      font-weight: 500;
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-edit-custom {
+      background-color: #f1c40f;
+      color: #2c3e50;
+    }
+    
+    .btn-pay-custom {
+      background-color: #198754;
+      color: white;
+    }
+
+    .btn-stmt-custom {
+      background-color: #0dcaf0;
+      color: #2c3e50;
+    }
+
     .form-control:focus, .form-select:focus {
       border-color: #667eea;
       box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
@@ -381,27 +423,31 @@
 
   <!-- Customer Selection and Actions -->
   <div class="filter-section">
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label for="customerSelect" class="form-label">Select Customer</label>
-        <select class="form-select" id="customerSelect" onchange="onCustomerSelected()">
-          <option value="">-- Select a customer --</option>
-        </select>
-      </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Actions</label>
-        <div class="d-flex gap-2">
-          <button type="button" class="btn btn-warning flex-fill" id="editCustomerBtn" onclick="editSelectedCustomer()" disabled>
-            <i class="bi bi-pencil"></i> Edit
-          </button>
-          <button type="button" class="btn btn-success flex-fill" id="receiveCustomerBtn" onclick="receiveSelectedCustomer()" disabled>
-            <i class="bi bi-cash-coin"></i> Receive
-          </button>
-          <button type="button" class="btn btn-info flex-fill text-white" id="statementCustomerBtn" onclick="viewSelectedStatement()" disabled>
-            <i class="bi bi-file-text"></i> Statement
-          </button>
-        </div>
-      </div>
+    <div class="action-row">
+      <select class="form-select action-select" id="selectCustomerEdit">
+        <option value="">Select Customer to Edit...</option>
+      </select>
+      <button class="btn btn-action btn-edit-custom" onclick="actionEdit()">
+        <i class="bi bi-pencil"></i> Edit
+      </button>
+    </div>
+
+    <div class="action-row">
+      <select class="form-select action-select" id="selectCustomerPay">
+        <option value="">Select Customer - Balance...</option>
+      </select>
+      <button class="btn btn-action btn-pay-custom" onclick="actionReceive()">
+        <i class="bi bi-cash"></i> Receive
+      </button>
+    </div>
+
+    <div class="action-row">
+      <select class="form-select action-select" id="selectCustomerStmt">
+        <option value="">Select Customer for Statement...</option>
+      </select>
+      <button class="btn btn-action btn-stmt-custom" onclick="actionStatement()">
+        <i class="bi bi-file-text"></i> Statement
+      </button>
     </div>
   </div>
 
@@ -665,37 +711,6 @@
     // Load customers on page load
     document.addEventListener('DOMContentLoaded', function() {
       loadCustomers();
-
-      // Add event listeners as backup to inline onclick handlers
-      const editBtn = document.getElementById('editCustomerBtn');
-      const receiveBtn = document.getElementById('receiveCustomerBtn');
-      const statementBtn = document.getElementById('statementCustomerBtn');
-
-      if (editBtn) {
-        editBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          editSelectedCustomer();
-        });
-      }
-
-      if (receiveBtn) {
-        receiveBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          receiveSelectedCustomer();
-        });
-      }
-
-      if (statementBtn) {
-        statementBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          viewSelectedStatement();
-        });
-      }
-
-      console.log('Button event listeners attached');
     });
 
     // Search functionality
@@ -900,118 +915,85 @@
       alert('View customer details for: ' + customerId + '\n\nThis feature will show detailed customer information, purchase history, and payment records.');
     }
 
+    // --- NEW LOGIC FOR 3-ROW ACTIONS ---
+
     function populateCustomerDropdown(data) {
-      const select = document.getElementById('customerSelect');
-      const currentValue = select.value;
+      const selectEdit = document.getElementById('selectCustomerEdit');
+      const selectPay = document.getElementById('selectCustomerPay');
+      const selectStmt = document.getElementById('selectCustomerStmt');
 
-      // Clear existing options
-      select.innerHTML = '<option value="">-- Select a customer --</option>';
+      selectEdit.innerHTML = '<option value="">Select Customer to Edit...</option>';
+      selectPay.innerHTML = '<option value="">Select Customer - Balance...</option>';
+      selectStmt.innerHTML = '<option value="">Select Customer for Statement...</option>';
 
-      if (!data || data.length === 0) {
-        return;
-      }
+      if (!data || data.length === 0) return;
 
-      // Sort by customer name
       const sortedData = [...data].sort((a, b) => {
-        const nameA = (a.Customer_Name || a.Name || '').toLowerCase();
-        const nameB = (b.Customer_Name || b.Name || '').toLowerCase();
-        return nameA.localeCompare(nameB);
+        return (a.Customer_Name || '').localeCompare(b.Customer_Name || '');
       });
 
       sortedData.forEach(customer => {
-        const option = document.createElement('option');
+        const name = customer.Customer_Name || customer.Name;
+        const id = customer.Customer_ID;
         const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
 
-        // Create label similar to supplier: Name (ID) - Balance: 100
         let balanceText = '';
         if (balance < 0) {
-            balanceText = ` - Owes: Ksh ${Math.abs(balance).toFixed(2)}`;
+          balanceText = ` - Owes: Ksh ${Math.abs(balance).toLocaleString()}`;
         } else if (balance > 0) {
-            balanceText = ` - Credit: Ksh ${balance.toFixed(2)}`;
+          balanceText = ` - Credit: Ksh ${balance.toLocaleString()}`;
+        } else {
+          balanceText = ' - Balance: 0';
         }
 
-        option.value = customer.Customer_ID;
-        option.textContent = `${customer.Customer_Name || customer.Name} (${customer.Customer_ID})${balanceText}`;
-        select.appendChild(option);
+        const optEdit = document.createElement('option');
+        optEdit.value = id;
+        optEdit.textContent = `${name} (${id})`;
+        selectEdit.appendChild(optEdit);
+
+        const optPay = document.createElement('option');
+        optPay.value = id;
+        optPay.textContent = `${name}${balanceText}`;
+        selectPay.appendChild(optPay);
+
+        const optStmt = document.createElement('option');
+        optStmt.value = id;
+        optStmt.textContent = `${name} (${id})`;
+        selectStmt.appendChild(optStmt);
       });
-
-      // Restore previous selection if it still exists
-      if (currentValue) {
-        select.value = currentValue;
-        onCustomerSelected();
-      }
     }
 
-    function onCustomerSelected() {
-      const customerId = document.getElementById('customerSelect').value;
-      const editBtn = document.getElementById('editCustomerBtn');
-      const receiveBtn = document.getElementById('receiveCustomerBtn');
-      const statementBtn = document.getElementById('statementCustomerBtn');
-
+    function actionEdit() {
+      const customerId = document.getElementById('selectCustomerEdit').value;
       if (!customerId) {
-        // Disable all action buttons
-        editBtn.disabled = true;
-        receiveBtn.disabled = true;
-        statementBtn.disabled = true;
+        alert('Please select a customer to edit first.');
         return;
       }
-
-      // Find the selected customer
-      const customer = customersData.find(c => c.Customer_ID === customerId);
-      if (!customer) {
-        console.error('Customer not found:', customerId);
-        return;
-      }
-
-      // Enable generic buttons
-      editBtn.disabled = false;
-      statementBtn.disabled = false;
-
-      // Logic for "Receive Payment" button
-      // In Suppliers, we PAY if Balance > 0.
-      // In Customers, we RECEIVE if Balance < 0 (Debt).
-      const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
-
-      // Enable receive button if they owe money (balance is negative)
-      if (balance < 0) {
-          receiveBtn.disabled = false;
-          receiveBtn.innerHTML = `<i class="bi bi-cash-coin"></i> Receive (Ksh ${Math.abs(balance).toFixed(0)})`;
-      } else {
-          receiveBtn.disabled = true;
-          receiveBtn.innerHTML = `<i class="bi bi-cash-coin"></i> Receive`;
-      }
-    }
-
-    function editSelectedCustomer() {
-      console.log('Edit button clicked');
-      const customerId = document.getElementById('customerSelect').value;
-      if (!customerId) {
-        alert('Please select a customer first');
-        return;
-      }
-      console.log('Editing customer:', customerId);
       openCustomerEditor(customerId);
     }
 
-    function receiveSelectedCustomer() {
-      console.log('Receive button clicked');
-      const customerId = document.getElementById('customerSelect').value;
+    function actionReceive() {
+      const customerId = document.getElementById('selectCustomerPay').value;
       if (!customerId) {
-        alert('Please select a customer first');
+        alert('Please select a customer to receive payment from.');
         return;
       }
-      console.log('Opening payment for customer:', customerId);
+      const customer = customersData.find(c => c.Customer_ID === customerId);
+      const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
+
+      if (balance >= 0) {
+        if (!confirm('This customer has a zero or positive credit balance. Do you still want to add a payment?')) return;
+      }
+
       openPaymentModal(customerId);
     }
 
-    function viewSelectedStatement() {
-      console.log('Statement button clicked');
-      const customerId = document.getElementById('customerSelect').value;
+    function actionStatement() {
+      const customerId = document.getElementById('selectCustomerStmt').value;
       if (!customerId) {
-        alert('Please select a customer first');
+        alert('Please select a customer to view statement.');
         return;
       }
-      console.log('Viewing statement for customer:', customerId);
       viewCustomerStatement(customerId);
     }
 
