@@ -940,83 +940,111 @@
     </div>
 
     <div class="content-section" id="section-sales-new">
-      <div class="card shadow-sm">
-        <div class="card-header bg-white">
-          <h4><i class="bi bi-cart-plus"></i> Quick Sale / Quotation</h4>
+      <div class="dashboard-content">
+        <h3><i class="bi bi-cart-plus"></i> Quick Sale / Quotation</h3>
+        <p class="text-muted">Process a sale or create a quotation</p>
+        
+        <div class="row">
+          <div class="col-md-8">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <form id="dashboardSaleForm">
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label fw-bold">Customer</label>
+                      <select class="form-select" id="dashSaleCustomer">
+                        <option value="WALK-IN">Walk-in Customer</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-bold">Date</label>
+                      <input type="date" class="form-control" id="dashSaleDate">
+                    </div>
+                  </div>
+
+                  <hr>
+
+                  <div class="row align-items-end mb-3">
+                    <div class="col-md-5">
+                      <label class="form-label fw-bold">Product</label>
+                      <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()">
+                        <option value="">-- Choose Item --</option>
+                      </select>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Qty</label>
+                      <input type="number" class="form-control" id="dashSaleQty" value="1" min="1">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Price (Editable)</label>
+                      <input type="number" class="form-control" id="dashSalePrice" min="0" step="0.01">
+                    </div>
+                    <div class="col-md-2">
+                      <button type="button" class="btn btn-primary w-100" onclick="addDashCartItem()">
+                        <i class="bi bi-plus-lg"></i> Add
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="table-responsive border rounded mb-3" style="max-height: 250px; overflow-y: auto;">
+                    <table class="table table-sm table-striped mb-0">
+                      <thead class="table-light sticky-top">
+                        <tr>
+                          <th>Item</th>
+                          <th>Qty</th>
+                          <th>Price</th>
+                          <th>Total</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="dashCartBody">
+                        <tr><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                      <h4 class="mb-0 text-success">Total: <span id="dashCartTotal">Ksh 0.00</span></h4>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                      <button type="button" class="btn btn-outline-secondary" onclick="clearDashCart()">Clear</button>
+                      
+                      <select class="form-select" id="dashSalePayment" style="width: auto;">
+                        <option value="Cash">Cash</option>
+                        <option value="M-Pesa">M-Pesa</option>
+                        <option value="Equity Bank">Equity Bank</option>
+                        <option value="Credit">Credit (Debt)</option>
+                      </select>
+
+                      <button type="button" class="btn btn-warning text-dark" onclick="submitDashTransaction('Quotation')">
+                        <i class="bi bi-file-text"></i> Quotation
+                      </button>
+                      
+                      <button type="button" class="btn btn-success px-4" onclick="submitDashTransaction('Sale')">
+                        <i class="bi bi-check-circle"></i> Sale
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="card bg-light border-0">
+              <div class="card-body">
+                <h6>Product Details</h6>
+                <div id="dashProductInfo" class="text-muted small">Select a product to see details.</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          <form id="dashboardSaleForm">
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-bold">Customer</label>
-                <select class="form-select" id="dashSaleCustomer">
-                  <option value="WALK-IN">Walk-in Customer</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold">Date</label>
-                <input type="date" class="form-control" id="dashSaleDate">
-              </div>
-            </div>
-
-            <div class="row align-items-end mb-3">
-              <div class="col-md-5">
-                <label class="form-label fw-bold">Product</label>
-                <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()">
-                  <option value="">-- Choose Item --</option>
-                </select>
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Qty</label>
-                <input type="number" class="form-control" id="dashSaleQty" value="1" min="1">
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Price</label>
-                <input type="number" class="form-control" id="dashSalePrice" min="0" step="0.01">
-              </div>
-              <div class="col-md-2">
-                <button type="button" class="btn btn-primary w-100" onclick="addDashCartItem()">
-                  <i class="bi bi-plus-lg"></i> Add
-                </button>
-              </div>
-            </div>
-
-            <div id="dashProductInfo" class="alert alert-light border mb-3 p-2 small">
-              Select a product to check stock availability.
-            </div>
-
-            <div class="table-responsive border rounded mb-3" style="max-height: 250px; overflow-y: auto;">
-              <table class="table table-sm table-striped mb-0">
-                <thead class="table-light sticky-top">
-                  <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th>Action</th></tr>
-                </thead>
-                <tbody id="dashCartBody">
-                  <tr><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mt-3">
-              <h4 class="mb-0 text-success">Total: <span id="dashCartTotal">Ksh 0.00</span></h4>
-              
-              <div class="d-flex gap-2 align-items-center">
-                <select class="form-select" id="dashSalePayment" style="width: auto;">
-                  <option value="Cash">Cash</option>
-                  <option value="M-Pesa">M-Pesa</option>
-                  <option value="Equity Bank">Equity Bank</option>
-                  <option value="Credit">Credit (Debt)</option>
-                </select>
-
-                <button type="button" class="btn btn-warning" onclick="submitDashTransaction('Quotation')">
-                  <i class="bi bi-file-text"></i> Quotation
-                </button>
-                <button type="button" class="btn btn-success" onclick="submitDashTransaction('Sale')">
-                  <i class="bi bi-check-circle"></i> Sale
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
+      </div>
+      
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()"><i class="bi bi-chevron-left"></i> Previous</button>
+        <button class="nav-btn" onclick="navigateToNext()">Next <i class="bi bi-chevron-right"></i></button>
       </div>
     </div>
 
@@ -1033,13 +1061,14 @@
                 <th>Transaction</th>
                 <th>Date</th>
                 <th>Customer</th>
-                <th>Type</th>
+                <th>Payment</th>
                 <th class="text-end">Total</th>
+                <th>Type</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="salesHistoryBody">
-              <tr><td colspan="6" class="text-center text-muted py-4">Loading sales history...</td></tr>
+              <tr><td colspan="7" class="text-center text-muted py-4">Loading sales history...</td></tr>
             </tbody>
           </table>
         </div>
@@ -2675,37 +2704,38 @@
     // --- INVENTORY & CUSTOMER LOADER ---
     function loadNewSaleInDashboard() {
       clearDashCart();
-      const dateInput = document.getElementById('dashSaleDate');
-      if (dateInput && !dateInput.value) {
-        dateInput.valueAsDate = new Date();
-      }
       
+      // Set Date to Today automatically
+      const dateField = document.getElementById('dashSaleDate');
+      if(dateField) dateField.valueAsDate = new Date();
+
       // Load Customers
       google.script.run.withSuccessHandler(function(customers) {
         dashCustomers = customers || [];
         const sel = document.getElementById('dashSaleCustomer');
-        if (!sel) return;
         sel.innerHTML = '<option value="WALK-IN">Walk-in Customer</option>';
-        
-        dashCustomers.forEach(c => {
-          sel.add(new Option(c.Customer_Name, c.Customer_ID));
-        });
+        if (dashCustomers.length > 0) {
+          dashCustomers.sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
+          dashCustomers.forEach(c => {
+            sel.add(new Option(`${c.Customer_Name} (${c.Phone || '-'})`, c.Customer_ID));
+          });
+        }
       }).getCustomers();
 
-      // Load Inventory (Ensures fresh stock levels)
+      // Load Inventory (Forces refresh of stock levels)
       google.script.run.withSuccessHandler(function(items) {
         dashProducts = items || []; 
         const sel = document.getElementById('dashSaleProduct');
-        if (!sel) return;
         sel.innerHTML = '<option value="">-- Choose Item --</option>';
-        
-        dashProducts.forEach(i => {
-          const stock = i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty;
-          // Only show items with stock or services
-          if (stock > 0 || i.Type === 'Service') {
-             sel.add(new Option(`${i.Item_Name}`, i.Item_ID));
-          }
-        });
+        if (dashProducts.length > 0) {
+          dashProducts.forEach(i => {
+            const stock = i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty;
+            // Show item if it has stock OR is a service
+            if (stock > 0 || i.Type === 'Service') {
+              sel.add(new Option(`${i.Item_Name} (Stock: ${stock})`, i.Item_ID));
+            }
+          });
+        }
       }).getInventory();
     }
 
@@ -2735,10 +2765,10 @@
 
     // --- TRANSACTION SUBMISSION ---
     function submitDashTransaction(type) {
-      if(dashCart.length === 0) return alert("Cart is empty.");
+      if(dashCart.length === 0) return alert("Cart is empty. Add items first.");
 
       const btnText = type === 'Quotation' ? 'Quotation' : 'Sale';
-      // Disable buttons to prevent double click
+      // Disable buttons
       const btns = document.querySelectorAll('button');
       let clickedBtn;
       btns.forEach(b => { if(b.innerText.includes(btnText)) clickedBtn = b; });
@@ -2748,16 +2778,24 @@
         clickedBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
       }
 
+      // FIX: Handle Date as String for Quotation to avoid "Illegal Value" error
+      let validUntilStr = null;
+      if (type === 'Quotation') {
+          const d = new Date();
+          d.setDate(d.getDate() + 14); 
+          validUntilStr = d.toISOString().split('T')[0];
+      }
+
       const transactionData = {
         Customer_ID: document.getElementById('dashSaleCustomer').value,
-        Customer_Name: document.getElementById('dashSaleCustomer').selectedOptions[0].text,
+        Customer_Name: document.getElementById('dashSaleCustomer').options[document.getElementById('dashSaleCustomer').selectedIndex].text,
         DateTime: document.getElementById('dashSaleDate').value, // Manual Date
         Payment_Mode: document.getElementById('dashSalePayment').value,
         items: dashCart,
         User: sessionStorage.getItem('userName') || 'SYSTEM',
         Delivery_Charge: 0,
         Discount: 0,
-        Valid_Until: type === 'Quotation' ? new Date(Date.now() + 14 * 86400000) : null 
+        Valid_Until: validUntilStr // Send String
       };
 
       const backendFunc = type === 'Quotation' ? 'createQuotation' : 'createSale';
@@ -2766,19 +2804,19 @@
         .withSuccessHandler(function(res) {
            if(clickedBtn) {
              clickedBtn.disabled = false;
-             clickedBtn.innerHTML = `<i class="bi bi-check-circle"></i> ${btnText}`;
+             clickedBtn.innerHTML = (type === 'Quotation' ? '<i class="bi bi-file-text"></i> ' : '<i class="bi bi-check-circle"></i> ') + btnText;
            }
            
            if(res.success) {
              alert((type === 'Quotation' ? "Quotation Saved: " : "Sale Complete: ") + res.transactionId);
              
-             // 1. TRIGGER PRINT (Client Side)
+             // Trigger Client-Side Print
              printDocument(res.transactionId, type);
 
-             // 2. REFRESH DATA (Fixes Inventory Lag)
+             // Refresh Inventory & History
              clearDashCart();
-             loadNewSaleInDashboard(); // Reloads inventory to show new stock balances
-             loadSalesHistory();       // Adds the new sale to history
+             loadNewSaleInDashboard(); 
+             loadSalesHistory();       
            } else {
              alert("Error: " + res.message);
            }
@@ -2791,12 +2829,53 @@
     }
 
     // --- CLIENT SIDE PRINTING (Fixes "Loading..." hang) ---
+    function loadSalesHistory() {
+      const tbody = document.getElementById('salesHistoryBody');
+      if(!tbody) return;
+      
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><span class="spinner-border text-primary"></span> Loading...</td></tr>';
+
+      // Uses the new mixed transaction function
+      google.script.run.withSuccessHandler(function(rows) {
+          if (!rows || rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No recent transactions found</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = rows.map(function(row) {
+            const isQuot = row.Transaction_ID.startsWith('QUOT');
+            const typeLabel = isQuot ? 'Quotation' : 'Sale';
+            const badgeClass = isQuot ? 'bg-warning text-dark' : 'bg-success';
+
+            return `
+              <tr>
+                <td><strong>${row.Transaction_ID}</strong></td>
+                <td>${new Date(row.DateTime).toLocaleDateString()}</td>
+                <td>${row.Customer_Name || 'Walk-in'}</td>
+                <td>${row.Payment_Mode || '-'}</td>
+                <td class="text-end">${formatCurrency(row.Grand_Total)}</td>
+                <td><span class="badge ${badgeClass}">${typeLabel}</span></td>
+                <td>
+                  <button class="btn btn-sm btn-outline-dark" onclick="printDocument('${row.Transaction_ID}', '${typeLabel}')">
+                    <i class="bi bi-printer"></i>
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }).getRecentTransactionsMixed(); // Ensure this backend function exists
+    }
+
+    // --- UPDATED FUNCTIONS FOR SALES & QUOTATIONS ---
+
+    // 4. NEW: Client-Side Print Function (Add this if missing)
     function printDocument(id, type) {
       const func = type === 'Quotation' ? 'generateQuotationHTML' : 'generateReceiptHTML';
       
-      // Opens window immediately so browser doesn't block it
       const printWindow = window.open('', '_blank', 'width=900,height=700');
-      printWindow.document.write('<div style="text-align:center; padding:50px;"><h3>Generating Document...</h3></div>');
+      if(!printWindow) { return alert("Allow popups to print!"); }
+      
+      printWindow.document.write('<div style="text-align:center;padding:50px;"><h3>Generating Document...</h3></div>');
 
       google.script.run
         .withSuccessHandler(function(html) {
@@ -2812,35 +2891,6 @@
           printWindow.document.body.innerHTML = `<p style="color:red">Error: ${e.message}</p>`;
         })
         [func](id);
-    }
-
-    // --- SALES HISTORY ---
-    function loadSalesHistory() {
-      const tbody = document.getElementById('salesHistoryBody');
-      if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
-
-      google.script.run.withSuccessHandler(function(rows) {
-        if (!rows || rows.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No recent transactions found.</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = rows.map(r => `
-          <tr>
-            <td><strong>${r.Transaction_ID}</strong></td>
-            <td>${new Date(r.DateTime).toLocaleDateString()}</td>
-            <td>${r.Customer_Name}</td>
-            <td><span class="badge ${r.Transaction_ID.startsWith('QUOT') ? 'bg-warning text-dark' : 'bg-success'}">${r.Transaction_ID.startsWith('QUOT') ? 'Quotation' : 'Sale'}</span></td>
-            <td class="text-end">Ksh ${parseFloat(r.Grand_Total).toLocaleString()}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-dark" onclick="printDocument('${r.Transaction_ID}', '${r.Transaction_ID.startsWith('QUOT')?'Quotation':'Sale'}')">
-                <i class="bi bi-printer"></i> Print
-              </button>
-            </td>
-          </tr>
-        `).join('');
-      }).getRecentTransactionsMixed(); 
     }
 
     // --- CART FUNCTIONS ---

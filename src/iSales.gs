@@ -328,34 +328,33 @@ function markAsPickedUp(transactionId, user) {
 function createQuotation(quotationData) {
   try {
     validateRequired(quotationData, ['items', 'Customer_ID', 'User']);
-
-    if (!quotationData.items || quotationData.items.length === 0) {
-      throw new Error('Quotation must have at least one item');
-    }
+    if (!quotationData.items || quotationData.items.length === 0) throw new Error('Quotation must have at least one item');
 
     const sheet = getSheet('Sales');
     const transactionId = generateId('Sales', 'Transaction_ID', 'QUOT');
+    
+    // Handle Date (From form or default)
     let dateTime = new Date();
-    if (quotationData.DateTime) {
-      dateTime = new Date(quotationData.DateTime);
-      const now = new Date();
-      dateTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+    if(quotationData.DateTime) {
+       dateTime = new Date(quotationData.DateTime);
+       const now = new Date();
+       dateTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
     }
 
-    // Calculate validity date (default 30 days from now)
-    const validityDays = quotationData.Validity_Days || 30;
-    const validUntil = new Date(dateTime);
-    validUntil.setDate(validUntil.getDate() + validityDays);
+    // Handle Valid_Until (Parse string properly)
+    let validUntil = new Date();
+    if (quotationData.Valid_Until) {
+        validUntil = new Date(quotationData.Valid_Until); 
+    } else {
+        validUntil.setDate(validUntil.getDate() + 14);
+    }
 
-    // Calculate totals
     let subtotal = 0;
     const items = [];
-
     for (const item of quotationData.items) {
       const product = getInventoryItemById(item.Item_ID);
       const unitPrice = item.Unit_Price || product.Selling_Price;
       const lineTotal = parseFloat(item.Qty) * parseFloat(unitPrice);
-
       items.push({
         Item_ID: item.Item_ID,
         Item_Name: product.Item_Name,
@@ -363,7 +362,6 @@ function createQuotation(quotationData) {
         Unit_Price: parseFloat(unitPrice),
         Line_Total: lineTotal
       });
-
       subtotal += lineTotal;
     }
 
@@ -371,7 +369,6 @@ function createQuotation(quotationData) {
     const discount = parseFloat(quotationData.Discount) || 0;
     const grandTotal = subtotal + deliveryCharge - discount;
 
-    // Add each line item to Sales sheet
     items.forEach(item => {
       const quotRow = [
         transactionId,
@@ -388,39 +385,20 @@ function createQuotation(quotationData) {
         deliveryCharge,
         discount,
         grandTotal,
-        '', // Payment_Mode (empty for quotation)
+        '', // Payment Mode
         quotationData.User,
         quotationData.Location || '',
         quotationData.KRA_PIN || '',
         'Pending',
         validUntil,
-        ''  // Converted_Sale_ID (filled when converted)
+        ''
       ];
-
       sheet.appendRow(quotRow);
     });
 
-    // Log audit
-    logAudit(
-      quotationData.User,
-      'Sales',
-      'Create Quotation',
-      'Quotation created: ' + transactionId + ' for ' + formatCurrency(grandTotal),
-      '',
-      '',
-      JSON.stringify({transactionId, grandTotal, items: items.length})
-    );
-
-    return {
-      success: true,
-      transactionId: transactionId,
-      grandTotal: grandTotal,
-      subtotal: subtotal,
-      items: items,
-      validUntil: validUntil,
-      message: 'Quotation created successfully'
-    };
-
+    logAudit(quotationData.User, 'Sales', 'Create Quotation', 'Created ' + transactionId, '', '', '');
+    
+    return { success: true, transactionId: transactionId, message: 'Quotation created successfully' };
   } catch (error) {
     logError('createQuotation', error);
     throw new Error('Error creating quotation: ' + error.message);

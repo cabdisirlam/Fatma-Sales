@@ -160,7 +160,7 @@ function getSalesReport() {
 }
 
 /**
- * Get recent transactions (Both Sales and Quotations) for Dashboard History
+ * Get recent transactions (Sales + Quotations) for Dashboard
  */
 function getRecentTransactionsMixed() {
   try {
@@ -181,7 +181,8 @@ function getRecentTransactionsMixed() {
         Customer_Name: row.Customer_Name,
         Grand_Total: row.Grand_Total,
         Type: row.Type, 
-        Status: row.Status
+        Status: row.Status,
+        Payment_Mode: row.Payment_Mode
       });
 
       if (results.length >= 15) break; 
