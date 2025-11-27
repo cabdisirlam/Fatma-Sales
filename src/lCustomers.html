@@ -183,34 +183,21 @@
           <i class="bi bi-arrow-clockwise"></i> Refresh
         </button>
       </div>
-      <div class="col-md-3">
-        <label for="customerEditSelect" class="form-label">-- Select Customer to Edit --</label>
+      <div class="col-md-5">
+        <label for="customerSelect" class="form-label">Select Customer</label>
+        <select class="form-select" id="customerSelect" onchange="onCustomerSelected()">
+          <option value="">-- Select a customer --</option>
+        </select>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label">Actions</label>
         <div class="d-flex gap-2">
-          <select class="form-select" id="customerEditSelect" onchange="updateCustomerActionButtons()">
-            <option value="">-- Select Customer to Edit --</option>
-          </select>
           <button type="button" class="btn btn-warning" id="editCustomerBtn" onclick="editSelectedCustomer()" disabled>
             <i class="bi bi-pencil"></i> Edit
           </button>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <label for="customerPaymentSelect" class="form-label">-- Select Customer to Receive Payment --</label>
-        <div class="d-flex gap-2">
-          <select class="form-select" id="customerPaymentSelect" onchange="updateCustomerActionButtons()">
-            <option value="">-- Select Customer to Receive Payment --</option>
-          </select>
           <button type="button" class="btn btn-success" id="receivePaymentBtn" onclick="receiveSelectedPayment()" disabled>
             <i class="bi bi-cash"></i> Receive
           </button>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <label for="customerStatementSelect" class="form-label">-- Select Customer for Statement --</label>
-        <div class="d-flex gap-2">
-          <select class="form-select" id="customerStatementSelect" onchange="updateCustomerActionButtons()">
-            <option value="">-- Select Customer for Statement --</option>
-          </select>
           <button type="button" class="btn btn-info" id="customerStatementBtn" onclick="viewSelectedCustomerStatement()" disabled>
             <i class="bi bi-file-text"></i> Statement
           </button>
@@ -672,17 +659,13 @@
     }
 
     function populateCustomerDropdown(data) {
-      const actionSelects = [
-        { id: 'customerEditSelect', placeholder: '-- Select Customer to Edit --' },
-        { id: 'customerPaymentSelect', placeholder: '-- Select Customer to Receive Payment --' },
-        { id: 'customerStatementSelect', placeholder: '-- Select Customer for Statement --' }
-      ];
+      const select = document.getElementById('customerSelect');
+      if (!select) return;
+
+      const currentValue = select.value;
+      select.innerHTML = '<option value="">-- Select a customer --</option>';
 
       if (!data || data.length === 0) {
-        actionSelects.forEach(({ id, placeholder }) => {
-          const select = document.getElementById(id);
-          if (select) select.innerHTML = `<option value="">${placeholder}</option>`;
-        });
         updateCustomerActionButtons();
         return;
       }
@@ -693,65 +676,70 @@
         return nameA.localeCompare(nameB);
       });
 
-      actionSelects.forEach(({ id, placeholder }) => {
-        const select = document.getElementById(id);
-        if (!select) return;
-
-        const currentValue = select.value;
-        select.innerHTML = `<option value="">${placeholder}</option>`;
-
-        sorted.forEach(customer => {
-          const option = document.createElement('option');
-          option.value = customer.Customer_ID;
-          option.textContent = `${customer.Customer_Name || customer.Name || ''} (${customer.Customer_ID})`;
-          select.appendChild(option);
-        });
-
-        if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
-          select.value = currentValue;
-        }
+      sorted.forEach(customer => {
+        const option = document.createElement('option');
+        option.value = customer.Customer_ID;
+        const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
+        const balanceText = balance < 0 ? ` - Owes: Ksh ${Math.abs(balance).toFixed(2)}` :
+                           balance > 0 ? ` - Credit: Ksh ${balance.toFixed(2)}` : '';
+        option.textContent = `${customer.Customer_Name || customer.Name || ''} (${customer.Customer_ID})${balanceText}`;
+        select.appendChild(option);
       });
+
+      if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
+        select.value = currentValue;
+      }
 
       updateCustomerActionButtons();
     }
 
-    function updateCustomerActionButtons() {
-      const editSelect = document.getElementById('customerEditSelect');
-      document.getElementById('editCustomerBtn').disabled = !(editSelect && editSelect.value);
-
-      const paymentSelect = document.getElementById('customerPaymentSelect');
-      const paymentCustomer = paymentSelect ? findCustomerById(paymentSelect.value) : null;
-      const paymentBalance = paymentCustomer ? getNumericField(paymentCustomer, ['Current_Balance', 'Balance']) : 0;
-      document.getElementById('receivePaymentBtn').disabled = !(paymentCustomer && paymentBalance < 0);
-
-      const statementSelect = document.getElementById('customerStatementSelect');
-      document.getElementById('customerStatementBtn').disabled = !(statementSelect && statementSelect.value);
+    function onCustomerSelected() {
+      updateCustomerActionButtons();
     }
 
-    function getSelectedCustomerId(selectId, actionText) {
-      const select = document.getElementById(selectId);
-      if (!select || !select.value) {
-        alert(`Please select a customer ${actionText}`);
-        return null;
-      }
-      return select.value;
+    function updateCustomerActionButtons() {
+      const select = document.getElementById('customerSelect');
+      const customerId = select ? select.value : '';
+      const customer = customerId ? findCustomerById(customerId) : null;
+
+      // Edit button: enabled when customer selected
+      document.getElementById('editCustomerBtn').disabled = !customer;
+
+      // Receive payment button: enabled only when customer has debt (negative balance)
+      const balance = customer ? getNumericField(customer, ['Current_Balance', 'Balance']) : 0;
+      document.getElementById('receivePaymentBtn').disabled = !(customer && balance < 0);
+
+      // Statement button: enabled when customer selected
+      document.getElementById('customerStatementBtn').disabled = !customer;
     }
 
     function editSelectedCustomer() {
-      const customerId = getSelectedCustomerId('customerEditSelect', 'to edit');
-      if (!customerId) return;
+      const select = document.getElementById('customerSelect');
+      const customerId = select ? select.value : '';
+      if (!customerId) {
+        alert('Please select a customer to edit');
+        return;
+      }
       openCustomerEditor(customerId);
     }
 
     function receiveSelectedPayment() {
-      const customerId = getSelectedCustomerId('customerPaymentSelect', 'to receive payment from');
-      if (!customerId) return;
+      const select = document.getElementById('customerSelect');
+      const customerId = select ? select.value : '';
+      if (!customerId) {
+        alert('Please select a customer to receive payment from');
+        return;
+      }
       openPaymentModal(customerId);
     }
 
     function viewSelectedCustomerStatement() {
-      const customerId = getSelectedCustomerId('customerStatementSelect', 'for the statement');
-      if (!customerId) return;
+      const select = document.getElementById('customerSelect');
+      const customerId = select ? select.value : '';
+      if (!customerId) {
+        alert('Please select a customer for the statement');
+        return;
+      }
       viewCustomerStatement(customerId);
     }
 
