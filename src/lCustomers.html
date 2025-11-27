@@ -16,6 +16,7 @@
       padding: 20px;
     }
 
+    /* Header */
     .header-section {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -24,86 +25,21 @@
       margin-bottom: 30px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-
-    .header-section h2 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 700;
-    }
-
-    .header-section p {
-      margin: 10px 0 0 0;
-      opacity: 0.9;
-    }
-
-    .card {
-      border: none;
-      border-radius: 15px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
-
-    .card-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-radius: 15px 15px 0 0 !important;
-      padding: 20px;
-      font-weight: 600;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-success {
-      border-radius: 8px;
-      padding: 10px 20px;
-    }
-
-    .table {
-      margin: 0;
-    }
-
-    .table thead {
-      background: #f8f9fa;
-    }
-
-    .table th {
-      border-bottom: 2px solid #dee2e6;
-      font-weight: 600;
-      color: #2c3e50;
-    }
-
-    .badge {
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-weight: 500;
-    }
-
-    /* Supplier-style stat cards */
+    
+    /* Clean Stat Cards (Matches Supplier Look) */
     .stat-card {
       background: white;
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
       margin-bottom: 20px;
-      height: 100%; /* Ensure uniform height */
+      height: 100%;
     }
 
     .stat-value {
-      font-size: 20px;
+      font-size: 24px;
       font-weight: 700;
-      color: #667eea; /* Default color */
+      color: #667eea;
       margin: 10px 0;
     }
 
@@ -112,25 +48,16 @@
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      font-weight: 600;
     }
 
-    /* Add these specific color classes */
-    .text-success { color: #27ae60 !important; }
-    .text-danger { color: #e74c3c !important; }
-    .text-warning { color: #f39c12 !important; }
-    .text-primary { color: #667eea !important; }
+    /* Colors */
+    .text-success-custom { color: #27ae60; }
+    .text-danger-custom { color: #e74c3c; }
+    .text-primary-custom { color: #667eea; }
+    .text-warning-custom { color: #f39c12; }
 
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: #7f8c8d;
-    }
-
-    .spinner-border {
-      width: 3rem;
-      height: 3rem;
-    }
-
+    /* Action Rows Layout */
     .filter-section {
       background: white;
       padding: 20px;
@@ -139,46 +66,28 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
-    .balance-negative {
-      color: #e74c3c;
-      font-weight: 600;
-    }
-
-    .balance-positive {
-      color: #27ae60;
-      font-weight: 600;
-    }
-
-    .form-label {
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 8px;
-    }
-
-    .form-control, .form-select {
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      padding: 10px 15px;
-    }
-
-    /* Action rows styling */
     .action-row {
       display: flex;
       gap: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       align-items: center;
+    }
+
+    .action-row:last-child {
+      margin-bottom: 0;
     }
 
     .action-select {
       flex-grow: 1;
-      border-radius: 6px;
+      border-radius: 8px;
       border: 1px solid #dee2e6;
       padding: 8px 12px;
-      background-color: white;
+      height: 40px;
     }
 
     .btn-action {
-      min-width: 120px;
+      min-width: 140px;
+      height: 40px;
       font-weight: 500;
       color: white;
       border: none;
@@ -186,303 +95,148 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      border-radius: 8px;
+      transition: all 0.2s;
     }
 
-    .btn-edit-custom {
-      background-color: #f1c40f;
-      color: #2c3e50;
-    }
-    
-    .btn-pay-custom {
-      background-color: #198754;
+    .btn-action:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
       color: white;
     }
 
-    .btn-stmt-custom {
-      background-color: #0dcaf0;
+    /* Specific Button Colors */
+    .btn-edit-custom { background-color: #f1c40f; color: #2c3e50; } /* Yellow */
+    .btn-pay-custom { background-color: #198754; } /* Green */
+    .btn-stmt-custom { background-color: #0dcaf0; color: #2c3e50; } /* Cyan */
+
+    /* Tables & General */
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .card-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 15px 15px 0 0 !important;
+      padding: 15px 20px;
+      font-weight: 600;
+    }
+
+    .table thead { background: #f8f9fa; }
+    .table th {
+      border-bottom: 2px solid #dee2e6;
       color: #2c3e50;
+      font-weight: 600;
+      padding: 12px;
     }
+    .table td { padding: 12px; vertical-align: middle; }
 
-    .form-control:focus, .form-select:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    }
+    .balance-negative { color: #e74c3c; font-weight: 600; }
+    .balance-positive { color: #27ae60; font-weight: 600; }
 
-    /* Mobile Responsive Styles */
-    @media (max-width: 768px) {
-      body {
-        padding: 10px;
-      }
-
-      .header-section {
-        padding: 20px 15px;
-        margin-bottom: 20px;
-      }
-
-      .header-section h2 {
-        font-size: 22px;
-      }
-
-      .stat-card {
-        margin-bottom: 15px;
-        padding: 15px;
-      }
-
-      .stat-value {
-        font-size: 24px;
-      }
-
-      .stat-label {
-        font-size: 12px;
-      }
-
-      .filter-section {
-        padding: 15px;
-      }
-
-      .filter-section .row > div {
-        margin-bottom: 10px;
-      }
-
-      .table {
-        font-size: 14px;
-      }
-
-      .table th, .table td {
-        padding: 8px 5px;
-      }
-
-      /* Stack action buttons vertically on mobile */
-      .btn-group {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-      }
-
-      .btn-group .btn {
-        width: 100%;
-      }
-
-      /* Make modals full screen on mobile */
-      .modal-xl {
-        max-width: 100%;
-        margin: 0;
-      }
-
-      .modal-dialog-centered {
-        min-height: calc(100% - 20px);
-      }
-
-      .modal-content {
-        min-height: calc(100vh - 20px);
-      }
-
-      /* Improve form inputs on mobile */
-      .form-control, .form-select {
-        font-size: 16px; /* Prevents zoom on iOS */
-      }
-
-      /* Hide less important columns on mobile */
-      .table td:nth-child(3),
-      .table th:nth-child(3),
-      .table td:nth-child(5),
-      .table th:nth-child(5) {
-        display: none;
-      }
-
-      /* Make cards more compact */
-      .card {
-        margin-bottom: 15px;
-      }
-
-      .card-header {
-        padding: 15px;
-        font-size: 14px;
-      }
-
-      .card-body {
-        padding: 15px;
-      }
-
-      /* Improve alert readability on mobile */
-      .alert {
-        font-size: 14px;
-        padding: 10px;
-      }
-
-      /* Make buttons touch-friendly */
-      .btn {
-        min-height: 44px;
-        padding: 10px 15px;
-      }
-
-      .btn-sm {
-        min-height: 36px;
-        padding: 6px 10px;
-      }
-    }
-
-    /* Extra small devices (phones in portrait, less than 576px) */
-    @media (max-width: 576px) {
-      .header-section h2 {
-        font-size: 18px;
-      }
-
-      .stat-value {
-        font-size: 20px;
-      }
-
-      .table {
-        font-size: 12px;
-      }
-
-      /* Further simplify table on very small screens */
-      .table td:nth-child(4),
-      .table th:nth-child(4),
-      .table td:nth-child(7),
-      .table th:nth-child(7) {
-        display: none;
-      }
-
-      /* Stack form rows on small screens */
-      .row .col-md-6,
-      .row .col-md-4,
-      .row .col-md-3 {
-        margin-bottom: 10px;
-      }
-    }
-
-    /* Print styles for statements */
-    @media print {
-      .modal-header,
-      .modal-footer,
-      .btn,
-      .filter-section,
-      #statsSection {
-        display: none !important;
-      }
-
-      .modal-dialog {
-        max-width: 100%;
-        margin: 0;
-      }
-
-      .modal-content {
-        border: none;
-        box-shadow: none;
-      }
-
-      body {
-        background: white;
-      }
-
-      .card {
-        border: 1px solid #ddd;
-        page-break-inside: avoid;
-      }
-
-      .table {
-        font-size: 12px;
-      }
-    }
+    /* Loading Overlay */
+    .loading { text-align: center; padding: 40px; color: #7f8c8d; }
   </style>
 </head>
 <body>
   <div class="header-section">
-    <h2><i class="bi bi-people"></i> Customer Management</h2>
-    <p>Manage your customers, sales orders, and payment tracking</p>
+    <h2 style="margin:0; font-weight: 700;"><i class="bi bi-people"></i> Customer Management</h2>
+    <p style="margin: 5px 0 0 0; opacity: 0.9;">Manage customers, track balances, and record payments</p>
   </div>
 
-  <!-- Statistics Cards -->
-  <div class="row" id="statsSection">
+  <div class="row mb-4" id="statsSection">
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Customers</div>
-        <div class="stat-value text-primary" id="totalCustomers">0</div>
+        <div class="stat-value text-primary-custom" id="totalCustomers">0</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Active Customers</div>
-        <div class="stat-value text-success" id="activeCustomers">0</div>
+        <div class="stat-value text-success-custom" id="activeCustomers">0</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
-        <div class="stat-label">Total Receivable</div>
-        <div class="stat-value text-danger" id="totalReceivable">Ksh 0.00</div>
+        <div class="stat-label">Total Receivable (Debt)</div>
+        <div class="stat-value text-danger-custom" id="totalReceivable">Ksh 0.00</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
-        <div class="stat-label">Total Sales</div>
-        <div class="stat-value text-primary" id="totalSales">Ksh 0.00</div>
+        <div class="stat-label">Total Sales Volume</div>
+        <div class="stat-value text-primary-custom" id="totalSales">Ksh 0.00</div>
       </div>
     </div>
   </div>
 
-  <!-- Customer Selection and Actions -->
-  <div class="filter-section">
-    <div class="action-row">
-      <select class="form-select action-select" id="selectCustomerEdit">
-        <option value="">Select Customer to Edit...</option>
-      </select>
-      <button class="btn btn-action btn-edit-custom" onclick="actionEdit()">
-        <i class="bi bi-pencil"></i> Edit
-      </button>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="filter-section">
+        <h6 class="mb-3 text-muted fw-bold">ACTIONS</h6>
+        
+        <div class="action-row">
+          <select class="form-select action-select" id="selectCustomerEdit">
+            <option value="">Select Customer to Edit...</option>
+          </select>
+          <button class="btn btn-action btn-edit-custom" onclick="actionEdit()">
+            <i class="bi bi-pencil"></i> Edit
+          </button>
+        </div>
+
+        <div class="action-row">
+          <select class="form-select action-select" id="selectCustomerPay">
+            <option value="">Select Customer - Balance...</option>
+          </select>
+          <button class="btn btn-action btn-pay-custom" onclick="actionReceive()">
+            <i class="bi bi-cash-coin"></i> Receive
+          </button>
+        </div>
+
+        <div class="action-row">
+          <select class="form-select action-select" id="selectCustomerStmt">
+            <option value="">Select Customer for Statement...</option>
+          </select>
+          <button class="btn btn-action btn-stmt-custom" onclick="actionStatement()">
+            <i class="bi bi-file-text"></i> Statement
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="action-row">
-      <select class="form-select action-select" id="selectCustomerPay">
-        <option value="">Select Customer - Balance...</option>
-      </select>
-      <button class="btn btn-action btn-pay-custom" onclick="actionReceive()">
-        <i class="bi bi-cash"></i> Receive
-      </button>
-    </div>
-
-    <div class="action-row">
-      <select class="form-select action-select" id="selectCustomerStmt">
-        <option value="">Select Customer for Statement...</option>
-      </select>
-      <button class="btn btn-action btn-stmt-custom" onclick="actionStatement()">
-        <i class="bi bi-file-text"></i> Statement
-      </button>
+    <div class="col-md-6">
+      <div class="filter-section" style="height: 100%;"> <h6 class="mb-3 text-muted fw-bold">FILTERS & NEW</h6>
+        <div class="mb-3">
+          <input type="text" class="form-control" id="searchInput" placeholder="Search by name, phone, or email..." style="height: 45px;">
+        </div>
+        <div class="mb-3">
+          <select class="form-select" id="statusFilter" style="height: 45px;">
+            <option value="">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary flex-grow-1" onclick="loadCustomers()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh List
+          </button>
+          <button class="btn btn-success flex-grow-1" onclick="showAddCustomerModal()">
+            <i class="bi bi-plus-circle"></i> Add New Customer
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Filter Section -->
-  <div class="filter-section">
-    <div class="row">
-      <div class="col-md-5">
-        <input type="text" class="form-control" id="searchInput" placeholder="Search by name, phone, or email...">
-      </div>
-      <div class="col-md-3">
-        <select class="form-select" id="statusFilter">
-          <option value="">All Status</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <button class="btn btn-primary w-100" onclick="loadCustomers()">
-          <i class="bi bi-arrow-clockwise"></i> Refresh
-        </button>
-      </div>
-      <div class="col-md-2">
-        <button class="btn btn-success w-100" onclick="showAddCustomerModal()">
-          <i class="bi bi-plus-circle"></i> Add New
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Customers Table -->
-  <div class="card">
+  <div class="card mt-2">
     <div class="card-header">
       <i class="bi bi-list-ul"></i> Customers List
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
       <div id="loadingIndicator" class="loading">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading...</span>
@@ -492,34 +246,30 @@
 
       <div id="customersTableContainer" style="display: none;">
         <div class="table-responsive">
-          <table class="table table-hover">
+          <table class="table table-hover mb-0">
             <thead>
               <tr>
                 <th>Customer ID</th>
                 <th>Name</th>
                 <th>Phone</th>
-                <th>Email</th>
                 <th>Location</th>
                 <th>Balance</th>
                 <th>Status</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="customersTableBody">
-              <!-- Data will be loaded here -->
-            </tbody>
+              </tbody>
           </table>
         </div>
       </div>
 
-      <div id="noDataMessage" style="display: none;" class="text-center text-muted py-4">
+      <div id="noDataMessage" style="display: none;" class="text-center text-muted py-5">
         <i class="bi bi-inbox" style="font-size: 48px;"></i>
         <p class="mt-3">No customers found</p>
       </div>
     </div>
   </div>
 
-  <!-- Add Customer Modal -->
   <div class="modal fade" id="addCustomerModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -529,39 +279,55 @@
         </div>
         <form id="addCustomerForm" onsubmit="submitCustomer(event)">
           <div class="modal-body">
-            <div class="mb-3">
-              <label for="custName" class="form-label">Customer Name *</label>
-              <input type="text" class="form-control" id="custName" required>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Customer Name *</label>
+                <input type="text" class="form-control" id="custName" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone Number *</label>
+                <input type="text" class="form-control" id="custPhone" required>
+              </div>
             </div>
+            
             <div class="mb-3">
-              <label for="custPhone" class="form-label">Phone Number *</label>
-              <input type="text" class="form-control" id="custPhone" required>
-            </div>
-            <div class="mb-3">
-              <label for="custEmail" class="form-label">Email</label>
+              <label class="form-label">Email</label>
               <input type="email" class="form-control" id="custEmail">
             </div>
-            <div class="mb-3">
-              <label for="custLocation" class="form-label">Location</label>
-              <input type="text" class="form-control" id="custLocation">
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Location</label>
+                <input type="text" class="form-control" id="custLocation">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">KRA PIN</label>
+                <input type="text" class="form-control" id="custKRAPin">
+              </div>
             </div>
-            <div class="mb-3">
-              <label for="custKRAPin" class="form-label">KRA PIN</label>
-              <input type="text" class="form-control" id="custKRAPin">
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Customer Type</label>
+                <select class="form-select" id="custType">
+                  <option value="Walk-in">Walk-in</option>
+                  <option value="Regular">Regular</option>
+                  <option value="Corporate">Corporate</option>
+                  <option value="Wholesale">Wholesale</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Credit Limit (KSh)</label>
+                <input type="number" class="form-control" id="custCreditLimit" value="0" min="0">
+              </div>
             </div>
-            <div class="mb-3">
-              <label for="custType" class="form-label">Customer Type</label>
-              <select class="form-select" id="custType">
-                <option value="Walk-in">Walk-in</option>
-                <option value="Regular">Regular</option>
-                <option value="Corporate">Corporate</option>
-                <option value="Wholesale">Wholesale</option>
-              </select>
+
+            <div class="mb-3 p-3 bg-light rounded border">
+              <label class="form-label text-primary fw-bold">Opening Balance (Optional)</label>
+              <input type="number" class="form-control" id="custOpeningBalance" placeholder="0.00" step="0.01">
+              <div class="form-text">Enter amount if customer already owes money. (Positive value = Debt)</div>
             </div>
-            <div class="mb-3">
-              <label for="custCreditLimit" class="form-label">Credit Limit (KSh)</label>
-              <input type="number" class="form-control" id="custCreditLimit" value="0" min="0" step="0.01">
-            </div>
+
             <div id="addCustomerAlert" class="alert mt-3" style="display: none;"></div>
           </div>
           <div class="modal-footer">
@@ -575,132 +341,45 @@
     </div>
   </div>
 
-  <!-- Receive Payment Modal -->
   <div class="modal fade" id="customerPaymentModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white;">
-          <h5 class="modal-title"><i class="bi bi-cash-coin"></i> Receive Customer Payment</h5>
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="bi bi-cash-coin"></i> Receive Payment</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <input type="hidden" id="paymentCustomerId">
-          <div class="alert alert-info mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <strong>Customer:</strong> <span id="paymentCustomerName"></span>
-              </div>
-              <div>
-                <strong>Balance:</strong> <span id="paymentCustomerBalance" class="balance-negative"></span>
-              </div>
-            </div>
+          <div class="alert alert-light border text-center mb-3">
+            <h5 id="paymentCustomerName" class="mb-1 fw-bold"></h5>
+            <div id="paymentCustomerBalance" class="fs-4 fw-bold text-danger"></div>
+            <small class="text-muted">Current Outstanding Balance</small>
           </div>
 
           <div class="mb-3">
-            <label for="customerPaymentAmount" class="form-label">Payment Amount (Ksh) *</label>
-            <input type="number" class="form-control" id="customerPaymentAmount" min="0" step="0.01" required>
-            <div class="form-text">Enter the amount received from the customer</div>
+            <label class="form-label">Payment Amount (Ksh) *</label>
+            <input type="number" class="form-control form-control-lg" id="customerPaymentAmount" min="0" step="0.01" required>
           </div>
 
           <div class="mb-3">
-            <label for="customerPaymentAccount" class="form-label">Payment Method *</label>
+            <label class="form-label">Payment Method *</label>
             <select class="form-select" id="customerPaymentAccount" required>
               <option value="Cash">Cash</option>
               <option value="M-Pesa">M-Pesa</option>
               <option value="Equity Bank">Equity Bank</option>
             </select>
-            <div class="form-text">Select the account receiving this payment</div>
           </div>
 
           <div class="mb-3">
-            <label for="customerPaymentReference" class="form-label">Reference/Receipt No</label>
-            <input type="text" class="form-control" id="customerPaymentReference" placeholder="e.g., TXN123456">
-            <div class="form-text">Optional: M-Pesa code, receipt number, or transfer reference</div>
-          </div>
-
-          <div class="mb-3">
-            <label for="customerPaymentNotes" class="form-label">Notes</label>
-            <textarea class="form-control" id="customerPaymentNotes" rows="2" placeholder="Optional payment notes"></textarea>
+            <label class="form-label">Reference / Receipt No</label>
+            <input type="text" class="form-control" id="customerPaymentReference" placeholder="e.g. QH823... or 1234">
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-success" id="submitCustomerPaymentBtn" onclick="submitCustomerPayment()">
-            <i class="bi bi-check-circle"></i> Submit Payment
+          <button type="button" class="btn btn-success px-4" id="submitCustomerPaymentBtn" onclick="submitCustomerPayment()">
+            Confirm Payment
           </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Customer Statement Modal -->
-  <div class="modal fade" id="customerStatementModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white;">
-          <h5 class="modal-title"><i class="bi bi-file-earmark-text"></i> Customer Statement</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row mb-3">
-            <div class="col-md-4">
-              <label class="form-label">Start Date</label>
-              <input type="date" class="form-control" id="customerStatementStartDate">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">End Date</label>
-              <input type="date" class="form-control" id="customerStatementEndDate">
-            </div>
-            <div class="col-md-4 d-flex align-items-end">
-              <button class="btn btn-primary w-100" onclick="filterCustomerStatement()">
-                <i class="bi bi-filter"></i> Apply Filter
-              </button>
-            </div>
-          </div>
-
-          <div class="alert alert-secondary">
-            <div class="row">
-              <div class="col-md-6">
-                <p class="mb-1"><strong>Customer:</strong> <span id="statementCustomerName"></span></p>
-                <p class="mb-1"><strong>Customer ID:</strong> <span id="statementCustomerId"></span></p>
-                <p class="mb-1"><strong>Phone:</strong> <span id="statementCustomerPhone"></span></p>
-              </div>
-              <div class="col-md-6 text-md-end">
-                <p class="mb-1"><strong>Opening Balance:</strong> <span id="statementOpeningBalance"></span></p>
-                <p class="mb-1"><strong>Total Debits (Sales):</strong> <span id="statementDebits"></span></p>
-                <p class="mb-1"><strong>Total Credits (Payments):</strong> <span id="statementCredits"></span></p>
-                <p class="mb-0"><strong>Closing Balance:</strong> <span id="statementClosingBalance"></span></p>
-              </div>
-            </div>
-          </div>
-
-          <div id="customerStatementLoading" class="text-center py-3" style="display: none;">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-          </div>
-
-          <div class="table-responsive">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th>Reference</th>
-                  <th class="text-end">Debit</th>
-                  <th class="text-end">Credit</th>
-                  <th class="text-end">Balance</th>
-                </tr>
-              </thead>
-              <tbody id="customerStatementBody">
-                <tr><td colspan="7" class="text-center text-muted">No transactions found</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
@@ -708,37 +387,68 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Load customers on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      loadCustomers();
-    });
-
-    // Search functionality
-    document.getElementById('searchInput').addEventListener('keyup', filterCustomers);
-    document.getElementById('statusFilter').addEventListener('change', filterCustomers);
-
     let customersData = [];
     let editingCustomerId = null;
-    let currentStatementCustomerId = null;
+    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadCustomers();
+      
+      // Search Listener
+      document.getElementById('searchInput').addEventListener('keyup', filterCustomers);
+      document.getElementById('statusFilter').addEventListener('change', filterCustomers);
+    });
 
     function loadCustomers() {
       document.getElementById('loadingIndicator').style.display = 'block';
       document.getElementById('customersTableContainer').style.display = 'none';
-      document.getElementById('noDataMessage').style.display = 'none';
-
+      
       google.script.run
         .withSuccessHandler(function(data) {
           customersData = data;
           displayCustomers(data);
           updateStats(data);
-          populateCustomerDropdown(data);
+          populateDropdowns(data);
           document.getElementById('loadingIndicator').style.display = 'none';
         })
         .withFailureHandler(function(error) {
-          document.getElementById('loadingIndicator').innerHTML =
-            '<div class="alert alert-danger">Error loading customers: ' + error.message + '</div>';
+          alert('Error loading customers: ' + error.message);
         })
         .getCustomers({});
+    }
+
+    function populateDropdowns(data) {
+      const selectEdit = document.getElementById('selectCustomerEdit');
+      const selectPay = document.getElementById('selectCustomerPay');
+      const selectStmt = document.getElementById('selectCustomerStmt');
+
+      // Reset
+      selectEdit.innerHTML = '<option value="">Select Customer to Edit...</option>';
+      selectPay.innerHTML = '<option value="">Select Customer - Balance...</option>';
+      selectStmt.innerHTML = '<option value="">Select Customer for Statement...</option>';
+
+      if (!data || data.length === 0) return;
+
+      // Sort A-Z
+      const sorted = [...data].sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
+
+      sorted.forEach(c => {
+        const name = c.Customer_Name || c.Name;
+        const id = c.Customer_ID;
+        const balance = parseFloat(c.Current_Balance || c.Balance || 0);
+        
+        // Format balance text
+        let balText = ' - Bal: 0';
+        if (balance < 0) balText = ` - Owes: ${Math.abs(balance).toLocaleString()}`;
+        if (balance > 0) balText = ` - Credit: ${balance.toLocaleString()}`;
+
+        // Add to Edit
+        selectEdit.add(new Option(`${name}`, id));
+        // Add to Pay (with balance)
+        selectPay.add(new Option(`${name}${balText}`, id));
+        // Add to Statement
+        selectStmt.add(new Option(`${name}`, id));
+      });
     }
 
     function displayCustomers(data) {
@@ -749,456 +459,208 @@
         document.getElementById('noDataMessage').style.display = 'block';
         return;
       }
-
+      document.getElementById('noDataMessage').style.display = 'none';
       document.getElementById('customersTableContainer').style.display = 'block';
 
-      data.forEach(function(customer) {
+      data.forEach(c => {
         const row = document.createElement('tr');
+        const balance = parseFloat(c.Current_Balance || c.Balance || 0);
+        
+        let balHtml = '<span class="text-muted">0.00</span>';
+        if (balance < 0) balHtml = `<span class="balance-negative">Owes ${Math.abs(balance).toLocaleString()}</span>`;
+        if (balance > 0) balHtml = `<span class="balance-positive">Credit ${balance.toLocaleString()}</span>`;
 
-        const balance = parseFloat(customer.Current_Balance || customer.Balance || 0);
-        const balanceClass = balance < 0 ? 'balance-negative' : balance > 0 ? 'balance-positive' : '';
-        const balanceText = balance < 0 ? 'Owes: Ksh ' + Math.abs(balance).toFixed(2) :
-                           balance > 0 ? 'Credit: Ksh ' + balance.toFixed(2) : 'Ksh 0.00';
-
-        const statusBadge = customer.Status === 'Active' ?
-          '<span class="badge bg-success">Active</span>' :
-          '<span class="badge bg-secondary">Inactive</span>';
+        const statusBadge = c.Status === 'Active' 
+          ? '<span class="badge bg-success">Active</span>' 
+          : '<span class="badge bg-secondary">Inactive</span>';
 
         row.innerHTML = `
-          <td>${customer.Customer_ID || ''}</td>
-          <td><strong>${customer.Customer_Name || customer.Name || ''}</strong></td>
-          <td>${customer.Phone || '-'}</td>
-          <td>${customer.Email || '-'}</td>
-          <td>${customer.Location || '-'}</td>
-          <td class="${balanceClass}">${balanceText}</td>
+          <td>${c.Customer_ID}</td>
+          <td><strong>${c.Customer_Name}</strong></td>
+          <td>${c.Phone}</td>
+          <td>${c.Location || '-'}</td>
+          <td>${balHtml}</td>
           <td>${statusBadge}</td>
-          <td>
-            <button class="btn btn-sm btn-info" onclick='viewCustomerStatement("${customer.Customer_ID}")' title="View Statement">
-              <i class="bi bi-file-text"></i>
-            </button>
-          </td>
         `;
         tbody.appendChild(row);
       });
     }
 
     function updateStats(data) {
-      if (!data || data.length === 0) {
-        document.getElementById('totalCustomers').textContent = '0';
-        document.getElementById('activeCustomers').textContent = '0';
-        document.getElementById('totalReceivable').textContent = 'Ksh 0.00';
-        document.getElementById('totalSales').textContent = 'Ksh 0.00';
-        return;
-      }
+      if(!data) return;
+      const total = data.length;
+      const active = data.filter(c => c.Status === 'Active').length;
+      
+      let debt = 0;
+      let sales = 0;
 
-      const totalCustomers = data.length;
-      const activeCustomers = data.filter(c => c.Status === 'Active').length;
-      let totalReceivable = 0;
-      let totalSales = 0;
-
-      data.forEach(function(customer) {
-        const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
-        const sales = getNumericField(customer, ['Total_Sales', 'Total Sales']);
-
-        // For customers, negative balance means they owe us money (receivable)
-        if (balance < 0) {
-          totalReceivable += Math.abs(balance);
-        }
-
-        totalSales += sales;
+      data.forEach(c => {
+        const bal = parseFloat(c.Current_Balance || 0);
+        if (bal < 0) debt += Math.abs(bal);
+        sales += parseFloat(c.Total_Purchases || 0);
       });
 
-      document.getElementById('totalCustomers').textContent = totalCustomers;
-      document.getElementById('activeCustomers').textContent = activeCustomers;
-      document.getElementById('totalReceivable').textContent = 'Ksh ' + totalReceivable.toFixed(2);
-      document.getElementById('totalSales').textContent = 'Ksh ' + totalSales.toFixed(2);
+      document.getElementById('totalCustomers').textContent = total;
+      document.getElementById('activeCustomers').textContent = active;
+      document.getElementById('totalReceivable').textContent = 'Ksh ' + debt.toLocaleString();
+      document.getElementById('totalSales').textContent = 'Ksh ' + sales.toLocaleString();
     }
 
     function filterCustomers() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const statusFilter = document.getElementById('statusFilter').value;
+      const term = document.getElementById('searchInput').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
 
-      const filtered = customersData.filter(function(customer) {
-        const matchesSearch = !searchTerm ||
-          (customer.Name && customer.Name.toLowerCase().includes(searchTerm)) ||
-          (customer.Phone && customer.Phone.includes(searchTerm)) ||
-          (customer.Email && customer.Email.toLowerCase().includes(searchTerm)) ||
-          (customer.Customer_ID && customer.Customer_ID.toLowerCase().includes(searchTerm));
-
-        const matchesStatus = !statusFilter || customer.Status === statusFilter;
-
-        return matchesSearch && matchesStatus;
+      const filtered = customersData.filter(c => {
+        const matchTerm = (c.Customer_Name && c.Customer_Name.toLowerCase().includes(term)) ||
+                          (c.Phone && c.Phone.includes(term));
+        const matchStatus = !status || c.Status === status;
+        return matchTerm && matchStatus;
       });
 
       displayCustomers(filtered);
-      updateStats(filtered);
     }
 
-    // Get current user
-    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
-
-    // Show Add Customer Modal
-    function showAddCustomerModal() {
-      editingCustomerId = null;
-      document.getElementById('addCustomerForm').reset();
-      document.getElementById('addCustomerAlert').style.display = 'none';
-      document.getElementById('customerModalTitle').innerHTML = '<i class="bi bi-person-plus"></i> Add New Customer';
-      document.getElementById('customerSubmitBtn').innerHTML = '<i class="bi bi-save"></i> Save Customer';
-      const modal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
-      modal.show();
-    }
-
-    // Submit Customer
-    function submitCustomer(event) {
-      if (event) event.preventDefault();
-      const name = document.getElementById('custName').value.trim();
-      const phone = document.getElementById('custPhone').value.trim();
-      const email = document.getElementById('custEmail').value.trim();
-      const location = document.getElementById('custLocation').value.trim();
-      const kraPin = document.getElementById('custKRAPin').value.trim();
-      const type = document.getElementById('custType').value;
-      const creditLimit = document.getElementById('custCreditLimit').value;
-
-      if (!name || !phone) {
-        showCustomerAlert('Please fill in all required fields (Name and Phone)', 'warning');
-        return;
-      }
-
-      const customerData = {
-        Customer_Name: name,
-        Phone: phone,
-        Email: email,
-        Location: location,
-        KRA_PIN: kraPin,
-        Customer_Type: type,
-        Credit_Limit: parseFloat(creditLimit) || 0,
-        Created_By: currentUser,
-        User: currentUser
-      };
-
-      // Show loading state
-      showCustomerAlert(editingCustomerId ? 'Updating customer...' : 'Adding customer...', 'info');
-
-      const runner = google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) {
-            showCustomerAlert(editingCustomerId ? 'Customer updated successfully!' : 'Customer added successfully!', 'success');
-            setTimeout(function() {
-              bootstrap.Modal.getInstance(document.getElementById('addCustomerModal')).hide();
-              loadCustomers(); // Refresh the customer list
-            }, 1000);
-          } else {
-            showCustomerAlert('Error: ' + result.message, 'danger');
-          }
-        })
-        .withFailureHandler(function(error) {
-          showCustomerAlert('Error: ' + error.message, 'danger');
-        });
-
-      if (editingCustomerId) {
-        runner.updateCustomer(editingCustomerId, customerData);
-      } else {
-        runner.addCustomer(customerData);
-      }
-    }
-
-    // Helper function to show alerts in customer modal
-    function showCustomerAlert(message, type) {
-      const alertDiv = document.getElementById('addCustomerAlert');
-      alertDiv.className = 'alert alert-' + type + ' mt-3';
-      alertDiv.textContent = message;
-      alertDiv.style.display = 'block';
-    }
-
-    // View customer details
-    function viewCustomer(customerId) {
-      alert('View customer details for: ' + customerId + '\n\nThis feature will show detailed customer information, purchase history, and payment records.');
-    }
-
-    // --- NEW LOGIC FOR 3-ROW ACTIONS ---
-
-    function populateCustomerDropdown(data) {
-      const selectEdit = document.getElementById('selectCustomerEdit');
-      const selectPay = document.getElementById('selectCustomerPay');
-      const selectStmt = document.getElementById('selectCustomerStmt');
-
-      selectEdit.innerHTML = '<option value="">Select Customer to Edit...</option>';
-      selectPay.innerHTML = '<option value="">Select Customer - Balance...</option>';
-      selectStmt.innerHTML = '<option value="">Select Customer for Statement...</option>';
-
-      if (!data || data.length === 0) return;
-
-      const sortedData = [...data].sort((a, b) => {
-        return (a.Customer_Name || '').localeCompare(b.Customer_Name || '');
-      });
-
-      sortedData.forEach(customer => {
-        const name = customer.Customer_Name || customer.Name;
-        const id = customer.Customer_ID;
-        const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
-
-        let balanceText = '';
-        if (balance < 0) {
-          balanceText = ` - Owes: Ksh ${Math.abs(balance).toLocaleString()}`;
-        } else if (balance > 0) {
-          balanceText = ` - Credit: Ksh ${balance.toLocaleString()}`;
-        } else {
-          balanceText = ' - Balance: 0';
-        }
-
-        const optEdit = document.createElement('option');
-        optEdit.value = id;
-        optEdit.textContent = `${name} (${id})`;
-        selectEdit.appendChild(optEdit);
-
-        const optPay = document.createElement('option');
-        optPay.value = id;
-        optPay.textContent = `${name}${balanceText}`;
-        selectPay.appendChild(optPay);
-
-        const optStmt = document.createElement('option');
-        optStmt.value = id;
-        optStmt.textContent = `${name} (${id})`;
-        selectStmt.appendChild(optStmt);
-      });
-    }
+    // --- ACTIONS ---
 
     function actionEdit() {
-      const customerId = document.getElementById('selectCustomerEdit').value;
-      if (!customerId) {
-        alert('Please select a customer to edit first.');
-        return;
-      }
-      openCustomerEditor(customerId);
+      const id = document.getElementById('selectCustomerEdit').value;
+      if(!id) return alert("Select a customer first");
+      
+      const c = customersData.find(x => x.Customer_ID === id);
+      if(!c) return;
+
+      editingCustomerId = id;
+      document.getElementById('customerModalTitle').innerText = 'Edit Customer';
+      document.getElementById('customerSubmitBtn').innerText = 'Update Customer';
+      
+      document.getElementById('custName').value = c.Customer_Name;
+      document.getElementById('custPhone').value = c.Phone;
+      document.getElementById('custEmail').value = c.Email || '';
+      document.getElementById('custLocation').value = c.Location || '';
+      document.getElementById('custKRAPin').value = c.KRA_PIN || '';
+      document.getElementById('custType').value = c.Customer_Type || 'Walk-in';
+      document.getElementById('custCreditLimit').value = c.Credit_Limit || 0;
+      
+      // Hide Opening Balance on Edit (handled via adjustments)
+      document.getElementById('custOpeningBalance').parentElement.style.display = 'none';
+
+      new bootstrap.Modal(document.getElementById('addCustomerModal')).show();
     }
 
     function actionReceive() {
-      const customerId = document.getElementById('selectCustomerPay').value;
-      if (!customerId) {
-        alert('Please select a customer to receive payment from.');
-        return;
-      }
-      const customer = customersData.find(c => c.Customer_ID === customerId);
-      const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
+      const id = document.getElementById('selectCustomerPay').value;
+      if(!id) return alert("Select a customer first");
 
+      const c = customersData.find(x => x.Customer_ID === id);
+      const balance = parseFloat(c.Current_Balance || 0);
+
+      // Check if they actually owe money
       if (balance >= 0) {
-        if (!confirm('This customer has a zero or positive credit balance. Do you still want to add a payment?')) return;
+        if(!confirm("This customer does not have a negative balance (debt). Do you still want to record a payment?")) return;
       }
 
-      openPaymentModal(customerId);
+      document.getElementById('paymentCustomerId').value = id;
+      document.getElementById('paymentCustomerName').innerText = c.Customer_Name;
+      document.getElementById('paymentCustomerBalance').innerText = 'Ksh ' + Math.abs(balance).toLocaleString();
+      document.getElementById('customerPaymentAmount').value = balance < 0 ? Math.abs(balance) : '';
+      
+      new bootstrap.Modal(document.getElementById('customerPaymentModal')).show();
     }
 
     function actionStatement() {
-      const customerId = document.getElementById('selectCustomerStmt').value;
-      if (!customerId) {
-        alert('Please select a customer to view statement.');
-        return;
-      }
-      viewCustomerStatement(customerId);
+      const id = document.getElementById('selectCustomerStmt').value;
+      if(!id) return alert("Select a customer first");
+      
+      // Logic for statement view (call existing function or alert)
+      alert("Statement view for " + id + " (Feature needs Statement Modal implemented)");
     }
 
-    function findCustomerById(customerId) {
-      if (!customerId) return null;
-      return customersData.find(c => c.Customer_ID === customerId) || null;
+    // --- ADD / SAVE ---
+
+    function showAddCustomerModal() {
+      editingCustomerId = null;
+      document.getElementById('addCustomerForm').reset();
+      document.getElementById('customerModalTitle').innerText = 'Add New Customer';
+      document.getElementById('customerSubmitBtn').innerText = 'Save Customer';
+      document.getElementById('custOpeningBalance').parentElement.style.display = 'block';
+      new bootstrap.Modal(document.getElementById('addCustomerModal')).show();
     }
 
-    function getNumericField(record, fields) {
-      for (let i = 0; i < fields.length; i++) {
-        const value = record[fields[i]];
-        if (value !== undefined && value !== null && value !== '') {
-          const num = parseFloat(value);
-          if (!isNaN(num)) return num;
+    function submitCustomer(e) {
+      e.preventDefault();
+      const btn = document.getElementById('customerSubmitBtn');
+      btn.disabled = true;
+      btn.innerText = 'Saving...';
+
+      const data = {
+        Customer_Name: document.getElementById('custName').value,
+        Phone: document.getElementById('custPhone').value,
+        Email: document.getElementById('custEmail').value,
+        Location: document.getElementById('custLocation').value,
+        KRA_PIN: document.getElementById('custKRAPin').value,
+        Customer_Type: document.getElementById('custType').value,
+        Credit_Limit: document.getElementById('custCreditLimit').value,
+        Opening_Balance: document.getElementById('custOpeningBalance').value, // Send this
+        User: currentUser
+      };
+
+      const handler = editingCustomerId 
+        ? google.script.run.withSuccessHandler(onSave).withFailureHandler(onError).updateCustomer(editingCustomerId, data)
+        : google.script.run.withSuccessHandler(onSave).withFailureHandler(onError).addCustomer(data);
+
+      function onSave(res) {
+        btn.disabled = false;
+        if(res.success) {
+          bootstrap.Modal.getInstance(document.getElementById('addCustomerModal')).hide();
+          loadCustomers();
+          alert(res.message);
+        } else {
+          alert('Error: ' + res.message);
         }
       }
-      return 0;
-    }
 
-    function openCustomerEditor(customerId) {
-      const customer = customersData.find(c => c.Customer_ID === customerId);
-      if (!customer) {
-        alert('Customer not found');
-        return;
+      function onError(err) {
+        btn.disabled = false;
+        alert('System Error: ' + err.message);
       }
-
-      editingCustomerId = customerId;
-      document.getElementById('customerModalTitle').innerHTML = '<i class="bi bi-pencil"></i> Edit Customer';
-      document.getElementById('customerSubmitBtn').innerHTML = '<i class="bi bi-check-circle"></i> Update Customer';
-
-      document.getElementById('custName').value = customer.Customer_Name || customer.Name || '';
-      document.getElementById('custPhone').value = customer.Phone || '';
-      document.getElementById('custEmail').value = customer.Email || '';
-      document.getElementById('custLocation').value = customer.Location || '';
-      document.getElementById('custKRAPin').value = customer.KRA_PIN || '';
-      document.getElementById('custType').value = customer.Customer_Type || 'Walk-in';
-      const creditLimit = getNumericField(customer, ['Credit_Limit', 'Credit Limit']);
-      document.getElementById('custCreditLimit').value = creditLimit || 0;
-
-      const modal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
-      modal.show();
-    }
-
-    function openPaymentModal(customerId) {
-      const customer = customersData.find(c => c.Customer_ID === customerId);
-      if (!customer) {
-        alert('Customer not found');
-        return;
-      }
-
-      document.getElementById('paymentCustomerId').value = customerId;
-      document.getElementById('paymentCustomerName').textContent = customer.Customer_Name || customer.Name || '';
-      const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
-      document.getElementById('paymentCustomerBalance').textContent = 'Ksh ' + balance.toFixed(2);
-      document.getElementById('customerPaymentAmount').value = Math.abs(balance).toFixed(2);
-      document.getElementById('customerPaymentAccount').value = 'Cash';
-      document.getElementById('customerPaymentReference').value = '';
-      document.getElementById('customerPaymentNotes').value = '';
-
-      const modal = new bootstrap.Modal(document.getElementById('customerPaymentModal'));
-      modal.show();
     }
 
     function submitCustomerPayment() {
-      const customerId = document.getElementById('paymentCustomerId').value;
-      const amount = parseFloat(document.getElementById('customerPaymentAmount').value);
-      const account = document.getElementById('customerPaymentAccount').value;
-      const reference = document.getElementById('customerPaymentReference').value.trim();
-      const notes = document.getElementById('customerPaymentNotes').value.trim();
+      const id = document.getElementById('paymentCustomerId').value;
+      const amt = document.getElementById('customerPaymentAmount').value;
+      const method = document.getElementById('customerPaymentAccount').value;
+      const ref = document.getElementById('customerPaymentReference').value;
 
-      if (!customerId) {
-        alert('No customer selected');
-        return;
-      }
+      if(!amt || amt <= 0) return alert("Enter valid amount");
 
-      if (isNaN(amount) || amount <= 0) {
-        alert('Please enter a valid payment amount');
-        return;
-      }
-
-      const submitBtn = document.getElementById('submitCustomerPaymentBtn');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+      const btn = document.getElementById('submitCustomerPaymentBtn');
+      btn.disabled = true;
+      btn.innerText = 'Processing...';
 
       const paymentData = {
-        Customer_ID: customerId,
-        Amount: amount,
-        Account: account,
-        Reference: reference,
-        Receipt_No: reference,
-        Notes: notes,
+        Customer_ID: id,
+        Amount: amt,
+        Account: method,
+        Reference: ref,
         User: currentUser
       };
 
       google.script.run
-        .withSuccessHandler(function(result) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Submit Payment';
-
-          if (result.success) {
-            alert('Payment recorded successfully!');
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          if(res.success) {
             bootstrap.Modal.getInstance(document.getElementById('customerPaymentModal')).hide();
             loadCustomers();
+            alert("Payment Recorded!");
           } else {
-            alert('Error: ' + result.message);
+            alert(res.message);
           }
         })
-        .withFailureHandler(function(error) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Submit Payment';
-          alert('Error recording payment: ' + error.message);
+        .withFailureHandler(function(e) {
+          btn.disabled = false;
+          alert(e.message);
         })
         .recordCustomerPayment(paymentData);
-    }
-
-    function viewCustomerStatement(customerId) {
-      const customer = customersData.find(c => c.Customer_ID === customerId);
-      if (!customer) {
-        alert('Customer not found');
-        return;
-      }
-
-      currentStatementCustomerId = customerId;
-      document.getElementById('customerStatementStartDate').value = '';
-      document.getElementById('customerStatementEndDate').value = '';
-
-      document.getElementById('statementCustomerName').textContent = customer.Customer_Name || customer.Name || '';
-      document.getElementById('statementCustomerId').textContent = customer.Customer_ID;
-      document.getElementById('statementCustomerPhone').textContent = customer.Phone || '-';
-
-      document.getElementById('customerStatementLoading').style.display = 'block';
-      document.getElementById('customerStatementBody').innerHTML = '<tr><td colspan="7" class="text-center text-muted">Loading statement...</td></tr>';
-
-      const modal = new bootstrap.Modal(document.getElementById('customerStatementModal'));
-      modal.show();
-
-      loadCustomerStatementData(customerId, null, null);
-    }
-
-    function loadCustomerStatementData(customerId, startDate, endDate) {
-      document.getElementById('customerStatementLoading').style.display = 'block';
-
-      google.script.run
-        .withSuccessHandler(function(statement) {
-          displayCustomerStatement(statement);
-          document.getElementById('customerStatementLoading').style.display = 'none';
-        })
-        .withFailureHandler(function(error) {
-          document.getElementById('customerStatementBody').innerHTML = '<tr><td colspan="7" class="text-danger">Error loading statement: ' + error.message + '</td></tr>';
-          document.getElementById('customerStatementLoading').style.display = 'none';
-        })
-        .getCustomerStatement(customerId, startDate, endDate);
-    }
-
-    function filterCustomerStatement() {
-      if (!currentStatementCustomerId) {
-        alert('No customer statement is currently loaded');
-        return;
-      }
-
-      const start = document.getElementById('customerStatementStartDate').value || null;
-      const end = document.getElementById('customerStatementEndDate').value || null;
-      loadCustomerStatementData(currentStatementCustomerId, start, end);
-    }
-
-    function displayCustomerStatement(statement) {
-      const customer = statement.customer;
-
-      document.getElementById('statementCustomerName').textContent = customer.Customer_Name || customer.Name || '';
-      document.getElementById('statementCustomerId').textContent = customer.Customer_ID || '';
-      document.getElementById('statementCustomerPhone').textContent = customer.Phone || '-';
-
-      document.getElementById('statementOpeningBalance').textContent = 'Ksh ' + (statement.openingBalance || 0).toFixed(2);
-      document.getElementById('statementDebits').textContent = 'Ksh ' + (statement.totalDebits || 0).toFixed(2);
-      document.getElementById('statementCredits').textContent = 'Ksh ' + (statement.totalCredits || 0).toFixed(2);
-      document.getElementById('statementClosingBalance').textContent = 'Ksh ' + (statement.closingBalance || 0).toFixed(2);
-
-      const tbody = document.getElementById('customerStatementBody');
-      tbody.innerHTML = '';
-
-      if (!statement.transactions || statement.transactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No transactions found</td></tr>';
-        return;
-      }
-
-      statement.transactions.forEach(txn => {
-        const row = document.createElement('tr');
-        const date = new Date(txn.date);
-        const debit = txn.debit || 0;
-        const credit = txn.credit || 0;
-        const balance = txn.balance || 0;
-        const balanceClass = balance > 0 ? 'balance-negative' : balance < 0 ? 'balance-positive' : '';
-
-        row.innerHTML = `
-          <td>${date.toLocaleDateString('en-GB')}</td>
-          <td><span class="badge ${txn.type === 'Sale' ? 'bg-danger' : 'bg-success'}">${txn.type}</span></td>
-          <td>${txn.description || '-'}</td>
-          <td>${txn.reference || '-'}</td>
-          <td class="text-end">${debit > 0 ? 'Ksh ' + debit.toFixed(2) : '-'}</td>
-          <td class="text-end">${credit > 0 ? 'Ksh ' + credit.toFixed(2) : '-'}</td>
-          <td class="text-end ${balanceClass}"><strong>Ksh ${balance.toFixed(2)}</strong></td>
-        `;
-
-        tbody.appendChild(row);
-      });
     }
   </script>
 </body>
