@@ -158,3 +158,37 @@ function getSalesReport() {
     throw new Error('Unable to load sales report: ' + error.message);
   }
 }
+
+/**
+ * Get recent transactions (Both Sales and Quotations) for Dashboard History
+ */
+function getRecentTransactionsMixed() {
+  try {
+    const sales = sheetToObjects('Sales', null);
+    const seenIds = new Set();
+    const results = [];
+
+    // Sort by date descending
+    sales.sort((a, b) => new Date(b.DateTime) - new Date(a.DateTime));
+
+    for (const row of sales) {
+      if (seenIds.has(row.Transaction_ID)) continue;
+      seenIds.add(row.Transaction_ID);
+
+      results.push({
+        Transaction_ID: row.Transaction_ID,
+        DateTime: row.DateTime,
+        Customer_Name: row.Customer_Name,
+        Grand_Total: row.Grand_Total,
+        Type: row.Type, 
+        Status: row.Status
+      });
+
+      if (results.length >= 15) break; 
+    }
+    return results;
+  } catch (error) {
+    logError('getRecentTransactionsMixed', error);
+    return [];
+  }
+}

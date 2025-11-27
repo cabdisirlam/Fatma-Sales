@@ -13,11 +13,10 @@ function generateReceiptHTML(transactionId) {
 
     const settings = getAllSettings();
     const dateStr = Utilities.formatDate(new Date(sale.DateTime), 'GMT+3', 'dd/MM/yyyy HH:mm');
-    const kraInfo = sale.KRA_PIN ? `<div><strong>KRA PIN:</strong> ${sale.KRA_PIN}</div>` : '';
 
     const html = `
       <html>
-      <body style="font-family: monospace; padding: 20px; max-width: 300px; margin: 0 auto;">
+      <body style="font-family: monospace; padding: 20px; max-width: 350px; margin: 0 auto;">
         <div style="text-align: center; border-bottom: 1px dashed black; padding-bottom: 10px;">
           <h2 style="margin: 0;">${settings.Shop_Name || CONFIG.SHOP_NAME}</h2>
           <p style="margin: 5px 0;">${settings.Receipt_Header || ''}</p>
@@ -27,11 +26,9 @@ function generateReceiptHTML(transactionId) {
           <div><strong>Date:</strong> ${dateStr}</div>
           <div><strong>Receipt #:</strong> ${sale.Transaction_ID}</div>
           <div><strong>Customer:</strong> ${sale.Customer_Name}</div>
-          ${sale.Location ? `<div><strong>Location:</strong> ${sale.Location}</div>` : ''}
-          ${kraInfo}
           <div><strong>Served By:</strong> ${sale.Sold_By}</div>
         </div>
-
+        
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
           <tr style="border-bottom: 1px solid black;">
             <th style="text-align: left;">Item</th>
@@ -58,15 +55,12 @@ function generateReceiptHTML(transactionId) {
           <p>${settings.Receipt_Footer || 'Thank you!'}</p>
         </div>
       </body>
-      <script>
-        window.onload = function() { window.print(); }
-      </script>
       </html>
     `;
     return html;
   } catch (error) {
     logError('generateReceiptHTML', error);
-    return 'Error generating receipt';
+    return 'Error generating receipt: ' + error.message;
   }
 }
 

@@ -32,12 +32,17 @@ function createSale(saleData) {
 
     const sheet = getSheet('Sales');
     const transactionId = generateId('Sales', 'Transaction_ID', 'SALE');
+    
+    // --- UPDATED DATE HANDLING ---
     let dateTime = new Date();
     if (saleData.DateTime) {
+      // Use the manual date selected by user
       dateTime = new Date(saleData.DateTime);
+      // Set current time so reports don't get confused by 00:00:00
       const now = new Date();
       dateTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
     }
+    // -----------------------------
 
     // Calculate totals and validate stock
     let subtotal = 0;
