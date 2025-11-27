@@ -1,10 +1,10 @@
 /**
- * Fatma Sales Management System
+ * Beipoa Sales Management System
  * Workbook Manager - Complete Sheet Setup System
  *
  * To setup the system:
  * 1. Run the function: createFatmaSystem()
- * 2. The system will automatically create a new spreadsheet named "Fatma System"
+ * 2. The system will automatically create a new spreadsheet named "Beipoa System"
  * 3. All required sheets will be created and formatted
  * 4. Default admin user will be created (email: cabdisirlam@gmail.com, username: Cabdisirlam, PIN: 2020)
  *
@@ -229,12 +229,12 @@ function reorganizeExistingSheetsToV2() {
 }
 
 /**
- * Easy-to-use function to create and setup Fatma System
+ * Easy-to-use function to create and setup Beipoa System
  * Run this function from the Script Editor to get started!
  */
 function createFatmaSystem() {
   try {
-    Logger.log('=== Creating Fatma System ===');
+    Logger.log('=== Creating Beipoa System ===');
     const result = setupFatmaSystem();
 
     if (result.success) {
@@ -250,11 +250,11 @@ function createFatmaSystem() {
 }
 
 /**
- * Main setup function - creates Fatma System workbook with all sheets
+ * Main setup function - creates Beipoa System workbook with all sheets
  */
 function setupFatmaSystem() {
   try {
-    Logger.log('Starting Fatma System setup...');
+    Logger.log('Starting Beipoa System setup...');
 
     // Try to get existing spreadsheet, or create new one
     let ss;
@@ -275,7 +275,7 @@ function setupFatmaSystem() {
       PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ss.getId());
       Logger.log('Saved spreadsheet ID to Script Properties');
     } else {
-      // Rename existing spreadsheet to "Fatma System"
+      // Rename existing spreadsheet to "Beipoa System"
       ss.rename(CONFIG.WORKBOOK_NAME);
       Logger.log('Renamed workbook to: ' + CONFIG.WORKBOOK_NAME);
 
@@ -303,14 +303,14 @@ function setupFatmaSystem() {
       ss.setActiveSheet(usersSheet);
     }
 
-    Logger.log('Fatma System setup completed successfully!');
+    Logger.log('Beipoa System setup completed successfully!');
     Logger.log('Spreadsheet URL: ' + ss.getUrl());
 
     // Show success message
     try {
       SpreadsheetApp.getUi().alert(
         'Success',
-        'Fatma System has been initialized successfully!\n\n' +
+        'Beipoa System has been initialized successfully!\n\n' +
         'Workbook Name: ' + CONFIG.WORKBOOK_NAME + '\n' +
         'Spreadsheet URL: ' + ss.getUrl() + '\n\n' +
         'All sheets have been created and formatted.\n\n' +
@@ -330,7 +330,7 @@ function setupFatmaSystem() {
       success: true,
       spreadsheetId: ss.getId(),
       spreadsheetUrl: ss.getUrl(),
-      message: 'Fatma System initialized successfully'
+      message: 'Beipoa System initialized successfully'
     };
   } catch (error) {
     Logger.log('ERROR in setupFatmaSystem: ' + error.message);
@@ -339,7 +339,7 @@ function setupFatmaSystem() {
     try {
       SpreadsheetApp.getUi().alert(
         'Error',
-        'Failed to setup Fatma System: ' + error.message,
+        'Failed to setup Beipoa System: ' + error.message,
         SpreadsheetApp.getUi().ButtonSet.OK
       );
     } catch (e) {
@@ -716,8 +716,8 @@ function createSettingsSheet() {
     ['Use_Token_Auth', CONFIG.USE_TOKEN_AUTH],
     ['System_Version', '2.0.0'],
     ['Include_Shop_Logo', false],
-    ['Receipt_Header', 'Keipoa Kenya'],
-    ['Receipt_Footer', 'Thank you for shopping with Keipoa Kenya!'],
+    ['Receipt_Header', 'Beipoa Kenya'],
+    ['Receipt_Footer', 'Pata Kila Kitu Na Bei Poa'],
     ['Last_Updated', new Date()],
     ['Initialized_By', CONFIG.ADMIN_EMAIL],
     ['', ''],  // Separator
