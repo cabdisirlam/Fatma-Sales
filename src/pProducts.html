@@ -380,22 +380,45 @@
     }
 
     function loadInventory() {
+      // Reset UI state before fetching data
       document.getElementById('loadingIndicator').style.display = 'block';
+      document.getElementById('loadingIndicator').innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
       document.getElementById('inventoryTableContainer').style.display = 'none';
       document.getElementById('noDataMessage').style.display = 'none';
 
       google.script.run
         .withSuccessHandler(function(data) {
-          inventoryData = data;
-          displayInventory(data);
-          updateStats(data);
-          document.getElementById('loadingIndicator').style.display = 'none';
+          try {
+            // Normalize payload so downstream rendering never throws
+            inventoryData = Array.isArray(data) ? data : [];
+
+            if (!Array.isArray(data)) {
+              console.error('Unexpected inventory payload received', data);
+            }
+
+            displayInventory(inventoryData);
+            updateStats(inventoryData);
+            document.getElementById('loadingIndicator').style.display = 'none';
+          } catch (renderError) {
+            console.error('Error rendering inventory data', renderError);
+            showInventoryError('Error rendering inventory. Please try again.');
+          }
         })
         .withFailureHandler(function(error) {
-          document.getElementById('loadingIndicator').innerHTML =
-            '<div class="alert alert-danger">Error loading inventory: ' + error.message + '</div>';
+          showInventoryError('Error loading inventory: ' + (error && error.message ? error.message : error));
         })
         .getInventory({});
+    }
+
+    function showInventoryError(message) {
+      document.getElementById('loadingIndicator').style.display = 'none';
+      document.getElementById('inventoryTableContainer').style.display = 'none';
+      document.getElementById('noDataMessage').style.display = 'none';
+
+      const indicator = document.getElementById('loadingIndicator');
+      if (indicator) {
+        indicator.innerHTML = '<div class="alert alert-danger">' + message + '</div>';
+      }
     }
 
     function displayInventory(data) {
