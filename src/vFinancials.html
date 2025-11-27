@@ -4,923 +4,452 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Financials</title>
-
+  <title>Financial Management</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f6fa;
-      padding: 20px;
-    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f6fa; padding: 20px; }
+    .header-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    
+    /* Quick Action Buttons */
+    .action-btn-group { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
+    .btn-action { flex: 1; padding: 15px; border: none; border-radius: 12px; font-weight: 600; color: white; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: transform 0.2s; min-width: 150px; }
+    .btn-action:hover { transform: translateY(-3px); color: white; opacity: 0.95; }
+    .btn-action i { font-size: 24px; }
+    
+    .btn-income { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+    .btn-expense { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    .btn-bank { background: linear-gradient(135deg, #3498db, #2980b9); }
+    .btn-account { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
 
-    .header-section {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 30px;
-      border-radius: 15px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
+    /* Stats */
+    .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; height: 100%; }
+    .stat-value { font-size: 22px; font-weight: 700; margin: 10px 0; color: #2c3e50; }
+    .stat-label { color: #7f8c8d; font-size: 12px; text-transform: uppercase; font-weight: 600; }
+    .text-success-custom { color: #27ae60 !important; }
+    .text-danger-custom { color: #e74c3c !important; }
 
-    .header-section h2 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 700;
-    }
-
-    .header-section p {
-      margin: 10px 0 0 0;
-      opacity: 0.9;
-    }
-
-    .card {
-      border: none;
-      border-radius: 15px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
-
-    .card-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-radius: 15px 15px 0 0 !important;
-      padding: 20px;
-      font-weight: 600;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .table {
-      margin: 0;
-    }
-
-    .table thead {
-      background: #f8f9fa;
-    }
-
-    .table th {
-      border-bottom: 2px solid #dee2e6;
-      font-weight: 600;
-      color: #2c3e50;
-    }
-
-    .badge {
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-weight: 500;
-    }
-
-    .stat-card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    .stat-value {
-      font-size: 32px;
-      font-weight: 700;
-      margin: 10px 0;
-    }
-
-    .stat-label {
-      color: #7f8c8d;
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .income {
-      color: #27ae60;
-    }
-
-    .expense {
-      color: #e74c3c;
-    }
-
-    .profit {
-      color: #667eea;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: #7f8c8d;
-    }
-
-    .spinner-border {
-      width: 3rem;
-      height: 3rem;
-    }
-
-    .filter-section {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    .transaction-debit {
-      color: #e74c3c;
-    }
-
-    .transaction-credit {
-      color: #27ae60;
-    }
-
-    .summary-card {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
-
-    .summary-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid #ecf0f1;
-    }
-
-    .summary-item:last-child {
-      border-bottom: none;
-      font-weight: 700;
-      font-size: 18px;
-    }
-
-    .form-label {
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 8px;
-    }
-
-    .form-control, .form-select {
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      padding: 10px 15px;
-    }
-
-    .form-control:focus, .form-select:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    }
+    /* Table */
+    .card { border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .card-header { background: white; border-bottom: 1px solid #eee; padding: 15px 20px; font-weight: 700; color: #2c3e50; }
+    .table th { font-weight: 600; color: #555; font-size: 13px; }
+    .table td { font-size: 14px; vertical-align: middle; }
+    
+    /* Loading */
+    .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; display: none; }
   </style>
 </head>
 <body>
+
   <div class="header-section">
-    <h2><i class="bi bi-cash-stack"></i> Financial Overview</h2>
-    <p>Track your revenue, expenses, and financial performance</p>
+    <h2 style="margin:0; font-weight:700;"><i class="bi bi-wallet2"></i> Financial Management</h2>
+    <p style="margin:5px 0 0 0; opacity: 0.9;">Manage Cash, M-Pesa, Bank Accounts & Expenses</p>
   </div>
 
-  <div class="card mb-3">
-    <div class="card-body d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">Account Management</h5>
-      <button class="btn btn-outline-primary" onclick="promptOpeningBalance()">
-        <i class="bi bi-bank"></i> Set Opening Balance
-      </button>
-    </div>
+  <div class="action-btn-group">
+    <button class="btn-action btn-income" onclick="openModal('modalReceivePayment')">
+      <i class="bi bi-box-arrow-in-down-left"></i>
+      Receive From Client
+    </button>
+    <button class="btn-action btn-expense" onclick="openModal('modalRecordExpense')">
+      <i class="bi bi-box-arrow-up-right"></i>
+      Pay Expense
+    </button>
+    <button class="btn-action btn-bank" onclick="openModal('modalBankTxn')">
+      <i class="bi bi-bank"></i>
+      Bank / Cash Txn
+    </button>
+    <button class="btn-action btn-account" onclick="openModal('modalAddAccount')">
+      <i class="bi bi-plus-circle-dotted"></i>
+      Add New Account
+    </button>
   </div>
 
-  <!-- Statistics Cards -->
-  <div class="row" id="statsSection">
+  <div class="row mb-4">
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Revenue</div>
-        <div class="stat-value income" id="totalRevenue">KSh 0.00</div>
+        <div class="stat-value text-success-custom" id="totalRevenue">...</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Expenses</div>
-        <div class="stat-value expense" id="totalExpenses">KSh 0.00</div>
+        <div class="stat-value text-danger-custom" id="totalExpenses">...</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Net Profit</div>
-        <div class="stat-value profit" id="netProfit">KSh 0.00</div>
+        <div class="stat-value" id="netProfit">...</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
-        <div class="stat-label">Account Balance</div>
-        <div class="stat-value" id="accountBalance">KSh 0.00</div>
+        <div class="stat-label">System Balance</div>
+        <div class="stat-value text-primary" id="systemBalance">...</div>
       </div>
     </div>
   </div>
 
-  <!-- Supplier Payables Section -->
-  <div class="row mb-3">
-    <div class="col-md-12">
-      <div class="summary-card">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="mb-0"><i class="bi bi-building"></i> Supplier Payables</h5>
-          <button class="btn btn-sm btn-primary" onclick="viewSupplierPayables()">
-            <i class="bi bi-eye"></i> View All
-          </button>
-        </div>
-        <div class="row">
-          <div class="col-md-3">
-            <div class="text-center">
-              <div class="stat-label">Total Payable</div>
-              <div class="stat-value expense" id="totalPayable" style="font-size: 24px;">Ksh 0.00</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="text-center">
-              <div class="stat-label">Suppliers with Balance</div>
-              <div class="stat-value" id="suppliersWithDebt" style="font-size: 24px;">0</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="text-center">
-              <div class="stat-label">Total Purchased</div>
-              <div class="stat-value" id="totalPurchased" style="font-size: 24px;">Ksh 0.00</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="text-center">
-              <div class="stat-label">Total Paid</div>
-              <div class="stat-value income" id="totalPaidToSuppliers" style="font-size: 24px;">Ksh 0.00</div>
-            </div>
-          </div>
-        </div>
-        <div id="topSuppliersList" class="mt-3">
-          <!-- Top suppliers with balances will appear here -->
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Financial Summary -->
-  <div class="row">
-    <div class="col-md-6">
-      <div class="summary-card">
-        <h5 class="mb-3"><i class="bi bi-bar-chart"></i> Income Breakdown</h5>
-        <div class="summary-item">
-          <span>Sales Revenue</span>
-          <span class="income" id="salesRevenue">KSh 0.00</span>
-        </div>
-        <div class="summary-item">
-          <span>Customer Payments</span>
-          <span class="income" id="customerPayments">KSh 0.00</span>
-        </div>
-        <div class="summary-item">
-          <span>Other Income</span>
-          <span class="income" id="otherIncome">KSh 0.00</span>
-        </div>
-        <div class="summary-item">
-          <span>Total Income</span>
-          <span class="income" id="totalIncome">KSh 0.00</span>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="summary-card">
-        <h5 class="mb-3"><i class="bi bi-pie-chart"></i> Expense Breakdown</h5>
-        <div class="summary-item">
-          <span>Operating Expenses</span>
-          <span class="expense" id="operatingExpenses">KSh 0.00</span>
-        </div>
-        <div class="summary-item">
-          <span>Supplier Payments</span>
-          <span class="expense" id="supplierPayments">KSh 0.00</span>
-        </div>
-        <div class="summary-item">
-          <span>Other Expenses</span>
-          <span class="expense" id="otherExpenses">KSh 0.00</span>
-        </div>
-        <div class="summary-item">
-          <span>Total Expenses</span>
-          <span class="expense" id="totalExpensesBreakdown">KSh 0.00</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter Section -->
-  <div class="filter-section">
-    <div class="row">
-      <div class="col-md-3">
-        <label for="dateFrom" class="form-label">From Date</label>
-        <input type="date" class="form-control" id="dateFrom">
-      </div>
-      <div class="col-md-3">
-        <label for="dateTo" class="form-label">To Date</label>
-        <input type="date" class="form-control" id="dateTo">
-      </div>
-      <div class="col-md-3">
-        <label for="accountFilter" class="form-label">Account</label>
-        <select class="form-select" id="accountFilter">
-          <option value="">All Accounts</option>
-          <option value="Cash">Cash</option>
-          <option value="Bank">Bank</option>
-          <option value="Mobile Money">Mobile Money</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">&nbsp;</label>
-        <button class="btn btn-primary w-100" onclick="loadFinancials()">
-          <i class="bi bi-arrow-clockwise"></i> Refresh
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Account Statement Section -->
-  <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <span><i class="bi bi-bank"></i> Account Statement</span>
-      <button class="btn btn-outline-light btn-sm" onclick="showOpeningBalanceModal()">
-        <i class="bi bi-bank"></i> Set Opening Balance
-      </button>
-    </div>
-    <div class="card-body">
-      <div class="row mb-3">
-        <div class="col-md-4">
-          <label for="accountSelect" class="form-label">Select Account</label>
-          <select class="form-select" id="accountSelect">
-            <option value="">-- Select Account --</option>
-            <option value="Cash">Cash</option>
-            <option value="M-Pesa">M-Pesa</option>
-            <option value="Equity Bank">Equity Bank</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label for="statementDateFrom" class="form-label">From Date</label>
-          <input type="date" class="form-control" id="statementDateFrom">
-        </div>
-        <div class="col-md-3">
-          <label for="statementDateTo" class="form-label">To Date</label>
-          <input type="date" class="form-control" id="statementDateTo">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">&nbsp;</label>
-          <button class="btn btn-primary w-100" onclick="loadAccountStatement()">
-            <i class="bi bi-file-text"></i> Generate
-          </button>
-        </div>
-      </div>
-
-      <!-- Validation Message Area -->
-      <div id="statementValidationMessage" class="alert alert-warning" style="display: none;" role="alert">
-        <i class="bi bi-exclamation-triangle"></i> <span id="statementValidationText"></span>
-      </div>
-
-      <!-- Statement Summary -->
-      <div id="accountSummarySection" style="display: none;">
-        <div class="summary-card">
-          <h5 class="mb-3"><i class="bi bi-wallet2"></i> Account Summary: <span id="selectedAccountName"></span></h5>
-          <div class="summary-item">
-            <span>Opening Balance</span>
-            <span id="openingBal">KSh 0.00</span>
-          </div>
-          <div class="summary-item">
-            <span>Total Additions (Money In)</span>
-            <span class="income" id="additions">KSh 0.00</span>
-          </div>
-          <div class="summary-item">
-            <span>Total Payments (Money Out)</span>
-            <span class="expense" id="payments">KSh 0.00</span>
-          </div>
-          <div class="summary-item">
-            <span>Closing Balance</span>
-            <span id="closingBal">KSh 0.00</span>
-          </div>
-        </div>
-
-        <!-- Statement Transactions -->
-        <div class="mt-3">
-          <h6>Detailed Transactions</h6>
-          <div class="table-responsive">
-            <table class="table table-hover table-sm">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th>Money In</th>
-                  <th>Money Out</th>
-                  <th>Balance</th>
-                </tr>
-              </thead>
-              <tbody id="statementTransactionsBody">
-                <!-- Data will be loaded here -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div id="noStatementMessage" class="text-center text-muted py-4">
-        <i class="bi bi-info-circle" style="font-size: 32px;"></i>
-        <p class="mt-2">Select an account and date range to generate statement</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Transactions Table -->
   <div class="card">
-    <div class="card-header">
-      <i class="bi bi-list-ul"></i> Recent Transactions
-    </div>
+    <div class="card-header"><i class="bi bi-piggy-bank"></i> Account Balances</div>
     <div class="card-body">
-      <div id="loadingIndicator" class="loading">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-3">Loading financial data...</p>
-      </div>
-
-      <div id="transactionsTableContainer" style="display: none;">
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Transaction ID</th>
-                <th>Date & Time</th>
-                <th>Type</th>
-                <th>Account</th>
-                <th>Description</th>
-                <th>Debit</th>
-                <th>Credit</th>
-                <th>Balance</th>
-              </tr>
-            </thead>
-            <tbody id="transactionsTableBody">
-              <!-- Data will be loaded here -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="noDataMessage" style="display: none;" class="text-center text-muted py-4">
-        <i class="bi bi-inbox" style="font-size: 48px;"></i>
-        <p class="mt-3">No financial transactions found</p>
+      <div class="row" id="accountBalancesContainer">
+        <div class="col-12 text-center py-3"><div class="spinner-border text-primary"></div></div>
       </div>
     </div>
   </div>
 
-  <!-- Opening Balance Modal -->
-  <div class="modal fade" id="openingBalanceModal" tabindex="-1">
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-list-ul"></i> Recent Transactions</span>
+      <button class="btn btn-sm btn-outline-primary" onclick="loadFinancialData()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Account</th>
+              <th>Description</th>
+              <th class="text-end">In (Credit)</th>
+              <th class="text-end">Out (Debit)</th>
+            </tr>
+          </thead>
+          <tbody id="txnTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalReceivePayment" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-bank"></i> Set Opening Balance</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="bi bi-cash"></i> Receive from Client</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i>
-            Set the initial balance for an account when starting to use this system. This can only be done once per account.
-          </div>
-          <form id="openingBalForm" onsubmit="event.preventDefault(); submitOpeningBalance();">
+          <form id="formReceivePayment">
             <div class="mb-3">
-              <label for="obAccount" class="form-label">Account *</label>
-              <select class="form-select" id="obAccount" required>
-                <option value="">Select Account...</option>
-                <option value="Cash">Cash</option>
-                <option value="Equity Bank">Equity Bank</option>
-                <option value="M-Pesa">M-Pesa</option>
+              <label class="form-label">Customer</label>
+              <select class="form-select" name="customer" id="inputRecvCustomer" required>
+                <option value="">Loading...</option>
               </select>
             </div>
             <div class="mb-3">
-              <label for="obAmount" class="form-label">Opening Amount (KSh) *</label>
-              <input type="number" class="form-control" id="obAmount" step="0.01" min="0" required>
-              <small class="text-muted">Enter the balance that exists in this account right now</small>
+              <label class="form-label">Amount (Ksh)</label>
+              <input type="number" class="form-control" name="amount" required step="0.01">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Deposit To (Account)</label>
+              <select class="form-select" name="account" id="inputRecvAccount" required>
+                 </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Reference / Notes</label>
+              <input type="text" class="form-control" name="ref" placeholder="Receipt No / M-Pesa Code">
             </div>
           </form>
-          <div id="openingBalanceAlert" class="alert mt-3" style="display: none;"></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-save"></i> Save Opening Balance
-          </button>
+          <button type="button" class="btn btn-success" onclick="submitTxn('client_payment')">Confirm Receipt</button>
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="modal fade" id="modalRecordExpense" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title"><i class="bi bi-receipt"></i> Record Expense</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formRecordExpense">
+            <div class="mb-3">
+              <label class="form-label">Expense Category</label>
+              <select class="form-select" name="category" id="inputExpCategory" required>
+                 </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Amount (Ksh)</label>
+              <input type="number" class="form-control" name="amount" required step="0.01">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Pay From (Account)</label>
+              <select class="form-select" name="account" id="inputExpAccount" required>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Description / Notes</label>
+              <textarea class="form-control" name="notes" rows="2"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" onclick="submitTxn('expense')">Pay Expense</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalBankTxn" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title"><i class="bi bi-bank"></i> Bank / Cash Transaction</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formBankTxn">
+            <div class="mb-3">
+              <label class="form-label">Transaction Type</label>
+              <select class="form-select" name="subType" id="inputBankType">
+                <option value="bank_deposit">Deposit (Money In)</option>
+                <option value="bank_withdrawal">Withdrawal (Money Out)</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Account</label>
+              <select class="form-select" name="account" id="inputBankAccount" required>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Amount (Ksh)</label>
+              <input type="number" class="form-control" name="amount" required step="0.01">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Description / Reference</label>
+              <input type="text" class="form-control" name="notes">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitTxn('bank_txn')">Process</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalAddAccount" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-purple text-white" style="background-color: #8e44ad;">
+          <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Account</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formAddAccount">
+            <div class="mb-3">
+              <label class="form-label">Account Name</label>
+              <input type="text" class="form-control" name="accountName" placeholder="e.g., KCB Bank, Petty Cash" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Opening Balance (Ksh)</label>
+              <input type="number" class="form-control" name="openingBal" value="0" step="0.01">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" style="background-color: #8e44ad; border-color: #8e44ad;" onclick="submitTxn('add_account')">Create Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Load financials on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      // Set default date range (last 30 days)
-      const today = new Date();
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(today.getDate() - 30);
-
-      document.getElementById('dateTo').valueAsDate = today;
-      document.getElementById('dateFrom').valueAsDate = thirtyDaysAgo;
-
-      loadFinancials();
-    });
-
-    let transactionsData = [];
-
-    function loadFinancials() {
-      document.getElementById('loadingIndicator').style.display = 'block';
-      document.getElementById('transactionsTableContainer').style.display = 'none';
-      document.getElementById('noDataMessage').style.display = 'none';
-
-      // Get filter values
-      const dateFrom = document.getElementById('dateFrom').value;
-      const dateTo = document.getElementById('dateTo').value;
-      const account = document.getElementById('accountFilter').value;
-
-      const filters = {
-        dateFrom: dateFrom,
-        dateTo: dateTo,
-        account: account
-      };
-
-      // Load financial summary
-      google.script.run
-        .withSuccessHandler(function(summary) {
-          updateFinancialSummary(summary);
-        })
-        .withFailureHandler(function(error) {
-          console.error('Error loading summary:', error);
-        })
-        .getFinancialSummary();
-
-      // Load supplier payables
-      google.script.run
-        .withSuccessHandler(function(suppliers) {
-          updateSupplierPayables(suppliers);
-        })
-        .withFailureHandler(function(error) {
-          console.error('Error loading supplier payables:', error);
-        })
-        .getSuppliers({});
-
-      // Load transactions
-      google.script.run
-        .withSuccessHandler(function(data) {
-          transactionsData = data;
-          displayTransactions(data);
-          document.getElementById('loadingIndicator').style.display = 'none';
-        })
-        .withFailureHandler(function(error) {
-          document.getElementById('loadingIndicator').innerHTML =
-            '<div class="alert alert-danger">Error loading financial data: ' + error.message + '</div>';
-        })
-        .getFinancialTransactions(filters);
-    }
-
-    function updateSupplierPayables(suppliers) {
-      if (!suppliers || suppliers.length === 0) {
-        document.getElementById('totalPayable').textContent = 'Ksh 0.00';
-        document.getElementById('suppliersWithDebt').textContent = '0';
-        document.getElementById('totalPurchased').textContent = 'Ksh 0.00';
-        document.getElementById('totalPaidToSuppliers').textContent = 'Ksh 0.00';
-        document.getElementById('topSuppliersList').innerHTML = '<p class="text-muted text-center mt-3">No supplier data available</p>';
-        return;
-      }
-
-      // Calculate totals
-      let totalPayable = 0;
-      let totalPurchased = 0;
-      let totalPaid = 0;
-      let suppliersWithBalance = 0;
-
-      const suppliersWithDebt = [];
-
-      suppliers.forEach(function(supplier) {
-        const balance = parseFloat(supplier.Current_Balance) || 0;
-        const purchased = parseFloat(supplier.Total_Purchased) || 0;
-        const paid = parseFloat(supplier.Total_Paid) || 0;
-
-        totalPurchased += purchased;
-        totalPaid += paid;
-
-        if (balance > 0) {
-          totalPayable += balance;
-          suppliersWithBalance++;
-          suppliersWithDebt.push({
-            id: supplier.Supplier_ID,
-            name: supplier.Supplier_Name || supplier.Name,
-            balance: balance
-          });
-        }
-      });
-
-      // Update summary cards
-      document.getElementById('totalPayable').textContent = 'Ksh ' + totalPayable.toFixed(2);
-      document.getElementById('suppliersWithDebt').textContent = suppliersWithBalance;
-      document.getElementById('totalPurchased').textContent = 'Ksh ' + totalPurchased.toFixed(2);
-      document.getElementById('totalPaidToSuppliers').textContent = 'Ksh ' + totalPaid.toFixed(2);
-
-      // Display top 5 suppliers with balances
-      const topSuppliersList = document.getElementById('topSuppliersList');
-
-      if (suppliersWithDebt.length === 0) {
-        topSuppliersList.innerHTML = '<p class="text-muted text-center mt-3">No outstanding supplier balances</p>';
-        return;
-      }
-
-      // Sort by balance descending
-      suppliersWithDebt.sort((a, b) => b.balance - a.balance);
-
-      let html = '<div class="table-responsive"><table class="table table-sm table-hover mt-3"><thead><tr><th>Supplier</th><th class="text-end">Balance Due</th></tr></thead><tbody>';
-      suppliersWithDebt.slice(0, 5).forEach(function(supplier) {
-        html += `
-          <tr>
-            <td><strong>${supplier.name}</strong><br><small class="text-muted">${supplier.id}</small></td>
-            <td class="text-end expense"><strong>Ksh ${supplier.balance.toFixed(2)}</strong></td>
-          </tr>
-        `;
-      });
-      html += '</tbody></table></div>';
-
-      if (suppliersWithDebt.length > 5) {
-        html += '<p class="text-muted text-center mb-0">Showing top 5 of ' + suppliersWithDebt.length + ' suppliers with balances</p>';
-      }
-
-      topSuppliersList.innerHTML = html;
-    }
-
-    function viewSupplierPayables() {
-      // This would open the suppliers management page
-      alert('Opening Suppliers Management...\n\nThis will show all suppliers with their balances and payment history.');
-      // In a real implementation, this would navigate to the suppliers page
-      // window.location.href = 'suppliers.html';
-    }
-
-    function updateFinancialSummary(summary) {
-      if (!summary) return;
-
-      // Main stats
-      document.getElementById('totalRevenue').textContent = formatCurrency(summary.totalRevenue || 0);
-      document.getElementById('totalExpenses').textContent = formatCurrency(summary.totalExpenses || 0);
-      document.getElementById('netProfit').textContent = formatCurrency(summary.netProfit || 0);
-      document.getElementById('accountBalance').textContent = formatCurrency(summary.currentBalance || 0);
-
-      // Income breakdown
-      document.getElementById('salesRevenue').textContent = formatCurrency(summary.salesRevenue || 0);
-      document.getElementById('customerPayments').textContent = formatCurrency(summary.customerPayments || 0);
-      document.getElementById('otherIncome').textContent = formatCurrency(summary.otherIncome || 0);
-      document.getElementById('totalIncome').textContent = formatCurrency(summary.totalRevenue || 0);
-
-      // Expense breakdown
-      document.getElementById('operatingExpenses').textContent = formatCurrency(summary.operatingExpenses || 0);
-      document.getElementById('supplierPayments').textContent = formatCurrency(summary.supplierPayments || 0);
-      document.getElementById('otherExpenses').textContent = formatCurrency(summary.otherExpenses || 0);
-      document.getElementById('totalExpensesBreakdown').textContent = formatCurrency(summary.totalExpenses || 0);
-
-      // Color coding for profit/loss
-      const netProfitElement = document.getElementById('netProfit');
-      const netProfit = summary.netProfit || 0;
-      if (netProfit >= 0) {
-        netProfitElement.className = 'stat-value profit';
-      } else {
-        netProfitElement.className = 'stat-value expense';
-      }
-    }
-
-    function displayTransactions(data) {
-      const tbody = document.getElementById('transactionsTableBody');
-      tbody.innerHTML = '';
-
-      if (!data || data.length === 0) {
-        document.getElementById('noDataMessage').style.display = 'block';
-        return;
-      }
-
-      document.getElementById('transactionsTableContainer').style.display = 'block';
-
-      // Sort by date descending (newest first)
-      data.sort((a, b) => new Date(b.DateTime) - new Date(a.DateTime));
-
-      // Show only last 100 transactions
-      const displayData = data.slice(0, 100);
-
-      displayData.forEach(function(transaction) {
-        const row = document.createElement('tr');
-
-        const debit = parseFloat(transaction.Debit || 0);
-        const credit = parseFloat(transaction.Credit || 0);
-        const balance = parseFloat(transaction.Balance || 0);
-
-        const debitText = debit > 0 ? formatCurrency(debit) : '-';
-        const creditText = credit > 0 ? formatCurrency(credit) : '-';
-
-        row.innerHTML = `
-          <td>${transaction.Transaction_ID || ''}</td>
-          <td>${formatDateTime(transaction.DateTime)}</td>
-          <td>${transaction.Type || ''}</td>
-          <td>${transaction.Account || ''}</td>
-          <td>${transaction.Description || ''}</td>
-          <td class="transaction-debit">${debitText}</td>
-          <td class="transaction-credit">${creditText}</td>
-          <td><strong>${formatCurrency(balance)}</strong></td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    function formatDateTime(dateTime) {
-      if (!dateTime) return '';
-      const date = new Date(dateTime);
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    }
-
-    function formatCurrency(amount) {
-      return 'KSh ' + parseFloat(amount || 0).toLocaleString('en-KE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    }
-
-    // Load Account Statement
-    function loadAccountStatement() {
-      const account = document.getElementById('accountSelect').value;
-      const startDate = document.getElementById('statementDateFrom').value;
-      const endDate = document.getElementById('statementDateTo').value;
-
-      // Clear previous validation message
-      document.getElementById('statementValidationMessage').style.display = 'none';
-
-      if (!account) {
-        document.getElementById('statementValidationText').textContent = 'Please select an account';
-        document.getElementById('statementValidationMessage').style.display = 'block';
-        return;
-      }
-
-      if (!startDate || !endDate) {
-        document.getElementById('statementValidationText').textContent = 'Please select date range';
-        document.getElementById('statementValidationMessage').style.display = 'block';
-        return;
-      }
-
-      // Hide validation message and show loading state
-      document.getElementById('statementValidationMessage').style.display = 'none';
-      document.getElementById('noStatementMessage').innerHTML =
-        '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Loading statement...</p>';
-
-      google.script.run
-        .withSuccessHandler(function(report) {
-          displayAccountStatement(report);
-        })
-        .withFailureHandler(function(error) {
-          document.getElementById('noStatementMessage').innerHTML =
-            '<div class="alert alert-danger">Error loading statement: ' + error.message + '</div>';
-          document.getElementById('accountSummarySection').style.display = 'none';
-        })
-        .getAccountReport(account, startDate, endDate);
-    }
-
-    function displayAccountStatement(report) {
-      if (!report) {
-        document.getElementById('noStatementMessage').innerHTML =
-          '<div class="alert alert-warning">No data found for the selected period</div>';
-        document.getElementById('accountSummarySection').style.display = 'none';
-        return;
-      }
-
-      // Hide no data message and show summary
-      document.getElementById('noStatementMessage').style.display = 'none';
-      document.getElementById('accountSummarySection').style.display = 'block';
-
-      // Update account name
-      document.getElementById('selectedAccountName').textContent = report.account;
-
-      // Update summary figures
-      document.getElementById('openingBal').textContent = formatCurrency(report.openingBalance);
-      document.getElementById('additions').textContent = formatCurrency(report.totalAdditions);
-      document.getElementById('payments').textContent = formatCurrency(report.totalPayments);
-      document.getElementById('closingBal').textContent = formatCurrency(report.closingBalance);
-
-      // Display transactions
-      const tbody = document.getElementById('statementTransactionsBody');
-      tbody.innerHTML = '';
-
-      if (!report.transactions || report.transactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No transactions in this period</td></tr>';
-        return;
-      }
-
-      report.transactions.forEach(function(txn) {
-        const row = document.createElement('tr');
-        const moneyIn = txn.in > 0 ? formatCurrency(txn.in) : '-';
-        const moneyOut = txn.out > 0 ? formatCurrency(txn.out) : '-';
-
-        row.innerHTML = `
-          <td>${formatDateTime(txn.date)}</td>
-          <td>${txn.type || ''}</td>
-          <td>${txn.description || ''}</td>
-          <td class="transaction-credit">${moneyIn}</td>
-          <td class="transaction-debit">${moneyOut}</td>
-          <td><strong>${formatCurrency(txn.balance)}</strong></td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    // Initialize statement date fields on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      const today = new Date();
-      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-      document.getElementById('statementDateFrom').valueAsDate = firstDayOfMonth;
-      document.getElementById('statementDateTo').valueAsDate = today;
-    });
-
-    // Placeholder function - needs backend implementation
-    function getFinancialTransactions(filters) {
-      // This would call the backend to get filtered transactions
-      // For now, return empty array
-      return [];
-    }
-
-    // Get current user
     let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+    let allAccounts = []; // Store accounts locally
 
-    function promptOpeningBalance() {
-      const account = prompt('Enter Account Name (Cash, M-Pesa, Equity Bank):');
-      if (!account) return;
+    document.addEventListener('DOMContentLoaded', function() {
+      loadFinancialData();
+      loadDropdownData();
+    });
 
-      const amount = prompt('Enter Opening Balance Amount for ' + account + ':');
-      if (!amount) return;
-
-      google.script.run
-        .withSuccessHandler(function(res) {
-          alert(res.message);
-          loadFinancials();
-        })
-        .withFailureHandler(function(error) {
-          alert('Error: ' + error.message);
-        })
-        .setOpeningBalance(account, amount, currentUser);
+    function openModal(id) {
+      new bootstrap.Modal(document.getElementById(id)).show();
     }
 
-    // Show Opening Balance Modal
-    function showOpeningBalanceModal() {
-      document.getElementById('openingBalForm').reset();
-      document.getElementById('openingBalanceAlert').style.display = 'none';
-      const modal = new bootstrap.Modal(document.getElementById('openingBalanceModal'));
-      modal.show();
+    function showLoading(show) {
+      document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
     }
 
-    // Submit Opening Balance
-    function submitOpeningBalance() {
-      const account = document.getElementById('obAccount').value;
-      const amount = document.getElementById('obAmount').value;
+    // --- DATA LOADING ---
+    function loadFinancialData() {
+      // 1. Load Summary
+      google.script.run.withSuccessHandler(renderStats).getFinancialSummary();
+      // 2. Load Transactions
+      google.script.run.withSuccessHandler(renderTxns).getFinancialTransactions({limit: 20});
+    }
 
-      if (!account || !amount) {
-        showAlert('openingBalanceAlert', 'Please fill in all required fields', 'warning');
+    function loadDropdownData() {
+      google.script.run.withSuccessHandler(data => {
+        allAccounts = data.accounts; // Store for refresher
+        populateSelect('inputRecvAccount', data.accounts);
+        populateSelect('inputExpAccount', data.accounts);
+        populateSelect('inputBankAccount', data.accounts);
+        
+        populateSelect('inputExpCategory', data.categories);
+        
+        // Customers with Balance info
+        const custSelect = document.getElementById('inputRecvCustomer');
+        custSelect.innerHTML = '<option value="">Select Customer...</option>';
+        data.customers.forEach(c => {
+          const balText = c.balance < 0 ? ` (Owes: ${Math.abs(c.balance)})` : '';
+          custSelect.add(new Option(c.name + balText, c.id));
+        });
+
+      }).getFinancialUiData();
+    }
+
+    function populateSelect(id, items) {
+      const sel = document.getElementById(id);
+      sel.innerHTML = '';
+      items.forEach(i => sel.add(new Option(i, i)));
+    }
+
+    // --- RENDERING ---
+    function renderStats(data) {
+      document.getElementById('totalRevenue').textContent = formatMoney(data.totalRevenue);
+      document.getElementById('totalExpenses').textContent = formatMoney(data.totalExpenses);
+      document.getElementById('netProfit').textContent = formatMoney(data.netProfit);
+      document.getElementById('systemBalance').textContent = formatMoney(data.currentBalance);
+
+      // Account Balances
+      const accContainer = document.getElementById('accountBalancesContainer');
+      accContainer.innerHTML = '';
+      if(data.accountBalances) {
+        for(const [acc, bal] of Object.entries(data.accountBalances)) {
+           const col = document.createElement('div');
+           col.className = 'col-md-3 mb-2';
+           col.innerHTML = `
+             <div class="p-3 border rounded bg-light text-center">
+                <small class="text-muted fw-bold text-uppercase">${acc}</small>
+                <div class="fs-5 fw-bold text-primary">${formatMoney(bal)}</div>
+             </div>
+           `;
+           accContainer.appendChild(col);
+        }
+      }
+    }
+
+    function renderTxns(data) {
+      const tbody = document.getElementById('txnTableBody');
+      tbody.innerHTML = '';
+      if(!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No recent transactions</td></tr>';
         return;
       }
-
-      if (parseFloat(amount) < 0) {
-        showAlert('openingBalanceAlert', 'Amount must be a positive number', 'warning');
-        return;
-      }
-
-      // Show loading state
-      showAlert('openingBalanceAlert', 'Setting opening balance...', 'info');
-
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) {
-            showAlert('openingBalanceAlert', result.message, 'success');
-            setTimeout(function() {
-              bootstrap.Modal.getInstance(document.getElementById('openingBalanceModal')).hide();
-              loadFinancials(); // Refresh the financial data
-            }, 1500);
-          } else {
-            showAlert('openingBalanceAlert', result.message, 'danger');
-          }
-        })
-        .withFailureHandler(function(error) {
-          showAlert('openingBalanceAlert', 'Error: ' + error.message, 'danger');
-        })
-        .setOpeningBalance(account, amount, currentUser);
+      
+      data.slice(0,15).forEach(t => { // Show top 15
+        const date = new Date(t.DateTime).toLocaleDateString();
+        const credit = parseFloat(t.Credit) || 0;
+        const debit = parseFloat(t.Debit) || 0;
+        
+        const row = `<tr>
+          <td>${date}</td>
+          <td><span class="badge bg-secondary">${t.Type}</span></td>
+          <td>${t.Account}</td>
+          <td>${t.Description}</td>
+          <td class="text-end text-success">${credit > 0 ? formatMoney(credit) : '-'}</td>
+          <td class="text-end text-danger">${debit > 0 ? formatMoney(debit) : '-'}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
     }
 
-    // Helper function to show alerts in modals
-    function showAlert(elementId, message, type) {
-      const alertDiv = document.getElementById(elementId);
-      alertDiv.className = 'alert alert-' + type + ' mt-3';
-      alertDiv.textContent = message;
-      alertDiv.style.display = 'block';
+    // --- SUBMISSION ---
+    function submitTxn(type) {
+      let data = { txnType: type, User: currentUser };
+      let formId = '';
+      let modalId = '';
+
+      if (type === 'client_payment') {
+        formId = 'formReceivePayment';
+        modalId = 'modalReceivePayment';
+        const form = document.getElementById(formId);
+        
+        const custId = form.customer.value;
+        if(!custId) return alert("Select Customer");
+        // Find customer Name from dropdown text
+        const custName = form.customer.options[form.customer.selectedIndex].text.split(' (')[0];
+        
+        data.customerId = custId;
+        data.customerName = custName;
+        data.amount = form.amount.value;
+        data.account = form.account.value;
+        data.notes = form.ref.value;
+
+      } else if (type === 'expense') {
+        formId = 'formRecordExpense';
+        modalId = 'modalRecordExpense';
+        const form = document.getElementById(formId);
+        
+        data.category = form.category.value;
+        data.amount = form.amount.value;
+        data.account = form.account.value;
+        data.notes = form.notes.value;
+
+      } else if (type === 'bank_txn') {
+        formId = 'formBankTxn';
+        modalId = 'modalBankTxn';
+        const form = document.getElementById(formId);
+        
+        data.txnType = form.subType.value; // bank_deposit or bank_withdrawal
+        data.account = form.account.value;
+        data.amount = form.amount.value;
+        data.notes = form.notes.value;
+
+      } else if (type === 'add_account') {
+        formId = 'formAddAccount';
+        modalId = 'modalAddAccount';
+        const form = document.getElementById(formId);
+        
+        data.account = form.accountName.value.trim();
+        data.openingBal = form.openingBal.value;
+        if(!data.account) return alert("Enter Account Name");
+      }
+
+      if (!data.amount && type !== 'add_account') return alert("Enter Amount");
+
+      showLoading(true);
+      
+      google.script.run
+        .withSuccessHandler(res => {
+           showLoading(false);
+           if(res.success) {
+             bootstrap.Modal.getInstance(document.getElementById(modalId)).hide();
+             document.getElementById(formId).reset();
+             alert(res.message);
+             loadFinancialData(); // Refresh UI
+             if(type === 'add_account') loadDropdownData(); // Reload dropdowns
+           } else {
+             alert("Error: " + res.message);
+           }
+        })
+        .withFailureHandler(e => {
+           showLoading(false);
+           alert("System Error: " + e.message);
+        })
+        .handleFinancialTransaction(data);
+    }
+
+    function formatMoney(amount) {
+      return 'Ksh ' + parseFloat(amount || 0).toLocaleString('en-KE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
   </script>
 </body>
