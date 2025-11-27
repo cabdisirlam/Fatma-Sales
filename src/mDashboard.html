@@ -940,109 +940,83 @@
     </div>
 
     <div class="content-section" id="section-sales-new">
-      <div class="dashboard-content">
-        <h3><i class="bi bi-cart-plus"></i> Quick Sale / Quotation</h3>
-        <p class="text-muted">Process a sale or create a quotation</p>
-        
-        <div class="row">
-          <div class="col-md-8">
-            <div class="card shadow-sm">
-              <div class="card-body">
-                <form id="dashboardSaleForm">
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <label class="form-label fw-bold">Customer</label>
-                      <select class="form-select" id="dashSaleCustomer">
-                        <option value="WALK-IN">Walk-in Customer</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label fw-bold">Payment Mode</label>
-                      <select class="form-select" id="dashSalePayment">
-                        <option value="Cash">Cash</option>
-                        <option value="M-Pesa">M-Pesa</option>
-                        <option value="Equity Bank">Equity Bank</option>
-                        <option value="Credit">Credit (Debt)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <hr>
-
-                  <div class="row align-items-end mb-3">
-                    <div class="col-md-5">
-                      <label class="form-label fw-bold">Product</label>
-                      <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()">
-                        <option value="">-- Choose Item --</option>
-                      </select>
-                    </div>
-                    <div class="col-md-2">
-                      <label class="form-label">Qty</label>
-                      <input type="number" class="form-control" id="dashSaleQty" value="1" min="1">
-                    </div>
-                    <div class="col-md-3">
-                      <label class="form-label">Price (Editable)</label>
-                      <input type="number" class="form-control" id="dashSalePrice" min="0" step="0.01">
-                    </div>
-                    <div class="col-md-2">
-                      <button type="button" class="btn btn-primary w-100" onclick="addDashCartItem()">
-                        <i class="bi bi-plus-lg"></i> Add
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="table-responsive border rounded mb-3" style="max-height: 250px; overflow-y: auto;">
-                    <table class="table table-sm table-striped mb-0">
-                      <thead class="table-light sticky-top">
-                        <tr>
-                          <th>Item</th>
-                          <th>Qty</th>
-                          <th>Price</th>
-                          <th>Total</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody id="dashCartBody">
-                        <tr><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div class="d-flex justify-content-between align-items-center mt-3">
-                    <div>
-                      <h4 class="mb-0 text-success">Total: <span id="dashCartTotal">Ksh 0.00</span></h4>
-                    </div>
-                    <div class="d-flex gap-2">
-                      <button type="button" class="btn btn-outline-secondary" onclick="clearDashCart()">Clear</button>
-                      
-                      <button type="button" class="btn btn-warning text-dark" onclick="submitDashTransaction('Quotation')">
-                        <i class="bi bi-file-text"></i> Save Quotation
-                      </button>
-                      
-                      <button type="button" class="btn btn-success px-4" onclick="submitDashTransaction('Sale')">
-                        <i class="bi bi-check-circle"></i> Complete Sale
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-          
-          <div class="col-md-4">
-            <div class="card bg-light border-0">
-              <div class="card-body">
-                <h6>Product Details</h6>
-                <div id="dashProductInfo" class="text-muted small">Select a product to see details.</div>
-              </div>
-            </div>
-          </div>
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <h4><i class="bi bi-cart-plus"></i> Quick Sale / Quotation</h4>
         </div>
-      </div>
-      
-      <div class="navigation-controls">
-        <button class="nav-btn" onclick="navigateToPrevious()"><i class="bi bi-chevron-left"></i> Previous</button>
-        <button class="nav-btn" onclick="navigateToNext()">Next <i class="bi bi-chevron-right"></i></button>
+        <div class="card-body">
+          <form id="dashboardSaleForm">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Customer</label>
+                <select class="form-select" id="dashSaleCustomer">
+                  <option value="WALK-IN">Walk-in Customer</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Date</label>
+                <input type="date" class="form-control" id="dashSaleDate">
+              </div>
+            </div>
+
+            <div class="row align-items-end mb-3">
+              <div class="col-md-5">
+                <label class="form-label fw-bold">Product</label>
+                <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()">
+                  <option value="">-- Choose Item --</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Qty</label>
+                <input type="number" class="form-control" id="dashSaleQty" value="1" min="1">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Price</label>
+                <input type="number" class="form-control" id="dashSalePrice" min="0" step="0.01">
+              </div>
+              <div class="col-md-2">
+                <button type="button" class="btn btn-primary w-100" onclick="addDashCartItem()">
+                  <i class="bi bi-plus-lg"></i> Add
+                </button>
+              </div>
+            </div>
+
+            <div id="dashProductInfo" class="alert alert-light border mb-3 p-2 small">
+              Select a product to check stock availability.
+            </div>
+
+            <div class="table-responsive border rounded mb-3" style="max-height: 250px; overflow-y: auto;">
+              <table class="table table-sm table-striped mb-0">
+                <thead class="table-light sticky-top">
+                  <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th>Action</th></tr>
+                </thead>
+                <tbody id="dashCartBody">
+                  <tr><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <h4 class="mb-0 text-success">Total: <span id="dashCartTotal">Ksh 0.00</span></h4>
+              
+              <div class="d-flex gap-2 align-items-center">
+                <select class="form-select" id="dashSalePayment" style="width: auto;">
+                  <option value="Cash">Cash</option>
+                  <option value="M-Pesa">M-Pesa</option>
+                  <option value="Equity Bank">Equity Bank</option>
+                  <option value="Credit">Credit (Debt)</option>
+                </select>
+
+                <button type="button" class="btn btn-warning" onclick="submitDashTransaction('Quotation')">
+                  <i class="bi bi-file-text"></i> Quotation
+                </button>
+                <button type="button" class="btn btn-success" onclick="submitDashTransaction('Sale')">
+                  <i class="bi bi-check-circle"></i> Sale
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -1059,14 +1033,13 @@
                 <th>Transaction</th>
                 <th>Date</th>
                 <th>Customer</th>
-                <th>Payment</th>
+                <th>Type</th>
                 <th class="text-end">Total</th>
-                <th>Status</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="salesHistoryBody">
-              <tr><td colspan="7" class="text-center text-muted py-4">Loading sales history...</td></tr>
+              <tr><td colspan="6" class="text-center text-muted py-4">Loading sales history...</td></tr>
             </tbody>
           </table>
         </div>
@@ -2684,168 +2657,88 @@
     }
 
     // --- DASHBOARD QUICK SALE LOGIC ---
-    let dashCart = [];
     let dashProducts = [];
     let dashCustomers = [];
+    let dashCart = [];
 
-    // Call this when 'Quick Sale' section is loaded
+    // Initialize Dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      const dateInput = document.getElementById('dashSaleDate');
+      if (dateInput) {
+        dateInput.valueAsDate = new Date();
+      }
+
+      loadNewSaleInDashboard();
+      loadSalesHistory();
+    });
+
+    // --- INVENTORY & CUSTOMER LOADER ---
     function loadNewSaleInDashboard() {
       clearDashCart();
-
-      // 1. Load Customers
+      const dateInput = document.getElementById('dashSaleDate');
+      if (dateInput && !dateInput.value) {
+        dateInput.valueAsDate = new Date();
+      }
+      
+      // Load Customers
       google.script.run.withSuccessHandler(function(customers) {
         dashCustomers = customers || [];
         const sel = document.getElementById('dashSaleCustomer');
+        if (!sel) return;
         sel.innerHTML = '<option value="WALK-IN">Walk-in Customer</option>';
-
-        if (dashCustomers.length > 0) {
-          dashCustomers.sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
-
-          dashCustomers.forEach(c => {
-            const label = `${c.Customer_Name} (${c.Phone || '-'})`;
-            sel.add(new Option(label, c.Customer_ID));
-          });
-        }
+        
+        dashCustomers.forEach(c => {
+          sel.add(new Option(c.Customer_Name, c.Customer_ID));
+        });
       }).getCustomers();
 
-      // 2. Load Inventory
+      // Load Inventory (Ensures fresh stock levels)
       google.script.run.withSuccessHandler(function(items) {
-        dashProducts = items || []; // Store globally for lookups
+        dashProducts = items || []; 
         const sel = document.getElementById('dashSaleProduct');
+        if (!sel) return;
         sel.innerHTML = '<option value="">-- Choose Item --</option>';
-        if (dashProducts.length > 0) {
-          dashProducts.forEach(i => {
-            // Only show items in stock
-            const stock = i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty;
-            if (stock > 0) {
-              sel.add(new Option(`${i.Item_Name} (Stock: ${stock})`, i.Item_ID));
-            }
-          });
-        }
+        
+        dashProducts.forEach(i => {
+          const stock = i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty;
+          // Only show items with stock or services
+          if (stock > 0 || i.Type === 'Service') {
+             sel.add(new Option(`${i.Item_Name}`, i.Item_ID));
+          }
+        });
       }).getInventory();
     }
 
+    // --- UPDATE PRODUCT DETAILS ON SELECTION ---
     function updateDashProductDetails() {
       const id = document.getElementById('dashSaleProduct').value;
       const product = dashProducts.find(p => p.Item_ID === id);
+      const infoBox = document.getElementById('dashProductInfo');
+      
       if (product) {
         document.getElementById('dashSalePrice').value = product.Selling_Price;
         const stock = product.Current_Qty !== undefined ? product.Current_Qty : product.Stock_Qty;
-        document.getElementById('dashProductInfo').innerHTML = `
-           <div class="mb-2"><strong>Item:</strong> ${product.Item_Name}</div>
-           <div class="mb-2"><strong>Category:</strong> ${product.Category || '-'}</div>
-           <div class="mb-2 text-primary"><strong>Standard Price:</strong> Ksh ${product.Selling_Price}</div>
-           <div class="mb-2 ${stock < 10 ? 'text-danger' : 'text-success'}"><strong>Current Stock:</strong> ${stock}</div>
-        `;
-      } else {
+        
+        let stockColor = stock > 10 ? 'text-success' : 'text-danger';
+        if (infoBox) {
+          infoBox.innerHTML = `
+            <strong>${product.Item_Name}</strong> | 
+            Price: Ksh ${product.Selling_Price} | 
+            Stock: <span class="${stockColor} fw-bold">${stock}</span>
+          `;
+        }
+      } else if (infoBox) {
+        infoBox.innerText = 'Select a product to check stock availability.';
         document.getElementById('dashSalePrice').value = '';
-        document.getElementById('dashProductInfo').innerText = 'Select a product from the list to see stock levels and pricing details.';
       }
     }
 
-    function addDashCartItem() {
-      const id = document.getElementById('dashSaleProduct').value;
-      const qty = parseFloat(document.getElementById('dashSaleQty').value);
-      const price = parseFloat(document.getElementById('dashSalePrice').value);
-      const product = dashProducts.find(p => p.Item_ID === id);
-
-      if (!product || !id) return alert("Please select a product.");
-      if (isNaN(qty) || qty <= 0) return alert("Please enter a valid quantity.");
-      if (isNaN(price) || price < 0) return alert("Please enter a valid price.");
-
-      // Check stock
-      const stock = product.Current_Qty !== undefined ? product.Current_Qty : product.Stock_Qty;
-      if (qty > stock) return alert(`Insufficient stock. Only ${stock} available.`);
-
-      // Add to cart array
-      dashCart.push({
-        Item_ID: id,
-        Item_Name: product.Item_Name,
-        Qty: qty,
-        Unit_Price: price,
-        Total: qty * price
-      });
-
-      renderDashCart();
-      // Reset inputs
-      document.getElementById('dashSaleProduct').value = '';
-      document.getElementById('dashSaleQty').value = 1;
-      document.getElementById('dashSalePrice').value = '';
-      document.getElementById('dashProductInfo').innerText = 'Select a product from the list to see stock levels and pricing details.';
-    }
-
-    function renderDashCart() {
-      const tbody = document.getElementById('dashCartBody');
-      tbody.innerHTML = '';
-      let total = 0;
-
-      dashCart.forEach((item, index) => {
-        total += item.Total;
-        tbody.innerHTML += `
-          <tr>
-            <td>${item.Item_Name}</td>
-            <td>${item.Qty}</td>
-            <td>${formatCurrency(item.Unit_Price)}</td>
-            <td>${formatCurrency(item.Total)}</td>
-            <td class="text-end">
-              <button class="btn btn-sm btn-outline-danger" onclick="removeDashItem(${index})">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      });
-
-      document.getElementById('dashCartTotal').innerText = formatCurrency(total);
-
-      if (dashCart.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Cart is empty</td></tr>';
-    }
-
-    function removeDashItem(index) {
-      dashCart.splice(index, 1);
-      renderDashCart();
-    }
-
-    function clearDashCart() {
-      dashCart = [];
-      renderDashCart();
-      const customerSelect = document.getElementById('dashSaleCustomer');
-      if (customerSelect) customerSelect.value = 'WALK-IN';
-      const paymentSelect = document.getElementById('dashSalePayment');
-      if (paymentSelect) paymentSelect.value = 'Cash';
-      const info = document.getElementById('dashProductInfo');
-      if (info) info.innerText = 'Select a product from the list to see stock levels and pricing details.';
-    }
-
-    // --- UPDATED TRANSACTION LOGIC (Sales & Quotations) ---
-
+    // --- TRANSACTION SUBMISSION ---
     function submitDashTransaction(type) {
-      if(dashCart.length === 0) return alert("Cart is empty. Add items first.");
+      if(dashCart.length === 0) return alert("Cart is empty.");
 
-      const customerId = document.getElementById('dashSaleCustomer').value;
-      const paymentMode = document.getElementById('dashSalePayment').value;
-      const custSelect = document.getElementById('dashSaleCustomer');
-      const customerName = custSelect.options[custSelect.selectedIndex].text;
-
-      // Prepare Data
-      const transactionData = {
-        Customer_ID: customerId,
-        Customer_Name: customerName,
-        Payment_Mode: paymentMode,
-        items: dashCart,
-        User: sessionStorage.getItem('userName') || 'SYSTEM',
-        Delivery_Charge: 0,
-        Discount: 0,
-        // Quotation specific fields
-        Valid_Until: type === 'Quotation' ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) : null // 14 days validity
-      };
-
-      // Determine backend function
-      const backendFunc = type === 'Quotation' ? 'createQuotation' : 'createSale';
-      
-      // UI Loading State
-      const btnText = type === 'Quotation' ? 'Save Quotation' : 'Complete Sale';
-      // Find button by text to disable it (simple selector)
+      const btnText = type === 'Quotation' ? 'Quotation' : 'Sale';
+      // Disable buttons to prevent double click
       const btns = document.querySelectorAll('button');
       let clickedBtn;
       btns.forEach(b => { if(b.innerText.includes(btnText)) clickedBtn = b; });
@@ -2855,35 +2748,131 @@
         clickedBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
       }
 
-      // Call Backend
+      const transactionData = {
+        Customer_ID: document.getElementById('dashSaleCustomer').value,
+        Customer_Name: document.getElementById('dashSaleCustomer').selectedOptions[0].text,
+        DateTime: document.getElementById('dashSaleDate').value, // Manual Date
+        Payment_Mode: document.getElementById('dashSalePayment').value,
+        items: dashCart,
+        User: sessionStorage.getItem('userName') || 'SYSTEM',
+        Delivery_Charge: 0,
+        Discount: 0,
+        Valid_Until: type === 'Quotation' ? new Date(Date.now() + 14 * 86400000) : null 
+      };
+
+      const backendFunc = type === 'Quotation' ? 'createQuotation' : 'createSale';
+
       google.script.run
         .withSuccessHandler(function(res) {
            if(clickedBtn) {
              clickedBtn.disabled = false;
-             clickedBtn.innerHTML = `<i class=\"bi bi-check-circle\"></i> ${btnText}`;
+             clickedBtn.innerHTML = `<i class="bi bi-check-circle"></i> ${btnText}`;
            }
            
            if(res.success) {
-             const msg = type === 'Quotation' 
-               ? "Quotation Saved! ID: " + res.transactionId 
-               : "Sale Successful! ID: " + res.transactionId;
-             alert(msg);
+             alert((type === 'Quotation' ? "Quotation Saved: " : "Sale Complete: ") + res.transactionId);
+             
+             // 1. TRIGGER PRINT (Client Side)
+             printDocument(res.transactionId, type);
+
+             // 2. REFRESH DATA (Fixes Inventory Lag)
              clearDashCart();
-             // Refresh inventory/sales history
-             loadNewSaleInDashboard(); 
-             if(type === 'Sale') loadSalesHistory(); // Update history tab
+             loadNewSaleInDashboard(); // Reloads inventory to show new stock balances
+             loadSalesHistory();       // Adds the new sale to history
            } else {
              alert("Error: " + res.message);
            }
         })
         .withFailureHandler(function(e) {
-           if(clickedBtn) {
-             clickedBtn.disabled = false;
-             clickedBtn.innerText = btnText;
-           }
+           if(clickedBtn) { clickedBtn.disabled = false; clickedBtn.innerText = btnText; }
            alert("System Error: " + e.message);
         })
-        [backendFunc](transactionData); // Dynamic function call
+        [backendFunc](transactionData);
+    }
+
+    // --- CLIENT SIDE PRINTING (Fixes "Loading..." hang) ---
+    function printDocument(id, type) {
+      const func = type === 'Quotation' ? 'generateQuotationHTML' : 'generateReceiptHTML';
+      
+      // Opens window immediately so browser doesn't block it
+      const printWindow = window.open('', '_blank', 'width=900,height=700');
+      printWindow.document.write('<div style="text-align:center; padding:50px;"><h3>Generating Document...</h3></div>');
+
+      google.script.run
+        .withSuccessHandler(function(html) {
+          printWindow.document.open();
+          printWindow.document.write(html);
+          printWindow.document.close();
+          setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+          }, 500);
+        })
+        .withFailureHandler(function(e) {
+          printWindow.document.body.innerHTML = `<p style="color:red">Error: ${e.message}</p>`;
+        })
+        [func](id);
+    }
+
+    // --- SALES HISTORY ---
+    function loadSalesHistory() {
+      const tbody = document.getElementById('salesHistoryBody');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+
+      google.script.run.withSuccessHandler(function(rows) {
+        if (!rows || rows.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No recent transactions found.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = rows.map(r => `
+          <tr>
+            <td><strong>${r.Transaction_ID}</strong></td>
+            <td>${new Date(r.DateTime).toLocaleDateString()}</td>
+            <td>${r.Customer_Name}</td>
+            <td><span class="badge ${r.Transaction_ID.startsWith('QUOT') ? 'bg-warning text-dark' : 'bg-success'}">${r.Transaction_ID.startsWith('QUOT') ? 'Quotation' : 'Sale'}</span></td>
+            <td class="text-end">Ksh ${parseFloat(r.Grand_Total).toLocaleString()}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-dark" onclick="printDocument('${r.Transaction_ID}', '${r.Transaction_ID.startsWith('QUOT')?'Quotation':'Sale'}')">
+                <i class="bi bi-printer"></i> Print
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      }).getRecentTransactionsMixed(); 
+    }
+
+    // --- CART FUNCTIONS ---
+    function addDashCartItem() {
+      const id = document.getElementById('dashSaleProduct').value;
+      const qty = parseFloat(document.getElementById('dashSaleQty').value);
+      const price = parseFloat(document.getElementById('dashSalePrice').value);
+      const product = dashProducts.find(p => p.Item_ID === id);
+
+      if(!id || qty <=0 || price < 0) return alert("Invalid item details");
+
+      dashCart.push({ Item_ID: id, Item_Name: product.Item_Name, Qty: qty, Unit_Price: price, Total: qty*price });
+      renderDashCart();
+    }
+
+    function renderDashCart() {
+      const tbody = document.getElementById('dashCartBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      let total = 0;
+      dashCart.forEach((item, i) => {
+        total += item.Total;
+        tbody.innerHTML += `<tr><td>${item.Item_Name}</td><td>${item.Qty}</td><td>${item.Unit_Price}</td><td>${item.Total}</td><td><button class="btn btn-sm btn-danger" onclick="dashCart.splice(${i},1);renderDashCart()">X</button></td></tr>`;
+      });
+      document.getElementById('dashCartTotal').innerText = "Ksh " + total.toLocaleString();
+      if (dashCart.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>';
+    }
+
+    function clearDashCart() {
+      dashCart = [];
+      renderDashCart();
+      document.getElementById('dashSaleQty').value = 1;
     }
 
     // Inventory Section
