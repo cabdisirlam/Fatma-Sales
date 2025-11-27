@@ -66,6 +66,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
+    /* The 3-Row Layout Styles */
     .action-row {
       display: flex;
       gap: 10px;
@@ -105,7 +106,7 @@
       color: white;
     }
 
-    /* Specific Button Colors */
+    /* Specific Button Colors to match Screenshot */
     .btn-edit-custom { background-color: #f1c40f; color: #2c3e50; } /* Yellow */
     .btn-pay-custom { background-color: #198754; } /* Green */
     .btn-stmt-custom { background-color: #0dcaf0; color: #2c3e50; } /* Cyan */
@@ -209,7 +210,8 @@
     </div>
 
     <div class="col-md-6">
-      <div class="filter-section" style="height: 100%;"> <h6 class="mb-3 text-muted fw-bold">FILTERS & NEW</h6>
+      <div class="filter-section" style="height: 100%;">
+        <h6 class="mb-3 text-muted fw-bold">FILTERS & NEW</h6>
         <div class="mb-3">
           <input type="text" class="form-control" id="searchInput" placeholder="Search by name, phone, or email..." style="height: 45px;">
         </div>
@@ -257,8 +259,7 @@
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody id="customersTableBody">
-              </tbody>
+            <tbody id="customersTableBody"></tbody>
           </table>
         </div>
       </div>
@@ -325,7 +326,7 @@
             <div class="mb-3 p-3 bg-light rounded border">
               <label class="form-label text-primary fw-bold">Opening Balance (Optional)</label>
               <input type="number" class="form-control" id="custOpeningBalance" placeholder="0.00" step="0.01">
-              <div class="form-text">Enter amount if customer already owes money. (Positive value = Debt)</div>
+              <div class="form-text">Enter amount if customer already owes money.</div>
             </div>
 
             <div id="addCustomerAlert" class="alert mt-3" style="display: none;"></div>
@@ -372,7 +373,7 @@
 
           <div class="mb-3">
             <label class="form-label">Reference / Receipt No</label>
-            <input type="text" class="form-control" id="customerPaymentReference" placeholder="e.g. QH823... or 1234">
+            <input type="text" class="form-control" id="customerPaymentReference" placeholder="e.g. QH823...">
           </div>
         </div>
         <div class="modal-footer">
@@ -393,8 +394,6 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       loadCustomers();
-      
-      // Search Listener
       document.getElementById('searchInput').addEventListener('keyup', filterCustomers);
       document.getElementById('statusFilter').addEventListener('change', filterCustomers);
     });
@@ -412,7 +411,7 @@
           document.getElementById('loadingIndicator').style.display = 'none';
         })
         .withFailureHandler(function(error) {
-          alert('Error loading customers: ' + error.message);
+          alert('Error: ' + error.message);
         })
         .getCustomers({});
     }
@@ -429,7 +428,6 @@
 
       if (!data || data.length === 0) return;
 
-      // Sort A-Z
       const sorted = [...data].sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
 
       sorted.forEach(c => {
@@ -437,16 +435,12 @@
         const id = c.Customer_ID;
         const balance = parseFloat(c.Current_Balance || c.Balance || 0);
         
-        // Format balance text
         let balText = ' - Bal: 0';
         if (balance < 0) balText = ` - Owes: ${Math.abs(balance).toLocaleString()}`;
         if (balance > 0) balText = ` - Credit: ${balance.toLocaleString()}`;
 
-        // Add to Edit
         selectEdit.add(new Option(`${name}`, id));
-        // Add to Pay (with balance)
         selectPay.add(new Option(`${name}${balText}`, id));
-        // Add to Statement
         selectStmt.add(new Option(`${name}`, id));
       });
     }
@@ -470,17 +464,13 @@
         if (balance < 0) balHtml = `<span class="balance-negative">Owes ${Math.abs(balance).toLocaleString()}</span>`;
         if (balance > 0) balHtml = `<span class="balance-positive">Credit ${balance.toLocaleString()}</span>`;
 
-        const statusBadge = c.Status === 'Active' 
-          ? '<span class="badge bg-success">Active</span>' 
-          : '<span class="badge bg-secondary">Inactive</span>';
-
         row.innerHTML = `
           <td>${c.Customer_ID}</td>
           <td><strong>${c.Customer_Name}</strong></td>
           <td>${c.Phone}</td>
           <td>${c.Location || '-'}</td>
           <td>${balHtml}</td>
-          <td>${statusBadge}</td>
+          <td><span class="badge ${c.Status === 'Active' ? 'bg-success' : 'bg-secondary'}">${c.Status}</span></td>
         `;
         tbody.appendChild(row);
       });
@@ -490,7 +480,6 @@
       if(!data) return;
       const total = data.length;
       const active = data.filter(c => c.Status === 'Active').length;
-      
       let debt = 0;
       let sales = 0;
 
@@ -516,19 +505,15 @@
         const matchStatus = !status || c.Status === status;
         return matchTerm && matchStatus;
       });
-
       displayCustomers(filtered);
     }
 
-    // --- ACTIONS ---
-
+    // ACTIONS
     function actionEdit() {
       const id = document.getElementById('selectCustomerEdit').value;
       if(!id) return alert("Select a customer first");
-      
       const c = customersData.find(x => x.Customer_ID === id);
-      if(!c) return;
-
+      
       editingCustomerId = id;
       document.getElementById('customerModalTitle').innerText = 'Edit Customer';
       document.getElementById('customerSubmitBtn').innerText = 'Update Customer';
@@ -541,23 +526,15 @@
       document.getElementById('custType').value = c.Customer_Type || 'Walk-in';
       document.getElementById('custCreditLimit').value = c.Credit_Limit || 0;
       
-      // Hide Opening Balance on Edit (handled via adjustments)
-      document.getElementById('custOpeningBalance').parentElement.style.display = 'none';
-
+      document.getElementById('custOpeningBalance').parentElement.style.display = 'none'; // Hide on edit
       new bootstrap.Modal(document.getElementById('addCustomerModal')).show();
     }
 
     function actionReceive() {
       const id = document.getElementById('selectCustomerPay').value;
       if(!id) return alert("Select a customer first");
-
       const c = customersData.find(x => x.Customer_ID === id);
       const balance = parseFloat(c.Current_Balance || 0);
-
-      // Check if they actually owe money
-      if (balance >= 0) {
-        if(!confirm("This customer does not have a negative balance (debt). Do you still want to record a payment?")) return;
-      }
 
       document.getElementById('paymentCustomerId').value = id;
       document.getElementById('paymentCustomerName').innerText = c.Customer_Name;
@@ -570,12 +547,9 @@
     function actionStatement() {
       const id = document.getElementById('selectCustomerStmt').value;
       if(!id) return alert("Select a customer first");
-      
-      // Logic for statement view (call existing function or alert)
-      alert("Statement view for " + id + " (Feature needs Statement Modal implemented)");
+      // Placeholder for statement modal logic
+      alert("Statement feature coming soon for " + id);
     }
-
-    // --- ADD / SAVE ---
 
     function showAddCustomerModal() {
       editingCustomerId = null;
@@ -600,7 +574,7 @@
         KRA_PIN: document.getElementById('custKRAPin').value,
         Customer_Type: document.getElementById('custType').value,
         Credit_Limit: document.getElementById('custCreditLimit').value,
-        Opening_Balance: document.getElementById('custOpeningBalance').value, // Send this
+        Opening_Balance: document.getElementById('custOpeningBalance').value,
         User: currentUser
       };
 
@@ -615,14 +589,10 @@
           loadCustomers();
           alert(res.message);
         } else {
-          alert('Error: ' + res.message);
+          alert(res.message);
         }
       }
-
-      function onError(err) {
-        btn.disabled = false;
-        alert('System Error: ' + err.message);
-      }
+      function onError(err) { btn.disabled = false; alert(err.message); }
     }
 
     function submitCustomerPayment() {
@@ -637,30 +607,16 @@
       btn.disabled = true;
       btn.innerText = 'Processing...';
 
-      const paymentData = {
-        Customer_ID: id,
-        Amount: amt,
-        Account: method,
-        Reference: ref,
-        User: currentUser
-      };
+      const paymentData = { Customer_ID: id, Amount: amt, Account: method, Reference: ref, User: currentUser };
 
-      google.script.run
-        .withSuccessHandler(function(res) {
-          btn.disabled = false;
-          if(res.success) {
-            bootstrap.Modal.getInstance(document.getElementById('customerPaymentModal')).hide();
-            loadCustomers();
-            alert("Payment Recorded!");
-          } else {
-            alert(res.message);
-          }
-        })
-        .withFailureHandler(function(e) {
-          btn.disabled = false;
-          alert(e.message);
-        })
-        .recordCustomerPayment(paymentData);
+      google.script.run.withSuccessHandler(res => {
+        btn.disabled = false;
+        if(res.success) {
+          bootstrap.Modal.getInstance(document.getElementById('customerPaymentModal')).hide();
+          loadCustomers();
+          alert("Payment Recorded!");
+        } else alert(res.message);
+      }).withFailureHandler(e => { btn.disabled = false; alert(e.message); }).recordCustomerPayment(paymentData);
     }
   </script>
 </body>
