@@ -140,8 +140,8 @@
 </head>
 <body>
   <div class="header-section">
-    <h2><i class="bi bi-people"></i> Customers List</h2>
-    <p>Manage your customer database, sales, and payment tracking</p>
+    <h2><i class="bi bi-people"></i> Customers Management</h2>
+    <p>Manage your customers, sales orders, and payment tracking</p>
   </div>
 
   <!-- Statistics Cards -->
@@ -149,26 +149,25 @@
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Customers</div>
-        <div class="stat-value" id="totalCustomers">0 (0 active)</div>
+        <div class="stat-value" id="totalCustomers">0</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
-        <div class="stat-label">Total Cost</div>
-        <div class="stat-value" id="totalCost">Ksh 0</div>
+        <div class="stat-label">Active Customers</div>
+        <div class="stat-value" id="activeCustomers">0</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
-        <div class="stat-label">Total Payment</div>
-        <div class="stat-value balance-positive" id="totalPayment">Ksh 0</div>
+        <div class="stat-label">With Debt</div>
+        <div class="stat-value" id="withDebt">0</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
-        <div class="stat-label">Balance</div>
-        <div class="stat-value balance-negative" id="totalBalance">Ksh 0</div>
-        <small class="text-muted">Receivable</small>
+        <div class="stat-label">Total Debt</div>
+        <div class="stat-value balance-negative" id="totalDebt">Ksh 0</div>
       </div>
     </div>
   </div>
@@ -563,36 +562,32 @@
 
     function updateStats(data) {
       if (!data || data.length === 0) {
-        document.getElementById('totalCustomers').textContent = '0 (0 active)';
-        document.getElementById('totalCost').textContent = 'Ksh 0';
-        document.getElementById('totalPayment').textContent = 'Ksh 0';
-        document.getElementById('totalBalance').textContent = 'Ksh 0';
+        document.getElementById('totalCustomers').textContent = '0';
+        document.getElementById('activeCustomers').textContent = '0';
+        document.getElementById('withDebt').textContent = '0';
+        document.getElementById('totalDebt').textContent = 'Ksh 0';
         return;
       }
 
       const totalCustomers = data.length;
       const activeCustomers = data.filter(c => c.Status === 'Active').length;
-      let totalCost = 0;
-      let totalPayment = 0;
-      let totalBalance = 0;
+      let customersWithDebt = 0;
+      let totalDebt = 0;
 
       data.forEach(function(customer) {
         const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
-        const cost = getNumericField(customer, ['Total_Sales', 'Total Sales', 'Total_Cost']);
-        const payment = getNumericField(customer, ['Total_Payments', 'Total Payments']);
 
-        // For customers, negative balance means they owe us money (receivable)
+        // For customers, negative balance means they owe us money (receivable/debt)
         if (balance < 0) {
-          totalBalance += Math.abs(balance);
+          customersWithDebt++;
+          totalDebt += Math.abs(balance);
         }
-        totalCost += cost;
-        totalPayment += payment;
       });
 
-      document.getElementById('totalCustomers').textContent = `${totalCustomers} (${activeCustomers} active)`;
-      document.getElementById('totalCost').textContent = 'Ksh ' + totalCost.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
-      document.getElementById('totalPayment').textContent = 'Ksh ' + totalPayment.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
-      document.getElementById('totalBalance').textContent = 'Ksh ' + totalBalance.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+      document.getElementById('totalCustomers').textContent = totalCustomers;
+      document.getElementById('activeCustomers').textContent = activeCustomers;
+      document.getElementById('withDebt').textContent = customersWithDebt;
+      document.getElementById('totalDebt').textContent = 'Ksh ' + totalDebt.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
     }
 
     function filterCustomers() {
