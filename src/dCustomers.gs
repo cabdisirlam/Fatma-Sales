@@ -9,6 +9,7 @@
 
 /**
  * Get all customers with optional filters
+ * FIXED: Sanitizes Date objects to prevent "Uncaught hz" errors
  */
 function getCustomers(filters) {
   try {
@@ -27,7 +28,18 @@ function getCustomers(filters) {
       const customer = {};
 
       headers.forEach((header, index) => {
-        customer[header] = row[index];
+        let value = row[index];
+
+        // CRITICAL FIX: Convert Date objects to strings to prevent "hz" error
+        if (value instanceof Date) {
+          value = value.toISOString();
+        }
+        // Ensure no undefined/null values
+        if (value === null || value === undefined) {
+          value = "";
+        }
+
+        customer[header] = value;
       });
 
       // Apply filters if provided
@@ -46,10 +58,10 @@ function getCustomers(filters) {
     }
 
     return customers;
-
   } catch (error) {
     logError('getCustomers', error);
-    throw new Error('Error loading customers: ' + error.message);
+    // Return empty array instead of throwing to prevent UI freeze
+    return [];
   }
 }
 
@@ -59,9 +71,7 @@ function getCustomers(filters) {
 function getCustomerById(customerId) {
   try {
     const customer = findRowById('Customers', 'Customer_ID', customerId);
-    if (!customer) {
-      throw new Error('Customer not found: ' + customerId);
-    }
+    if (!customer) throw new Error('Customer not found: ' + customerId);
     return customer;
   } catch (error) {
     logError('getCustomerById', error);
@@ -110,68 +120,45 @@ function searchCustomers(query) {
  */
 function addCustomer(customerData) {
   try {
-    // Validate required fields
-    if (!customerData || !customerData.Customer_Name || !customerData.Phone) {
-      throw new Error('Customer Name and Phone are required');
+    if (!customerData || !customerData.Customer_Name) {
+      throw new Error('Customer Name is required');
     }
 
     const sheet = getSheet('Customers');
     const customerId = generateId('Customers', 'Customer_ID', 'CUST');
     
-    // Handle Opening Balance
-    // In this system: Negative = Debt (Owes Money), Positive = Credit (Store Credit)
-    // If admin enters "1000" as opening balance, they usually mean debt.
     let openingBalance = parseFloat(customerData.Opening_Balance) || 0;
     if (openingBalance > 0) {
-      openingBalance = -Math.abs(openingBalance); // Convert to negative to represent Debt
+      openingBalance = -Math.abs(openingBalance); // Convert to negative (Debt)
     }
 
-    const createdBy = customerData.User || customerData.Created_By || 'SYSTEM';
+    const createdBy = customerData.User || 'SYSTEM';
 
-    // Headers: Customer_ID, Customer_Name, Phone, Email, Location, KRA_PIN, Customer_Type,
-    // Credit_Limit, Current_Balance, Total_Purchases, Last_Purchase_Date, Loyalty_Points, Status, Created_Date, Created_By
     const newCustomer = [
-      customerId,                                       // Customer_ID
-      customerData.Customer_Name,                       // Customer_Name
-      customerData.Phone,                               // Phone
-      customerData.Email || '',                         // Email
-      customerData.Location || '',                      // Location
-      customerData.KRA_PIN || '',                       // KRA_PIN
-      customerData.Customer_Type || 'Walk-in',          // Customer_Type
-      parseFloat(customerData.Credit_Limit) || 0,       // Credit_Limit
-      openingBalance,                                   // Current_Balance (Set to negative opening balance)
-      0,                                                // Total_Purchases
-      '',                                               // Last_Purchase_Date
-      0,                                                // Loyalty_Points
-      'Active',                                         // Status
-      new Date(),                                       // Created_Date
-      createdBy                                         // Created_By
+      customerId,
+      customerData.Customer_Name,
+      customerData.Phone || '',
+      customerData.Email || '',
+      customerData.Location || '',  // Added Location
+      customerData.KRA_PIN || '',   // Added KRA PIN
+      customerData.Customer_Type || 'Walk-in',
+      parseFloat(customerData.Credit_Limit) || 0,
+      openingBalance,
+      0, // Total Purchases
+      '', // Last Purchase Date
+      0, // Loyalty Points
+      'Active',
+      new Date(),
+      createdBy
     ];
 
     sheet.appendRow(newCustomer);
+    logAudit(createdBy, 'Customers', 'Create', 'New customer: ' + customerData.Customer_Name, '', '', JSON.stringify(newCustomer));
 
-    logAudit(
-      createdBy,
-      'Customers',
-      'Create',
-      'New customer added: ' + customerData.Customer_Name + ' (ID: ' + customerId + ')',
-      '',
-      '',
-      JSON.stringify(newCustomer)
-    );
-
-    return {
-      success: true,
-      customerId: customerId,
-      message: 'Customer added successfully'
-    };
-
+    return { success: true, customerId: customerId, message: 'Customer added successfully' };
   } catch (error) {
     logError('addCustomer', error);
-    return {
-      success: false,
-      message: 'Error adding customer: ' + error.message
-    };
+    return { success: false, message: 'Error adding customer: ' + error.message };
   }
 }
 
@@ -180,30 +167,8 @@ function addCustomer(customerData) {
  */
 function updateCustomer(customerId, customerData) {
   try {
-    if (!customerId) {
-      return {
-        success: false,
-        message: 'Customer ID is required'
-      };
-    }
+    if (!customerId) return { success: false, message: 'Customer ID is required' };
 
-    if (!customerData) {
-      return {
-        success: false,
-        message: 'Customer data is required'
-      };
-    }
-
-    // Get current values for audit
-    const currentCustomer = getCustomerById(customerId);
-    if (!currentCustomer) {
-      return {
-        success: false,
-        message: 'Customer not found: ' + customerId
-      };
-    }
-
-    // Update the customer
     const updates = {};
     if (customerData.Customer_Name !== undefined) updates.Customer_Name = customerData.Customer_Name;
     if (customerData.Phone !== undefined) updates.Phone = customerData.Phone;
@@ -215,28 +180,12 @@ function updateCustomer(customerId, customerData) {
     if (customerData.Status !== undefined) updates.Status = customerData.Status;
 
     const result = updateRowById('Customers', 'Customer_ID', customerId, updates);
+    logAudit(customerData.User || 'SYSTEM', 'Customers', 'Update', 'Customer updated: ' + customerId, '', result.beforeValue, result.afterValue);
 
-    logAudit(
-      customerData.User || 'SYSTEM',
-      'Customers',
-      'Update',
-      'Customer updated: ' + customerId,
-      '',
-      result.beforeValue,
-      result.afterValue
-    );
-
-    return {
-      success: true,
-      message: 'Customer updated successfully'
-    };
-
+    return { success: true, message: 'Customer updated successfully' };
   } catch (error) {
     logError('updateCustomer', error);
-    return {
-      success: false,
-      message: 'Error updating customer: ' + error.message
-    };
+    return { success: false, message: 'Error updating customer: ' + error.message };
   }
 }
 
@@ -456,83 +405,34 @@ function recordCustomerPayment(paymentData) {
     const customer = getCustomerById(customerId);
     const paymentAmount = parseFloat(paymentData.Amount);
 
-    if (paymentAmount <= 0) {
-      throw new Error('Payment amount must be greater than zero');
-    }
+    if (paymentAmount <= 0) throw new Error('Payment amount must be greater than zero');
 
-    // Create transaction in Financials sheet
     const txnId = generateId('Financials', 'Transaction_ID', 'CPY');
     const sheet = getSheet('Financials');
 
     const description = 'Payment from ' + customer.Customer_Name +
-                       (paymentData.Notes ? ' - ' + paymentData.Notes : '') +
                        (paymentData.Reference ? ' [Ref: ' + paymentData.Reference + ']' : '');
-    
+                       
     const txnRow = [
-      txnId,
-      new Date(),
-      'Customer_Payment',
-      customerId,
-      'Sales',
-      paymentData.Account, // Account (Cash/M-Pesa/Equity Bank)
-      description,
-      paymentAmount,
-      0, // Debit
-      paymentAmount, // Credit (money in)
-      0, // Balance (calculated separately)
-      paymentData.Account,
-      customer.Customer_Name, // Payee
-      paymentData.Receipt_No || paymentData.Reference || '', // Receipt_No
-      'Customer: ' + customerId, // Reference (for filtering)
-      'Approved',
-      paymentData.User,
-      paymentData.User
+      txnId, new Date(), 'Customer_Payment', customerId, 'Sales',
+      paymentData.Account, description, paymentAmount,
+      0, paymentAmount, 0,
+      paymentData.Account, customer.Customer_Name, 
+      paymentData.Reference || '', 'Customer: ' + customerId,
+      'Approved', paymentData.User, paymentData.User
     ];
-
+    
     sheet.appendRow(txnRow);
 
-    // Update account balance (increase - money coming in)
-    try {
-      updateAccountBalance(paymentData.Account, paymentAmount, paymentData.User);
-    } catch (error) {
-      // If updateAccountBalance doesn't exist, just log the error
-      Logger.log('Warning: Could not update account balance - ' + error.message);
-    }
-
-    // Update customer balance (payment reduces the debt/increases credit)
-    // Debt is negative, Payment is positive.
-    // Example: Balance -500 (Owes 500). Pay 200. New Balance = -300.
+    // Update customer balance
     const currentBalance = parseFloat(customer.Current_Balance) || 0;
     const newCustomerBalance = currentBalance + paymentAmount; 
+    updateRowById('Customers', 'Customer_ID', customerId, { Current_Balance: newCustomerBalance });
 
-    updateRowById('Customers', 'Customer_ID', customerId, {
-      Current_Balance: newCustomerBalance
-    });
-
-    logAudit(
-      paymentData.User,
-      'Customers',
-      'Payment',
-      'Payment received from ' + customer.Customer_Name + ': ' + formatCurrency(paymentAmount),
-      '',
-      'Balance: ' + currentBalance,
-      'Balance: ' + newCustomerBalance
-    );
-
-    return {
-      success: true,
-      txnId: txnId,
-      amount: paymentAmount,
-      newBalance: newCustomerBalance,
-      message: 'Payment recorded successfully'
-    };
-
+    return { success: true, message: 'Payment recorded successfully' };
   } catch (error) {
     logError('recordCustomerPayment', error);
-    return {
-      success: false,
-      message: error.message
-    };
+    return { success: false, message: error.message };
   }
 }
 

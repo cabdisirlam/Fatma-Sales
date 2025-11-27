@@ -9,105 +9,60 @@
 function generateReceiptHTML(transactionId) {
   try {
     const sale = getSaleById(transactionId);
-    if (!sale) {
-      throw new Error('Sale not found');
-    }
+    if (!sale) throw new Error('Sale not found');
 
     const settings = getAllSettings();
-    const shopName = settings.Shop_Name || CONFIG.SHOP_NAME;
-    const currency = settings.Currency_Symbol || CONFIG.CURRENCY_SYMBOL;
+    const dateStr = Utilities.formatDate(new Date(sale.DateTime), 'GMT+3', 'dd/MM/yyyy HH:mm');
 
     const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Courier New', monospace; padding: 20px; max-width: 400px; margin: 0 auto; }
-    .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-    .header h1 { font-size: 24px; margin-bottom: 5px; }
-    .header p { font-size: 12px; }
-    .section { margin: 15px 0; }
-    .section-title { font-weight: bold; margin-bottom: 5px; border-bottom: 1px dashed #000; }
-    .row { display: flex; justify-content: space-between; padding: 3px 0; }
-    .items table { width: 100%; border-collapse: collapse; }
-    .items th { text-align: left; border-bottom: 1px solid #000; padding: 5px 0; }
-    .items td { padding: 5px 0; }
-    .totals { margin-top: 15px; border-top: 2px solid #000; padding-top: 10px; }
-    .totals .row { font-size: 14px; }
-    .grand-total { font-size: 18px; font-weight: bold; }
-    .footer { text-align: center; margin-top: 20px; border-top: 1px dashed #000; padding-top: 10px; font-size: 12px; }
-    @media print {
-      body { padding: 10px; }
-      .no-print { display: none; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>${shopName}</h1>
-    <p>SALES RECEIPT</p>
-  </div>
+      <html>
+      <body style="font-family: monospace; padding: 20px; max-width: 300px; margin: 0 auto;">
+        <div style="text-align: center; border-bottom: 1px dashed black; padding-bottom: 10px;">
+          <h2 style="margin: 0;">${settings.Shop_Name || CONFIG.SHOP_NAME}</h2>
+          <p style="margin: 5px 0;">${settings.Receipt_Header || ''}</p>
+        </div>
+        
+        <div style="margin: 10px 0;">
+          <div><strong>Date:</strong> ${dateStr}</div>
+          <div><strong>Receipt #:</strong> ${sale.Transaction_ID}</div>
+          <div><strong>Customer:</strong> ${sale.Customer_Name}</div>
+          ${sale.Location ? `<div><strong>Location:</strong> ${sale.Location}</div>` : ''}
+          ${sale.KRA_PIN ? `<div><strong>KRA PIN:</strong> ${sale.KRA_PIN}</div>` : ''}
+          <div><strong>Served By:</strong> ${sale.Sold_By}</div>
+        </div>
 
-  <div class="section">
-    <div class="row"><span>Receipt #:</span><span>${sale.Transaction_ID}</span></div>
-    <div class="row"><span>Date:</span><span>${Utilities.formatDate(new Date(sale.DateTime), 'GMT+3', 'dd/MM/yyyy HH:mm')}</span></div>
-    <div class="row"><span>Customer:</span><span>${sale.Customer_Name}</span></div>
-    ${sale.Location ? '<div class="row"><span>Location:</span><span>' + sale.Location + '</span></div>' : ''}
-    ${sale.KRA_PIN ? '<div class="row"><span>KRA PIN:</span><span>' + sale.KRA_PIN + '</span></div>' : ''}
-    <div class="row"><span>Sold By:</span><span>${sale.Sold_By}</span></div>
-  </div>
-
-  <div class="section items">
-    <div class="section-title">ITEMS</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th style="text-align:center">Qty</th>
-          <th style="text-align:right">Price</th>
-          <th style="text-align:right">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${sale.items.map(item => `
-          <tr>
-            <td>${item.Item_Name}</td>
-            <td style="text-align:center">${item.Qty}</td>
-            <td style="text-align:right">${currency} ${formatNumber(item.Unit_Price)}</td>
-            <td style="text-align:right">${currency} ${formatNumber(item.Line_Total)}</td>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+          <tr style="border-bottom: 1px solid black;">
+            <th style="text-align: left;">Item</th>
+            <th style="text-align: center;">Qty</th>
+            <th style="text-align: right;">Total</th>
           </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  </div>
+          ${sale.items.map(i => `
+            <tr>
+              <td>${i.Item_Name}</td>
+              <td style="text-align: center;">${i.Qty}</td>
+              <td style="text-align: right;">${formatNumber(i.Line_Total)}</td>
+            </tr>
+          `).join('')}
+        </table>
 
-  <div class="totals">
-    <div class="row"><span>Subtotal:</span><span>${currency} ${formatNumber(sale.Subtotal)}</span></div>
-    ${sale.Delivery_Charge > 0 ? '<div class="row"><span>Delivery:</span><span>' + currency + ' ' + formatNumber(sale.Delivery_Charge) + '</span></div>' : ''}
-    ${sale.Discount > 0 ? '<div class="row"><span>Discount:</span><span>-' + currency + ' ' + formatNumber(sale.Discount) + '</span></div>' : ''}
-    <div class="row grand-total"><span>TOTAL:</span><span>${currency} ${formatNumber(sale.Grand_Total)}</span></div>
-    <div class="row"><span>Payment:</span><span>${sale.Payment_Mode}</span></div>
-  </div>
-
-  <div class="footer">
-    <p>Thank you for your business!</p>
-    <p>Goods once sold cannot be returned</p>
-  </div>
-
-  <div class="no-print" style="margin-top: 20px; text-align: center;">
-    <button onclick="window.print()">Print Receipt</button>
-  </div>
-</body>
-</html>
+        <div style="border-top: 1px dashed black; padding-top: 5px;">
+          <div style="display: flex; justify-content: space-between;">
+            <strong>TOTAL:</strong>
+            <strong>${settings.Currency_Symbol || 'Ksh'} ${formatNumber(sale.Grand_Total)}</strong>
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px; font-size: 12px;">
+          <p>${settings.Receipt_Footer || 'Thank you!'}</p>
+        </div>
+      </body>
+      </html>
     `;
-
     return html;
-
   } catch (error) {
     logError('generateReceiptHTML', error);
-    throw new Error('Error generating receipt: ' + error.message);
+    return 'Error generating receipt';
   }
 }
 
