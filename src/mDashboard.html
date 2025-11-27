@@ -2235,19 +2235,19 @@
         // Validate required fields
         if (!productData.Item_Name) {
           showQuickAddAlert(alertBox, 'danger', 'Item Name is required');
-          resetSubmitButton(submitBtn);
+          resetSubmitButton(submitBtn, 'product');
           return;
         }
 
         if (!productData.Supplier) {
           showQuickAddAlert(alertBox, 'danger', 'Supplier is required');
-          resetSubmitButton(submitBtn);
+          resetSubmitButton(submitBtn, 'product');
           return;
         }
 
         if (!productData.Cost_Price || productData.Cost_Price <= 0) {
           showQuickAddAlert(alertBox, 'danger', 'Cost Price must be greater than 0');
-          resetSubmitButton(submitBtn);
+          resetSubmitButton(submitBtn, 'product');
           return;
         }
 
@@ -2265,13 +2265,62 @@
             } else {
               showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add product'));
             }
-            resetSubmitButton(submitBtn);
+            resetSubmitButton(submitBtn, 'product');
           })
           .withFailureHandler(function(error) {
             showQuickAddAlert(alertBox, 'danger', 'Error: ' + error.message);
-            resetSubmitButton(submitBtn);
+            resetSubmitButton(submitBtn, 'product');
           })
           .addProduct(productData);
+      } else if (type === 'customer') {
+        const form = event.target;
+        const submitBtn = document.getElementById('quickAddCustomerBtn');
+        const alertBox = document.getElementById('quickAddCustomerAlert');
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+        }
+
+        const customerData = {
+          Customer_Name: form.name.value.trim(),
+          Phone: form.phone.value.trim(),
+          Email: form.email.value.trim(),
+          Opening_Balance: parseFloat(form.balance.value) || 0,
+          User: currentUser || 'SYSTEM'
+        };
+
+        if (!customerData.Customer_Name) {
+          showQuickAddAlert(alertBox, 'danger', 'Customer name is required');
+          resetSubmitButton(submitBtn, 'customer');
+          return;
+        }
+
+        if (!customerData.Phone) {
+          showQuickAddAlert(alertBox, 'danger', 'Phone number is required');
+          resetSubmitButton(submitBtn, 'customer');
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function(response) {
+            if (response.success) {
+              showQuickAddAlert(alertBox, 'success', 'Customer added successfully! ID: ' + response.customerId);
+              form.reset();
+              setTimeout(() => {
+                loadCustomersSection(true);
+                toggleQuickAdd('customer');
+              }, 2000);
+            } else {
+              showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add customer'));
+            }
+            resetSubmitButton(submitBtn, 'customer');
+          })
+          .withFailureHandler(function(error) {
+            showQuickAddAlert(alertBox, 'danger', 'Error: ' + error.message);
+            resetSubmitButton(submitBtn, 'customer');
+          })
+          .addCustomer(customerData);
       } else {
         // For other types, show generic success message
         const alertBox = document.getElementById('quickAdd' + capitalizeType(type) + 'Alert');
@@ -2295,10 +2344,11 @@
       }
     }
 
-    function resetSubmitButton(submitBtn) {
+    function resetSubmitButton(submitBtn, type) {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Save Product';
+        const label = type === 'customer' ? 'Save Customer' : 'Save Product';
+        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> ' + label;
       }
     }
 
@@ -2802,7 +2852,7 @@
               </div>
               <div class="col-md-4">
                 <label class="form-label">Phone</label>
-                <input type="tel" class="form-control" name="phone" placeholder="07xx xxx xxx">
+                <input type="tel" class="form-control" name="phone" placeholder="07xx xxx xxx" required>
               </div>
               <div class="col-md-4">
                 <label class="form-label">Email</label>
@@ -2815,7 +2865,7 @@
                 <input type="number" class="form-control" name="balance" step="0.01">
               </div>
               <div class="col-md-8 d-flex align-items-end justify-content-end">
-                <button class="btn btn-success" type="submit">
+                <button class="btn btn-success" type="submit" id="quickAddCustomerBtn">
                   <i class="bi bi-check-circle"></i> Save Customer
                 </button>
               </div>
