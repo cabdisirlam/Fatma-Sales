@@ -1,15 +1,15 @@
 /**
- * Fatma Sales Management System (Keipoa Kenya)
+ * Beipoa Kenya - Sales Management System
  * Configuration File
  */
 
 const CONFIG = {
   // Shop Information
-  SHOP_NAME: 'Keipoa Kenya',
+  SHOP_NAME: 'Beipoa Kenya',
   ADMIN_EMAIL: 'cabdisirlam@gmail.com',
 
   // Workbook Configuration
-  WORKBOOK_NAME: 'Keipoa System',
+  WORKBOOK_NAME: 'Beipoa System',
 
   // Sheet Names - Reorganized to 9 sheets for simplified management
   SHEETS: {
@@ -24,7 +24,7 @@ const CONFIG = {
     SETTINGS: 'Settings'         // Now includes Expense_Categories as settings
   },
 
-  // Colors (Fatma Brand Colors)
+  // Colors (Brand Colors)
   COLORS: {
     PRIMARY: '#4A90E2',
     SECONDARY: '#50C878',
