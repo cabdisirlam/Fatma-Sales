@@ -105,8 +105,12 @@
       `;
     }
 
+    function isGoogleScriptAvailable() {
+      return typeof google !== 'undefined' && google.script && google.script.run;
+    }
+
     function loadSettings() {
-      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      if (!isGoogleScriptAvailable()) {
         showAlert('Unable to load settings: Google Apps Script context not available.', 'danger');
         return;
       }
@@ -142,7 +146,7 @@
         return;
       }
 
-      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      if (!isGoogleScriptAvailable()) {
         showAlert('Unable to save settings: Google Apps Script context not available.', 'danger');
         return;
       }
@@ -164,7 +168,7 @@
       const receiptHeader = document.getElementById('receipt-header').value.trim() || DEFAULT_SHOP_NAME;
       const receiptFooter = document.getElementById('receipt-footer').value.trim();
 
-      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      if (!isGoogleScriptAvailable()) {
         showAlert('Unable to save settings: Google Apps Script context not available.', 'danger');
         return;
       }
