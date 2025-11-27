@@ -112,11 +112,12 @@
           <thead>
             <tr>
               <th>Date</th>
+              <th>ID</th>
               <th>Type</th>
               <th>Account</th>
               <th>Description</th>
-              <th class="text-end">In (Credit)</th>
-              <th class="text-end">Out (Debit)</th>
+              <th class="text-end">Credit (In)</th>
+              <th class="text-end">Debit (Out)</th>
             </tr>
           </thead>
           <tbody id="txnTableBody"></tbody>
@@ -351,7 +352,7 @@
       const tbody = document.getElementById('txnTableBody');
       tbody.innerHTML = '';
       if(!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No recent transactions</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No recent transactions</td></tr>';
         return;
       }
       
@@ -359,9 +360,11 @@
         const date = new Date(t.DateTime).toLocaleDateString();
         const credit = parseFloat(t.Credit) || 0;
         const debit = parseFloat(t.Debit) || 0;
+        const id = t.Transaction_ID || '';
         
         const row = `<tr>
           <td>${date}</td>
+          <td><small>${id}</small></td>
           <td><span class="badge bg-secondary">${t.Type}</span></td>
           <td>${t.Account}</td>
           <td>${t.Description}</td>
