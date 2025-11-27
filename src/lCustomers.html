@@ -509,8 +509,10 @@
       const status = document.getElementById('statusFilter').value;
 
       const filtered = customersData.filter(c => {
-        const matchTerm = (c.Customer_Name && c.Customer_Name.toLowerCase().includes(term)) ||
-                          (c.Phone && c.Phone.includes(term));
+        const name = (c.Customer_Name || '').toString().toLowerCase();
+        const phone = (c.Phone || '').toString().toLowerCase();
+
+        const matchTerm = name.includes(term) || phone.includes(term);
         const matchStatus = !status || c.Status === status;
         return matchTerm && matchStatus;
       });
