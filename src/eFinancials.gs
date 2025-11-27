@@ -63,7 +63,7 @@ function getFinancialUiData() {
 
 /**
  * Master function to handle various financial transactions
- * types: 'income', 'expense', 'transfer', 'deposit', 'withdrawal'
+ * Logic: Determines ID prefix based on Account (BANK, MPS, CASH)
  */
 function handleFinancialTransaction(data) {
   try {
@@ -71,52 +71,65 @@ function handleFinancialTransaction(data) {
     const user = data.User || 'SYSTEM';
     const date = new Date();
     
-    // 1. Generate IDs and Basics
-    let txnId, type, desc, debit = 0, credit = 0;
-    const amount = parseFloat(data.amount);
+    // 1. Determine ID Prefix based on Account Name
+    let prefix = 'TXN';
+    const accountName = (data.account || '').toLowerCase();
     
-    // Mapping logic based on Transaction Type
+    if (accountName.includes('cash')) {
+      prefix = 'CASH';
+    } else if (accountName.includes('mpesa') || accountName.includes('m-pesa')) {
+      prefix = 'MPS';
+    } else {
+      // Assume it's a Bank if not Cash or Mpesa
+      prefix = 'BANK';
+    }
+
+    // 2. Generate Unique ID
+    const txnId = generateId('Financials', 'Transaction_ID', prefix);
+
+    // 3. Prepare Transaction Variables
+    let type, desc, debit = 0, credit = 0;
+    const amount = parseFloat(data.amount) || 0;
+    
+    // Mapping logic based on Transaction Type from Frontend
     switch (data.txnType) {
-      case 'client_payment':
-        txnId = generateId('Financials', 'Transaction_ID', 'CPY');
+      case 'client_payment': // Money In
         type = 'Customer_Payment';
         desc = 'Payment from ' + data.customerName + (data.notes ? ': ' + data.notes : '');
-        credit = amount; // Money In
+        credit = amount;
         // Also update Customer Balance
         updateCustomerBalance(data.customerId, amount, user);
         break;
 
-      case 'expense':
-        txnId = generateId('Financials', 'Transaction_ID', 'EXP');
+      case 'expense': // Money Out
         type = 'Expense';
         desc = data.category + ': ' + (data.notes || '');
-        debit = amount; // Money Out
+        debit = amount; 
         break;
 
-      case 'bank_deposit':
-        txnId = generateId('Financials', 'Transaction_ID', 'DEP');
-        type = 'Bank_Deposit'; // Treated as Money In (Capital/Other) or Transfer if implemented
+      case 'bank_deposit': // Money In
+        type = 'Deposit';
         desc = 'Deposit: ' + (data.notes || 'Cash Deposit');
         credit = amount;
         break;
 
-      case 'bank_withdrawal':
-        txnId = generateId('Financials', 'Transaction_ID', 'WTH');
-        type = 'Bank_Withdrawal';
+      case 'bank_withdrawal': // Money Out
+        type = 'Withdrawal';
         desc = 'Withdrawal: ' + (data.notes || 'Cash Withdrawal');
         debit = amount;
         break;
         
-      case 'add_account':
-         // Just a dummy transaction to initialize an account
-         txnId = generateId('Financials', 'Transaction_ID', 'ACC');
-         type = 'Account_Created';
-         desc = 'New Account Added: ' + data.account;
+      case 'add_account': // Opening Balance (Money In)
+         type = 'Opening_Balance';
+         desc = 'Initial Balance for ' + data.account;
          credit = parseFloat(data.openingBal) || 0;
          break;
+         
+       default:
+         throw new Error("Unknown transaction type");
     }
 
-    // 2. Prepare Row Data (Matching 18 Columns)
+    // 4. Prepare Row Data (Matching 18 Columns Header Structure)
     // Headers: Transaction_ID, DateTime, Type, Customer_ID, Category, Account, Description, Amount, Debit, Credit, Balance, Payment_Method, Payee, Receipt_No, Reference, Status, Approved_By, User
     
     const row = [
@@ -124,13 +137,13 @@ function handleFinancialTransaction(data) {
       date,                             // DateTime
       type,                             // Type
       data.customerId || '',            // Customer_ID
-      data.category || 'General',       // Category
-      data.account,                     // Account (Bank/Cash/Mpesa)
+      data.category || '',              // Category
+      data.account,                     // Account
       desc,                             // Description
-      amount,                           // Amount
+      (credit > 0 ? credit : debit),    // Amount (Absolute value)
       debit,                            // Debit
       credit,                           // Credit
-      0,                                // Balance (Calculated later or via formula)
+      0,                                // Balance (Calculated by running total in report)
       data.method || data.account,      // Payment_Method
       data.payee || '',                 // Payee
       data.ref || '',                   // Receipt_No
@@ -142,10 +155,8 @@ function handleFinancialTransaction(data) {
 
     sheet.appendRow(row);
 
-    // 3. Update Account Balance (if keeping a separate running total is desired, otherwise calculated on fly)
-    // This system seems to calculate on fly in reports, but we can log it.
-    
-    logAudit(user, 'Financials', 'Transaction', type + ' of ' + amount, '', '', JSON.stringify(row));
+    // Log audit
+    logAudit(user, 'Financials', 'Transaction', type + ' ' + prefix + ' amount ' + amount, '', '', JSON.stringify(row));
 
     return { success: true, message: 'Transaction recorded successfully!', txnId: txnId };
 
@@ -173,7 +184,6 @@ function getFinancialSummary(startDate, endDate) {
     const accountBalances = {};
 
     txns.forEach(txn => {
-      const amt = parseFloat(txn.Amount) || 0;
       const debit = parseFloat(txn.Debit) || 0;
       const credit = parseFloat(txn.Credit) || 0;
       const acc = txn.Account || 'Unknown';
@@ -181,14 +191,13 @@ function getFinancialSummary(startDate, endDate) {
       if (!accountBalances[acc]) accountBalances[acc] = 0;
       accountBalances[acc] += (credit - debit); // Credit is In, Debit is Out
 
-      if (txn.Type === 'Sale_Payment' || txn.Type === 'Customer_Payment' || txn.Type === 'Income') {
-        totalRevenue += (credit - debit);
-      } else if (txn.Type === 'Expense' || txn.Type === 'Bank_Withdrawal' || txn.Type === 'Purchase_Payment') {
+      if (txn.Type === 'Sale_Payment' || txn.Type === 'Customer_Payment') {
+        totalRevenue += credit;
+      } else if (txn.Type === 'Expense') {
         totalExpenses += debit;
       }
     });
 
-    // Calculate total system balance
     const currentBalance = Object.values(accountBalances).reduce((a, b) => a + b, 0);
 
     return {
@@ -196,7 +205,7 @@ function getFinancialSummary(startDate, endDate) {
       totalExpenses: totalExpenses,
       netProfit: totalRevenue - totalExpenses,
       currentBalance: currentBalance,
-      accountBalances: accountBalances // Return breakdown
+      accountBalances: accountBalances
     };
 
   } catch (error) {
@@ -206,8 +215,7 @@ function getFinancialSummary(startDate, endDate) {
 }
 
 function getAccountReport(accountName, startDate, endDate) {
-  // Existing logic... reusing getFinancialSummary logic is better but keeping structure
-   try {
+  try {
     const financials = sheetToObjects('Financials');
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -218,7 +226,6 @@ function getAccountReport(accountName, startDate, endDate) {
     let totalDebits = 0;
     const transactions = [];
     
-    // Sort transactions
     financials.sort((a, b) => new Date(a.DateTime) - new Date(b.DateTime));
     
     financials.forEach(txn => {
