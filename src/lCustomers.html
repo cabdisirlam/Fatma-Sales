@@ -96,12 +96,13 @@
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
       margin-bottom: 20px;
+      height: 100%; /* Ensure uniform height */
     }
 
     .stat-value {
       font-size: 20px;
       font-weight: 700;
-      color: #667eea;
+      color: #667eea; /* Default color */
       margin: 10px 0;
     }
 
@@ -111,6 +112,12 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+
+    /* Add these specific color classes */
+    .text-success { color: #27ae60 !important; }
+    .text-danger { color: #e74c3c !important; }
+    .text-warning { color: #f39c12 !important; }
+    .text-primary { color: #667eea !important; }
 
     .loading {
       text-align: center;
@@ -348,25 +355,25 @@
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Customers</div>
-        <div class="stat-value" id="totalCustomers">0</div>
+        <div class="stat-value text-primary" id="totalCustomers">0</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Active Customers</div>
-        <div class="stat-value" id="activeCustomers">0</div>
+        <div class="stat-value text-success" id="activeCustomers">0</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Receivable</div>
-        <div class="stat-value balance-negative" id="totalReceivable">Ksh 0.00</div>
+        <div class="stat-value text-danger" id="totalReceivable">Ksh 0.00</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Sales</div>
-        <div class="stat-value" id="totalSales">Ksh 0.00</div>
+        <div class="stat-value text-primary" id="totalSales">Ksh 0.00</div>
       </div>
     </div>
   </div>
@@ -383,13 +390,13 @@
       <div class="col-md-6 mb-3">
         <label class="form-label">Actions</label>
         <div class="d-flex gap-2">
-          <button type="button" class="btn btn-warning" id="editCustomerBtn" onclick="editSelectedCustomer()" disabled>
+          <button type="button" class="btn btn-warning flex-fill" id="editCustomerBtn" onclick="editSelectedCustomer()" disabled>
             <i class="bi bi-pencil"></i> Edit
           </button>
-          <button type="button" class="btn btn-success" id="receiveCustomerBtn" onclick="receiveSelectedCustomer()" disabled>
+          <button type="button" class="btn btn-success flex-fill" id="receiveCustomerBtn" onclick="receiveSelectedCustomer()" disabled>
             <i class="bi bi-cash-coin"></i> Receive
           </button>
-          <button type="button" class="btn btn-info" id="statementCustomerBtn" onclick="viewSelectedStatement()" disabled>
+          <button type="button" class="btn btn-info flex-fill text-white" id="statementCustomerBtn" onclick="viewSelectedStatement()" disabled>
             <i class="bi bi-file-text"></i> Statement
           </button>
         </div>
@@ -896,7 +903,7 @@
       const select = document.getElementById('customerSelect');
       const currentValue = select.value;
 
-      // Clear existing options except the first one
+      // Clear existing options
       select.innerHTML = '<option value="">-- Select a customer --</option>';
 
       if (!data || data.length === 0) {
@@ -912,8 +919,18 @@
 
       sortedData.forEach(customer => {
         const option = document.createElement('option');
+        const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
+
+        // Create label similar to supplier: Name (ID) - Balance: 100
+        let balanceText = '';
+        if (balance < 0) {
+            balanceText = ` - Owes: Ksh ${Math.abs(balance).toFixed(2)}`;
+        } else if (balance > 0) {
+            balanceText = ` - Credit: Ksh ${balance.toFixed(2)}`;
+        }
+
         option.value = customer.Customer_ID;
-        option.textContent = `${customer.Customer_Name || customer.Name || ''} (${customer.Customer_ID})`;
+        option.textContent = `${customer.Customer_Name || customer.Name} (${customer.Customer_ID})${balanceText}`;
         select.appendChild(option);
       });
 
@@ -930,8 +947,6 @@
       const receiveBtn = document.getElementById('receiveCustomerBtn');
       const statementBtn = document.getElementById('statementCustomerBtn');
 
-      console.log('Customer selected:', customerId);
-
       if (!customerId) {
         // Disable all action buttons
         editBtn.disabled = true;
@@ -947,15 +962,23 @@
         return;
       }
 
-      // Enable action buttons
+      // Enable generic buttons
       editBtn.disabled = false;
       statementBtn.disabled = false;
 
-      // Enable receive button only if there's a negative balance (customer owes money)
+      // Logic for "Receive Payment" button
+      // In Suppliers, we PAY if Balance > 0.
+      // In Customers, we RECEIVE if Balance < 0 (Debt).
       const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
-      receiveBtn.disabled = balance >= 0;
 
-      console.log('Buttons enabled - Edit:', !editBtn.disabled, 'Receive:', !receiveBtn.disabled, 'Statement:', !statementBtn.disabled);
+      // Enable receive button if they owe money (balance is negative)
+      if (balance < 0) {
+          receiveBtn.disabled = false;
+          receiveBtn.innerHTML = `<i class="bi bi-cash-coin"></i> Receive (Ksh ${Math.abs(balance).toFixed(0)})`;
+      } else {
+          receiveBtn.disabled = true;
+          receiveBtn.innerHTML = `<i class="bi bi-cash-coin"></i> Receive`;
+      }
     }
 
     function editSelectedCustomer() {
