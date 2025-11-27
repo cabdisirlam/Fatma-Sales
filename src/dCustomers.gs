@@ -96,7 +96,7 @@ function searchCustomers(query) {
 
 /**
  * Add new customer
- * Handles opening balance and precise column mapping
+ * Handles opening balance (Debt) and precise column mapping
  */
 function addCustomer(customerData) {
   try {
@@ -107,27 +107,35 @@ function addCustomer(customerData) {
 
     const sheet = getSheet('Customers');
     const customerId = generateId('Customers', 'Customer_ID', 'CUST');
-    const openingBalance = parseFloat(customerData.Opening_Balance) || 0;
+    
+    // Handle Opening Balance
+    // In this system: Negative = Debt (Owes Money), Positive = Credit (Store Credit)
+    // If admin enters "1000" as opening balance, they usually mean debt.
+    let openingBalance = parseFloat(customerData.Opening_Balance) || 0;
+    if (openingBalance > 0) {
+      openingBalance = -Math.abs(openingBalance); // Convert to negative to represent Debt
+    }
+
     const createdBy = customerData.User || customerData.Created_By || 'SYSTEM';
 
     // Headers: Customer_ID, Customer_Name, Phone, Email, Location, KRA_PIN, Customer_Type,
     // Credit_Limit, Current_Balance, Total_Purchases, Last_Purchase_Date, Loyalty_Points, Status, Created_Date, Created_By
     const newCustomer = [
-      customerId,                               // Customer_ID
-      customerData.Customer_Name,               // Customer_Name
-      customerData.Phone,                       // Phone
-      customerData.Email || '',                 // Email
-      customerData.Location || '',              // Location
-      customerData.KRA_PIN || '',               // KRA_PIN
-      customerData.Customer_Type || 'Walk-in',  // Customer_Type
-      parseFloat(customerData.Credit_Limit) || 0, // Credit_Limit
-      openingBalance,                           // Current_Balance
-      0,                                        // Total_Purchases
-      '',                                       // Last_Purchase_Date
-      0,                                        // Loyalty_Points
-      'Active',                                 // Status
-      new Date(),                               // Created_Date
-      createdBy                                 // Created_By
+      customerId,                                       // Customer_ID
+      customerData.Customer_Name,                       // Customer_Name
+      customerData.Phone,                               // Phone
+      customerData.Email || '',                         // Email
+      customerData.Location || '',                      // Location
+      customerData.KRA_PIN || '',                       // KRA_PIN
+      customerData.Customer_Type || 'Walk-in',          // Customer_Type
+      parseFloat(customerData.Credit_Limit) || 0,       // Credit_Limit
+      openingBalance,                                   // Current_Balance (Set to negative opening balance)
+      0,                                                // Total_Purchases
+      '',                                               // Last_Purchase_Date
+      0,                                                // Loyalty_Points
+      'Active',                                         // Status
+      new Date(),                                       // Created_Date
+      createdBy                                         // Created_By
     ];
 
     sheet.appendRow(newCustomer);
@@ -235,8 +243,9 @@ function deleteCustomer(customerId, user) {
     const customer = getCustomerById(customerId);
 
     // Check if customer has outstanding balance
-    if (parseFloat(customer.Current_Balance) > 0) {
-      throw new Error('Cannot delete customer with outstanding balance: ' + formatCurrency(customer.Current_Balance));
+    if (parseFloat(customer.Current_Balance) !== 0) {
+      // Prevent deleting if balance is not zero (either debt or credit)
+      throw new Error('Cannot delete customer with non-zero balance: ' + formatCurrency(customer.Current_Balance));
     }
 
     const sheet = getSheet('Customers');
@@ -406,5 +415,442 @@ function getCustomerPaymentHistory(customerId) {
   } catch (error) {
     logError('getCustomerPaymentHistory', error);
     return [];
+  }
+}
+
+/**
+ * Get customers with outstanding balances
+ */
+function getCustomersWithDebt() {
+  try {
+    const customers = getCustomers();
+    // In this system, negative balance means Debt
+    return customers.filter(customer => {
+      return parseFloat(customer.Current_Balance) < 0;
+    }).sort((a, b) => {
+      return parseFloat(a.Current_Balance) - parseFloat(b.Current_Balance);
+    });
+  } catch (error) {
+    logError('getCustomersWithDebt', error);
+    return [];
+  }
+}
+
+/**
+ * Record a direct payment from customer (reduces customer balance)
+ */
+function recordCustomerPayment(paymentData) {
+  try {
+    validateRequired(paymentData, ['Customer_ID', 'Amount', 'Account', 'User']);
+    const customerId = paymentData.Customer_ID;
+    const customer = getCustomerById(customerId);
+    const paymentAmount = parseFloat(paymentData.Amount);
+
+    if (paymentAmount <= 0) {
+      throw new Error('Payment amount must be greater than zero');
+    }
+
+    // Create transaction in Financials sheet
+    const txnId = generateId('Financials', 'Transaction_ID', 'CPY');
+    const sheet = getSheet('Financials');
+
+    const description = 'Payment from ' + customer.Customer_Name +
+                       (paymentData.Notes ? ' - ' + paymentData.Notes : '') +
+                       (paymentData.Reference ? ' [Ref: ' + paymentData.Reference + ']' : '');
+    
+    const txnRow = [
+      txnId,
+      new Date(),
+      'Customer_Payment',
+      customerId,
+      'Sales',
+      paymentData.Account, // Account (Cash/M-Pesa/Equity Bank)
+      description,
+      paymentAmount,
+      0, // Debit
+      paymentAmount, // Credit (money in)
+      0, // Balance (calculated separately)
+      paymentData.Account,
+      customer.Customer_Name, // Payee
+      paymentData.Receipt_No || paymentData.Reference || '', // Receipt_No
+      'Customer: ' + customerId, // Reference (for filtering)
+      'Approved',
+      paymentData.User,
+      paymentData.User
+    ];
+
+    sheet.appendRow(txnRow);
+
+    // Update account balance (increase - money coming in)
+    try {
+      updateAccountBalance(paymentData.Account, paymentAmount, paymentData.User);
+    } catch (error) {
+      // If updateAccountBalance doesn't exist, just log the error
+      Logger.log('Warning: Could not update account balance - ' + error.message);
+    }
+
+    // Update customer balance (payment reduces the debt/increases credit)
+    // Debt is negative, Payment is positive.
+    // Example: Balance -500 (Owes 500). Pay 200. New Balance = -300.
+    const currentBalance = parseFloat(customer.Current_Balance) || 0;
+    const newCustomerBalance = currentBalance + paymentAmount; 
+
+    updateRowById('Customers', 'Customer_ID', customerId, {
+      Current_Balance: newCustomerBalance
+    });
+
+    logAudit(
+      paymentData.User,
+      'Customers',
+      'Payment',
+      'Payment received from ' + customer.Customer_Name + ': ' + formatCurrency(paymentAmount),
+      '',
+      'Balance: ' + currentBalance,
+      'Balance: ' + newCustomerBalance
+    );
+
+    return {
+      success: true,
+      txnId: txnId,
+      amount: paymentAmount,
+      newBalance: newCustomerBalance,
+      message: 'Payment recorded successfully'
+    };
+
+  } catch (error) {
+    logError('recordCustomerPayment', error);
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+}
+
+/**
+ * Get customer statement (purchases + payments)
+ */
+function getCustomerStatement(customerId, startDate, endDate) {
+  try {
+    const customer = getCustomerById(customerId);
+    const purchases = getCustomerPurchaseHistory(customerId);
+    const payments = getCustomerPaymentHistory(customerId);
+
+    // Combine and sort by date
+    const transactions = [];
+    purchases.forEach(purchase => {
+      transactions.push({
+        date: new Date(purchase.DateTime),
+        type: 'Sale',
+        description: 'Sale #' + purchase.Transaction_ID,
+        debit: purchase.Grand_Total, // Debit increases what they owe (makes balance more negative if we track debt as pos, but here we track money movement)
+        credit: 0,
+        reference: purchase.Transaction_ID
+      });
+    });
+    payments.forEach(payment => {
+      transactions.push({
+        date: new Date(payment.DateTime),
+        type: 'Payment',
+        description: payment.Description || 'Payment',
+        debit: 0,
+        credit: payment.Amount, // Credit reduces what they owe
+        reference: payment.Transaction_ID
+      });
+    });
+
+    // Filter by date range if provided
+    let filteredTransactions = transactions;
+    if (startDate) {
+      const start = new Date(startDate);
+      filteredTransactions = filteredTransactions.filter(t => t.date >= start);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      filteredTransactions = filteredTransactions.filter(t => t.date <= end);
+    }
+
+    // Sort by date ascending
+    filteredTransactions.sort((a, b) => a.date - b.date);
+
+    // Calculate running balance
+    // Start from 0 for the statement view
+    let balance = 0;
+    filteredTransactions.forEach(txn => {
+      // In statement: Debit (Sale) increases debt (negative balance), Credit (Payment) reduces debt
+      // Balance = Credit - Debit (if we stick to Negative = Debt)
+      // Or Balance = Debit - Credit (if we show Debt as positive on statement)
+      // Let's stick to system logic: Balance is typically Credit - Debit.
+      // Sale (Debit 1000) -> Balance -1000. Payment (Credit 1000) -> Balance 0.
+      balance += (txn.credit - txn.debit);
+      txn.balance = balance;
+    });
+
+    return {
+      customer: customer,
+      transactions: filteredTransactions,
+      openingBalance: 0,
+      closingBalance: balance,
+      totalDebits: filteredTransactions.reduce((sum, t) => sum + t.debit, 0),
+      totalCredits: filteredTransactions.reduce((sum, t) => sum + t.credit, 0)
+    };
+
+  } catch (error) {
+    logError('getCustomerStatement', error);
+    throw new Error('Error generating customer statement: ' + error.message);
+  }
+}
+
+/**
+ * Get or create walk-in customer
+ */
+function getOrCreateWalkInCustomer() {
+  try {
+    const customers = getCustomers();
+    // Look for existing walk-in customer
+    const walkIn = customers.find(c =>
+      c.Customer_Name === 'Walk-in Customer' ||
+      c.Customer_Type === 'Walk-in'
+    );
+
+    if (walkIn) {
+      return walkIn;
+    }
+
+    // Create walk-in customer
+    const result = addCustomer({
+      Customer_Name: 'Walk-in Customer',
+      Phone: 'N/A',
+      Email: '',
+      Location: '',
+      KRA_PIN: '',
+      Customer_Type: 'Walk-in',
+      Credit_Limit: 0,
+      Created_By: 'SYSTEM'
+    });
+
+    return getCustomerById(result.customerId);
+
+  } catch (error) {
+    logError('getOrCreateWalkInCustomer', error);
+    throw new Error('Error getting walk-in customer: ' + error.message);
+  }
+}
+
+// =====================================================
+// PAYMENT REMINDER FUNCTIONS
+// =====================================================
+
+/**
+ * Send payment reminder to a specific customer
+ */
+function sendPaymentReminder(customerId, businessName) {
+  try {
+    const customer = getCustomerById(customerId);
+    const balance = parseFloat(customer.Current_Balance) || 0;
+
+    // Only send if balance is negative (Debt)
+    if (balance >= 0) {
+      return { success: false, message: 'Customer has no outstanding debt' };
+    }
+
+    // Check if customer has email
+    if (!customer.Email || customer.Email === '') {
+      return { success: false, message: 'Customer has no email address' };
+    }
+
+    // Get business name from settings if not provided
+    if (!businessName) {
+      const settings = sheetToObjects('Settings');
+      const businessNameSetting = settings.find(s => s.Setting_Key === 'Business_Name');
+      businessName = businessNameSetting ? businessNameSetting.Setting_Value : 'Fatma Sales';
+    }
+
+    const debtAmount = Math.abs(balance);
+
+    // Build email content
+    let emailBody = '<html><body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">';
+    emailBody += '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">';
+    emailBody += '<h2 style="margin: 0;">💳 Payment Reminder</h2>';
+    emailBody += '</div>';
+    emailBody += '<div style="padding: 30px; background: #f9f9f9;">';
+    emailBody += '<p>Dear <strong>' + customer.Customer_Name + '</strong>,</p>';
+    emailBody += '<p>This is a friendly reminder that you have an outstanding balance with ' + businessName + '.</p>';
+    emailBody += '<div style="background: white; padding: 20px; border-left: 4px solid #e74c3c; margin: 20px 0;">';
+    emailBody += '<h3 style="color: #e74c3c; margin-top: 0;">Outstanding Balance</h3>';
+    emailBody += '<p style="font-size: 28px; font-weight: bold; color: #2c3e50; margin: 10px 0;">KSh ' + debtAmount.toLocaleString('en-KE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</p>';
+    emailBody += '</div>';
+
+    emailBody += '<p>Please arrange to settle this amount at your earliest convenience.</p>';
+    // Payment methods section
+    emailBody += '<div style="background: white; padding: 20px; margin: 20px 0; border-radius: 8px;">';
+    emailBody += '<h4 style="color: #667eea; margin-top: 0;">Payment Methods</h4>';
+    emailBody += '<ul style="list-style: none; padding: 0;">';
+    emailBody += '<li style="padding: 5px 0;">📱 <strong>M-Pesa:</strong> Pay via M-Pesa</li>';
+    emailBody += '<li style="padding: 5px 0;">🏦 <strong>Bank Transfer:</strong> Equity Bank</li>';
+    emailBody += '<li style="padding: 5px 0;">💵 <strong>Cash:</strong> Visit our location</li>';
+    emailBody += '</ul>';
+    emailBody += '</div>';
+    emailBody += '<p>If you have any questions or concerns regarding this balance, please don\'t hesitate to contact us.</p>';
+    emailBody += '<p style="margin-top: 30px;">Thank you for your business!</p>';
+    emailBody += '<p><strong>' + businessName + '</strong></p>';
+    emailBody += '</div>';
+    emailBody += '<div style="background: #2c3e50; color: #bdc3c7; padding: 20px; text-align: center; font-size: 12px;">';
+    emailBody += '<p style="margin: 5px 0;">This is an automated reminder from ' + businessName + '</p>';
+    emailBody += '<p style="margin: 5px 0;">Generated on: ' + new Date().toLocaleString() + '</p>';
+    emailBody += '</div>';
+    emailBody += '</body></html>';
+
+    // Send email
+    MailApp.sendEmail({
+      to: customer.Email,
+      subject: '💳 Payment Reminder - Outstanding Balance KSh ' + debtAmount.toLocaleString('en-KE'),
+      htmlBody: emailBody
+    });
+
+    logAudit(
+      'SYSTEM',
+      'Customers',
+      'Payment Reminder',
+      'Reminder sent to ' + customer.Customer_Name + ' for KSh ' + debtAmount.toLocaleString('en-KE'),
+      '',
+      '',
+      customer.Customer_ID
+    );
+
+    return {
+      success: true,
+      message: 'Payment reminder sent to ' + customer.Email,
+      balance: balance
+    };
+
+  } catch (error) {
+    logError('sendPaymentReminder', error);
+    throw new Error('Error sending payment reminder: ' + error.message);
+  }
+}
+
+/**
+ * Send payment reminders to all customers with outstanding balances
+ * This function should be triggered weekly via a time-based trigger
+ */
+function sendAllPaymentReminders() {
+  try {
+    const customersWithDebt = getCustomersWithDebt();
+
+    if (customersWithDebt.length === 0) {
+      Logger.log('No customers with outstanding balances');
+      return { success: true, message: 'No customers with debt', count: 0 };
+    }
+
+    // Read settings once for efficiency
+    const settings = sheetToObjects('Settings');
+    const businessNameSetting = settings.find(s => s.Setting_Key === 'Business_Name');
+    const businessName = businessNameSetting ? businessNameSetting.Setting_Value : 'Fatma Sales';
+    const adminEmailSetting = settings.find(s => s.Setting_Key === 'Admin_Email');
+    const adminEmail = adminEmailSetting ? adminEmailSetting.Setting_Value : Session.getActiveUser().getEmail();
+
+    let sentCount = 0;
+    let failedCount = 0;
+    const results = [];
+
+    customersWithDebt.forEach(customer => {
+      // Only send to customers with email addresses
+      if (customer.Email && customer.Email !== '') {
+        try {
+          const result = sendPaymentReminder(customer.Customer_ID, businessName);
+          if (result.success) {
+            sentCount++;
+          } else {
+            failedCount++;
+          }
+          results.push({
+            customerId: customer.Customer_ID,
+            customerName: customer.Customer_Name,
+            balance: customer.Current_Balance,
+            result: result
+          });
+        } catch (error) {
+          failedCount++;
+          results.push({
+            customerId: customer.Customer_ID,
+            customerName: customer.Customer_Name,
+            balance: customer.Current_Balance,
+            error: error.message
+          });
+        }
+      }
+    });
+
+    // Send summary to admin
+    let summaryEmail = '<html><body style="font-family: Arial, sans-serif;">';
+    summaryEmail += '<h2 style="color: #667eea;">📧 Payment Reminders Summary</h2>';
+    summaryEmail += '<p><strong>Total customers with debt:</strong> ' + customersWithDebt.length + '</p>';
+    summaryEmail += '<p><strong>Reminders sent:</strong> ' + sentCount + '</p>';
+    summaryEmail += '<p><strong>Failed/No email:</strong> ' + failedCount + '</p>';
+    summaryEmail += '<hr>';
+    summaryEmail += '<h3>Details:</h3>';
+    summaryEmail += '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">';
+    summaryEmail += '<tr style="background-color: #f0f0f0;"><th>Customer</th><th>Balance (KSh)</th><th>Status</th></tr>';
+
+    results.forEach(r => {
+      const status = r.result ? (r.result.success ? '✅ Sent' : '❌ ' + r.result.message) : '❌ ' + r.error;
+      summaryEmail += '<tr>';
+      summaryEmail += '<td>' + r.customerName + '</td>';
+      summaryEmail += '<td>KSh ' + Math.abs(parseFloat(r.balance)).toLocaleString('en-KE', {minimumFractionDigits: 2}) + '</td>';
+      summaryEmail += '<td>' + status + '</td>';
+      summaryEmail += '</tr>';
+    });
+
+    summaryEmail += '</table>';
+    summaryEmail += '<br><p style="color: #7f8c8d; font-size: 12px;">Generated on: ' + new Date().toLocaleString() + '</p>';
+    summaryEmail += '</body></html>';
+
+    MailApp.sendEmail({
+      to: adminEmail,
+      subject: '📧 Payment Reminders Summary - ' + sentCount + ' sent',
+      htmlBody: summaryEmail
+    });
+
+    return {
+      success: true,
+      message: 'Sent ' + sentCount + ' reminders',
+      sent: sentCount,
+      failed: failedCount,
+      total: customersWithDebt.length,
+      results: results
+    };
+
+  } catch (error) {
+    logError('sendAllPaymentReminders', error);
+    throw new Error('Error sending payment reminders: ' + error.message);
+  }
+}
+
+/**
+ * Create time-based trigger for weekly payment reminders
+ * Run this once to set up weekly reminders on Monday at 9 AM
+ */
+function createPaymentReminderTrigger() {
+  try {
+    // Delete existing triggers for this function
+    const triggers = ScriptApp.getProjectTriggers();
+    triggers.forEach(trigger => {
+      if (trigger.getHandlerFunction() === 'sendAllPaymentReminders') {
+        ScriptApp.deleteTrigger(trigger);
+      }
+    });
+
+    // Create new trigger for Monday at 9 AM weekly
+    ScriptApp.newTrigger('sendAllPaymentReminders')
+      .timeBased()
+      .onWeekDay(ScriptApp.WeekDay.MONDAY)
+      .atHour(9)
+      .create();
+
+    return { success: true, message: 'Payment reminder trigger created for Mondays at 9 AM' };
+
+  } catch (error) {
+    logError('createPaymentReminderTrigger', error);
+    throw new Error('Error creating trigger: ' + error.message);
   }
 }
