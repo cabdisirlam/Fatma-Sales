@@ -3,9 +3,6 @@
  * Handles: System settings, expense categories, business information
  */
 
-/**
- * List of allowed setting keys to prevent arbitrary key/value injection
- */
 const ALLOWED_SETTINGS_KEYS = [
   'Shop_Name',
   'Admin_Email',
@@ -25,20 +22,13 @@ const ALLOWED_SETTINGS_KEYS = [
   'Auto_Backup_Days'
 ];
 
-/**
- * Validate if a setting key is allowed
- */
 function isValidSettingKey(key) {
-  // Allow expense categories
   if (key && key.startsWith('Expense_Category_')) {
     return true;
   }
   return ALLOWED_SETTINGS_KEYS.includes(key);
 }
 
-/**
- * Get setting value by key
- */
 function getSetting(key) {
   return getSettingValue(key);
 }
@@ -52,11 +42,12 @@ function getBusinessInfo() {
     return {
       Shop_Name: getSetting('Shop_Name') || CONFIG.SHOP_NAME,
       Admin_Email: getSetting('Admin_Email') || CONFIG.ADMIN_EMAIL,
+      // Force Currency to Ksh
       Currency: 'KES',
       Currency_Symbol: 'Ksh',
       Tax_Rate: getSetting('Tax_Rate') || 0,
-      Receipt_Header: getSetting('Receipt_Header') || CONFIG.SHOP_NAME,
-      Receipt_Footer: getSetting('Receipt_Footer') || 'Thank you for your business!',
+      Receipt_Header: getSetting('Receipt_Header') || 'Beipoa Kenya',
+      Receipt_Footer: getSetting('Receipt_Footer') || 'Pata Kila Kitu Na Bei Poa',
       Include_Shop_Logo: includeLogo === true || includeLogo === 'true' || includeLogo === 'TRUE',
       Date_Format: getSetting('Date_Format') || CONFIG.DATE_FORMAT,
       Timezone: getSetting('Timezone') || 'Africa/Mogadishu',
@@ -70,21 +61,22 @@ function getBusinessInfo() {
 
 /**
  * Update business information
- * DEBUGGED VERSION: Logs specific keys that fail
  */
 function updateBusinessInfo(businessData, user) {
   try {
-    Logger.log('Attempting to save settings: ' + JSON.stringify(businessData));
-
-    // Enforce default currency and logo policy
+    // 1. Enforce Defaults
     businessData.Currency = 'KES';
     businessData.Currency_Symbol = 'Ksh';
-    businessData.Include_Shop_Logo = false;
+    
+    // Handle Checkbox for Logo (HTML sends boolean, we store string/boolean)
+    if (businessData.Include_Shop_Logo === undefined) {
+       // If not sent in object, assume false? No, usually sent as true/false
+       // Keep as is.
+    }
 
     const invalidKeys = [];
 
     for (let key in businessData) {
-      // Skip undefined values
       if (businessData[key] === undefined) continue;
 
       if (!isValidSettingKey(key)) {
@@ -92,21 +84,8 @@ function updateBusinessInfo(businessData, user) {
         Logger.log('Blocked invalid setting key: ' + key);
       } else {
         // Valid key, save it
-        let value = businessData[key];
-
-        // Special handling for Logo boolean to ensure it saves correctly
-        if (key === 'Include_Shop_Logo') {
-          value = (value === true || value === 'true' || value === 'on');
-        }
-
-        setSettingValue(key, value);
+        setSettingValue(key, businessData[key]);
       }
-    }
-
-    if (invalidKeys.length > 0) {
-      Logger.log('Warning: Some settings were skipped: ' + invalidKeys.join(', '));
-      // We don't throw error here to allow valid settings to save,
-      // but we log it.
     }
 
     logAudit(
@@ -146,7 +125,6 @@ function addExpenseCategory(categoryName, budget, user) {
       '',
       budget
     );
-
     return {
       success: true,
       message: 'Expense category added successfully'
@@ -157,21 +135,24 @@ function addExpenseCategory(categoryName, budget, user) {
   }
 }
 
-// Keep existing addExpenseCategory, getSettingValue, setSettingValue logic...
-// If setSettingValue is missing in this file context, here it is again for safety:
+// ==========================================
+// LOW LEVEL DB FUNCTIONS (Using getSpreadsheet)
+// ==========================================
 
 function setSettingValue(key, value) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet(); // Direct access
+    // Use getSpreadsheet() from aCode.gs to ensure we get the correct file
+    const ss = getSpreadsheet();
     const sheet = ss.getSheetByName('Settings');
-    if (!sheet) return;
+    if (!sheet) throw new Error("Settings sheet not found");
 
     const data = sheet.getDataRange().getValues();
     let found = false;
 
-    // Look for existing key
+    // Look for existing key (Skip header row)
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === key) {
+        // Row is i+1
         sheet.getRange(i + 1, 2).setValue(value);
         found = true;
         break;
@@ -190,11 +171,12 @@ function setSettingValue(key, value) {
 
 function getSettingValue(key) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getSpreadsheet();
     const sheet = ss.getSheetByName('Settings');
     if (!sheet) return null;
 
     const data = sheet.getDataRange().getValues();
+    // Skip header row 0
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === key) {
         return data[i][1];
