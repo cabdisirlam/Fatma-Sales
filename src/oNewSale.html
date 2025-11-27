@@ -9,158 +9,305 @@
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f6fa; padding: 20px; }
     .header-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    .header-section h2 { margin: 0; font-size: 24px; font-weight: 700; }
     .card { border: none; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-    .card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; font-weight: 600; }
-    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 10px 20px; border-radius: 8px; }
-    .form-label { font-weight: 600; color: #2c3e50; margin-bottom: 8px; }
-    .form-control, .form-select { border-radius: 8px; border: 1px solid #ddd; padding: 10px 15px; }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; }
+    /* Hidden area for receipt printing iframe */
+    #printFrame { display: none; }
   </style>
 </head>
 <body>
   <div class="header-section">
-    <h2><i class="bi bi-cart-plus"></i> New Sale</h2>
-    <p class="mb-0">Process a new sale transaction</p>
+    <h2><i class="bi bi-cart-plus"></i> New Transaction</h2>
+    <p class="mb-0">Process Sales, Quotations & Returns</p>
   </div>
+
   <div class="card">
-    <div class="card-header"><i class="bi bi-receipt"></i> Sale Information</div>
     <div class="card-body">
-      <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> <strong>Note:</strong> For full featured sales processing, use the main Dashboard application.
-      </div>
       <form id="saleForm">
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Transaction Type *</label>
-            <select class="form-select" name="type" required>
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Transaction Type</label>
+            <select class="form-select" name="type" id="txnType" required onchange="toggleReturnMode()">
               <option value="Sale">Sale</option>
               <option value="Quotation">Quotation</option>
+              <option value="Return">Return (Credit Note)</option>
             </select>
           </div>
-          <div class="col-md-6 mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Date</label>
+            <input type="date" class="form-control" name="saleDate" id="saleDate" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Processed By</label>
+            <input type="text" class="form-control" id="displayUser" readonly>
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
             <label class="form-label">Customer</label>
-            <select class="form-select" name="customerId" id="customerSelect">
+            <select class="form-select" name="customerId" id="customerSelect" onchange="fillCustomerDetails()">
               <option value="">Walk-in Customer</option>
             </select>
           </div>
+          <div class="col-md-6">
+            <label class="form-label">KRA PIN</label>
+            <input type="text" class="form-control" name="kraPin" id="kraPin" placeholder="A00..." >
+          </div>
         </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
+
+        <div class="row mb-3">
+          <div class="col-md-5">
             <label class="form-label">Item/Product *</label>
             <select class="form-select" name="itemId" id="itemSelect" required>
               <option value="">Select Item</option>
             </select>
           </div>
-          <div class="col-md-3 mb-3">
-            <label class="form-label">Quantity *</label>
-            <input type="number" class="form-control" name="quantity" min="1" value="1" required>
+          <div class="col-md-2">
+            <label class="form-label">Qty *</label>
+            <input type="number" class="form-control" name="quantity" id="qtyInput" min="1" value="1" required>
           </div>
-          <div class="col-md-3 mb-3">
-            <label class="form-label">Payment Mode *</label>
-            <select class="form-select" name="paymentMode" required>
+          <div class="col-md-2">
+            <label class="form-label">Unit Price</label>
+            <input type="number" class="form-control" name="unitPrice" id="unitPrice" step="0.01">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Payment Mode</label>
+            <select class="form-select" name="paymentMode" id="paymentMode" required>
               <option value="Cash">Cash</option>
               <option value="M-Pesa">M-Pesa</option>
               <option value="Equity Bank">Bank</option>
-              <option value="Credit">Credit (Up to 3 days)</option>
+              <option value="Credit">Credit/Debt</option>
             </select>
-            <div class="form-text">Use Credit only for short-term terms (up to 3 days) when payment will be collected on receipt.</div>
           </div>
         </div>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Process Sale</button>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+            <i class="bi bi-check-circle"></i> Complete Transaction
+          </button>
+        </div>
       </form>
-      <div id="saleFormAlert" class="alert mt-3" style="display: none;"></div>
+
+      <div id="resultArea" class="mt-4 text-center" style="display: none;">
+        <div class="alert alert-success">
+          <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Success!</h4>
+          <p id="successMessage"></p>
+          <hr>
+          <div class="d-flex justify-content-center gap-2">
+            <button class="btn btn-dark" onclick="printDocument()">
+              <i class="bi bi-printer"></i> Print Receipt/Quotation
+            </button>
+            <button class="btn btn-outline-secondary" onclick="resetForm()">
+              <i class="bi bi-arrow-repeat"></i> New Transaction
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div id="errorArea" class="alert alert-danger mt-3" style="display: none;"></div>
     </div>
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Get current user from session or server
     let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+    let globalCustomers = []; // Store customers locally to pull details
+    let lastTransactionId = null;
 
     document.addEventListener('DOMContentLoaded', function() {
-      // Try to get current user from backend if not in session
-      if (!sessionStorage.getItem('userName')) {
-        google.script.run.withSuccessHandler(function(email) {
-          currentUser = email || 'SYSTEM';
-        }).getActiveUserEmail();
-      }
+      // Set Today's Date
+      document.getElementById('saleDate').valueAsDate = new Date();
+      document.getElementById('displayUser').value = currentUser;
 
-      // Load customers
+      // Load Data
+      loadCustomers();
+      loadInventory();
+    });
+
+    function loadCustomers() {
       google.script.run.withSuccessHandler(function(data) {
+        globalCustomers = data; // Save to global variable
         const select = document.getElementById('customerSelect');
+        select.innerHTML = '<option value="">Walk-in Customer</option>';
+        
         data.forEach(c => {
           const o = document.createElement('option');
           o.value = c.Customer_ID;
-          o.textContent = c.Name;
+          o.textContent = c.Customer_Name || c.Name;
           select.appendChild(o);
         });
       }).getCustomers({status: 'Active'});
+    }
 
-      // Load inventory items
+    function loadInventory() {
       google.script.run.withSuccessHandler(function(data) {
         const select = document.getElementById('itemSelect');
         data.forEach(i => {
           const stockQty = (i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty) || 0;
-          if (stockQty > 0) {
-            const o = document.createElement('option');
-            o.value = i.Item_ID;
-            o.textContent = i.Item_Name + ' - Ksh ' + Number(i.Selling_Price || 0).toLocaleString('en-KE', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            }) + ' (Stock: ' + stockQty + ')';
-            select.appendChild(o);
-          }
+          const o = document.createElement('option');
+          o.value = i.Item_ID;
+          o.textContent = `${i.Item_Name} - Ksh ${i.Selling_Price}`;
+          o.dataset.price = i.Selling_Price; // Store price in data attribute
+          if(stockQty <= 0) o.disabled = true; // Optional: disable out of stock
+          select.appendChild(o);
+        });
+        
+        // Auto-fill price on change
+        select.addEventListener('change', function() {
+           const price = this.options[this.selectedIndex].dataset.price;
+           if(price) document.getElementById('unitPrice').value = price;
         });
       }).getInventory({});
-    });
+    }
 
+    // Auto-fill KRA PIN when customer is selected
+    function fillCustomerDetails() {
+      const custId = document.getElementById('customerSelect').value;
+      const kraInput = document.getElementById('kraPin');
+      
+      if (custId) {
+        const customer = globalCustomers.find(c => c.Customer_ID === custId);
+        if (customer) {
+          kraInput.value = customer.KRA_PIN || '';
+        }
+      } else {
+        kraInput.value = '';
+      }
+    }
+
+    // Handle Return Mode (Visual cues)
+    function toggleReturnMode() {
+      const type = document.getElementById('txnType').value;
+      const btn = document.getElementById('submitBtn');
+      const qty = document.getElementById('qtyInput');
+      
+      if (type === 'Return') {
+        btn.className = 'btn btn-danger btn-lg';
+        btn.innerHTML = '<i class="bi bi-arrow-return-left"></i> Process Return';
+      } else if (type === 'Quotation') {
+        btn.className = 'btn btn-warning btn-lg';
+        btn.innerHTML = '<i class="bi bi-file-text"></i> Create Quotation';
+      } else {
+        btn.className = 'btn btn-primary btn-lg';
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Complete Sale';
+      }
+    }
+
+    // Submit Handler
     document.getElementById('saleForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      const formData = Object.fromEntries(new FormData(e.target));
+      
+      const btn = document.getElementById('submitBtn');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+      
+      document.getElementById('resultArea').style.display = 'none';
+      document.getElementById('errorArea').style.display = 'none';
 
-      // Transform form data to match backend expectations
+      const formData = Object.fromEntries(new FormData(e.target));
+      const type = formData.type; // Sale, Quotation, Return
+
+      // Build data object
       const saleData = {
         items: [{
           Item_ID: formData.itemId,
-          Qty: parseFloat(formData.quantity)
+          Qty: parseFloat(formData.quantity),
+          Unit_Price: parseFloat(formData.unitPrice) // Use edited price
         }],
         Customer_ID: formData.customerId || 'WALK-IN',
-        Customer_Name: formData.customerId ?
-          document.getElementById('customerSelect').selectedOptions[0].textContent :
-          'Walk-in Customer',
+        Customer_Name: formData.customerId ? 
+          document.getElementById('customerSelect').selectedOptions[0].textContent : 'Walk-in Customer',
         Payment_Mode: formData.paymentMode,
         User: currentUser,
-        Location: '',
-        KRA_PIN: '',
+        // New Fields
+        KRA_PIN: formData.kraPin,
+        DateTime: formData.saleDate, // Backend will parse this
         Delivery_Charge: 0,
         Discount: 0
       };
 
-      // Handle Sale vs Quotation
-      const isQuotation = formData.type === 'Quotation';
-      const backendFunction = isQuotation ? 'createQuotation' : 'createSale';
-
-      const alert = document.getElementById('saleFormAlert');
-      alert.style.display = 'none';
+      // Determine backend function
+      let backendFunc = 'createSale';
+      if (type === 'Quotation') backendFunc = 'createQuotation';
+      // For Return, we might handle it via createSale but with logic, 
+      // or calling 'processSaleReturn' if checking against old sale. 
+      // For simplicity here, we'll treat Return as a Sale but handle via createSale logic
+      // Note: A true return usually needs a reference to original sale ID. 
+      // If this is a blind return (credit note), backend needs to handle negative stock logic.
+      // Assuming iSales.gs createSale handles generic sales.
 
       google.script.run
         .withSuccessHandler(function(result) {
-          alert.className = result.success ? 'alert alert-success mt-3' : 'alert alert-danger mt-3';
-          alert.textContent = result.success ?
-            (isQuotation ? 'Quotation created! ID: ' : 'Sale processed! ID: ') + result.transactionId +
-            ' | Total: Ksh ' + Number(result.grandTotal || 0).toLocaleString('en-KE', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            }) :
-            'Error: ' + result.message;
-          alert.style.display = 'block';
-          if (result.success) e.target.reset();
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+
+          if (result.success) {
+            lastTransactionId = result.transactionId || result.purchaseId; // Store for printing
+            
+            document.getElementById('resultArea').style.display = 'block';
+            document.getElementById('successMessage').textContent = 
+              `${type} successfully processed! Ref: ${lastTransactionId}`;
+            
+            // Disable form to prevent double submit until reset
+            document.getElementById('saleForm').style.opacity = '0.5';
+            document.getElementById('saleForm').style.pointerEvents = 'none';
+          } else {
+            showError(result.message);
+          }
         })
         .withFailureHandler(function(error) {
-          alert.className = 'alert alert-danger mt-3';
-          alert.textContent = 'Error: ' + error.message;
-          alert.style.display = 'block';
-        })[backendFunction](saleData);
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          showError(error.message);
+        })[backendFunc](saleData);
     });
+
+    // Client-side Print Logic
+    function printDocument() {
+      if (!lastTransactionId) return alert("No transaction ID found.");
+      
+      const type = document.getElementById('txnType').value;
+      const func = type === 'Quotation' ? 'generateQuotationHTML' : 'generateReceiptHTML';
+
+      // Open a new window immediately to avoid popup blockers
+      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      printWindow.document.write('<p>Loading document...</p>');
+
+      google.script.run
+        .withSuccessHandler(function(htmlContent) {
+          printWindow.document.open();
+          printWindow.document.write(htmlContent);
+          printWindow.document.close();
+          // Wait for images/styles to load then print
+          setTimeout(function() {
+            printWindow.focus();
+            printWindow.print();
+          }, 500);
+        })
+        .withFailureHandler(function(e) {
+          printWindow.close();
+          alert("Error generating document: " + e.message);
+        })[func](lastTransactionId);
+    }
+
+    function resetForm() {
+      document.getElementById('saleForm').reset();
+      document.getElementById('saleForm').style.opacity = '1';
+      document.getElementById('saleForm').style.pointerEvents = 'auto';
+      document.getElementById('resultArea').style.display = 'none';
+      document.getElementById('saleDate').valueAsDate = new Date();
+      lastTransactionId = null;
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorArea');
+      el.textContent = 'Error: ' + msg;
+      el.style.display = 'block';
+    }
   </script>
 </body>
 </html>

@@ -32,7 +32,12 @@ function createSale(saleData) {
 
     const sheet = getSheet('Sales');
     const transactionId = generateId('Sales', 'Transaction_ID', 'SALE');
-    const dateTime = new Date();
+    let dateTime = new Date();
+    if (saleData.DateTime) {
+      dateTime = new Date(saleData.DateTime);
+      const now = new Date();
+      dateTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+    }
 
     // Calculate totals and validate stock
     let subtotal = 0;
@@ -325,11 +330,16 @@ function createQuotation(quotationData) {
 
     const sheet = getSheet('Sales');
     const transactionId = generateId('Sales', 'Transaction_ID', 'QUOT');
-    const dateTime = new Date();
+    let dateTime = new Date();
+    if (quotationData.DateTime) {
+      dateTime = new Date(quotationData.DateTime);
+      const now = new Date();
+      dateTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+    }
 
     // Calculate validity date (default 30 days from now)
     const validityDays = quotationData.Validity_Days || 30;
-    const validUntil = new Date();
+    const validUntil = new Date(dateTime);
     validUntil.setDate(validUntil.getDate() + validityDays);
 
     // Calculate totals
