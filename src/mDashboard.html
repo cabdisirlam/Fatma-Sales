@@ -1905,648 +1905,289 @@
     </div>
   </div>
 
-  <script>
-    // Global cache object to prevent redundant server calls
-    const DATA_CACHE = {};
-    const navHistory = [];
-    let isGoingBack = false;
-    let dashboardSuppliersData = [];
-    let dashboardCustomersData = [];
+    <script>
+    // --- GLOBAL VARIABLES ---
+    let dashCart = [];
+    let dashProducts = [];
+    let dashCustomers = [];
 
-    // Track the active user for audit logging and attribution
-    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
-    if (!sessionStorage.getItem('userName') && typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run.withSuccessHandler(function(email) {
-        currentUser = email || 'SYSTEM';
-        sessionStorage.setItem('userName', currentUser);
-      }).getActiveUserEmail();
-    }
-
-    // Initialize dashboard
-    function initDashboard(userName, userRole) {
-      const userEmail = sessionStorage.getItem('userEmail');
-      document.getElementById('userName').textContent = userName || 'N/A';
-      document.getElementById('userRole').textContent = userRole || 'N/A';
-
-      // Set user avatar initial
-      const avatar = document.getElementById('userAvatar');
-      if (userName) {
-        avatar.innerHTML = userName.charAt(0).toUpperCase();
-      }
-
-      // Show user management menu if admin
-      if (userRole === 'Admin') {
-        document.getElementById('userManagementMenu').style.display = 'block';
-      }
-
-      // Load dashboard stats (placeholder values for now)
-      loadDashboardStats();
-    }
-
-    // Load dashboard statistics
-    function loadDashboardStats() {
-      // These will be replaced with actual data from backend
-      document.getElementById('totalSales').textContent = '0';
-      document.getElementById('totalProducts').textContent = '0';
-      document.getElementById('totalCustomers').textContent = '0';
-      document.getElementById('totalRevenue').textContent = '$0';
-    }
-
-    // Toggle sidebar
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const mainContent = document.getElementById('mainContent');
-      const toggleIcon = document.getElementById('toggleIcon');
-
-      sidebar.classList.toggle('collapsed');
-      mainContent.classList.toggle('expanded');
-
-      if (sidebar.classList.contains('collapsed')) {
-        toggleIcon.className = 'bi bi-chevron-right';
-      } else {
-        toggleIcon.className = 'bi bi-chevron-left';
-      }
-    }
-
-    // Toggle submenu
-    function toggleSubmenu(menuId, event) {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-
-      const menuItem = document.getElementById(menuId);
-      const submenu = menuItem.querySelector('.submenu');
-
-      // Toggle open class
-      menuItem.classList.toggle('open');
-      submenu.classList.toggle('active');
-    }
-
-    // Handle menu click for items with submenu (both navigate and toggle)
-    function handleMenuClick(menuId, sectionName, event) {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-
-      const menuItem = document.getElementById(menuId);
-      const submenu = menuItem.querySelector('.submenu');
-      const isOpen = menuItem.classList.contains('open');
-
-      // Navigate to section
-      showSection(sectionName, event);
-
-      // Toggle submenu state
-      if (!isOpen) {
-        menuItem.classList.add('open');
-        submenu.classList.add('active');
-      } else {
-        menuItem.classList.remove('open');
-        submenu.classList.remove('active');
-      }
-    }
-
-    const menuSectionMap = {
-      'dashboard': { linkId: 'menu-dashboard' },
-      'sales': { linkId: 'menu-sales' },
-      'sales-new': { linkId: 'menu-sales' },
-      'sales-history': { linkId: 'menu-sales' },
-      'sales-returns': { linkId: 'menu-sales' },
-      'sales-reports': { linkId: 'menu-sales' },
-      'inventory': { linkId: 'menu-inventory' },
-      'customers': { linkId: 'menu-customers' },
-      'suppliers-list': { linkId: 'menu-suppliers' },
-      'suppliers-add': { linkId: 'menu-suppliers' },
-      'suppliers-orders': { linkId: 'menu-suppliers' },
-      'suppliers-payments': { linkId: 'menu-suppliers' },
-      'quotations': { linkId: 'menu-quotations' },
-      'financials': { linkId: 'menu-financials' },
-      'reports': { linkId: 'menu-reports' },
-      'users-list': { linkId: 'menu-users' },
-      'users-add': { linkId: 'menu-users' },
-      'users-roles': { linkId: 'menu-users' },
-      'users-permissions': { linkId: 'menu-users' },
-      'settings': { linkId: 'menu-settings' }
+    // --- INITIALIZATION ---
+    window.onload = function() {
+      // Load initial dashboard stats
+      loadDashboardData();
     };
 
-    function openMappedSubmenu(menuItemId) {
-      const submenuItems = document.querySelectorAll('.menu-item.has-submenu');
-      submenuItems.forEach(item => {
-        item.classList.remove('open');
-        const submenu = item.querySelector('.submenu');
-        if (submenu) {
-          submenu.classList.remove('active');
-        }
-      });
-
-      if (menuItemId) {
-        const targetItem = document.getElementById(menuItemId);
-        if (targetItem) {
-          targetItem.classList.add('open');
-          const submenu = targetItem.querySelector('.submenu');
-          if (submenu) {
-            submenu.classList.add('active');
-          }
-        }
-      }
-    }
-
-    // Show section
-    // Updated showSection: Splits logic - Navigation vs Loading
-    function showSection(sectionName, event) {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-
-      const activeSection = document.querySelector('.content-section.active');
-      if (!isGoingBack && activeSection) {
-        const activeId = activeSection.id.replace('section-', '');
-        if (activeId !== sectionName) {
-          navHistory.push(activeId);
-        }
-      }
-      isGoingBack = false;
-
-      // Push new state to browser history
-      // This creates a "breadcrumb" so the Back button works
-      history.pushState({section: sectionName}, '', '#' + sectionName);
-
-      loadSectionInternal(sectionName);
-      updateBackButton();
-    }
-
-    function goBack() {
-      if (navHistory.length === 0) return;
-
-      isGoingBack = true;
-      const previousSection = navHistory.pop();
-      loadSectionInternal(previousSection);
-      updateBackButton();
-      history.pushState({section: previousSection}, '', '#' + previousSection);
-    }
-
-    // Internal function that actually switches the view
-    function loadSectionInternal(sectionName) {
-      // Close mobile menu automatically when navigating
-      closeMobileMenu();
-
-      // Hide all sections
-      const sections = document.querySelectorAll('.content-section');
-      sections.forEach(section => {
-        section.classList.remove('active');
-      });
-
-      // Remove active class from all menu items and submenu items
-      const menuItems = document.querySelectorAll('.menu-item a, .submenu-item a');
-      menuItems.forEach(item => {
-        item.classList.remove('active');
-      });
-
-      // Show Target Section
-      const targetSection = document.getElementById('section-' + sectionName);
-      if (targetSection) {
-        targetSection.classList.add('active');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-
-      // Ensure submenu visibility aligns with the selected section
-      const mappedMenu = menuSectionMap[sectionName];
-
-      // Mark the mapped menu item as active
-      if (mappedMenu && mappedMenu.linkId) {
-        const mappedLink = document.getElementById(mappedMenu.linkId);
-        if (mappedLink) {
-          mappedLink.classList.add('active');
-        }
-        // Expand submenu if needed
-        if (mappedMenu.menuItemId) openMappedSubmenu(mappedMenu.menuItemId);
-      }
-
-      // DATA LOADING STRATEGY (Prevent Hanging)
-      // Only load data if the container is empty OR explicitly requested.
-      // This prevents the "freeze" every time you press Back.
-      const container = document.getElementById('section-' + sectionName);
-      const hasContent = container && (container.querySelector('table') || container.querySelector('.stat-card'));
-
-      if (!hasContent) {
-        loadSectionData(sectionName);
-      }
-
-      updateBackButton();
-
-      // Update page title
-      const titles = {
-        'dashboard': 'Dashboard',
-        'sales': 'Sales Overview',
-        'sales-new': 'New Sale',
-        'sales-history': 'Sales History',
-        'sales-returns': 'Sales Returns',
-        'sales-reports': 'Sales Reports',
-        'inventory': 'Inventory Management',
-        'customers': 'Customer Management',
-        'quotations': 'Quotations',
-        'financials': 'Financial Management',
-        'reports': 'Reports & Analytics',
-        'suppliers-list': 'Suppliers List',
-        'suppliers-add': 'Add New Supplier',
-        'suppliers-orders': 'Purchase Orders',
-        'suppliers-payments': 'Supplier Payments',
-        'users-list': 'Users List',
-        'users-add': 'Create New User',
-        'users-roles': 'User Roles',
-        'users-permissions': 'User Permissions',
-        'settings': 'System Settings'
-      };
-
-      document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
-    }
-
-    function updateBackButton() {
-      const backBtn = document.getElementById('globalBackBtn');
-      if (backBtn) {
-        backBtn.disabled = navHistory.length === 0;
-      }
-    }
-
-    // Centralized Data Loader (Called only when needed)
-    function loadSectionData(sectionName) {
-      if (sectionName.startsWith('sales')) {
-        loadSalesOverview();
-      if (sectionName === 'sales-new') loadNewSaleInDashboard();
-      if (sectionName === 'sales-history') loadSalesHistory();
-      if (sectionName === 'sales-returns') loadSalesReturns();
-      if (sectionName === 'sales-reports') loadSalesReports();
-    }
-    else if (sectionName === 'inventory') loadInventorySection();
-    else if (sectionName === 'customers') loadCustomersSection();
-      else if (sectionName === 'quotations') loadQuotationsSection();
-      else if (sectionName === 'financials') loadFinancialsSection();
-      else if (sectionName === 'reports') loadReportsSection();
-      else if (sectionName === 'suppliers-list') loadSuppliersList();
-      else if (sectionName === 'suppliers-add') loadAddSupplier();
-      else if (sectionName === 'suppliers-orders') loadPurchaseOrders();
-      else if (sectionName === 'suppliers-payments') loadSupplierPayments();
-      else if (sectionName === 'users-list') loadUsersList();
-      else if (sectionName === 'users-add') loadCreateUser();
-      else if (sectionName === 'users-roles') loadUserRoles();
-      else if (sectionName === 'users-permissions') loadUserPermissions();
-      else if (sectionName === 'settings') loadSettingsSection();
-    }
-
-    // 1. LOAD USERS LIST
-    function loadUsersList() {
-      // Show loading spinner in table
-      const tbody = document.getElementById('usersTableBody');
-      if(tbody) {
-         tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading users...</p></td></tr>';
-      }
-
-      google.script.run
-        .withSuccessHandler(displayUsersList)
-        .withFailureHandler(function(error) {
-           if(tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error: ' + error.message + '</td></tr>';
-        })
-        .getUsers();
-    }
-
-    // 2. DISPLAY USERS LIST
-    function displayUsersList(users) {
-      const tbody = document.getElementById('usersTableBody');
-      if (!tbody) return; // Safety check
-
-      if (!users || users.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="6" class="text-center py-4">
-              <i class="bi bi-people" style="font-size: 48px; color: #ccc;"></i>
-              <p class="text-muted mt-2">No users found.</p>
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      tbody.innerHTML = users.map(user => {
-        // Create avatar initial
-        const initial = user.Username ? user.Username.charAt(0).toUpperCase() : 'U';
-        
-        // Status Badge Color
-        const statusBadge = user.Status === 'Active' 
-          ? '<span class="badge bg-success">Active</span>' 
-          : '<span class="badge bg-secondary">Inactive</span>';
-
-        // Role Badge Color
-        let roleClass = 'bg-secondary';
-        if(user.Role === 'Admin') roleClass = 'bg-danger';
-        if(user.Role === 'Manager') roleClass = 'bg-primary';
-        if(user.Role === 'Sales') roleClass = 'bg-info text-dark';
-
-        return `
-          <tr>
-            <td>
-              <div class="d-flex align-items-center">
-                <div class="user-avatar me-2" style="width:35px;height:35px;background:#667eea;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">
-                  ${initial}
-                </div>
-                <strong>${user.Username || 'Unknown'}</strong>
-              </div>
-            </td>
-            <td>${user.Email || '-'}</td>
-            <td>${user.Phone || '-'}</td>
-            <td><span class="badge ${roleClass}">${user.Role || 'User'}</span></td>
-            <td>${statusBadge}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary" onclick="alert('Edit feature coming soon')">Edit</button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    // 3. SHOW ADD USER MODAL
-    function showAddUserModal() {
-      // Reset form
-      document.getElementById('dashboardAddUserForm').reset();
-      // Show Modal using Bootstrap API
-      const modalEl = document.getElementById('dashboardAddUserModal');
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
-    }
-
-    // 4. HANDLE SAVE USER
-    function handleDashboardAddUser(event) {
-      event.preventDefault();
+    function showSection(id) {
+      document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+      document.getElementById('section-' + id).classList.add('active');
+      document.getElementById('pageTitle').textContent = id.replace('-', ' ').toUpperCase();
       
-      const btn = document.getElementById('btnSaveUser');
-      const originalText = btn.innerText;
-      btn.disabled = true;
-      btn.innerText = "Saving...";
+      // Load specific section data
+      if(id === 'sales-new') loadNewSaleInDashboard();
+      if(id === 'sales-history') loadSalesHistory();
+      if(id === 'dashboard') loadDashboardData();
+    }
 
-      const userData = {
-        Username: document.getElementById('newUsername').value,
-        Email: document.getElementById('newEmail').value,
-        Phone: document.getElementById('newPhone').value,
-        PIN: document.getElementById('newPin').value,
-        Role: document.getElementById('newRole').value,
-        Status: document.getElementById('newStatus').value
+    function loadDashboardData() {
+      google.script.run.withSuccessHandler(data => {
+        document.getElementById('dashTotalSales').innerText = data.saleCount || 0;
+        document.getElementById('dashTotalRevenue').innerText = 'Ksh ' + (data.totalRevenue || 0).toLocaleString();
+      }).getSalesOverview();
+    }
+
+    // --- QUICK SALE / QUOTATION LOGIC ---
+
+    function loadNewSaleInDashboard() {
+      clearDashCart();
+      
+      // 1. Load Customers
+      google.script.run.withSuccessHandler(function(customers) {
+        dashCustomers = customers || [];
+        const sel = document.getElementById('dashSaleCustomer');
+        
+        // Reset Dropdown
+        sel.innerHTML = '<option value="WALK-IN">Walk-in Customer</option>';
+        
+        if (dashCustomers.length > 0) {
+          // Sort alphabetically by Name
+          dashCustomers.sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
+          
+          dashCustomers.forEach(c => {
+            // STRICTLY use Customer_Name and ID
+            const name = c.Customer_Name || 'Unknown Name';
+            const phone = c.Phone ? ` (${c.Phone})` : '';
+            
+            // Create Option
+            const opt = new Option(name + phone, c.Customer_ID);
+            sel.add(opt);
+          });
+        }
+      }).getCustomers();
+
+      // 2. Load Inventory
+      google.script.run.withSuccessHandler(function(items) {
+        dashProducts = items || [];
+        const sel = document.getElementById('dashSaleProduct');
+        sel.innerHTML = '<option value="">-- Choose Item --</option>';
+        if (dashProducts.length > 0) {
+          dashProducts.forEach(i => {
+            const stock = i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty;
+            // Only show items with stock
+            if (stock > 0) {
+               sel.add(new Option(`${i.Item_Name} (Stock: ${stock})`, i.Item_ID));
+            }
+          });
+        }
+      }).getInventory();
+    }
+
+    function updateDashProductDetails() {
+      const id = document.getElementById('dashSaleProduct').value;
+      const product = dashProducts.find(p => p.Item_ID === id);
+      
+      if (product) {
+        document.getElementById('dashSalePrice').value = product.Selling_Price;
+        const stock = product.Current_Qty !== undefined ? product.Current_Qty : product.Stock_Qty;
+        document.getElementById('dashProductInfo').innerHTML = `
+           <div class="mb-2"><strong>Item:</strong> ${product.Item_Name}</div>
+           <div class="mb-2"><strong>Category:</strong> ${product.Category || '-'}</div>
+           <div class="mb-2 text-primary"><strong>Standard Price:</strong> Ksh ${product.Selling_Price}</div>
+           <div class="mb-2 ${stock < 10 ? 'text-danger' : 'text-success'}"><strong>Current Stock:</strong> ${stock}</div>
+        `;
+      } else {
+        document.getElementById('dashSalePrice').value = '';
+        document.getElementById('dashProductInfo').innerText = 'Select a product to see details.';
+      }
+    }
+
+    function addDashCartItem() {
+      const id = document.getElementById('dashSaleProduct').value;
+      const qty = parseFloat(document.getElementById('dashSaleQty').value);
+      const price = parseFloat(document.getElementById('dashSalePrice').value);
+      
+      const product = dashProducts.find(p => p.Item_ID === id);
+
+      if (!product || !id) return alert("Please select a product.");
+      if (isNaN(qty) || qty <= 0) return alert("Please enter a valid quantity.");
+      if (isNaN(price) || price < 0) return alert("Please enter a valid price.");
+
+      // Check stock
+      const stock = product.Current_Qty !== undefined ? product.Current_Qty : product.Stock_Qty;
+      if (qty > stock) {
+        return alert(`Insufficient stock. Only ${stock} available.`);
+      }
+
+      dashCart.push({
+        Item_ID: id,
+        Item_Name: product.Item_Name,
+        Qty: qty,
+        Unit_Price: price,
+        Total: qty * price
+      });
+
+      renderDashCart();
+      
+      // Reset inputs
+      document.getElementById('dashSaleProduct').value = '';
+      document.getElementById('dashSaleQty').value = 1;
+      document.getElementById('dashSalePrice').value = '';
+      document.getElementById('dashProductInfo').innerText = 'Select a product to see details.';
+    }
+
+    function renderDashCart() {
+      const tbody = document.getElementById('dashCartBody');
+      tbody.innerHTML = '';
+      let total = 0;
+
+      dashCart.forEach((item, index) => {
+        total += item.Total;
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.Item_Name}</td>
+            <td>${item.Qty}</td>
+            <td>${formatCurrency(item.Unit_Price)}</td>
+            <td>${formatCurrency(item.Total)}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-danger" onclick="removeDashItem(${index})">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('dashCartTotal').innerText = formatCurrency(total);
+      
+      if (dashCart.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Cart is empty</td></tr>';
+      }
+    }
+
+    function removeDashItem(index) {
+      dashCart.splice(index, 1);
+      renderDashCart();
+    }
+
+    function clearDashCart() {
+      dashCart = [];
+      renderDashCart();
+      document.getElementById('dashSaleCustomer').value = 'WALK-IN';
+      document.getElementById('dashSalePayment').value = 'Cash';
+    }
+
+    // --- TRANSACTION SUBMISSION (SALE OR QUOTATION) ---
+    function submitDashTransaction(type) {
+      if (dashCart.length === 0) return alert("Cart is empty. Add items first.");
+
+      const customerId = document.getElementById('dashSaleCustomer').value;
+      const paymentMode = document.getElementById('dashSalePayment').value;
+      const custSelect = document.getElementById('dashSaleCustomer');
+      const customerName = custSelect.options[custSelect.selectedIndex].text;
+
+      // Validation
+      if (type === 'Sale' && customerId === 'WALK-IN' && paymentMode === 'Credit') {
+        return alert("Error: Walk-in customers cannot buy on Credit.");
+      }
+
+      // Calculate Validity Date safely for Quotations
+      let validUntilString = null;
+      if (type === 'Quotation') {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 14); // Add 14 days
+        validUntilString = futureDate.toISOString(); // FIXED: Convert Date to String
+      }
+
+      const transactionData = {
+        Customer_ID: customerId,
+        Customer_Name: customerName,
+        Payment_Mode: paymentMode,
+        items: dashCart,
+        User: sessionStorage.getItem('userName') || 'SYSTEM',
+        Delivery_Charge: 0,
+        Discount: 0,
+        Valid_Until: validUntilString // Now passing a String, not a Date object
       };
 
+      const backendFunc = type === 'Quotation' ? 'createQuotation' : 'createSale';
+      
+      // Disable buttons and show loading
+      const btns = document.querySelectorAll('button');
+      btns.forEach(b => b.disabled = true);
+      const submitBtn = event.target; // Get the specific button clicked
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+
       google.script.run
-        .withSuccessHandler(function(response) {
-          // Hide Modal
-          const modalEl = document.getElementById('dashboardAddUserModal');
-          const modal = bootstrap.Modal.getInstance(modalEl);
-          modal.hide();
+        .withSuccessHandler(function(res) {
+           btns.forEach(b => b.disabled = false);
+           submitBtn.innerHTML = originalText;
+           
+           if (res.success) {
+             clearDashCart();
+             loadNewSaleInDashboard(); // Refresh stock
+             
+             // Open Receipt/Quotation
+             openReceiptModal(res.transactionId, type);
+           } else {
+             alert("Error: " + res.message);
+           }
+        })
+        .withFailureHandler(function(e) {
+           btns.forEach(b => b.disabled = false);
+           submitBtn.innerHTML = originalText;
+           alert("System Error: " + e.message);
+        })
+        [backendFunc](transactionData);
+    }
+
+    // --- PRINTING & RECEIPT LOGIC ---
+    function openReceiptModal(transactionId, type) {
+      const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+      modal.show();
+      
+      const title = type === 'Quotation' ? 'Quotation' : 'Receipt';
+      document.querySelector('#receiptModal .modal-title').innerHTML = `<i class="bi bi-printer"></i> Print ${title}`;
+      
+      document.getElementById('receiptContent').innerHTML = 
+        '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="mt-2">Generating...</p></div>';
+
+      // Decide which backend function to call
+      const backendFunc = type === 'Quotation' ? 'generateQuotationHTML' : 'generateReceiptHTML';
+
+      google.script.run
+        .withSuccessHandler(function(html) {
+          const iframe = document.createElement('iframe');
+          iframe.id = 'printFrame';
+          iframe.style.width = '100%';
+          iframe.style.height = '450px';
+          iframe.style.border = 'none';
           
-          // Reset Button
-          btn.disabled = false;
-          btn.innerText = originalText;
-
-          if(response.success) {
-            // Refresh List
-            loadUsersList();
-            // Show success message
-            showUsersAlert('User added successfully!', 'success'); 
-          }
+          document.getElementById('receiptContent').innerHTML = '';
+          document.getElementById('receiptContent').appendChild(iframe);
+          
+          const doc = iframe.contentWindow.document;
+          doc.open();
+          doc.write(html);
+          doc.close();
         })
-        .withFailureHandler(function(error) {
-          btn.disabled = false;
-          btn.innerText = originalText;
-          alert('Error saving user: ' + error.message);
+        .withFailureHandler(function(e) {
+          document.getElementById('receiptContent').innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
         })
-        .addUser(userData);
+        [backendFunc](transactionId);
     }
 
-    // Show alert in users section
-    function showUsersAlert(message, type) {
-      const alertContainer = document.getElementById('usersAlertContainer');
-      const alertId = 'users-alert-' + Date.now();
-
-      const alertHTML = `
-        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      `;
-
-      alertContainer.innerHTML = alertHTML;
-
-      setTimeout(() => {
-        const alert = document.getElementById(alertId);
-        if (alert) {
-          alert.remove();
-        }
-      }, 5000);
-    }
-
-    // Sales helpers
-    function formatCurrency(value) {
-      return 'Ksh ' + (parseFloat(value) || 0).toLocaleString('en-KE', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-    }
-
-    function showSalesAlert(message, type) {
-      const alert = document.getElementById('salesOverviewAlert');
-      if (!alert) return;
-      alert.textContent = message;
-      alert.className = 'alert alert-' + (type || 'info');
-      alert.style.display = 'block';
-    }
-
-    function capitalizeType(type) {
-      return type.charAt(0).toUpperCase() + type.slice(1);
-    }
-
-    function toggleQuickAdd(type) {
-      const card = document.getElementById('quickAdd' + capitalizeType(type));
-      if (card) {
-        card.classList.toggle('d-none');
+    function printReceiptFrame() {
+      const iframe = document.getElementById('printFrame');
+      if (iframe) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
       }
     }
 
-    function handleQuickAdd(event, type) {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-
-      if (type === 'product') {
-        const form = event.target;
-        const submitBtn = document.getElementById('quickAddProductBtn');
-        const alertBox = document.getElementById('quickAddProductAlert');
-
-        // Disable submit button to prevent double submission
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
-        }
-
-        // Collect form data
-        const productData = {
-          Item_Name: form.itemName.value.trim(),
-          Category: form.category.value.trim() || 'General',
-          Cost_Price: parseFloat(form.cost.value) || 0,
-          Selling_Price: parseFloat(form.price.value) || 0,
-          Current_Qty: parseFloat(form.qty.value) || 0,
-          Reorder_Level: parseFloat(form.reorderLevel.value) || 10,
-          Supplier: form.supplier.value.trim(),
-          User: currentUser || 'SYSTEM'
-        };
-
-        // Validate required fields
-        if (!productData.Item_Name) {
-          showQuickAddAlert(alertBox, 'danger', 'Item Name is required');
-          resetSubmitButton(submitBtn, 'product');
-          return;
-        }
-
-        if (!productData.Supplier) {
-          showQuickAddAlert(alertBox, 'danger', 'Supplier is required');
-          resetSubmitButton(submitBtn, 'product');
-          return;
-        }
-
-        if (!productData.Cost_Price || productData.Cost_Price <= 0) {
-          showQuickAddAlert(alertBox, 'danger', 'Cost Price must be greater than 0');
-          resetSubmitButton(submitBtn, 'product');
-          return;
-        }
-
-        // Call backend to save product
-        google.script.run
-          .withSuccessHandler(function(response) {
-            if (response.success) {
-              showQuickAddAlert(alertBox, 'success', 'Product added successfully! Item ID: ' + response.itemId);
-              form.reset();
-              // Reload inventory section after 2 seconds
-              setTimeout(() => {
-                loadInventorySection(true);
-                toggleQuickAdd('product');
-              }, 2000);
-            } else {
-              showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add product'));
-            }
-            resetSubmitButton(submitBtn, 'product');
-          })
-          .withFailureHandler(function(error) {
-            showQuickAddAlert(alertBox, 'danger', 'Error: ' + error.message);
-            resetSubmitButton(submitBtn, 'product');
-          })
-          .addProduct(productData);
-      } else if (type === 'customer') {
-        const form = event.target;
-        const submitBtn = document.getElementById('quickAddCustomerBtn');
-        const alertBox = document.getElementById('quickAddCustomerAlert');
-
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
-        }
-
-        const customerData = {
-          Customer_Name: form.name.value.trim(),
-          Phone: form.phone.value.trim(),
-          Email: form.email.value.trim(),
-          Opening_Balance: parseFloat(form.Opening_Balance.value) || 0,
-          User: currentUser || 'SYSTEM'
-        };
-
-        if (!customerData.Customer_Name) {
-          showQuickAddAlert(alertBox, 'danger', 'Customer name is required');
-          resetSubmitButton(submitBtn, 'customer');
-          return;
-        }
-
-        if (!customerData.Phone) {
-          showQuickAddAlert(alertBox, 'danger', 'Phone number is required');
-          resetSubmitButton(submitBtn, 'customer');
-          return;
-        }
-
-        google.script.run
-          .withSuccessHandler(function(response) {
-            if (response.success) {
-              showQuickAddAlert(alertBox, 'success', 'Customer added successfully! ID: ' + response.customerId);
-              form.reset();
-              setTimeout(() => {
-                loadCustomersSection(true);
-                toggleQuickAdd('customer');
-              }, 2000);
-            } else {
-              showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add customer'));
-            }
-            resetSubmitButton(submitBtn, 'customer');
-          })
-          .withFailureHandler(function(error) {
-            showQuickAddAlert(alertBox, 'danger', 'Error: ' + error.message);
-            resetSubmitButton(submitBtn, 'customer');
-          })
-          .addCustomer(customerData);
-      } else {
-        // For other types, show generic success message
-        const alertBox = document.getElementById('quickAdd' + capitalizeType(type) + 'Alert');
-        if (alertBox) {
-          alertBox.classList.remove('d-none');
-          alertBox.className = 'alert alert-success mt-3';
-          alertBox.textContent = 'Saved ' + type + ' details right from the dashboard.';
-
-          setTimeout(() => {
-            alertBox.classList.add('d-none');
-          }, 3500);
-        }
-      }
-    }
-
-    function showQuickAddAlert(alertBox, type, message) {
-      if (alertBox) {
-        alertBox.classList.remove('d-none');
-        alertBox.className = 'alert alert-' + type + ' mt-3';
-        alertBox.textContent = message;
-      }
-    }
-
-    function resetSubmitButton(submitBtn, type) {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        const label = type === 'customer' ? 'Save Customer' : 'Save Product';
-        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> ' + label;
-      }
-    }
-
-    function startNewSale(event) {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-
-      closeMobileMenu();
-      showSection('sales-new');
-      loadNewSaleInDashboard();
-    }
-
-    function loadSalesOverview() {
-      google.script.run
-        .withSuccessHandler(function(data) {
-          document.getElementById('salesTotalRevenue').textContent = formatCurrency(data.totalRevenue);
-          document.getElementById('salesCount').textContent = data.saleCount || 0;
-          document.getElementById('salesCreditCount').textContent = data.creditCount || 0;
-          document.getElementById('salesAverageOrder').textContent = formatCurrency(data.averageOrder);
-          showSalesAlert('Today\'s revenue: ' + formatCurrency(data.todayRevenue), 'info');
-        })
-        .withFailureHandler(function(error) {
-          showSalesAlert('Error loading sales overview: ' + error.message, 'danger');
-        })
-        .getSalesOverview();
-    }
-
+    // --- SALES HISTORY & RETURNS ---
     function loadSalesHistory() {
       const tbody = document.getElementById('salesHistoryBody');
       if (!tbody) return;
-      
       tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><span class="spinner-border text-primary"></span> Loading...</td></tr>';
 
       google.script.run.withSuccessHandler(function(rows) {
@@ -2561,12 +2202,13 @@
               ? '<span class="badge bg-warning text-dark">Returned</span>'
               : '<span class="badge bg-success">Completed</span>';
             
-            // Only show return button for completed sales
-            const actionCell = !isReturned
-              ? `<button class="btn btn-sm btn-outline-danger" onclick="initiateReturn('${row.Transaction_ID}')">
-                   <i class="bi bi-arrow-return-left"></i> Return
-                 </button>`
-              : '-';
+            // Print Button (Always visible)
+            let actions = `<button class="btn btn-sm btn-outline-secondary me-1" onclick="openReceiptModal('${row.Transaction_ID}', 'Sale')" title="Print"><i class="bi bi-printer"></i></button>`;
+            
+            // Return Button (Only if not already returned)
+            if (!isReturned) {
+               actions += `<button class="btn btn-sm btn-outline-danger" onclick="initiateReturn('${row.Transaction_ID}')" title="Return"><i class="bi bi-arrow-return-left"></i></button>`;
+            }
 
             return `
               <tr>
@@ -2576,7 +2218,7 @@
                 <td>${row.Payment_Mode || '-'}</td>
                 <td class="text-end">${formatCurrency(row.Grand_Total)}</td>
                 <td>${statusBadge}</td>
-                <td>${actionCell}</td>
+                <td>${actions}</td>
               </tr>
             `;
           }).join('');
@@ -2621,2248 +2263,23 @@
         }
       });
 
-      if (itemsToReturn.length === 0) return alert('Please select items to return.');
-      if (!reason) return alert('Please enter a reason.');
+      if (itemsToReturn.length === 0) return alert('Please select at least one item to return.');
+      if (!reason) return alert('Please enter a reason for the return.');
 
+      // Backend call to process return and update inventory
       google.script.run
         .withSuccessHandler(function(res) {
-          alert(res.message);
+          alert(res.message); // "Return processed successfully"
           bootstrap.Modal.getInstance(document.getElementById('returnSaleModal')).hide();
-          loadSalesHistory(); // Refresh list
+          loadSalesHistory(); // Refresh history table
         })
         .processSaleReturn(saleId, itemsToReturn, reason, sessionStorage.getItem('userName'));
     }
 
-    function createNewQuotation() {
-      startNewSale();
+    function formatCurrency(num) {
+      return 'Ksh ' + parseFloat(num).toLocaleString('en-KE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
-
-    function loadSalesReturns() {
-      const tbody = document.getElementById('salesReturnsBody');
-      if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Loading return data...</td></tr>';
-
-      google.script.run
-        .withSuccessHandler(function(rows) {
-          if (!rows || rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No returns found</td></tr>';
-            return;
-          }
-
-          tbody.innerHTML = rows.map(function(row) {
-            return `
-              <tr>
-                <td>${row.Transaction_ID}</td>
-                <td>${new Date(row.DateTime).toLocaleString()}</td>
-                <td>${row.Customer_Name || 'Walk-in'}</td>
-                <td>${row.Item_Name || row.Item_ID}</td>
-                <td>${row.Qty || ''}</td>
-                <td class="text-end">${formatCurrency(row.Grand_Total)}</td>
-              </tr>
-            `;
-          }).join('');
-        })
-        .withFailureHandler(function(error) {
-          tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-4">' + error.message + '</td></tr>';
-        })
-        .getSalesReturns();
-    }
-
-    function loadSalesReports() {
-      google.script.run
-        .withSuccessHandler(function(report) {
-          document.getElementById('reportTotalRevenue').textContent = formatCurrency(report.totalRevenue);
-          document.getElementById('reportTotalSales').textContent = report.totalSales || 0;
-          document.getElementById('reportCreditSales').textContent = report.creditSales || 0;
-          document.getElementById('reportAverageOrder').textContent = formatCurrency(report.averageOrder);
-          document.getElementById('report30DayRevenue').textContent = formatCurrency(report.revenue30);
-        })
-        .withFailureHandler(function(error) {
-          showSalesAlert('Error loading reports: ' + error.message, 'danger');
-        })
-        .getSalesReport();
-    }
-
-    // --- DASHBOARD QUICK SALE LOGIC ---
-    let dashCart = [];
-    let dashProducts = [];
-    let dashCustomers = [];
-
-    // Call this when 'Quick Sale' section is loaded
-    function loadNewSaleInDashboard() {
-      clearDashCart();
-
-      // 1. Load Customers
-      google.script.run.withSuccessHandler(function(customers) {
-        dashCustomers = customers || [];
-        const sel = document.getElementById('dashSaleCustomer');
-        sel.innerHTML = '<option value="WALK-IN">Walk-in Customer</option>';
-
-        if (dashCustomers.length > 0) {
-          dashCustomers.sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
-
-          dashCustomers.forEach(c => {
-            const label = `${c.Customer_Name} (${c.Phone || '-'})`;
-            sel.add(new Option(label, c.Customer_ID));
-          });
-        }
-      }).getCustomers();
-
-      // 2. Load Inventory
-      google.script.run.withSuccessHandler(function(items) {
-        dashProducts = items || []; // Store globally for lookups
-        const sel = document.getElementById('dashSaleProduct');
-        sel.innerHTML = '<option value="">-- Choose Item --</option>';
-        if (dashProducts.length > 0) {
-          dashProducts.forEach(i => {
-            // Only show items in stock
-            const stock = i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty;
-            if (stock > 0) {
-              sel.add(new Option(`${i.Item_Name} (Stock: ${stock})`, i.Item_ID));
-            }
-          });
-        }
-      }).getInventory();
-    }
-
-    function updateDashProductDetails() {
-      const id = document.getElementById('dashSaleProduct').value;
-      const product = dashProducts.find(p => p.Item_ID === id);
-      if (product) {
-        document.getElementById('dashSalePrice').value = product.Selling_Price;
-        const stock = product.Current_Qty !== undefined ? product.Current_Qty : product.Stock_Qty;
-        document.getElementById('dashProductInfo').innerHTML = `
-           <div class="mb-2"><strong>Item:</strong> ${product.Item_Name}</div>
-           <div class="mb-2"><strong>Category:</strong> ${product.Category || '-'}</div>
-           <div class="mb-2 text-primary"><strong>Standard Price:</strong> Ksh ${product.Selling_Price}</div>
-           <div class="mb-2 ${stock < 10 ? 'text-danger' : 'text-success'}"><strong>Current Stock:</strong> ${stock}</div>
-        `;
-      } else {
-        document.getElementById('dashSalePrice').value = '';
-        document.getElementById('dashProductInfo').innerText = 'Select a product from the list to see stock levels and pricing details.';
-      }
-    }
-
-    function addDashCartItem() {
-      const id = document.getElementById('dashSaleProduct').value;
-      const qty = parseFloat(document.getElementById('dashSaleQty').value);
-      const price = parseFloat(document.getElementById('dashSalePrice').value);
-      const product = dashProducts.find(p => p.Item_ID === id);
-
-      if (!product || !id) return alert("Please select a product.");
-      if (isNaN(qty) || qty <= 0) return alert("Please enter a valid quantity.");
-      if (isNaN(price) || price < 0) return alert("Please enter a valid price.");
-
-      // Check stock
-      const stock = product.Current_Qty !== undefined ? product.Current_Qty : product.Stock_Qty;
-      if (qty > stock) return alert(`Insufficient stock. Only ${stock} available.`);
-
-      // Add to cart array
-      dashCart.push({
-        Item_ID: id,
-        Item_Name: product.Item_Name,
-        Qty: qty,
-        Unit_Price: price,
-        Total: qty * price
-      });
-
-      renderDashCart();
-      // Reset inputs
-      document.getElementById('dashSaleProduct').value = '';
-      document.getElementById('dashSaleQty').value = 1;
-      document.getElementById('dashSalePrice').value = '';
-      document.getElementById('dashProductInfo').innerText = 'Select a product from the list to see stock levels and pricing details.';
-    }
-
-    function renderDashCart() {
-      const tbody = document.getElementById('dashCartBody');
-      tbody.innerHTML = '';
-      let total = 0;
-
-      dashCart.forEach((item, index) => {
-        total += item.Total;
-        tbody.innerHTML += `
-          <tr>
-            <td>${item.Item_Name}</td>
-            <td>${item.Qty}</td>
-            <td>${formatCurrency(item.Unit_Price)}</td>
-            <td>${formatCurrency(item.Total)}</td>
-            <td class="text-end">
-              <button class="btn btn-sm btn-outline-danger" onclick="removeDashItem(${index})">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      });
-
-      document.getElementById('dashCartTotal').innerText = formatCurrency(total);
-
-      if (dashCart.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Cart is empty</td></tr>';
-    }
-
-    function removeDashItem(index) {
-      dashCart.splice(index, 1);
-      renderDashCart();
-    }
-
-    function clearDashCart() {
-      dashCart = [];
-      renderDashCart();
-      const customerSelect = document.getElementById('dashSaleCustomer');
-      if (customerSelect) customerSelect.value = 'WALK-IN';
-      const paymentSelect = document.getElementById('dashSalePayment');
-      if (paymentSelect) paymentSelect.value = 'Cash';
-      const info = document.getElementById('dashProductInfo');
-      if (info) info.innerText = 'Select a product from the list to see stock levels and pricing details.';
-    }
-
-    // --- UPDATED TRANSACTION LOGIC (Sales & Quotations) ---
-
-    function submitDashTransaction(type) {
-      if(dashCart.length === 0) return alert("Cart is empty. Add items first.");
-
-      const customerId = document.getElementById('dashSaleCustomer').value;
-      const paymentMode = document.getElementById('dashSalePayment').value;
-      const custSelect = document.getElementById('dashSaleCustomer');
-      const customerName = custSelect.options[custSelect.selectedIndex].text;
-
-      // Prepare Data
-      const transactionData = {
-        Customer_ID: customerId,
-        Customer_Name: customerName,
-        Payment_Mode: paymentMode,
-        items: dashCart,
-        User: sessionStorage.getItem('userName') || 'SYSTEM',
-        Delivery_Charge: 0,
-        Discount: 0,
-        // Quotation specific fields
-        Valid_Until: type === 'Quotation' ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) : null // 14 days validity
-      };
-
-      // Determine backend function
-      const backendFunc = type === 'Quotation' ? 'createQuotation' : 'createSale';
-      
-      // UI Loading State
-      const btnText = type === 'Quotation' ? 'Save Quotation' : 'Complete Sale';
-      // Find button by text to disable it (simple selector)
-      const btns = document.querySelectorAll('button');
-      let clickedBtn;
-      btns.forEach(b => { if(b.innerText.includes(btnText)) clickedBtn = b; });
-      
-      if(clickedBtn) {
-        clickedBtn.disabled = true;
-        clickedBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
-      }
-
-      // Call Backend
-      google.script.run
-        .withSuccessHandler(function(res) {
-           if(clickedBtn) {
-             clickedBtn.disabled = false;
-             clickedBtn.innerHTML = `<i class=\"bi bi-check-circle\"></i> ${btnText}`;
-           }
-           
-           if(res.success) {
-             const msg = type === 'Quotation' 
-               ? "Quotation Saved! ID: " + res.transactionId 
-               : "Sale Successful! ID: " + res.transactionId;
-             alert(msg);
-             clearDashCart();
-             // Refresh inventory/sales history
-             loadNewSaleInDashboard(); 
-             if(type === 'Sale') loadSalesHistory(); // Update history tab
-           } else {
-             alert("Error: " + res.message);
-           }
-        })
-        .withFailureHandler(function(e) {
-           if(clickedBtn) {
-             clickedBtn.disabled = false;
-             clickedBtn.innerText = btnText;
-           }
-           alert("System Error: " + e.message);
-        })
-        [backendFunc](transactionData); // Dynamic function call
-    }
-
-    // Inventory Section
-    function loadInventorySection(forceRefresh = false) {
-      const container = document.getElementById('section-inventory');
-      if (!container) return;
-
-      // 1. Check Cache: If we have data and aren't forcing a refresh, use it!
-      if (!forceRefresh && DATA_CACHE['inventory']) {
-        console.log("Loading Inventory from Cache (Fast!)");
-        displayInventory(DATA_CACHE['inventory']);
-        return;
-      }
-
-      // 2. Show loading spinner only if fetching from server
-      const contentDiv = container.querySelector('.placeholder-content') || container;
-      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading inventory...</p></div>';
-
-      google.script.run
-        .withSuccessHandler(function(data) {
-          try {
-            // 3. Save to Cache
-            const normalized = Array.isArray(data) ? data : [];
-
-            if (!Array.isArray(data)) {
-              console.error('Unexpected inventory payload received in dashboard', data);
-            }
-
-            DATA_CACHE['inventory'] = normalized;
-            displayInventory(normalized);
-          } catch (renderError) {
-            console.error('Error rendering dashboard inventory', renderError);
-            contentDiv.innerHTML = '<div class="alert alert-danger">Error rendering inventory. Please try again.</div>';
-          }
-        })
-        .withFailureHandler(function(error) {
-          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading inventory: ' + error.message + '</div>';
-        })
-        .getInventory({});
-    }
-
-    function displayInventory(data) {
-      const container = document.getElementById('section-inventory');
-      if (!container) return;
-
-      const getStockQty = (item) => (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
-
-      let html = `
-        <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-primary" onclick="toggleQuickAdd('product')">
-            <i class="bi bi-plus-circle"></i> Add Product
-          </button>
-          <button class="btn btn-outline-secondary" onclick="loadInventorySection(true)">
-            <i class="bi bi-arrow-clockwise"></i> Refresh
-          </button>
-        </div>
-        <div id="quickAddProduct" class="quick-add-card d-none mb-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <h6 class="mb-0"><i class="bi bi-lightning-charge"></i> Quick Add Product</h6>
-            <button class="btn btn-sm btn-link text-decoration-none" onclick="toggleQuickAdd('product')">Close</button>
-          </div>
-          <form class="mt-2" onsubmit="handleQuickAdd(event, 'product')">
-            <div class="row g-2">
-              <div class="col-md-4">
-                <label class="form-label">Item Name</label>
-                <input type="text" class="form-control" name="itemName" placeholder="e.g., Coffee Beans" required>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Category</label>
-                <input type="text" class="form-control" name="category" placeholder="Beverages">
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Cost</label>
-                <input type="number" class="form-control" name="cost" min="0" step="0.01" required>
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Price</label>
-                <input type="number" class="form-control" name="price" min="0" step="0.01">
-              </div>
-            </div>
-            <div class="row g-2 mt-2">
-              <div class="col-md-3">
-                <label class="form-label">Supplier</label>
-                <div class="input-group">
-                  <select class="form-select" name="supplier" id="supplierDropdown" required>
-                    <option value="">Loading suppliers...</option>
-                  </select>
-                  <button class="btn btn-outline-secondary" type="button" onclick="showSection('suppliers-list', event)" title="Add Supplier">
-                    <i class="bi bi-plus-circle"></i>
-                  </button>
-                </div>
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Quantity</label>
-                <input type="number" class="form-control" name="qty" min="0" value="0" required>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Reorder Level</label>
-                <input type="number" class="form-control" name="reorderLevel" min="0" value="10">
-              </div>
-              <div class="col-md-3 d-flex align-items-end justify-content-end">
-                <button class="btn btn-success" type="submit" id="quickAddProductBtn">
-                  <i class="bi bi-check-circle"></i> Save Product
-                </button>
-              </div>
-            </div>
-            <div id="quickAddProductAlert" class="alert alert-success mt-3 d-none"></div>
-          </form>
-        </div>
-        <div class="row mb-4">
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Items</h6>
-              <h3>${data.length}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Low Stock</h6>
-              <h3 class="text-warning">${data.filter(i => getStockQty(i) > 0 && getStockQty(i) <= (i.Reorder_Level || 10)).length}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Out of Stock</h6>
-              <h3 class="text-danger">${data.filter(i => getStockQty(i) <= 0).length}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Value</h6>
-              <h3>${formatCurrency(data.reduce((sum, i) => sum + (getStockQty(i) * i.Cost_Price || 0), 0))}</h3>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><i class="bi bi-box-seam"></i> Inventory Items</div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Item ID</th>
-                    <th>Item Name</th>
-                    <th>Category</th>
-                    <th>Stock</th>
-                    <th>Unit</th>
-                    <th>Cost Price</th>
-                    <th>Selling Price</th>
-                    <th>Supplier</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-      `;
-
-      if (!data || data.length === 0) {
-        html += '<tr><td colspan="9" class="text-center text-muted py-4">No inventory items found</td></tr>';
-      } else {
-        data.slice(0, 50).forEach(function(item) {
-          let statusBadge = '';
-          const stockQty = getStockQty(item);
-
-          if (stockQty <= 0) {
-            statusBadge = '<span class="badge bg-danger">Out of Stock</span>';
-          } else if (stockQty <= (item.Reorder_Level || 10)) {
-            statusBadge = '<span class="badge bg-warning text-dark">Low Stock</span>';
-          } else {
-            statusBadge = '<span class="badge bg-success">In Stock</span>';
-          }
-
-          html += `
-            <tr>
-              <td>${item.Item_ID || ''}</td>
-              <td><strong>${item.Item_Name || ''}</strong></td>
-              <td>${item.Category || ''}</td>
-              <td>${stockQty}</td>
-              <td>${item.Unit || ''}</td>
-              <td>${formatCurrency(item.Cost_Price)}</td>
-              <td>${formatCurrency(item.Selling_Price)}</td>
-              <td>${item.Supplier || ''}</td>
-              <td>${statusBadge}</td>
-            </tr>
-          `;
-        });
-      }
-
-      html += `
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-
-      // Load suppliers into the dropdown
-      loadSuppliersForDropdown();
-    }
-
-    // Load suppliers and populate the supplier dropdown
-    function loadSuppliersForDropdown() {
-      const dropdown = document.getElementById('supplierDropdown');
-      if (!dropdown) return;
-
-      google.script.run
-        .withSuccessHandler(function(suppliers) {
-          dropdown.innerHTML = '<option value="">-- Select Supplier --</option>';
-
-          if (!suppliers || suppliers.length === 0) {
-            dropdown.innerHTML = '<option value="">No suppliers found</option>';
-            dropdown.disabled = true;
-            return;
-          }
-
-          suppliers.forEach(function(supplier) {
-            const option = document.createElement('option');
-            option.value = supplier.Supplier_Name;
-            option.textContent = supplier.Supplier_Name;
-            dropdown.appendChild(option);
-          });
-
-          dropdown.disabled = false;
-        })
-        .withFailureHandler(function(error) {
-          console.error('Error loading suppliers:', error);
-          dropdown.innerHTML = '<option value="">Error loading suppliers</option>';
-          dropdown.disabled = true;
-        })
-        .getSuppliers();
-    }
-
-    // Products Section
-    function loadProductsSection() {
-      loadInventorySection(); // Products and Inventory use same data
-    }
-
-    // Customers Section
-    function loadCustomersSection(forceRefresh = false) {
-      const container = document.getElementById('section-customers');
-      if (!container) return;
-
-      // Check Cache: If we have data and aren't forcing a refresh, use it!
-      if (!forceRefresh && DATA_CACHE['customers']) {
-        console.log("Loading Customers from Cache (Fast!)");
-        displayCustomers(DATA_CACHE['customers']);
-        return;
-      }
-
-      // Show loading spinner only if fetching from server
-      const contentDiv = container.querySelector('.placeholder-content') || container;
-      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading customers...</p></div>';
-
-      google.script.run
-        .withSuccessHandler(function(data) {
-          // Save to Cache
-          DATA_CACHE['customers'] = data;
-          displayCustomers(data);
-        })
-        .withFailureHandler(function(error) {
-          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading customers: ' + error.message + '</div>';
-        })
-        .getCustomers({});
-    }
-
-    function displayCustomers(data) {
-      dashboardCustomersData = data; // Store data for actions
-      const container = document.getElementById('section-customers');
-      if (!container) return;
-
-      const activeCustomers = data.filter(c => c.Status === 'Active').length;
-      const customersWithDebt = data.filter(c => parseFloat(c.Current_Balance || c.Balance || 0) < 0).length;
-      
-      // Calculate totals
-      const totalDebt = data.reduce((sum, c) => {
-        const balance = parseFloat(c.Current_Balance || c.Balance || 0);
-        return sum + (balance < 0 ? Math.abs(balance) : 0);
-      }, 0);
-
-      // Build HTML
-      let html = `
-        <div class="mb-3">
-          <div class="mb-2 d-flex gap-2">
-            <button class="btn btn-primary btn-sm" onclick="toggleQuickAdd('customer')">
-              <i class="bi bi-person-plus"></i> Quick Add
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" onclick="loadCustomersSection(true)">
-              <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
-          </div>
-
-          <div id="quickAddCustomer" class="quick-add-card d-none mb-3">
-             <div class="d-flex justify-content-between align-items-center">
-               <h6 class="mb-0"><i class="bi bi-stars"></i> Quick Add Customer</h6>
-               <button class="btn btn-sm btn-link text-decoration-none" onclick="toggleQuickAdd('customer')">Close</button>
-             </div>
-             <form class="mt-2" onsubmit="handleQuickAdd(event, 'customer')">
-               <div class="row g-2">
-                 <div class="col-md-4">
-                   <label class="form-label">Full Name</label>
-                   <input type="text" class="form-control" name="name" placeholder="Jane Doe" required>
-                 </div>
-                 <div class="col-md-4">
-                   <label class="form-label">Phone</label>
-                   <input type="tel" class="form-control" name="phone" placeholder="07xx xxx xxx">
-                 </div>
-                 <div class="col-md-4">
-                   <label class="form-label">Email</label>
-                   <input type="email" class="form-control" name="email" placeholder="name@example.com">
-                 </div>
-               </div>
-               <div class="row g-2 mt-2">
-                 <div class="col-md-4">
-                   <label class="form-label">Opening Balance</label>
-                   <input type="number" class="form-control" name="Opening_Balance" step="0.01">
-                 </div>
-                 <div class="col-md-8 d-flex align-items-end justify-content-end">
-                   <button class="btn btn-success" type="submit">
-                     <i class="bi bi-check-circle"></i> Save Customer
-                   </button>
-                 </div>
-               </div>
-               <div id="quickAddCustomerAlert" class="alert alert-success mt-3 d-none"></div>
-             </form>
-          </div>
-
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <select class="form-select form-select-sm" id="editCustomerSelect" style="max-width: 300px;" onchange="showCustomerEditButton()">
-              <option value="">-- Select Customer to Edit --</option>
-              ${data.map(c => `<option value="${c.Customer_ID}">${c.Customer_Name || c.Name}</option>`).join('')}
-            </select>
-            <button class="btn btn-warning btn-sm" id="editCustomerActionBtn" style="display: none;" onclick="executeEditCustomer()">
-              <i class="bi bi-pencil"></i> Edit
-            </button>
-          </div>
-
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <select class="form-select form-select-sm" id="payCustomerSelect" style="max-width: 300px;" onchange="showCustomerReceiveButton()">
-              <option value="">-- Select Customer (Balance) --</option>
-              ${data.map(c => {
-                 const bal = parseFloat(c.Current_Balance || c.Balance || 0);
-                 let balText = bal < 0 ? `Owes ${Math.abs(bal).toLocaleString()}` : `Credit ${bal.toLocaleString()}`;
-                 return `<option value="${c.Customer_ID}">${c.Customer_Name || c.Name} (${balText})</option>`;
-              }).join('')}
-            </select>
-            <button class="btn btn-success btn-sm" id="receiveCustomerActionBtn" style="display: none;" onclick="executeReceiveCustomer()">
-              <i class="bi bi-cash-coin"></i> Receive
-            </button>
-          </div>
-
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <select class="form-select form-select-sm" id="stmtCustomerSelect" style="max-width: 300px;" onchange="showCustomerStmtButton()">
-              <option value="">-- Select Customer for Statement --</option>
-              ${data.map(c => `<option value="${c.Customer_ID}">${c.Customer_Name || c.Name}</option>`).join('')}
-            </select>
-            <button class="btn btn-info btn-sm" id="stmtCustomerActionBtn" style="display: none;" onclick="executeCustomerStatement()">
-              <i class="bi bi-file-text"></i> Statement
-            </button>
-          </div>
-        </div>
-
-        <div class="row mb-4">
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Customers</h6>
-              <h3>${data.length}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Active</h6>
-              <h3 class="text-success">${activeCustomers}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>With Debt</h6>
-              <h3 class="text-warning">${customersWithDebt}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Debt</h6>
-              <h3 class="text-danger">${formatCurrency(totalDebt)}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header"><i class="bi bi-people"></i> Customers List</div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Customer ID</th>
-                    <th>Name</th>
-                    <th>Phone</th>
-                    <th>Email</th>
-                    <th>Balance</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-      `;
-
-      if (!data || data.length === 0) {
-        html += '<tr><td colspan="6" class="text-center text-muted py-4">No customers found</td></tr>';
-      } else {
-        data.slice(0, 50).forEach(function(customer) {
-          const balance = parseFloat(customer.Current_Balance || customer.Balance || 0);
-          const balanceClass = balance < 0 ? 'text-danger' : balance > 0 ? 'text-success' : '';
-          const balanceText = balance < 0 ? 'Owes: ' + formatCurrency(Math.abs(balance)) :
-                             balance > 0 ? 'Credit: ' + formatCurrency(balance) : formatCurrency(0);
-          const statusBadge = customer.Status === 'Active' ?
-            '<span class="badge bg-success">Active</span>' :
-            '<span class="badge bg-secondary">Inactive</span>';
-
-          html += `
-            <tr>
-              <td>${customer.Customer_ID || ''}</td>
-              <td><strong>${customer.Customer_Name || customer.Name || ''}</strong></td>
-              <td>${customer.Phone || '-'}</td>
-              <td>${customer.Email || '-'}</td>
-              <td class="${balanceClass}">${balanceText}</td>
-              <td>${statusBadge}</td>
-            </tr>
-          `;
-        });
-      }
-
-      html += `
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    // --- CUSTOMER DASHBOARD ACTIONS ---
-
-    function showCustomerEditButton() {
-      const val = document.getElementById('editCustomerSelect').value;
-      document.getElementById('editCustomerActionBtn').style.display = val ? 'inline-block' : 'none';
-    }
-    
-    function showCustomerReceiveButton() {
-      const val = document.getElementById('payCustomerSelect').value;
-      document.getElementById('receiveCustomerActionBtn').style.display = val ? 'inline-block' : 'none';
-    }
-
-    function showCustomerStmtButton() {
-      const val = document.getElementById('stmtCustomerSelect').value;
-      document.getElementById('stmtCustomerActionBtn').style.display = val ? 'inline-block' : 'none';
-    }
-
-    function executeEditCustomer() {
-      const id = document.getElementById('editCustomerSelect').value;
-      if(!id) return;
-      const c = dashboardCustomersData.find(x => x.Customer_ID === id);
-      
-      // Populate Modal
-      document.getElementById('editCustomerId').value = id;
-      document.getElementById('editCustomerName').value = c.Customer_Name || c.Name;
-      document.getElementById('editCustomerPhone').value = c.Phone;
-      document.getElementById('editCustomerEmail').value = c.Email || '';
-      document.getElementById('editCustomerLocation').value = c.Location || '';
-      
-      new bootstrap.Modal(document.getElementById('dashboardCustomerEditModal')).show();
-    }
-
-    function executeReceiveCustomer() {
-      const id = document.getElementById('payCustomerSelect').value;
-      if(!id) return;
-      const c = dashboardCustomersData.find(x => x.Customer_ID === id);
-      const balance = parseFloat(c.Current_Balance || c.Balance || 0);
-
-      document.getElementById('recvCustomerId').value = id;
-      document.getElementById('recvCustomerName').innerText = c.Customer_Name || c.Name;
-      document.getElementById('recvCustomerBal').innerText = formatCurrency(balance);
-      // If negative (debt), suggest positive amount
-      document.getElementById('recvAmount').value = balance < 0 ? Math.abs(balance).toFixed(2) : '';
-
-      new bootstrap.Modal(document.getElementById('dashboardCustomerPayModal')).show();
-    }
-
-    function dashboardSubmitCustomerEdit() {
-        const id = document.getElementById('editCustomerId').value;
-        const data = {
-            Customer_Name: document.getElementById('editCustomerName').value,
-            Phone: document.getElementById('editCustomerPhone').value,
-            Email: document.getElementById('editCustomerEmail').value,
-            Location: document.getElementById('editCustomerLocation').value,
-            User: sessionStorage.getItem('userName')
-        };
-        
-        const btn = document.getElementById('btnSubmitCustEdit');
-        btn.disabled = true; btn.innerText = 'Updating...';
-
-        google.script.run.withSuccessHandler(() => {
-            btn.disabled = false; btn.innerText = 'Update';
-            bootstrap.Modal.getInstance(document.getElementById('dashboardCustomerEditModal')).hide();
-            loadCustomersSection(true);
-            alert('Customer updated');
-        }).withFailureHandler(e => {
-            btn.disabled = false; btn.innerText = 'Update';
-            alert(e.message);
-        }).updateCustomer(id, data);
-    }
-
-    function dashboardSubmitCustomerPay() {
-        const id = document.getElementById('recvCustomerId').value;
-        const amt = document.getElementById('recvAmount').value;
-        const acc = document.getElementById('recvAccount').value;
-        const ref = document.getElementById('recvRef').value;
-        
-        if(!amt) return alert("Enter amount");
-
-        const btn = document.getElementById('btnSubmitCustPay');
-        btn.disabled = true; btn.innerText = 'Processing...';
-
-        google.script.run.withSuccessHandler(() => {
-            btn.disabled = false; btn.innerText = 'Confirm Payment';
-            bootstrap.Modal.getInstance(document.getElementById('dashboardCustomerPayModal')).hide();
-            loadCustomersSection(true);
-            alert('Payment Received');
-        }).withFailureHandler(e => {
-            btn.disabled = false; btn.innerText = 'Confirm Payment';
-            alert(e.message);
-        }).recordCustomerPayment({
-            Customer_ID: id,
-            Amount: amt,
-            Account: acc,
-            Reference: ref,
-            User: sessionStorage.getItem('userName')
-        });
-    }
-
-    // Quotations Section
-    function loadQuotationsSection(forceRefresh = false) {
-      const container = document.getElementById('section-quotations');
-      if (!container) return;
-
-      // Check Cache: If we have data and aren't forcing a refresh, use it!
-      if (!forceRefresh && DATA_CACHE['quotations']) {
-        console.log("Loading Quotations from Cache (Fast!)");
-        displayQuotations(DATA_CACHE['quotations']);
-        return;
-      }
-
-      // Show loading spinner only if fetching from server
-      const contentDiv = container.querySelector('.placeholder-content') || container;
-      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading quotations...</p></div>';
-
-      google.script.run
-        .withSuccessHandler(function(data) {
-          // Save to Cache
-          DATA_CACHE['quotations'] = data;
-          displayQuotations(data);
-        })
-        .withFailureHandler(function(error) {
-          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading quotations: ' + error.message + '</div>';
-        })
-        .getQuotations({});
-    }
-
-    function displayQuotations(data) {
-      const container = document.getElementById('section-quotations');
-      if (!container) return;
-
-      const pending = data.filter(q => q.Status === 'Pending').length;
-      const converted = data.filter(q => q.Status === 'Converted').length;
-      const totalValue = data.reduce((sum, q) => sum + parseFloat(q.Total_Amount || 0), 0);
-
-      let html = `
-        <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-outline-secondary" onclick="loadQuotationsSection(true)">
-            <i class="bi bi-arrow-clockwise"></i> Refresh
-          </button>
-        </div>
-        <div class="row mb-4">
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Quotations</h6>
-              <h3>${data.length}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Pending</h6>
-              <h3 class="text-warning">${pending}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Converted</h6>
-              <h3 class="text-success">${converted}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Value</h6>
-              <h3>${formatCurrency(totalValue)}</h3>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><i class="bi bi-file-text"></i> Quotations List</div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Quotation ID</th>
-                    <th>Date</th>
-                    <th>Customer</th>
-                    <th>Amount</th>
-                    <th>Valid Until</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-      `;
-
-      if (!data || data.length === 0) {
-        html += '<tr><td colspan="6" class="text-center text-muted py-4">No quotations found</td></tr>';
-      } else {
-        data.slice(0, 50).forEach(function(quotation) {
-          let statusBadge = '';
-          switch(quotation.Status) {
-            case 'Pending': statusBadge = '<span class="badge bg-warning text-dark">Pending</span>'; break;
-            case 'Accepted': statusBadge = '<span class="badge bg-info">Accepted</span>'; break;
-            case 'Converted': statusBadge = '<span class="badge bg-success">Converted</span>'; break;
-            case 'Rejected': statusBadge = '<span class="badge bg-danger">Rejected</span>'; break;
-            case 'Expired': statusBadge = '<span class="badge bg-secondary">Expired</span>'; break;
-            default: statusBadge = '<span class="badge bg-secondary">' + (quotation.Status || 'Unknown') + '</span>';
-          }
-
-          html += `
-            <tr>
-              <td><strong>${quotation.Transaction_ID || ''}</strong></td>
-              <td>${quotation.Date ? new Date(quotation.Date).toLocaleDateString() : ''}</td>
-              <td>${quotation.Customer_Name || quotation.Customer_ID || '-'}</td>
-              <td>${formatCurrency(quotation.Total_Amount)}</td>
-              <td>${quotation.Valid_Until ? new Date(quotation.Valid_Until).toLocaleDateString() : '-'}</td>
-              <td>${statusBadge}</td>
-            </tr>
-          `;
-        });
-      }
-
-      html += `
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    // Financials Section
-    function loadFinancialsSection() {
-      const container = document.getElementById('section-financials');
-      if (!container) return;
-
-      const contentDiv = container.querySelector('.placeholder-content') || container;
-      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading financial data...</p></div>';
-
-      google.script.run
-        .withSuccessHandler(function(summary) {
-          displayFinancials(summary);
-        })
-        .withFailureHandler(function(error) {
-          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading financials: ' + error.message + '</div>';
-        })
-        .getFinancialSummary();
-    }
-
-    function displayFinancials(summary) {
-      const container = document.getElementById('section-financials');
-      if (!container) return;
-
-      const netProfit = (summary.totalRevenue || 0) - (summary.totalExpenses || 0);
-      const profitClass = netProfit >= 0 ? 'text-success' : 'text-danger';
-
-      let html = `
-        <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-outline-secondary" onclick="loadFinancialsSection()">
-            <i class="bi bi-arrow-clockwise"></i> Refresh
-          </button>
-        </div>
-        <div class="row mb-4">
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Revenue</h6>
-              <h3 class="text-success">${formatCurrency(summary.totalRevenue)}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Expenses</h6>
-              <h3 class="text-danger">${formatCurrency(summary.totalExpenses)}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Net Profit</h6>
-              <h3 class="${profitClass}">${formatCurrency(netProfit)}</h3>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Account Balance</h6>
-              <h3>${formatCurrency(summary.currentBalance)}</h3>
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="card mb-4">
-              <div class="card-header"><i class="bi bi-bar-chart"></i> Income Breakdown</div>
-              <div class="card-body">
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Sales Revenue:</span>
-                  <strong class="text-success">${formatCurrency(summary.salesRevenue || 0)}</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Customer Payments:</span>
-                  <strong class="text-success">${formatCurrency(summary.customerPayments || 0)}</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Other Income:</span>
-                  <strong class="text-success">${formatCurrency(summary.otherIncome || 0)}</strong>
-                </div>
-                <hr>
-                <div class="d-flex justify-content-between">
-                  <strong>Total Income:</strong>
-                  <strong class="text-success">${formatCurrency(summary.totalRevenue)}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card mb-4">
-              <div class="card-header"><i class="bi bi-pie-chart"></i> Expense Breakdown</div>
-              <div class="card-body">
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Operating Expenses:</span>
-                  <strong class="text-danger">${formatCurrency(summary.operatingExpenses || 0)}</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Supplier Payments:</span>
-                  <strong class="text-danger">${formatCurrency(summary.supplierPayments || 0)}</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Other Expenses:</span>
-                  <strong class="text-danger">${formatCurrency(summary.otherExpenses || 0)}</strong>
-                </div>
-                <hr>
-                <div class="d-flex justify-content-between">
-                  <strong>Total Expenses:</strong>
-                  <strong class="text-danger">${formatCurrency(summary.totalExpenses)}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    // Reports Section
-    function loadReportsSection() {
-      loadSalesReports(); // Use existing sales reports
-    }
-
-    // Suppliers List Section
-    function loadSuppliersList() {
-      const container = document.getElementById('section-suppliers-list');
-      if (!container) return;
-
-      const contentDiv = container.querySelector('.placeholder-content') || container;
-      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading suppliers...</p></div>';
-
-      google.script.run
-        .withSuccessHandler(function(data) {
-          displaySuppliers(data);
-        })
-        .withFailureHandler(function(error) {
-          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading suppliers: ' + error.message + '</div>';
-        })
-        .getSuppliers({});
-    }
-
-    // Add Supplier Section
-    function loadAddSupplier() {
-      const container = document.getElementById('section-suppliers-add');
-      if (!container) return;
-
-      let html = `
-        <div class="card">
-          <div class="card-header"><i class="bi bi-plus-circle"></i> Add New Supplier</div>
-          <div class="card-body">
-            <form id="addSupplierForm" onsubmit="handleAddSupplier(event)">
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Supplier Name *</label>
-                  <input type="text" class="form-control" name="Supplier_Name" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Contact Person</label>
-                  <input type="text" class="form-control" name="Contact_Person">
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Phone *</label>
-                  <input type="tel" class="form-control" name="Phone" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Email</label>
-                  <input type="email" class="form-control" name="Email">
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-12 mb-3">
-                  <label class="form-label">Address</label>
-                  <textarea class="form-control" name="Address" rows="2"></textarea>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-4 mb-3">
-                  <label class="form-label">Payment Terms</label>
-                  <input type="text" class="form-control" name="Payment_Terms" placeholder="e.g., Net 30">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label">Opening Balance</label>
-                  <input type="number" class="form-control" name="Opening_Balance" step="0.01" min="0" placeholder="0.00">
-                  <div class="form-text">Starting payable balance to carry forward.</div>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label">Status</label>
-                  <select class="form-select" name="Status">
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
-              </div>
-              <button type="submit" class="btn btn-primary">
-                <i class="bi bi-check-circle"></i> Save Supplier
-              </button>
-            </form>
-            <div id="supplierFormAlert" class="alert mt-3" style="display: none;"></div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    function handleAddSupplier(event) {
-      event.preventDefault();
-      const form = event.target;
-      const formData = new FormData(form);
-      const supplierData = Object.fromEntries(formData);
-
-      const alertDiv = document.getElementById('supplierFormAlert');
-      alertDiv.style.display = 'none';
-
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) {
-            alertDiv.className = 'alert alert-success mt-3';
-            alertDiv.textContent = 'Supplier added successfully!';
-            alertDiv.style.display = 'block';
-            form.reset();
-          } else {
-            alertDiv.className = 'alert alert-danger mt-3';
-            alertDiv.textContent = 'Error: ' + result.message;
-            alertDiv.style.display = 'block';
-          }
-        })
-        .withFailureHandler(function(error) {
-          alertDiv.className = 'alert alert-danger mt-3';
-          alertDiv.textContent = 'Error: ' + error.message;
-          alertDiv.style.display = 'block';
-        })
-        .addSupplier(supplierData);
-    }
-
-    // Dashboard Supplier Action Functions
-
-    // Store suppliers data for later use
-    function displaySuppliers(data) {
-      dashboardSuppliersData = data;
-      const container = document.getElementById('section-suppliers-list');
-      if (!container) return;
-
-      const parseSupplierTotals = (supplier) => {
-        const purchased = parseFloat(supplier.Total_Purchased || supplier['Total Purchased'] || 0) || 0;
-        const paid = parseFloat(supplier.Total_Paid || supplier['Total Paid'] || 0) || 0;
-        const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
-
-        return { purchased, paid, balance };
-      };
-
-      const supplierTotals = data.reduce((totals, supplier) => {
-        const { purchased, paid, balance } = parseSupplierTotals(supplier);
-
-        totals.active += supplier.Status === 'Active' ? 1 : 0;
-        totals.purchased += purchased;
-        totals.paid += paid;
-        totals.balance += balance;
-        return totals;
-      }, { active: 0, purchased: 0, paid: 0, balance: 0 });
-
-      let html = `
-        <!-- Action Buttons Row -->
-        <div class="mb-3">
-          <!-- Add Button -->
-          <div class="mb-2">
-            <button class="btn btn-primary btn-sm" onclick="showSection('suppliers-add')">
-              <i class="bi bi-plus-circle"></i> Add
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" onclick="loadSuppliersList()">
-              <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
-          </div>
-
-          <!-- Edit Supplier Row -->
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <select class="form-select form-select-sm" id="editSupplierSelect" style="max-width: 300px;" onchange="showEditButton()">
-              <option value="">-- Select Supplier to Edit --</option>
-              ${(() => {
-                const activeSuppliers = data.filter(s => s.Status === 'Active');
-                if (activeSuppliers.length === 0) {
-                  return '<option value="" disabled>No active suppliers</option>';
-                }
-                return activeSuppliers.map(supplier => `
-                  <option value="${supplier.Supplier_ID}">
-                    ${supplier.Supplier_Name || supplier.Name} (${supplier.Supplier_ID})
-                  </option>
-                `).join('');
-              })()}
-            </select>
-            <button class="btn btn-warning btn-sm" id="editActionBtn" style="display: none;" onclick="executeEditSupplier()">
-              <i class="bi bi-pencil"></i> Edit
-            </button>
-          </div>
-
-          <!-- Pay Supplier Row -->
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <select class="form-select form-select-sm" id="paySupplierSelect" style="max-width: 300px;" onchange="showPayButton()">
-              <option value="">-- Select Supplier to Pay --</option>
-              ${(() => {
-                const payableSuppliers = data.filter(s => {
-                  const balance = parseFloat(s.Current_Balance || s['Current Balance'] || s.Balance || 0) || 0;
-                  return s.Status === 'Active' && balance > 0;
-                });
-
-                if (payableSuppliers.length === 0) {
-                  return '<option value="" disabled>No suppliers with payable balance</option>';
-                }
-
-                return payableSuppliers.map(supplier => {
-                  const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
-                  return `
-                    <option value="${supplier.Supplier_ID}">
-                      ${supplier.Supplier_Name || supplier.Name} - Balance: ${formatCurrency(balance)}
-                    </option>
-                  `;
-                }).join('');
-              })()}
-            </select>
-            <button class="btn btn-success btn-sm" id="payActionBtn" style="display: none;" onclick="executePaySupplier()">
-              <i class="bi bi-cash"></i> Pay
-            </button>
-          </div>
-
-          <!-- Statement Supplier Row -->
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <select class="form-select form-select-sm" id="statementSupplierSelect" style="max-width: 300px;" onchange="showStatementButton()">
-              <option value="">-- Select Supplier for Statement --</option>
-              ${(() => {
-                const activeSuppliers = data.filter(s => s.Status === 'Active');
-                if (activeSuppliers.length === 0) {
-                  return '<option value="" disabled>No active suppliers</option>';
-                }
-                return activeSuppliers.map(supplier => `
-                  <option value="${supplier.Supplier_ID}">
-                    ${supplier.Supplier_Name || supplier.Name} (${supplier.Supplier_ID})
-                  </option>
-                `).join('');
-              })()}
-            </select>
-            <button class="btn btn-info btn-sm" id="statementActionBtn" style="display: none;" onclick="executeViewStatement()">
-              <i class="bi bi-file-text"></i> Statement
-            </button>
-          </div>
-        </div>
-
-        <!-- Compact Summary Cards -->
-        <div class="row g-2 mb-3">
-          <div class="col-6 col-md-3">
-            <div class="card border-0 bg-light">
-              <div class="card-body p-2">
-                <small class="text-muted d-block">Total Suppliers</small>
-                <h5 class="mb-0">${data.length} <small class="text-muted">(${supplierTotals.active} active)</small></h5>
-              </div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card border-0 bg-light">
-              <div class="card-body p-2">
-                <small class="text-muted d-block">Total Cost</small>
-                <h6 class="mb-0 text-primary">${formatCurrency(supplierTotals.purchased)}</h6>
-              </div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card border-0 bg-light">
-              <div class="card-body p-2">
-                <small class="text-muted d-block">Total Payment</small>
-                <h6 class="mb-0 text-success">${formatCurrency(supplierTotals.paid)}</h6>
-              </div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card border-0 bg-light">
-              <div class="card-body p-2">
-                <small class="text-muted d-block">Balance</small>
-                <h6 class="mb-0 ${supplierTotals.balance > 0 ? 'text-danger' : supplierTotals.balance < 0 ? 'text-success' : ''}">${formatCurrency(supplierTotals.balance)}</h6>
-                <small class="text-muted">${supplierTotals.balance > 0 ? 'Payable' : supplierTotals.balance < 0 ? 'Credit' : 'Settled'}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><i class="bi bi-building"></i> Suppliers List</div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Supplier ID</th>
-                    <th>Name</th>
-                    <th>Total Cost</th>
-                    <th>Total Payment</th>
-                    <th>Balance</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-      `;
-
-      if (!data || data.length === 0) {
-        html += '<tr><td colspan="6" class="text-center text-muted py-4">No suppliers found</td></tr>';
-      } else {
-        data.slice(0, 50).forEach(function(supplier) {
-          const { purchased: totalPurchased, paid: totalPaid, balance } = parseSupplierTotals(supplier);
-          const balanceClass = balance > 0 ? 'text-danger' : balance < 0 ? 'text-success' : '';
-          const balanceText = balance > 0 ? 'Payable: ' + formatCurrency(balance) :
-                             balance < 0 ? 'Credit: ' + formatCurrency(Math.abs(balance)) : formatCurrency(0);
-          const statusBadge = supplier.Status === 'Active' ?
-            '<span class="badge bg-success">Active</span>' :
-            '<span class="badge bg-secondary">Inactive</span>';
-
-          html += `
-            <tr>
-              <td>${supplier.Supplier_ID || ''}</td>
-              <td><strong>${supplier.Supplier_Name || supplier.Name || ''}</strong></td>
-              <td>${formatCurrency(totalPurchased)}</td>
-              <td>${formatCurrency(totalPaid)}</td>
-              <td class="${balanceClass}">${balanceText}</td>
-              <td>${statusBadge}</td>
-            </tr>
-          `;
-        });
-      }
-
-      html += `
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    // Helper Functions
-    function getSupplierName(supplier) {
-      return supplier.Supplier_Name || supplier.Name || '';
-    }
-
-    function getSupplierBalance(supplier) {
-      return parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
-    }
-
-    function resetEditSubmitButton() {
-      const submitBtn = document.getElementById('submitEditBtn');
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Update Supplier';
-    }
-
-    function resetPaymentSubmitButton() {
-      const submitBtn = document.getElementById('submitPaymentBtn');
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="bi bi-credit-card"></i> Submit Payment';
-    }
-
-    // Dropdown selection handlers - show action buttons when supplier is selected
-    function showEditButton() {
-      const select = document.getElementById('editSupplierSelect');
-      const button = document.getElementById('editActionBtn');
-      if (select && button) {
-        button.style.display = select.value ? 'inline-block' : 'none';
-      }
-    }
-
-    function showPayButton() {
-      const select = document.getElementById('paySupplierSelect');
-      const button = document.getElementById('payActionBtn');
-      if (select && button) {
-        button.style.display = select.value ? 'inline-block' : 'none';
-      }
-    }
-
-    function showStatementButton() {
-      const select = document.getElementById('statementSupplierSelect');
-      const button = document.getElementById('statementActionBtn');
-      if (select && button) {
-        button.style.display = select.value ? 'inline-block' : 'none';
-      }
-    }
-
-    // Execute actions - called when action buttons are clicked
-    function executeEditSupplier() {
-      const select = document.getElementById('editSupplierSelect');
-      if (select && select.value) {
-        dashboardEditSupplier(select.value);
-        // Reset dropdown after action
-        select.value = '';
-        showEditButton();
-      }
-    }
-
-    function executePaySupplier() {
-      const select = document.getElementById('paySupplierSelect');
-      if (select && select.value) {
-        dashboardMakePayment(select.value);
-        // Reset dropdown after action
-        select.value = '';
-        showPayButton();
-      }
-    }
-
-    function executeViewStatement() {
-      const select = document.getElementById('statementSupplierSelect');
-      if (select && select.value) {
-        dashboardViewStatement(select.value);
-        // Reset dropdown after action
-        select.value = '';
-        showStatementButton();
-      }
-    }
-
-    // Edit Supplier
-    function dashboardEditSupplier(supplierId) {
-      const supplier = dashboardSuppliersData.find(s => s.Supplier_ID === supplierId);
-      if (!supplier) {
-        alert('Supplier not found');
-        return;
-      }
-
-      // Populate the edit modal with supplier data
-      document.getElementById('editSupplierId').value = supplierId;
-      document.getElementById('editSupplierName').value = getSupplierName(supplier);
-      document.getElementById('editContactPerson').value = supplier.Contact_Person || '';
-      document.getElementById('editPhone').value = supplier.Phone || '';
-      document.getElementById('editEmail').value = supplier.Email || '';
-      document.getElementById('editAddress').value = supplier.Address || '';
-      document.getElementById('editPaymentTerms').value = supplier.Payment_Terms || '';
-      document.getElementById('editStatus').value = supplier.Status || 'Active';
-
-      const balance = getSupplierBalance(supplier);
-      document.getElementById('editBalance').value = formatCurrency(balance);
-
-      const modal = new bootstrap.Modal(document.getElementById('supplierEditModal'));
-      modal.show();
-    }
-
-    // Submit Edit Supplier
-    function dashboardSubmitEdit() {
-      const supplierId = document.getElementById('editSupplierId').value;
-      const supplierName = document.getElementById('editSupplierName').value.trim();
-      const contactPerson = document.getElementById('editContactPerson').value.trim();
-      const phone = document.getElementById('editPhone').value.trim();
-      const email = document.getElementById('editEmail').value.trim();
-      const address = document.getElementById('editAddress').value.trim();
-      const paymentTerms = document.getElementById('editPaymentTerms').value.trim();
-      const status = document.getElementById('editStatus').value;
-
-      if (!supplierName || !phone) {
-        alert('Supplier Name and Phone are required');
-        return;
-      }
-
-      const submitBtn = document.getElementById('submitEditBtn');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
-
-      const updatedData = {
-        Supplier_Name: supplierName,
-        Contact_Person: contactPerson,
-        Phone: phone,
-        Email: email,
-        Address: address,
-        Payment_Terms: paymentTerms,
-        Status: status
-      };
-
-      google.script.run
-        .withSuccessHandler(function(result) {
-          resetEditSubmitButton();
-
-          if (result.success) {
-            alert('Supplier updated successfully!');
-            bootstrap.Modal.getInstance(document.getElementById('supplierEditModal')).hide();
-            loadSuppliersList();
-          } else {
-            alert('Error: ' + result.message);
-          }
-        })
-        .withFailureHandler(function(error) {
-          resetEditSubmitButton();
-          alert('Error updating supplier: ' + error.message);
-        })
-        .updateSupplier(supplierId, updatedData);
-    }
-
-    // Make Payment to Supplier
-    function dashboardMakePayment(supplierId) {
-      const supplier = dashboardSuppliersData.find(s => s.Supplier_ID === supplierId);
-      if (!supplier) {
-        alert('Supplier not found');
-        return;
-      }
-
-      const balance = getSupplierBalance(supplier);
-      document.getElementById('paymentSupplierId').value = supplierId;
-      document.getElementById('paymentSupplierName').textContent = getSupplierName(supplier);
-      document.getElementById('paymentCurrentBalance').textContent = formatCurrency(balance);
-      document.getElementById('paymentAmount').value = balance > 0 ? balance.toFixed(2) : '';
-      document.getElementById('paymentMethod').value = 'Cash';
-      document.getElementById('paymentReference').value = '';
-      document.getElementById('paymentNotes').value = '';
-
-      const modal = new bootstrap.Modal(document.getElementById('supplierPaymentModal'));
-      modal.show();
-    }
-
-    // Submit Payment
-    function dashboardSubmitPayment() {
-      const supplierId = document.getElementById('paymentSupplierId').value;
-      const amount = parseFloat(document.getElementById('paymentAmount').value);
-      const paymentMethod = document.getElementById('paymentMethod').value;
-      const reference = document.getElementById('paymentReference').value;
-      const notes = document.getElementById('paymentNotes').value;
-
-      if (!amount || amount <= 0) {
-        alert('Please enter a valid payment amount');
-        return;
-      }
-
-      const supplier = dashboardSuppliersData.find(s => s.Supplier_ID === supplierId);
-      const balance = getSupplierBalance(supplier);
-
-      if (amount > balance) {
-        if (!confirm('Payment amount (' + formatCurrency(amount) + ') exceeds balance (' + formatCurrency(balance) + '). Continue?')) {
-          return;
-        }
-      }
-
-      const submitBtn = document.getElementById('submitPaymentBtn');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-
-      const user = sessionStorage.getItem('userName') || 'SYSTEM';
-
-      google.script.run
-        .withSuccessHandler(function(result) {
-          resetPaymentSubmitButton();
-
-          if (result.success) {
-            alert('Payment of ' + formatCurrency(amount) + ' recorded successfully!');
-            bootstrap.Modal.getInstance(document.getElementById('supplierPaymentModal')).hide();
-            loadSuppliersList();
-          } else {
-            alert('Error: ' + result.message);
-          }
-        })
-        .withFailureHandler(function(error) {
-          resetPaymentSubmitButton();
-          alert('Error recording payment: ' + error.message);
-        })
-        .recordSupplierPayment(supplierId, amount, paymentMethod, reference, notes, user);
-    }
-
-    // View Supplier Statement
-    function dashboardViewStatement(supplierId) {
-      const supplier = dashboardSuppliersData.find(s => s.Supplier_ID === supplierId);
-      if (!supplier) {
-        alert('Supplier not found');
-        return;
-      }
-
-      const modal = new bootstrap.Modal(document.getElementById('supplierStatementModal'));
-      modal.show();
-
-      document.getElementById('statementLoading').style.display = 'block';
-      document.getElementById('statementContent').style.display = 'none';
-
-      google.script.run
-        .withSuccessHandler(function(statement) {
-          dashboardDisplayStatement(statement);
-          document.getElementById('statementLoading').style.display = 'none';
-          document.getElementById('statementContent').style.display = 'block';
-        })
-        .withFailureHandler(function(error) {
-          document.getElementById('statementLoading').innerHTML =
-            '<div class="alert alert-danger">Error loading statement: ' + error.message + '</div>';
-        })
-        .getSupplierStatement(supplierId, null, null);
-    }
-
-    // Display Statement
-    function dashboardDisplayStatement(statement) {
-      const supplier = statement.supplier;
-
-      document.getElementById('statementSupplierName').textContent = supplier.Supplier_Name || supplier.Name || '';
-      document.getElementById('statementSupplierId').textContent = supplier.Supplier_ID || '';
-      document.getElementById('statementContact').textContent = supplier.Contact_Person || '-';
-      document.getElementById('statementPhone').textContent = supplier.Phone || '-';
-
-      const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
-      document.getElementById('statementBalance').textContent = 'Ksh ' + balance.toFixed(2);
-      document.getElementById('statementOpening').textContent = 'Ksh ' + (statement.openingBalance || 0).toFixed(2);
-      document.getElementById('statementDebits').textContent = 'Ksh ' + (statement.totalDebits || 0).toFixed(2);
-      document.getElementById('statementCredits').textContent = 'Ksh ' + (statement.totalCredits || 0).toFixed(2);
-
-      const tbody = document.getElementById('statementTransactions');
-      tbody.innerHTML = '';
-
-      if (!statement.transactions || statement.transactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No transactions found</td></tr>';
-        return;
-      }
-
-      statement.transactions.forEach(function(txn) {
-        const row = document.createElement('tr');
-        const date = new Date(txn.date);
-        const dateStr = date.toLocaleDateString('en-GB');
-
-        const debit = txn.debit || 0;
-        const credit = txn.credit || 0;
-        const txnBalance = txn.balance || 0;
-
-        const balanceClass = txnBalance > 0 ? 'text-danger' : txnBalance < 0 ? 'text-success' : '';
-
-        row.innerHTML = `
-          <td>${dateStr}</td>
-          <td><span class="badge ${txn.type === 'Purchase' ? 'bg-danger' : (txn.type === 'Payment' ? 'bg-success' : 'bg-secondary')}">${txn.type}</span></td>
-          <td>${txn.description || '-'}</td>
-          <td>${txn.reference || '-'}</td>
-          <td class="text-end">${debit > 0 ? 'Ksh ' + debit.toFixed(2) : '-'}</td>
-          <td class="text-end">${credit > 0 ? 'Ksh ' + credit.toFixed(2) : '-'}</td>
-          <td class="text-end ${balanceClass}"><strong>Ksh ${txnBalance.toFixed(2)}</strong></td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    // Purchase Orders Section
-    function loadPurchaseOrders() {
-      const container = document.getElementById('section-suppliers-orders');
-      if (!container) return;
-
-      const contentDiv = container.querySelector('.placeholder-content') || container;
-      contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading purchase orders...</p></div>';
-
-      google.script.run
-        .withSuccessHandler(function(data) {
-          displayPurchaseOrders(data);
-        })
-        .withFailureHandler(function(error) {
-          contentDiv.innerHTML = '<div class="alert alert-danger">Error loading purchase orders: ' + error.message + '</div>';
-        })
-        .getPurchases({});
-    }
-
-    function displayPurchaseOrders(data) {
-      const container = document.getElementById('section-suppliers-orders');
-      if (!container) return;
-
-      const totalOrders = data.length;
-      const totalValue = data.reduce((sum, p) => sum + parseFloat(p.Total_Amount || 0), 0);
-      const pendingPayment = data.filter(p => p.Payment_Status !== 'Paid').length;
-
-      let html = `
-        <div class="row mb-4">
-          <div class="col-md-4">
-            <div class="stat-card">
-              <h6>Total Orders</h6>
-              <h3>${totalOrders}</h3>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="stat-card">
-              <h6>Pending Payment</h6>
-              <h3 class="text-warning">${pendingPayment}</h3>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="stat-card">
-              <h6>Total Value</h6>
-              <h3>${formatCurrency(totalValue)}</h3>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><i class="bi bi-cart"></i> Purchase Orders</div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Purchase ID</th>
-                    <th>Date</th>
-                    <th>Supplier</th>
-                    <th>Item</th>
-                    <th>Quantity</th>
-                    <th>Amount</th>
-                    <th>Payment Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-      `;
-
-      if (!data || data.length === 0) {
-        html += '<tr><td colspan="7" class="text-center text-muted py-4">No purchase orders found</td></tr>';
-      } else {
-        data.slice(0, 50).forEach(function(purchase) {
-          const statusBadge = purchase.Payment_Status === 'Paid' ?
-            '<span class="badge bg-success">Paid</span>' :
-            '<span class="badge bg-warning text-dark">Pending</span>';
-
-          html += `
-            <tr>
-              <td><strong>${purchase.Purchase_ID || ''}</strong></td>
-              <td>${purchase.Date ? new Date(purchase.Date).toLocaleDateString() : ''}</td>
-              <td>${purchase.Supplier_Name || purchase.Supplier_ID || '-'}</td>
-              <td>${purchase.Item_Name || purchase.Item_ID || '-'}</td>
-              <td>${purchase.Qty || 0}</td>
-              <td>${formatCurrency(purchase.Total_Amount)}</td>
-              <td>${statusBadge}</td>
-            </tr>
-          `;
-        });
-      }
-
-      html += `
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    // Supplier Payments Section
-    function loadSupplierPayments() {
-      const container = document.getElementById('section-suppliers-payments');
-      if (!container) return;
-
-      container.innerHTML = `
-        <div class="alert alert-info">
-          <i class="bi bi-info-circle"></i>
-          Supplier payment tracking feature. This section will display payment history and allow recording new payments to suppliers.
-        </div>
-        <div class="card">
-          <div class="card-header"><i class="bi bi-cash"></i> Recent Supplier Payments</div>
-          <div class="card-body">
-            <p class="text-muted">Payment tracking functionality coming soon...</p>
-          </div>
-        </div>
-      `;
-    }
-
-    // Create New User Section
-    function loadCreateUser() {
-      const container = document.getElementById('section-users-add');
-      if (!container) return;
-
-      let html = `
-        <div class="card">
-          <div class="card-header"><i class="bi bi-person-plus"></i> Create New User</div>
-          <div class="card-body">
-            <form id="createUserForm" onsubmit="handleCreateUser(event)">
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Username *</label>
-                  <input type="text" class="form-control" name="username" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Email *</label>
-                  <input type="email" class="form-control" name="email" required>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">4-Digit PIN *</label>
-                  <input type="password" class="form-control" name="pin" pattern="[0-9]{4}" maxlength="4" required>
-                  <small class="form-text text-muted">Enter a 4-digit numeric PIN</small>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Role *</label>
-                  <select class="form-select" name="role" required>
-                    <option value="">Select Role</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Manager">Manager</option>
-                    <option value="Sales">Sales</option>
-                    <option value="Cashier">Cashier</option>
-                  </select>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Phone</label>
-                  <input type="tel" class="form-control" name="phone">
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Status</label>
-                  <select class="form-select" name="status">
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
-              </div>
-              <button type="submit" class="btn btn-primary">
-                <i class="bi bi-check-circle"></i> Create User
-              </button>
-            </form>
-            <div id="createUserAlert" class="alert mt-3" style="display: none;"></div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    function handleCreateUser(event) {
-      event.preventDefault();
-      const form = event.target;
-      const formData = new FormData(form);
-      const userData = Object.fromEntries(formData);
-
-      const alertDiv = document.getElementById('createUserAlert');
-      alertDiv.style.display = 'none';
-
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) {
-            alertDiv.className = 'alert alert-success mt-3';
-            alertDiv.textContent = 'User created successfully!';
-            alertDiv.style.display = 'block';
-            form.reset();
-          } else {
-            alertDiv.className = 'alert alert-danger mt-3';
-            alertDiv.textContent = 'Error: ' + result.message;
-            alertDiv.style.display = 'block';
-          }
-        })
-        .withFailureHandler(function(error) {
-          alertDiv.className = 'alert alert-danger mt-3';
-          alertDiv.textContent = 'Error: ' + error.message;
-          alertDiv.style.display = 'block';
-        })
-        .createUser(userData);
-    }
-
-    // User Roles Section
-    function loadUserRoles() {
-      const container = document.getElementById('section-users-roles');
-      if (!container) return;
-
-      let html = `
-        <div class="card">
-          <div class="card-header"><i class="bi bi-shield-check"></i> User Roles & Responsibilities</div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <div class="card">
-                  <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-star-fill text-warning"></i> Admin</h5>
-                    <p class="card-text">Full system access including:</p>
-                    <ul>
-                      <li>User management</li>
-                      <li>System settings</li>
-                      <li>All financial reports</li>
-                      <li>Data management</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <div class="card">
-                  <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-briefcase-fill text-primary"></i> Manager</h5>
-                    <p class="card-text">Management access including:</p>
-                    <ul>
-                      <li>Sales oversight</li>
-                      <li>Inventory management</li>
-                      <li>Customer management</li>
-                      <li>Reports viewing</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <div class="card">
-                  <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-cart-fill text-success"></i> Sales</h5>
-                    <p class="card-text">Sales operations including:</p>
-                    <ul>
-                      <li>Process sales</li>
-                      <li>Create quotations</li>
-                      <li>Manage customers</li>
-                      <li>View inventory</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <div class="card">
-                  <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-cash-coin text-info"></i> Cashier</h5>
-                    <p class="card-text">Cashier operations including:</p>
-                    <ul>
-                      <li>Process payments</li>
-                      <li>Issue receipts</li>
-                      <li>View sales</li>
-                      <li>Handle returns</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    // User Permissions Section
-    function loadUserPermissions() {
-      const container = document.getElementById('section-users-permissions');
-      if (!container) return;
-
-      let html = `
-        <div class="alert alert-info">
-          <i class="bi bi-info-circle"></i>
-          User permissions are managed by assigning roles. Each role has predefined access levels as shown in the User Roles section.
-        </div>
-        <div class="card">
-          <div class="card-header"><i class="bi bi-key"></i> Permission Matrix</div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-bordered">
-                <thead>
-                  <tr>
-                    <th>Feature</th>
-                    <th>Admin</th>
-                    <th>Manager</th>
-                    <th>Sales</th>
-                    <th>Cashier</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>User Management</td>
-                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
-                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
-                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
-                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
-                  </tr>
-                  <tr>
-                    <td>Sales Processing</td>
-                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
-                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
-                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
-                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
-                  </tr>
-                  <tr>
-                    <td>Inventory Management</td>
-                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
-                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
-                    <td><i class="bi bi-dash-circle-fill text-warning"></i> View Only</td>
-                    <td><i class="bi bi-dash-circle-fill text-warning"></i> View Only</td>
-                  </tr>
-                  <tr>
-                    <td>Financial Reports</td>
-                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
-                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
-                    <td><i class="bi bi-dash-circle-fill text-warning"></i> Limited</td>
-                    <td><i class="bi bi-dash-circle-fill text-warning"></i> Limited</td>
-                  </tr>
-                  <tr>
-                    <td>System Settings</td>
-                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
-                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
-                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
-                    <td><i class="bi bi-x-circle-fill text-danger"></i></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    // Settings Section
-    function loadSettingsSection() {
-      const container = document.getElementById('section-settings');
-      if (!container) return;
-
-      let html = `
-        <div class="row">
-          <div class="col-md-6">
-            <div class="card mb-3">
-              <div class="card-header"><i class="bi bi-gear"></i> General Settings</div>
-              <div class="card-body">
-                <form>
-                  <div class="mb-3">
-                    <label class="form-label">Shop Name</label>
-                    <input type="text" class="form-control" value="Fatma Sales">
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Currency</label>
-                    <select class="form-select">
-                      <option>USD - US Dollar</option>
-                      <option>EUR - Euro</option>
-                      <option>GBP - British Pound</option>
-                    </select>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Tax Rate (%)</label>
-                    <input type="number" class="form-control" value="0" step="0.01">
-                  </div>
-                  <button type="button" class="btn btn-primary">Save Settings</button>
-                </form>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card mb-3">
-              <div class="card-header"><i class="bi bi-receipt"></i> Receipt Settings</div>
-              <div class="card-body">
-                <form>
-                  <div class="mb-3">
-                    <label class="form-label">Receipt Header</label>
-                    <textarea class="form-control" rows="2">Fatma Sales Management System</textarea>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Receipt Footer</label>
-                    <textarea class="form-control" rows="2">Thank you for your business!</textarea>
-                  </div>
-                  <div class="mb-3">
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" checked>
-                      <label class="form-check-label">Include Shop Logo</label>
-                    </div>
-                  </div>
-                  <button type="button" class="btn btn-primary">Save Settings</button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12">
-            <div class="card">
-              <div class="card-header"><i class="bi bi-tags"></i> Expense Categories</div>
-              <div class="card-body">
-                <p class="text-muted">Manage expense categories for better financial tracking</p>
-                <div class="d-flex flex-wrap gap-2">
-                  <span class="badge bg-primary">Rent</span>
-                  <span class="badge bg-primary">Utilities</span>
-                  <span class="badge bg-primary">Salaries</span>
-                  <span class="badge bg-primary">Marketing</span>
-                  <span class="badge bg-primary">Supplies</span>
-                  <span class="badge bg-primary">Transportation</span>
-                  <span class="badge bg-primary">Other</span>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-primary mt-3">
-                  <i class="bi bi-plus"></i> Add Category
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    // Expenses Section (if separate from Financials)
-    function loadExpensesSection() {
-      // This can reuse financial data or have its own implementation
-      loadFinancialsSection();
-    }
-
-    // Logout function
-    function logout() {
-      if (confirm('Are you sure you want to logout?')) {
-        sessionStorage.clear();
-        location.reload();
-      }
-    }
-
-    // Mobile menu functions
-    function toggleMobileMenu() {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('menuOverlay');
-      const hamburger = document.getElementById('hamburgerBtn');
-
-      sidebar.classList.toggle('mobile-open');
-      overlay.classList.toggle('active');
-      document.body.classList.toggle('menu-open'); // Prevent body scrolling when menu is open
-
-      // Change icon
-      const icon = hamburger.querySelector('i');
-      if (sidebar.classList.contains('mobile-open')) {
-        icon.className = 'bi bi-x';
-      } else {
-        icon.className = 'bi bi-list';
-      }
-    }
-
-    function closeMobileMenu() {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('menuOverlay');
-      const hamburger = document.getElementById('hamburgerBtn');
-
-      sidebar.classList.remove('mobile-open');
-      overlay.classList.remove('active');
-      document.body.classList.remove('menu-open'); // Re-enable body scrolling
-
-      // Reset icon
-      const icon = hamburger.querySelector('i');
-      icon.className = 'bi bi-list';
-    }
-
-    // Section navigation
-    const sectionOrder = [
-      'dashboard',
-      'sales',
-      'sales-new',
-      'sales-history',
-      'sales-returns',
-      'sales-reports',
-      'inventory',
-      'customers',
-      'suppliers-list',
-      'suppliers-add',
-      'suppliers-orders',
-      'suppliers-payments',
-      'quotations',
-      'financials',
-      'reports',
-      'users-list',
-      'users-add',
-      'users-roles',
-      'users-permissions',
-      'settings'
-    ];
-
-    function getCurrentSectionIndex() {
-      const activeSection = document.querySelector('.content-section.active');
-      if (activeSection) {
-        const sectionId = activeSection.id.replace('section-', '');
-        return sectionOrder.indexOf(sectionId);
-      }
-      return 0;
-    }
-
-    function navigateToNext() {
-      const currentIndex = getCurrentSectionIndex();
-      if (currentIndex < sectionOrder.length - 1) {
-        showSection(sectionOrder[currentIndex + 1]);
-        updateNavigationButtons();
-        closeMobileMenu();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }
-
-    function navigateToPrevious() {
-      const currentIndex = getCurrentSectionIndex();
-      if (currentIndex > 0) {
-        showSection(sectionOrder[currentIndex - 1]);
-        updateNavigationButtons();
-        closeMobileMenu();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }
-
-    function updateNavigationButtons() {
-      const currentIndex = getCurrentSectionIndex();
-      const activeSection = document.querySelector('.content-section.active');
-      const navControls = activeSection ? activeSection.querySelector('.navigation-controls') : null;
-      const buttons = navControls ? navControls.querySelectorAll('.nav-btn') : [];
-      const prevBtn = buttons[0];
-      const nextBtn = buttons[1];
-
-      if (prevBtn) {
-        prevBtn.disabled = currentIndex === 0;
-      }
-
-      if (nextBtn) {
-        nextBtn.disabled = currentIndex === sectionOrder.length - 1;
-      }
-    }
-
-    // Override showSection to close mobile menu and update navigation
-    const originalShowSection = showSection;
-    showSection = function(sectionName, event) {
-      originalShowSection.call(this, sectionName, event);
-      closeMobileMenu();
-      updateNavigationButtons();
-    };
-
-    // Handle Browser Back Button
-    window.onpopstate = function(event) {
-      if (event.state && event.state.section) {
-        // Load the section WITHOUT pushing to history again
-        loadSectionInternal(event.state.section);
-      } else {
-        // Fallback to dashboard if history is empty
-        loadSectionInternal('dashboard');
-      }
-    };
-
-    // Auto-initialize on page load
-    window.addEventListener('DOMContentLoaded', function() {
-      const userName = sessionStorage.getItem('userName');
-      const userRole = sessionStorage.getItem('userRole');
-      if (userName && userRole) {
-        initDashboard(userName, userRole);
-      }
-      updateNavigationButtons();
-      updateBackButton();
-
-      // Initialize History API: Replace current state so we have a starting point
-      history.replaceState({section: 'dashboard'}, 'Dashboard', '#dashboard');
-    });
   </script>
+
 </body>
 </html>
