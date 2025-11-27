@@ -140,8 +140,8 @@
 </head>
 <body>
   <div class="header-section">
-    <h2><i class="bi bi-people"></i> Customers Management</h2>
-    <p>Manage your customer database and track customer balances</p>
+    <h2><i class="bi bi-people"></i> Customers List</h2>
+    <p>Manage your customer database, sales, and payment tracking</p>
   </div>
 
   <!-- Statistics Cards -->
@@ -149,32 +149,33 @@
     <div class="col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Customers</div>
-        <div class="stat-value" id="totalCustomers">0</div>
+        <div class="stat-value" id="totalCustomers">0 (0 active)</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
-        <div class="stat-label">Active Customers</div>
-        <div class="stat-value" id="activeCustomers">0</div>
+        <div class="stat-label">Total Cost</div>
+        <div class="stat-value" id="totalCost">Ksh 0</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
-        <div class="stat-label">With Debt</div>
-        <div class="stat-value balance-negative" id="customersWithDebt">0</div>
+        <div class="stat-label">Total Payment</div>
+        <div class="stat-value balance-positive" id="totalPayment">Ksh 0</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
-        <div class="stat-label">Total Debt</div>
-        <div class="stat-value balance-negative" id="totalDebt">Ksh 0.00</div>
+        <div class="stat-label">Balance</div>
+        <div class="stat-value balance-negative" id="totalBalance">Ksh 0</div>
+        <small class="text-muted">Receivable</small>
       </div>
     </div>
   </div>
 
-  <!-- Customer Selection and Actions -->
+  <!-- Action Buttons and Dropdowns -->
   <div class="filter-section">
-    <div class="row g-3 align-items-end">
+    <div class="row g-3">
       <div class="col-md-2 d-grid gap-2">
         <button class="btn btn-success" onclick="showAddCustomerModal()">
           <i class="bi bi-person-plus"></i> Add
@@ -183,36 +184,35 @@
           <i class="bi bi-arrow-clockwise"></i> Refresh
         </button>
       </div>
-      <div class="col-md-5">
-        <label for="customerSelect" class="form-label">Select Customer</label>
-        <select class="form-select" id="customerSelect" onchange="onCustomerSelected()">
-          <option value="">-- Select a customer --</option>
-        </select>
-      </div>
-      <div class="col-md-5">
-        <label class="form-label">Actions</label>
-        <div class="d-flex gap-2">
-          <button type="button" class="btn btn-warning" id="editCustomerBtn" onclick="editSelectedCustomer()" disabled>
-            <i class="bi bi-pencil"></i> Edit
-          </button>
-          <button type="button" class="btn btn-success" id="receivePaymentBtn" onclick="receiveSelectedPayment()" disabled>
-            <i class="bi bi-cash"></i> Receive
-          </button>
-          <button type="button" class="btn btn-info" id="customerStatementBtn" onclick="viewSelectedCustomerStatement()" disabled>
-            <i class="bi bi-file-text"></i> Statement
-          </button>
+      <div class="col-md-10">
+        <div class="row g-2">
+          <div class="col-md-4">
+            <select class="form-select" id="customerEditSelect" onchange="onEditCustomerSelected()">
+              <option value="">-- Select Customer to Edit --</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <select class="form-select" id="customerPaySelect" onchange="onPayCustomerSelected()">
+              <option value="">-- Select Customer to Pay --</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <select class="form-select" id="customerStatementSelect" onchange="onStatementCustomerSelected()">
+              <option value="">-- Select Customer for Statement --</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Filter Section -->
+  <!-- Search and Filter Section -->
   <div class="filter-section">
-    <div class="row">
-      <div class="col-md-6 col-lg-4">
+    <div class="row g-2">
+      <div class="col-md-6">
         <input type="text" class="form-control" id="searchInput" placeholder="Search by name, phone, or email...">
       </div>
-      <div class="col-md-3 col-lg-2">
+      <div class="col-md-3">
         <select class="form-select" id="statusFilter">
           <option value="">All Status</option>
           <option value="Active">Active</option>
@@ -518,14 +518,8 @@
           <td class="${balanceClass}">${balanceText}</td>
           <td>${statusBadge}</td>
           <td>
-            <button class="btn btn-sm btn-primary me-1" onclick='viewCustomer("${customer.Customer_ID}")' title="View Details">
-              <i class="bi bi-eye"></i>
-            </button>
-            <button class="btn btn-sm btn-success me-1" onclick='openPaymentModal("${customer.Customer_ID}")' title="Record Payment" ${balance >= 0 ? 'disabled' : ''}>
-              <i class="bi bi-cash"></i>
-            </button>
-            <button class="btn btn-sm btn-warning" onclick='openCustomerEditor("${customer.Customer_ID}")' title="Edit">
-              <i class="bi bi-pencil"></i>
+            <button class="btn btn-sm btn-info" onclick='viewCustomerStatement("${customer.Customer_ID}")' title="View Statement">
+              <i class="bi bi-file-text"></i>
             </button>
           </td>
         `;
@@ -535,26 +529,36 @@
 
     function updateStats(data) {
       if (!data || data.length === 0) {
+        document.getElementById('totalCustomers').textContent = '0 (0 active)';
+        document.getElementById('totalCost').textContent = 'Ksh 0';
+        document.getElementById('totalPayment').textContent = 'Ksh 0';
+        document.getElementById('totalBalance').textContent = 'Ksh 0';
         return;
       }
 
       const totalCustomers = data.length;
       const activeCustomers = data.filter(c => c.Status === 'Active').length;
-      let customersWithDebt = 0;
-      let totalDebt = 0;
+      let totalCost = 0;
+      let totalPayment = 0;
+      let totalBalance = 0;
 
       data.forEach(function(customer) {
-        const balance = parseFloat(customer.Current_Balance || customer.Balance || 0);
+        const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
+        const cost = getNumericField(customer, ['Total_Sales', 'Total Sales', 'Total_Cost']);
+        const payment = getNumericField(customer, ['Total_Payments', 'Total Payments']);
+
+        // For customers, negative balance means they owe us money (receivable)
         if (balance < 0) {
-          customersWithDebt++;
-          totalDebt += Math.abs(balance);
+          totalBalance += Math.abs(balance);
         }
+        totalCost += cost;
+        totalPayment += payment;
       });
 
-      document.getElementById('totalCustomers').textContent = totalCustomers;
-      document.getElementById('activeCustomers').textContent = activeCustomers;
-      document.getElementById('customersWithDebt').textContent = customersWithDebt;
-      document.getElementById('totalDebt').textContent = 'Ksh ' + totalDebt.toFixed(2);
+      document.getElementById('totalCustomers').textContent = `${totalCustomers} (${activeCustomers} active)`;
+      document.getElementById('totalCost').textContent = 'Ksh ' + totalCost.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+      document.getElementById('totalPayment').textContent = 'Ksh ' + totalPayment.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+      document.getElementById('totalBalance').textContent = 'Ksh ' + totalBalance.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
     }
 
     function filterCustomers() {
@@ -659,16 +663,18 @@
     }
 
     function populateCustomerDropdown(data) {
-      const select = document.getElementById('customerSelect');
+      populateCustomerEditDropdown(data);
+      populateCustomerPayDropdown(data);
+      populateCustomerStatementDropdown(data);
+    }
+
+    function populateCustomerEditDropdown(data) {
+      const select = document.getElementById('customerEditSelect');
       if (!select) return;
 
-      const currentValue = select.value;
-      select.innerHTML = '<option value="">-- Select a customer --</option>';
+      select.innerHTML = '<option value="">-- Select Customer to Edit --</option>';
 
-      if (!data || data.length === 0) {
-        updateCustomerActionButtons();
-        return;
-      }
+      if (!data || data.length === 0) return;
 
       const sorted = [...data].sort((a, b) => {
         const nameA = (a.Customer_Name || a.Name || '').toLowerCase();
@@ -679,68 +685,90 @@
       sorted.forEach(customer => {
         const option = document.createElement('option');
         option.value = customer.Customer_ID;
-        const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
-        const balanceText = balance < 0 ? ` - Owes: Ksh ${Math.abs(balance).toFixed(2)}` :
-                           balance > 0 ? ` - Credit: Ksh ${balance.toFixed(2)}` : '';
-        option.textContent = `${customer.Customer_Name || customer.Name || ''} (${customer.Customer_ID})${balanceText}`;
+        option.textContent = `${customer.Customer_Name || customer.Name || ''} (${customer.Customer_ID})`;
         select.appendChild(option);
       });
-
-      if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
-        select.value = currentValue;
-      }
-
-      updateCustomerActionButtons();
     }
 
-    function onCustomerSelected() {
-      updateCustomerActionButtons();
+    function populateCustomerPayDropdown(data) {
+      const select = document.getElementById('customerPaySelect');
+      if (!select) return;
+
+      select.innerHTML = '<option value="">-- Select Customer to Pay --</option>';
+
+      if (!data || data.length === 0) return;
+
+      // Only show customers with debt (negative balance)
+      const sorted = [...data]
+        .filter(customer => {
+          const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
+          return balance < 0; // Customer owes money
+        })
+        .sort((a, b) => {
+          const nameA = (a.Customer_Name || a.Name || '').toLowerCase();
+          const nameB = (b.Customer_Name || b.Name || '').toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+
+      sorted.forEach(customer => {
+        const option = document.createElement('option');
+        option.value = customer.Customer_ID;
+        const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
+        option.textContent = `${customer.Customer_Name || customer.Name || ''} (${customer.Customer_ID}) - Owes: Ksh ${Math.abs(balance).toFixed(2)}`;
+        select.appendChild(option);
+      });
     }
 
-    function updateCustomerActionButtons() {
-      const select = document.getElementById('customerSelect');
+    function populateCustomerStatementDropdown(data) {
+      const select = document.getElementById('customerStatementSelect');
+      if (!select) return;
+
+      select.innerHTML = '<option value="">-- Select Customer for Statement --</option>';
+
+      if (!data || data.length === 0) return;
+
+      const sorted = [...data].sort((a, b) => {
+        const nameA = (a.Customer_Name || a.Name || '').toLowerCase();
+        const nameB = (b.Customer_Name || b.Name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+
+      sorted.forEach(customer => {
+        const option = document.createElement('option');
+        option.value = customer.Customer_ID;
+        option.textContent = `${customer.Customer_Name || customer.Name || ''} (${customer.Customer_ID})`;
+        select.appendChild(option);
+      });
+    }
+
+    function onEditCustomerSelected() {
+      const select = document.getElementById('customerEditSelect');
       const customerId = select ? select.value : '';
-      const customer = customerId ? findCustomerById(customerId) : null;
+      if (!customerId) return;
 
-      // Edit button: enabled when customer selected
-      document.getElementById('editCustomerBtn').disabled = !customer;
-
-      // Receive payment button: enabled only when customer has debt (negative balance)
-      const balance = customer ? getNumericField(customer, ['Current_Balance', 'Balance']) : 0;
-      document.getElementById('receivePaymentBtn').disabled = !(customer && balance < 0);
-
-      // Statement button: enabled when customer selected
-      document.getElementById('customerStatementBtn').disabled = !customer;
-    }
-
-    function editSelectedCustomer() {
-      const select = document.getElementById('customerSelect');
-      const customerId = select ? select.value : '';
-      if (!customerId) {
-        alert('Please select a customer to edit');
-        return;
-      }
       openCustomerEditor(customerId);
+      // Reset the dropdown after action
+      select.value = '';
     }
 
-    function receiveSelectedPayment() {
-      const select = document.getElementById('customerSelect');
+    function onPayCustomerSelected() {
+      const select = document.getElementById('customerPaySelect');
       const customerId = select ? select.value : '';
-      if (!customerId) {
-        alert('Please select a customer to receive payment from');
-        return;
-      }
+      if (!customerId) return;
+
       openPaymentModal(customerId);
+      // Reset the dropdown after action
+      select.value = '';
     }
 
-    function viewSelectedCustomerStatement() {
-      const select = document.getElementById('customerSelect');
+    function onStatementCustomerSelected() {
+      const select = document.getElementById('customerStatementSelect');
       const customerId = select ? select.value : '';
-      if (!customerId) {
-        alert('Please select a customer for the statement');
-        return;
-      }
+      if (!customerId) return;
+
       viewCustomerStatement(customerId);
+      // Reset the dropdown after action
+      select.value = '';
     }
 
     function findCustomerById(customerId) {
