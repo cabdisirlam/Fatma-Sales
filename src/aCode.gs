@@ -648,8 +648,7 @@ function getDashboardHTML() {
 }
 
 /**
- * Gets all users (excluding PIN for security in the list view)
- * FIXED: Added Created_Date and handled Date object serialization
+ * Gets all users (excluding PIN for security in the list view), including their creation date.
  */
 function getUsers() {
   try {
@@ -673,10 +672,14 @@ function getUsers() {
       // Only push if User_ID exists to avoid empty rows
       if (row[colMap['User_ID']]) {
 
-        // Handle Date Object safely
-        let createdDate = row[colMap['Created_Date']];
-        if (createdDate instanceof Date) {
-          createdDate = createdDate.toISOString(); // Convert to string for safe transfer
+        // Handle Created_Date safely
+        const createdDateRaw = row[colMap['Created_Date']];
+        let createdDate = '';
+        if (createdDateRaw) {
+          const parsedDate = new Date(createdDateRaw);
+          if (!isNaN(parsedDate)) {
+            createdDate = parsedDate.toISOString(); // Convert to string for safe transfer
+          }
         }
 
         users.push({
@@ -686,7 +689,7 @@ function getUsers() {
           Email: row[colMap['Email']],
           Phone: row[colMap['Phone']],
           Status: row[colMap['Status']],
-          Created_Date: createdDate || '' // Added missing field
+          Created_Date: createdDate
         });
       }
     }
