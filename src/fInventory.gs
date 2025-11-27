@@ -22,7 +22,14 @@ function getInventory(filters) {
         const cache = CacheService.getScriptCache();
         const cached = cache.get(INVENTORY_CACHE_KEY);
         if (cached) {
-          return JSON.parse(cached);
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            return parsed;
+          }
+
+          // Cache contained an unexpected payload (e.g., legacy null). Clear it
+          // so we can rebuild the value from the sheet below.
+          cache.remove(INVENTORY_CACHE_KEY);
         }
       } catch (cacheError) {
         logError('getInventoryCache', cacheError);
