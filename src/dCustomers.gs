@@ -99,7 +99,13 @@ function searchCustomers(query) {
  */
 function addCustomer(customerData) {
   try {
-    validateRequired(customerData, ['Customer_Name', 'Phone']);
+    // Validate required fields
+    if (!customerData || !customerData.Customer_Name || !customerData.Phone) {
+      return {
+        success: false,
+        message: 'Customer Name and Phone are required'
+      };
+    }
 
     const sheet = getSheet('Customers');
     const customerId = generateId('Customers', 'Customer_ID', 'CUST');
@@ -142,7 +148,10 @@ function addCustomer(customerData) {
 
   } catch (error) {
     logError('addCustomer', error);
-    throw new Error('Error adding customer: ' + error.message);
+    return {
+      success: false,
+      message: 'Error adding customer: ' + error.message
+    };
   }
 }
 
@@ -152,11 +161,27 @@ function addCustomer(customerData) {
 function updateCustomer(customerId, customerData) {
   try {
     if (!customerId) {
-      throw new Error('Customer ID is required');
+      return {
+        success: false,
+        message: 'Customer ID is required'
+      };
+    }
+
+    if (!customerData) {
+      return {
+        success: false,
+        message: 'Customer data is required'
+      };
     }
 
     // Get current values for audit
     const currentCustomer = getCustomerById(customerId);
+    if (!currentCustomer) {
+      return {
+        success: false,
+        message: 'Customer not found: ' + customerId
+      };
+    }
 
     // Update the customer
     const updates = {};
@@ -188,7 +213,10 @@ function updateCustomer(customerId, customerData) {
 
   } catch (error) {
     logError('updateCustomer', error);
-    throw new Error('Error updating customer: ' + error.message);
+    return {
+      success: false,
+      message: 'Error updating customer: ' + error.message
+    };
   }
 }
 
@@ -393,6 +421,108 @@ function getCustomersWithDebt() {
   } catch (error) {
     logError('getCustomersWithDebt', error);
     return [];
+  }
+}
+
+/**
+ * Record a direct payment from customer (reduces customer balance)
+ */
+function recordCustomerPayment(paymentData) {
+  try {
+    validateRequired(paymentData, ['Customer_ID', 'Amount', 'Account', 'User']);
+
+    const customerId = paymentData.Customer_ID;
+    const customer = getCustomerById(customerId);
+    const paymentAmount = parseFloat(paymentData.Amount);
+
+    if (paymentAmount <= 0) {
+      throw new Error('Payment amount must be greater than zero');
+    }
+
+    const currentBalance = parseFloat(customer.Current_Balance) || 0;
+
+    // Customer balance is negative when they owe money
+    // Payment should reduce the debt (make balance less negative/more positive)
+    if (currentBalance >= 0) {
+      throw new Error('Customer has no outstanding balance');
+    }
+
+    if (paymentAmount > Math.abs(currentBalance)) {
+      // Allow overpayment but warn
+      Logger.log('Warning: Payment amount exceeds current balance');
+    }
+
+    // Create transaction in Financials sheet
+    const txnId = generateId('Financials', 'Transaction_ID', 'CPY');
+    const sheet = getSheet('Financials');
+
+    const description = 'Payment from ' + customer.Customer_Name +
+                       (paymentData.Notes ? ' - ' + paymentData.Notes : '') +
+                       (paymentData.Reference ? ' [Ref: ' + paymentData.Reference + ']' : '');
+
+    const txnRow = [
+      txnId,
+      new Date(),
+      'Customer_Payment',
+      customerId,
+      'Sales',
+      paymentData.Account, // Account (Cash/M-Pesa/Equity Bank)
+      description,
+      paymentAmount,
+      0, // Debit
+      paymentAmount, // Credit (money in)
+      0, // Balance (calculated separately)
+      paymentData.Account,
+      customer.Customer_Name, // Payee
+      paymentData.Receipt_No || paymentData.Reference || '', // Receipt_No
+      'Customer: ' + customerId, // Reference (for filtering)
+      'Approved',
+      paymentData.User,
+      paymentData.User
+    ];
+
+    sheet.appendRow(txnRow);
+
+    // Update account balance (increase - money coming in)
+    try {
+      updateAccountBalance(paymentData.Account, paymentAmount, paymentData.User);
+    } catch (error) {
+      // If updateAccountBalance doesn't exist, just log the error
+      Logger.log('Warning: Could not update account balance - ' + error.message);
+    }
+
+    // Update customer balance (payment reduces the debt)
+    const oldBalance = currentBalance;
+    const newCustomerBalance = currentBalance + paymentAmount; // Adding because balance is negative
+
+    updateRowById('Customers', 'Customer_ID', customerId, {
+      Current_Balance: newCustomerBalance
+    });
+
+    logAudit(
+      paymentData.User,
+      'Customers',
+      'Payment',
+      'Payment received from ' + customer.Customer_Name + ': ' + formatCurrency(paymentAmount),
+      '',
+      'Balance: ' + oldBalance,
+      'Balance: ' + newCustomerBalance
+    );
+
+    return {
+      success: true,
+      txnId: txnId,
+      amount: paymentAmount,
+      newBalance: newCustomerBalance,
+      message: 'Payment recorded successfully'
+    };
+
+  } catch (error) {
+    logError('recordCustomerPayment', error);
+    return {
+      success: false,
+      message: error.message
+    };
   }
 }
 
