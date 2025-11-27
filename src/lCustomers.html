@@ -26,7 +26,7 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     
-    /* Clean Stat Cards (Matches Supplier Look) */
+    /* Clean Stat Cards */
     .stat-card {
       background: white;
       padding: 20px;
@@ -66,7 +66,6 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
-    /* The 3-Row Layout Styles */
     .action-row {
       display: flex;
       gap: 10px;
@@ -106,7 +105,7 @@
       color: white;
     }
 
-    /* Specific Button Colors to match Screenshot */
+    /* Specific Button Colors */
     .btn-edit-custom { background-color: #f1c40f; color: #2c3e50; } /* Yellow */
     .btn-pay-custom { background-color: #198754; } /* Green */
     .btn-stmt-custom { background-color: #0dcaf0; color: #2c3e50; } /* Cyan */
@@ -394,6 +393,8 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       loadCustomers();
+      
+      // Search Listener
       document.getElementById('searchInput').addEventListener('keyup', filterCustomers);
       document.getElementById('statusFilter').addEventListener('change', filterCustomers);
     });
@@ -411,7 +412,7 @@
           document.getElementById('loadingIndicator').style.display = 'none';
         })
         .withFailureHandler(function(error) {
-          alert('Error: ' + error.message);
+          alert('Error loading customers: ' + error.message);
         })
         .getCustomers({});
     }
@@ -428,6 +429,7 @@
 
       if (!data || data.length === 0) return;
 
+      // Sort A-Z
       const sorted = [...data].sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
 
       sorted.forEach(c => {
@@ -435,6 +437,7 @@
         const id = c.Customer_ID;
         const balance = parseFloat(c.Current_Balance || c.Balance || 0);
         
+        // Format balance text
         let balText = ' - Bal: 0';
         if (balance < 0) balText = ` - Owes: ${Math.abs(balance).toLocaleString()}`;
         if (balance > 0) balText = ` - Credit: ${balance.toLocaleString()}`;
@@ -461,8 +464,13 @@
         const balance = parseFloat(c.Current_Balance || c.Balance || 0);
         
         let balHtml = '<span class="text-muted">0.00</span>';
-        if (balance < 0) balHtml = `<span class="balance-negative">Owes ${Math.abs(balance).toLocaleString()}</span>`;
-        if (balance > 0) balHtml = `<span class="balance-positive">Credit ${balance.toLocaleString()}</span>`;
+        // Fix: Ensure formatCurrency is called
+        if (balance < 0) balHtml = `<span class="balance-negative">Owes ${formatCurrency(Math.abs(balance))}</span>`;
+        if (balance > 0) balHtml = `<span class="balance-positive">Credit ${formatCurrency(balance)}</span>`;
+
+        const statusBadge = c.Status === 'Active' 
+          ? '<span class="badge bg-success">Active</span>' 
+          : '<span class="badge bg-secondary">Inactive</span>';
 
         row.innerHTML = `
           <td>${c.Customer_ID}</td>
@@ -470,7 +478,7 @@
           <td>${c.Phone}</td>
           <td>${c.Location || '-'}</td>
           <td>${balHtml}</td>
-          <td><span class="badge ${c.Status === 'Active' ? 'bg-success' : 'bg-secondary'}">${c.Status}</span></td>
+          <td>${statusBadge}</td>
         `;
         tbody.appendChild(row);
       });
@@ -480,6 +488,7 @@
       if(!data) return;
       const total = data.length;
       const active = data.filter(c => c.Status === 'Active').length;
+      
       let debt = 0;
       let sales = 0;
 
@@ -491,8 +500,8 @@
 
       document.getElementById('totalCustomers').textContent = total;
       document.getElementById('activeCustomers').textContent = active;
-      document.getElementById('totalReceivable').textContent = 'Ksh ' + debt.toLocaleString();
-      document.getElementById('totalSales').textContent = 'Ksh ' + sales.toLocaleString();
+      document.getElementById('totalReceivable').textContent = formatCurrency(debt);
+      document.getElementById('totalSales').textContent = formatCurrency(sales);
     }
 
     function filterCustomers() {
@@ -505,15 +514,19 @@
         const matchStatus = !status || c.Status === status;
         return matchTerm && matchStatus;
       });
+
       displayCustomers(filtered);
     }
 
-    // ACTIONS
+    // --- ACTIONS ---
+
     function actionEdit() {
       const id = document.getElementById('selectCustomerEdit').value;
       if(!id) return alert("Select a customer first");
-      const c = customersData.find(x => x.Customer_ID === id);
       
+      const c = customersData.find(x => x.Customer_ID === id);
+      if(!c) return;
+
       editingCustomerId = id;
       document.getElementById('customerModalTitle').innerText = 'Edit Customer';
       document.getElementById('customerSubmitBtn').innerText = 'Update Customer';
@@ -526,19 +539,27 @@
       document.getElementById('custType').value = c.Customer_Type || 'Walk-in';
       document.getElementById('custCreditLimit').value = c.Credit_Limit || 0;
       
-      document.getElementById('custOpeningBalance').parentElement.style.display = 'none'; // Hide on edit
+      // Hide Opening Balance on Edit (handled via adjustments)
+      document.getElementById('custOpeningBalance').parentElement.style.display = 'none';
+
       new bootstrap.Modal(document.getElementById('addCustomerModal')).show();
     }
 
     function actionReceive() {
       const id = document.getElementById('selectCustomerPay').value;
       if(!id) return alert("Select a customer first");
+
       const c = customersData.find(x => x.Customer_ID === id);
       const balance = parseFloat(c.Current_Balance || 0);
 
+      // Check if they actually owe money
+      if (balance >= 0) {
+        if(!confirm("This customer does not have a negative balance (debt). Do you still want to record a payment?")) return;
+      }
+
       document.getElementById('paymentCustomerId').value = id;
       document.getElementById('paymentCustomerName').innerText = c.Customer_Name;
-      document.getElementById('paymentCustomerBalance').innerText = 'Ksh ' + Math.abs(balance).toLocaleString();
+      document.getElementById('paymentCustomerBalance').innerText = formatCurrency(balance);
       document.getElementById('customerPaymentAmount').value = balance < 0 ? Math.abs(balance) : '';
       
       new bootstrap.Modal(document.getElementById('customerPaymentModal')).show();
@@ -547,9 +568,12 @@
     function actionStatement() {
       const id = document.getElementById('selectCustomerStmt').value;
       if(!id) return alert("Select a customer first");
-      // Placeholder for statement modal logic
-      alert("Statement feature coming soon for " + id);
+      
+      // Logic for statement view (call existing function or alert)
+      alert("Statement view for " + id + " (Feature needs Statement Modal implemented)");
     }
+
+    // --- ADD / SAVE ---
 
     function showAddCustomerModal() {
       editingCustomerId = null;
@@ -574,7 +598,7 @@
         KRA_PIN: document.getElementById('custKRAPin').value,
         Customer_Type: document.getElementById('custType').value,
         Credit_Limit: document.getElementById('custCreditLimit').value,
-        Opening_Balance: document.getElementById('custOpeningBalance').value,
+        Opening_Balance: document.getElementById('custOpeningBalance').value, // Send this
         User: currentUser
       };
 
@@ -589,10 +613,14 @@
           loadCustomers();
           alert(res.message);
         } else {
-          alert(res.message);
+          alert('Error: ' + res.message);
         }
       }
-      function onError(err) { btn.disabled = false; alert(err.message); }
+
+      function onError(err) {
+        btn.disabled = false;
+        alert('System Error: ' + err.message);
+      }
     }
 
     function submitCustomerPayment() {
@@ -607,16 +635,41 @@
       btn.disabled = true;
       btn.innerText = 'Processing...';
 
-      const paymentData = { Customer_ID: id, Amount: amt, Account: method, Reference: ref, User: currentUser };
+      const paymentData = {
+        Customer_ID: id,
+        Amount: amt,
+        Account: method,
+        Reference: ref,
+        User: currentUser
+      };
 
-      google.script.run.withSuccessHandler(res => {
-        btn.disabled = false;
-        if(res.success) {
-          bootstrap.Modal.getInstance(document.getElementById('customerPaymentModal')).hide();
-          loadCustomers();
-          alert("Payment Recorded!");
-        } else alert(res.message);
-      }).withFailureHandler(e => { btn.disabled = false; alert(e.message); }).recordCustomerPayment(paymentData);
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          if(res.success) {
+            bootstrap.Modal.getInstance(document.getElementById('customerPaymentModal')).hide();
+            loadCustomers();
+            alert("Payment Recorded!");
+          } else {
+            alert(res.message);
+          }
+        })
+        .withFailureHandler(function(e) {
+          btn.disabled = false;
+          alert(e.message);
+        })
+        .recordCustomerPayment(paymentData);
+    }
+
+    // HELPER FUNCTION
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-KE', {
+        style: 'currency',
+        currency: 'KES',
+        currencyDisplay: 'narrowSymbol',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(parseFloat(value) || 0);
     }
   </script>
 </body>
