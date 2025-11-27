@@ -79,13 +79,23 @@ function searchCustomers(query) {
     }
 
     const customers = getCustomers();
-    const lowerQuery = query.toLowerCase();
+    const lowerQuery = String(query).toLowerCase();
+
+    const normalizeField = (value) => {
+      if (value === null || value === undefined) return '';
+      return String(value).toLowerCase();
+    };
 
     return customers.filter(customer => {
-      return (customer.Customer_ID && customer.Customer_ID.toLowerCase().indexOf(lowerQuery) !== -1) ||
-             (customer.Customer_Name && customer.Customer_Name.toLowerCase().indexOf(lowerQuery) !== -1) ||
-             (customer.Phone && customer.Phone.toLowerCase().indexOf(lowerQuery) !== -1) ||
-             (customer.Email && customer.Email.toLowerCase().indexOf(lowerQuery) !== -1);
+      const customerId = normalizeField(customer.Customer_ID);
+      const name = normalizeField(customer.Customer_Name);
+      const phone = normalizeField(customer.Phone);
+      const email = normalizeField(customer.Email);
+
+      return customerId.indexOf(lowerQuery) !== -1 ||
+             name.indexOf(lowerQuery) !== -1 ||
+             phone.indexOf(lowerQuery) !== -1 ||
+             email.indexOf(lowerQuery) !== -1;
     });
 
   } catch (error) {
