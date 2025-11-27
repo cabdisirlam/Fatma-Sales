@@ -941,23 +941,23 @@
 
     <div class="content-section" id="section-sales-new">
       <div class="dashboard-content">
-        <h3><i class="bi bi-cart-plus"></i> Quick Sale</h3>
-        <p class="text-muted">Process a sale directly from the dashboard</p>
-
+        <h3><i class="bi bi-cart-plus"></i> Quick Sale / Quotation</h3>
+        <p class="text-muted">Process a sale or create a quotation</p>
+        
         <div class="row">
           <div class="col-md-8">
-            <div class="card quick-sale-card">
+            <div class="card shadow-sm">
               <div class="card-body">
                 <form id="dashboardSaleForm">
                   <div class="row mb-3">
                     <div class="col-md-6">
-                      <label class="form-label fw-bold small text-uppercase">Customer</label>
+                      <label class="form-label fw-bold">Customer</label>
                       <select class="form-select" id="dashSaleCustomer">
                         <option value="WALK-IN">Walk-in Customer</option>
                         </select>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label fw-bold small text-uppercase">Payment Mode</label>
+                      <label class="form-label fw-bold">Payment Mode</label>
                       <select class="form-select" id="dashSalePayment">
                         <option value="Cash">Cash</option>
                         <option value="M-Pesa">M-Pesa</option>
@@ -967,21 +967,21 @@
                     </div>
                   </div>
 
-                  <hr class="text-muted opacity-25">
+                  <hr>
 
                   <div class="row align-items-end mb-3">
                     <div class="col-md-5">
-                      <label class="form-label fw-bold small text-uppercase">Select Product</label>
+                      <label class="form-label fw-bold">Product</label>
                       <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()">
                         <option value="">-- Choose Item --</option>
-                        </select>
+                      </select>
                     </div>
                     <div class="col-md-2">
-                      <label class="form-label fw-bold small text-uppercase">Qty</label>
+                      <label class="form-label">Qty</label>
                       <input type="number" class="form-control" id="dashSaleQty" value="1" min="1">
                     </div>
                     <div class="col-md-3">
-                      <label class="form-label fw-bold small text-uppercase">Price</label>
+                      <label class="form-label">Price (Editable)</label>
                       <input type="number" class="form-control" id="dashSalePrice" min="0" step="0.01">
                     </div>
                     <div class="col-md-2">
@@ -991,34 +991,36 @@
                     </div>
                   </div>
 
-                  <div class="table-responsive border rounded mb-3 bg-white" style="max-height: 300px; overflow-y: auto;">
-                    <table class="table table-sm table-striped table-cart mb-0">
+                  <div class="table-responsive border rounded mb-3" style="max-height: 250px; overflow-y: auto;">
+                    <table class="table table-sm table-striped mb-0">
                       <thead class="table-light sticky-top">
                         <tr>
                           <th>Item</th>
                           <th>Qty</th>
                           <th>Price</th>
                           <th>Total</th>
-                          <th class="text-end">Action</th>
+                          <th>Action</th>
                         </tr>
                       </thead>
                       <tbody id="dashCartBody">
-                        <tr><td colspan="5" class="text-center text-muted py-4">Cart is empty</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>
                       </tbody>
                     </table>
                   </div>
 
-                  <div class="d-flex justify-content-between align-items-center mt-4">
+                  <div class="d-flex justify-content-between align-items-center mt-3">
                     <div>
-                      <small class="text-muted text-uppercase fw-bold">Total Amount</small>
-                      <div class="total-display" id="dashCartTotal">Ksh 0.00</div>
+                      <h4 class="mb-0 text-success">Total: <span id="dashCartTotal">Ksh 0.00</span></h4>
                     </div>
-                    <div>
-                      <button type="button" class="btn btn-outline-secondary me-2" onclick="clearDashCart()">
-                        <i class="bi bi-x-lg"></i> Clear
+                    <div class="d-flex gap-2">
+                      <button type="button" class="btn btn-outline-secondary" onclick="clearDashCart()">Clear</button>
+                      
+                      <button type="button" class="btn btn-warning text-dark" onclick="submitDashTransaction('Quotation')">
+                        <i class="bi bi-file-text"></i> Save Quotation
                       </button>
-                      <button type="button" class="btn btn-success px-4" onclick="submitDashSale()">
-                        <i class="bi bi-check-circle-fill"></i> Complete Sale
+                      
+                      <button type="button" class="btn btn-success px-4" onclick="submitDashTransaction('Sale')">
+                        <i class="bi bi-check-circle"></i> Complete Sale
                       </button>
                     </div>
                   </div>
@@ -1026,22 +1028,21 @@
               </div>
             </div>
           </div>
-
+          
           <div class="col-md-4">
-            <div class="card bg-light border-0 h-100">
+            <div class="card bg-light border-0">
               <div class="card-body">
-                <h6 class="fw-bold mb-3"><i class="bi bi-info-circle"></i> Product Details</h6>
-                <div id="dashProductInfo" class="text-muted small">
-                  Select a product from the list to see stock levels and pricing details.
-                </div>
+                <h6>Product Details</h6>
+                <div id="dashProductInfo" class="text-muted small">Select a product to see details.</div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      <div class="navigation-controls mt-3 d-flex justify-content-between p-3 bg-white rounded shadow-sm">
-        <button class="btn btn-outline-primary" onclick="showSection('sales')"><i class="bi bi-arrow-left"></i> Back to Overview</button>
+      
+      <div class="navigation-controls">
+        <button class="nav-btn" onclick="navigateToPrevious()"><i class="bi bi-chevron-left"></i> Previous</button>
+        <button class="nav-btn" onclick="navigateToNext()">Next <i class="bi bi-chevron-right"></i></button>
       </div>
     </div>
 
@@ -1522,15 +1523,19 @@
   <div class="modal fade" id="returnSaleModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Return Sale Items</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title"><i class="bi bi-arrow-return-left"></i> Return Items</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <input type="hidden" id="returnSaleId">
-          <div id="returnItemsContainer"></div>
+          <div class="alert alert-warning small">
+            <i class="bi bi-exclamation-triangle"></i> Returned items will be added back to inventory.
+          </div>
+          <div id="returnItemsContainer">
+            </div>
           <div class="mt-3">
-            <label>Reason for Return</label>
+            <label class="form-label">Reason for Return</label>
             <input type="text" id="returnReason" class="form-control" placeholder="e.g. Damaged, Wrong Item">
           </div>
         </div>
@@ -2541,45 +2546,45 @@
     function loadSalesHistory() {
       const tbody = document.getElementById('salesHistoryBody');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Loading sales history...</td></tr>';
+      
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><span class="spinner-border text-primary"></span> Loading...</td></tr>';
 
-      google.script.run
-        .withSuccessHandler(function(rows) {
+      google.script.run.withSuccessHandler(function(rows) {
           if (!rows || rows.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No sales found</td></tr>';
             return;
           }
 
           tbody.innerHTML = rows.map(function(row) {
-            const statusBadge = row.Status === 'Returned'
+            const isReturned = row.Status === 'Returned';
+            const statusBadge = isReturned
               ? '<span class="badge bg-warning text-dark">Returned</span>'
               : '<span class="badge bg-success">Completed</span>';
-            const actionCell = row.Status !== 'Returned'
-              ? `<button class="btn btn-sm btn-outline-danger" onclick="initiateReturn('${row.Transaction_ID}')">Return</button>`
+            
+            // Only show return button for completed sales
+            const actionCell = !isReturned
+              ? `<button class="btn btn-sm btn-outline-danger" onclick="initiateReturn('${row.Transaction_ID}')">
+                   <i class="bi bi-arrow-return-left"></i> Return
+                 </button>`
               : '-';
 
             return `
               <tr>
                 <td>${row.Transaction_ID}</td>
-                <td>${new Date(row.DateTime).toLocaleString()}</td>
+                <td>${new Date(row.DateTime).toLocaleDateString()}</td>
                 <td>${row.Customer_Name || 'Walk-in'}</td>
-                <td>${row.Payment_Mode || 'N/A'}</td>
-                <td class="text-end">${formatCurrencyKes(row.Grand_Total)}</td>
+                <td>${row.Payment_Mode || '-'}</td>
+                <td class="text-end">${formatCurrency(row.Grand_Total)}</td>
                 <td>${statusBadge}</td>
                 <td>${actionCell}</td>
               </tr>
             `;
           }).join('');
-        })
-        .withFailureHandler(function(error) {
-          tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center py-4">' + error.message + '</td></tr>';
-        })
-        .getSalesHistory(25);
+        }).getSalesHistory(20);
     }
 
     function initiateReturn(saleId) {
-      google.script.run
-        .withSuccessHandler(function(sale) {
+      google.script.run.withSuccessHandler(function(sale) {
           document.getElementById('returnSaleId').value = sale.Transaction_ID;
           const container = document.getElementById('returnItemsContainer');
 
@@ -2589,18 +2594,18 @@
               <tr>
                 <td>${item.Item_Name}</td>
                 <td>${item.Qty}</td>
-                <td><input type="number" class="form-control form-control-sm return-qty" data-id="${item.Item_ID}" max="${item.Qty}" min="0" value="0"></td>
+                <td>
+                  <input type="number" class="form-control form-control-sm return-qty" 
+                         data-id="${item.Item_ID}" 
+                         max="${item.Qty}" min="0" value="0">
+                </td>
               </tr>`;
           });
           html += '</tbody></table>';
           container.innerHTML = html;
 
           new bootstrap.Modal(document.getElementById('returnSaleModal')).show();
-        })
-        .withFailureHandler(function(error) {
-          alert('Error loading sale: ' + error.message);
-        })
-        .getSaleById(saleId);
+        }).getSaleById(saleId);
     }
 
     function submitReturn() {
@@ -2616,24 +2621,14 @@
         }
       });
 
-      if (itemsToReturn.length === 0) {
-        alert('Please select at least one item to return.');
-        return;
-      }
-
-      if (!reason) {
-        alert('Please enter a reason.');
-        return;
-      }
+      if (itemsToReturn.length === 0) return alert('Please select items to return.');
+      if (!reason) return alert('Please enter a reason.');
 
       google.script.run
         .withSuccessHandler(function(res) {
           alert(res.message);
           bootstrap.Modal.getInstance(document.getElementById('returnSaleModal')).hide();
-          loadSalesHistory();
-        })
-        .withFailureHandler(function(error) {
-          alert('Return failed: ' + error.message);
+          loadSalesHistory(); // Refresh list
         })
         .processSaleReturn(saleId, itemsToReturn, reason, sessionStorage.getItem('userName'));
     }
@@ -2822,55 +2817,73 @@
       if (info) info.innerText = 'Select a product from the list to see stock levels and pricing details.';
     }
 
-    function submitDashSale() {
-      if (dashCart.length === 0) return alert("Cart is empty. Add items before submitting.");
+    // --- UPDATED TRANSACTION LOGIC (Sales & Quotations) ---
+
+    function submitDashTransaction(type) {
+      if(dashCart.length === 0) return alert("Cart is empty. Add items first.");
 
       const customerId = document.getElementById('dashSaleCustomer').value;
       const paymentMode = document.getElementById('dashSalePayment').value;
-
-      if (customerId === 'WALK-IN' && paymentMode === 'Credit') {
-        return alert("Error: Walk-in customers cannot buy on Credit. Please register the customer first or choose a different payment method.");
-      }
-
       const custSelect = document.getElementById('dashSaleCustomer');
       const customerName = custSelect.options[custSelect.selectedIndex].text;
 
-      const saleData = {
+      // Prepare Data
+      const transactionData = {
         Customer_ID: customerId,
         Customer_Name: customerName,
         Payment_Mode: paymentMode,
         items: dashCart,
         User: sessionStorage.getItem('userName') || 'SYSTEM',
         Delivery_Charge: 0,
-        Discount: 0
+        Discount: 0,
+        // Quotation specific fields
+        Valid_Until: type === 'Quotation' ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) : null // 14 days validity
       };
 
-      const btn = document.querySelector('button[onclick="submitDashSale()"]');
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+      // Determine backend function
+      const backendFunc = type === 'Quotation' ? 'createQuotation' : 'createSale';
+      
+      // UI Loading State
+      const btnText = type === 'Quotation' ? 'Save Quotation' : 'Complete Sale';
+      // Find button by text to disable it (simple selector)
+      const btns = document.querySelectorAll('button');
+      let clickedBtn;
+      btns.forEach(b => { if(b.innerText.includes(btnText)) clickedBtn = b; });
+      
+      if(clickedBtn) {
+        clickedBtn.disabled = true;
+        clickedBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+      }
 
-      // Submit
+      // Call Backend
       google.script.run
         .withSuccessHandler(function(res) {
-          btn.disabled = false;
-          btn.innerHTML = originalText;
-
-          if (res.success) {
-            alert("Sale Successful! Receipt ID: " + res.transactionId);
-            clearDashCart();
-            // Refresh inventory to update stock counts
-            loadNewSaleInDashboard();
-          } else {
-            alert("Error: " + res.message);
-          }
+           if(clickedBtn) {
+             clickedBtn.disabled = false;
+             clickedBtn.innerHTML = `<i class=\"bi bi-check-circle\"></i> ${btnText}`;
+           }
+           
+           if(res.success) {
+             const msg = type === 'Quotation' 
+               ? "Quotation Saved! ID: " + res.transactionId 
+               : "Sale Successful! ID: " + res.transactionId;
+             alert(msg);
+             clearDashCart();
+             // Refresh inventory/sales history
+             loadNewSaleInDashboard(); 
+             if(type === 'Sale') loadSalesHistory(); // Update history tab
+           } else {
+             alert("Error: " + res.message);
+           }
         })
         .withFailureHandler(function(e) {
-          btn.disabled = false;
-          btn.innerHTML = originalText;
-          alert("System Error: " + e.message);
+           if(clickedBtn) {
+             clickedBtn.disabled = false;
+             clickedBtn.innerText = btnText;
+           }
+           alert("System Error: " + e.message);
         })
-        .createSale(saleData);
+        [backendFunc](transactionData); // Dynamic function call
     }
 
     // Inventory Section
