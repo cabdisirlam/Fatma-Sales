@@ -17,7 +17,7 @@
 <body>
   <div class="header-section">
     <h2><i class="bi bi-gear"></i> System Settings</h2>
-    <p class="mb-0">Configure your system settings and preferences</p>
+    <p class="mb-0">Configure Beipoa Kenya settings</p>
   </div>
   <div class="row">
     <div class="col-md-6">
@@ -27,21 +27,21 @@
           <form id="general-settings-form">
             <div class="mb-3">
               <label class="form-label">Shop Name</label>
-              <input type="text" class="form-control" id="shop-name" placeholder="Enter shop name">
+              <input type="text" class="form-control" id="shop-name" placeholder="Beipoa Kenya">
             </div>
             <div class="mb-3">
               <label class="form-label">Currency</label>
               <select class="form-select" id="currency" disabled>
                 <option value="KES" data-symbol="Ksh" selected>KES - Kenyan Shilling (Ksh)</option>
               </select>
-              <div class="form-text">Currency is locked to Kenyan Shilling.</div>
+              <div class="form-text">System currency is locked to Ksh.</div>
             </div>
             <div class="mb-3">
               <label class="form-label">Tax Rate (%)</label>
               <input type="number" class="form-control" id="tax-rate" value="0" step="0.01" min="0">
             </div>
             <div class="d-grid">
-              <button type="submit" class="btn btn-primary">Save Settings</button>
+              <button type="submit" class="btn btn-primary">Save General Settings</button>
             </div>
           </form>
         </div>
@@ -54,14 +54,20 @@
           <form id="receipt-settings-form">
             <div class="mb-3">
               <label class="form-label">Receipt Header</label>
-              <textarea class="form-control" id="receipt-header" rows="2" placeholder="Enter receipt header"></textarea>
+              <textarea class="form-control" id="receipt-header" rows="2" placeholder="Beipoa Kenya"></textarea>
             </div>
             <div class="mb-3">
               <label class="form-label">Receipt Footer (Slogan)</label>
               <textarea class="form-control" id="receipt-footer" rows="2" placeholder="Pata Kila Kitu Na Bei Poa"></textarea>
             </div>
+            <div class="mb-3">
+               <div class="form-check">
+                 <input class="form-check-input" type="checkbox" id="include-logo">
+                 <label class="form-check-label" for="include-logo">Include Shop Logo on Receipt</label>
+               </div>
+            </div>
             <div class="d-grid">
-              <button type="submit" class="btn btn-primary">Save Settings</button>
+              <button type="submit" class="btn btn-primary">Save Receipt Settings</button>
             </div>
           </form>
         </div>
@@ -72,22 +78,18 @@
     <div class="card-header"><i class="bi bi-tags"></i> Expense Categories</div>
     <div class="card-body">
       <p class="text-muted">Manage expense categories for better financial tracking</p>
-      <div class="d-flex flex-wrap gap-2">
-        <span class="badge bg-primary">Rent</span>
-        <span class="badge bg-primary">Utilities</span>
-        <span class="badge bg-primary">Salaries</span>
-        <span class="badge bg-primary">Marketing</span>
-        <span class="badge bg-primary">Supplies</span>
-        <span class="badge bg-primary">Transportation</span>
-        <span class="badge bg-primary">Other</span>
+      <div class="d-flex flex-wrap gap-2" id="expense-categories-list">
+        <span class="badge bg-secondary">Loading...</span>
       </div>
-      <button type="button" class="btn btn-sm btn-outline-primary mt-3"><i class="bi bi-plus"></i> Add Category</button>
-    </div>
+      </div>
   </div>
+  
   <div id="settings-alert" class="mt-3"></div>
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const DEFAULT_SHOP_NAME = 'Beipoa Kenya';
+    const DEFAULT_SLOGAN = 'Pata Kila Kitu Na Bei Poa';
 
     document.addEventListener('DOMContentLoaded', () => {
       loadSettings();
@@ -105,16 +107,7 @@
       `;
     }
 
-    function isGoogleScriptAvailable() {
-      return typeof google !== 'undefined' && google.script && google.script.run;
-    }
-
     function loadSettings() {
-      if (!isGoogleScriptAvailable()) {
-        showAlert('Unable to load settings: Google Apps Script context not available.', 'danger');
-        return;
-      }
-
       google.script.run
         .withSuccessHandler(populateSettings)
         .withFailureHandler(error => showAlert(error.message || 'Failed to load settings', 'danger'))
@@ -122,63 +115,93 @@
     }
 
     function populateSettings(settings = {}) {
+      // Populate General
       document.getElementById('shop-name').value = settings.Shop_Name || DEFAULT_SHOP_NAME;
-
-      const currencySelect = document.getElementById('currency');
-      currencySelect.value = 'KES';
-
       document.getElementById('tax-rate').value = settings.Tax_Rate || 0;
+      
+      // Populate Receipt
       document.getElementById('receipt-header').value = settings.Receipt_Header || DEFAULT_SHOP_NAME;
-      document.getElementById('receipt-footer').value = settings.Receipt_Footer || 'Pata Kila Kitu Na Bei Poa';
+      document.getElementById('receipt-footer').value = settings.Receipt_Footer || DEFAULT_SLOGAN;
+      
+      // Checkbox
+      const isLogo = settings.Include_Shop_Logo === true || settings.Include_Shop_Logo === 'true';
+      document.getElementById('include-logo').checked = isLogo;
 
+      // Populate Categories from keys
+      const categoriesDiv = document.getElementById('expense-categories-list');
+      categoriesDiv.innerHTML = '';
+      
+      const categories = Object.keys(settings)
+          .filter(k => k.startsWith('Expense_Category_'))
+          .map(k => k.replace('Expense_Category_', ''));
+          
+      if (categories.length === 0) {
+          // Defaults if none found
+          ['Rent', 'Utilities', 'Salaries', 'Marketing', 'Other'].forEach(cat => categories.push(cat));
+      }
+
+      categories.forEach(cat => {
+          const span = document.createElement('span');
+          span.className = 'badge bg-primary';
+          span.textContent = cat;
+          categoriesDiv.appendChild(span);
+      });
     }
 
     function handleGeneralSettingsSave(event) {
       event.preventDefault();
 
-      const shopName = document.getElementById('shop-name').value.trim() || DEFAULT_SHOP_NAME;
-      const currency = 'KES';
-      const currencySymbol = 'Ksh';
-      const taxRate = parseFloat(document.getElementById('tax-rate').value) || 0;
+      const shopName = document.getElementById('shop-name').value.trim();
+      const taxRate = document.getElementById('tax-rate').value;
 
       if (!shopName) {
         showAlert('Shop name is required.', 'warning');
         return;
       }
 
-      if (!isGoogleScriptAvailable()) {
-        showAlert('Unable to save settings: Google Apps Script context not available.', 'danger');
-        return;
-      }
+      const btn = event.target.querySelector('button');
+      const originalText = btn.innerText;
+      btn.disabled = true; btn.innerText = 'Saving...';
 
       google.script.run
-        .withSuccessHandler(() => showAlert('General settings saved successfully.'))
-        .withFailureHandler(error => showAlert(error.message || 'Failed to save settings', 'danger'))
+        .withSuccessHandler(() => {
+             showAlert('General settings saved successfully.');
+             btn.disabled = false; btn.innerText = originalText;
+        })
+        .withFailureHandler(error => {
+             showAlert(error.message || 'Failed to save settings', 'danger');
+             btn.disabled = false; btn.innerText = originalText;
+        })
         .updateBusinessInfo({
           Shop_Name: shopName,
-          Currency: currency,
-          Currency_Symbol: currencySymbol,
-          Tax_Rate: taxRate
+          Tax_Rate: parseFloat(taxRate) || 0
         });
     }
 
     function handleReceiptSettingsSave(event) {
       event.preventDefault();
 
-      const receiptHeader = document.getElementById('receipt-header').value.trim() || DEFAULT_SHOP_NAME;
+      const receiptHeader = document.getElementById('receipt-header').value.trim();
       const receiptFooter = document.getElementById('receipt-footer').value.trim();
+      const includeLogo = document.getElementById('include-logo').checked;
 
-      if (!isGoogleScriptAvailable()) {
-        showAlert('Unable to save settings: Google Apps Script context not available.', 'danger');
-        return;
-      }
+      const btn = event.target.querySelector('button');
+      const originalText = btn.innerText;
+      btn.disabled = true; btn.innerText = 'Saving...';
+
       google.script.run
-        .withSuccessHandler(() => showAlert('Receipt settings saved successfully.'))
-        .withFailureHandler(error => showAlert(error.message || 'Failed to save receipt settings', 'danger'))
+        .withSuccessHandler(() => {
+             showAlert('Receipt settings saved successfully.');
+             btn.disabled = false; btn.innerText = originalText;
+        })
+        .withFailureHandler(error => {
+             showAlert(error.message || 'Failed to save settings', 'danger');
+             btn.disabled = false; btn.innerText = originalText;
+        })
         .updateBusinessInfo({
           Receipt_Header: receiptHeader,
           Receipt_Footer: receiptFooter,
-          Include_Shop_Logo: false
+          Include_Shop_Logo: includeLogo
         });
     }
   </script>
