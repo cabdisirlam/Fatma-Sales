@@ -91,11 +91,10 @@
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
       margin-bottom: 20px;
-      text-align: center;
     }
 
     .stat-value {
-      font-size: 32px;
+      font-size: 20px;
       font-weight: 700;
       color: #667eea;
       margin: 10px 0;
@@ -103,7 +102,7 @@
 
     .stat-label {
       color: #7f8c8d;
-      font-size: 14px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -160,14 +159,14 @@
     </div>
     <div class="col-md-3">
       <div class="stat-card">
-        <div class="stat-label">With Debt</div>
-        <div class="stat-value" id="withDebt">0</div>
+        <div class="stat-label">Total Receivable</div>
+        <div class="stat-value balance-negative" id="totalReceivable">Ksh 0.00</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="stat-card">
-        <div class="stat-label">Total Debt</div>
-        <div class="stat-value balance-negative" id="totalDebt">Ksh 0</div>
+        <div class="stat-label">Total Sales</div>
+        <div class="stat-value" id="totalSales">Ksh 0.00</div>
       </div>
     </div>
   </div>
@@ -564,30 +563,32 @@
       if (!data || data.length === 0) {
         document.getElementById('totalCustomers').textContent = '0';
         document.getElementById('activeCustomers').textContent = '0';
-        document.getElementById('withDebt').textContent = '0';
-        document.getElementById('totalDebt').textContent = 'Ksh 0';
+        document.getElementById('totalReceivable').textContent = 'Ksh 0.00';
+        document.getElementById('totalSales').textContent = 'Ksh 0.00';
         return;
       }
 
       const totalCustomers = data.length;
       const activeCustomers = data.filter(c => c.Status === 'Active').length;
-      let customersWithDebt = 0;
-      let totalDebt = 0;
+      let totalReceivable = 0;
+      let totalSales = 0;
 
       data.forEach(function(customer) {
         const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
+        const sales = getNumericField(customer, ['Total_Sales', 'Total Sales']);
 
-        // For customers, negative balance means they owe us money (receivable/debt)
+        // For customers, negative balance means they owe us money (receivable)
         if (balance < 0) {
-          customersWithDebt++;
-          totalDebt += Math.abs(balance);
+          totalReceivable += Math.abs(balance);
         }
+
+        totalSales += sales;
       });
 
       document.getElementById('totalCustomers').textContent = totalCustomers;
       document.getElementById('activeCustomers').textContent = activeCustomers;
-      document.getElementById('withDebt').textContent = customersWithDebt;
-      document.getElementById('totalDebt').textContent = 'Ksh ' + totalDebt.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+      document.getElementById('totalReceivable').textContent = 'Ksh ' + totalReceivable.toFixed(2);
+      document.getElementById('totalSales').textContent = 'Ksh ' + totalSales.toFixed(2);
     }
 
     function filterCustomers() {
