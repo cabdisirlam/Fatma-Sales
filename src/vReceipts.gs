@@ -13,6 +13,7 @@ function generateReceiptHTML(transactionId) {
 
     const settings = getAllSettings();
     const dateStr = Utilities.formatDate(new Date(sale.DateTime), 'GMT+3', 'dd/MM/yyyy HH:mm');
+    const kraInfo = sale.KRA_PIN ? `<div><strong>KRA PIN:</strong> ${sale.KRA_PIN}</div>` : '';
 
     const html = `
       <html>
@@ -27,7 +28,7 @@ function generateReceiptHTML(transactionId) {
           <div><strong>Receipt #:</strong> ${sale.Transaction_ID}</div>
           <div><strong>Customer:</strong> ${sale.Customer_Name}</div>
           ${sale.Location ? `<div><strong>Location:</strong> ${sale.Location}</div>` : ''}
-          ${sale.KRA_PIN ? `<div><strong>KRA PIN:</strong> ${sale.KRA_PIN}</div>` : ''}
+          ${kraInfo}
           <div><strong>Served By:</strong> ${sale.Sold_By}</div>
         </div>
 
@@ -57,6 +58,9 @@ function generateReceiptHTML(transactionId) {
           <p>${settings.Receipt_Footer || 'Thank you!'}</p>
         </div>
       </body>
+      <script>
+        window.onload = function() { window.print(); }
+      </script>
       </html>
     `;
     return html;
