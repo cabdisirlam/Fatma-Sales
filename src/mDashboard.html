@@ -1739,11 +1739,86 @@
     </div>
   </div>
 
+  <div class="modal fade" id="dashboardCustomerEditModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title">Edit Customer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editCustomerId">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" id="editCustomerName">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone</label>
+            <input type="text" class="form-control" id="editCustomerPhone">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" id="editCustomerEmail">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Location</label>
+            <input type="text" class="form-control" id="editCustomerLocation">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-warning" id="btnSubmitCustEdit" onclick="dashboardSubmitCustomerEdit()">Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="dashboardCustomerPayModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">Receive Payment</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="recvCustomerId">
+          <div class="alert alert-light text-center border">
+             <h5 id="recvCustomerName"></h5>
+             <span id="recvCustomerBal" class="fw-bold text-danger fs-5"></span>
+             <br><small>Current Balance</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Amount (Ksh)</label>
+            <input type="number" class="form-control form-control-lg" id="recvAmount">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Account</label>
+            <select class="form-select" id="recvAccount">
+               <option value="Cash">Cash</option>
+               <option value="M-Pesa">M-Pesa</option>
+               <option value="Equity Bank">Equity Bank</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Reference</label>
+            <input type="text" class="form-control" id="recvRef" placeholder="Receipt / Ref No">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-success" id="btnSubmitCustPay" onclick="dashboardSubmitCustomerPay()">Confirm Payment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Global cache object to prevent redundant server calls
     const DATA_CACHE = {};
     const navHistory = [];
     let isGoingBack = false;
+    let dashboardSuppliersData = [];
+    let dashboardCustomersData = [];
 
     // Track the active user for audit logging and attribution
     let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
@@ -2286,7 +2361,7 @@
           Customer_Name: form.name.value.trim(),
           Phone: form.phone.value.trim(),
           Email: form.email.value.trim(),
-          Opening_Balance: parseFloat(form.balance.value) || 0,
+          Opening_Balance: parseFloat(form.Opening_Balance.value) || 0,
           User: currentUser || 'SYSTEM'
         };
 
@@ -2820,59 +2895,101 @@
     }
 
     function displayCustomers(data) {
+      dashboardCustomersData = data; // Store data for actions
       const container = document.getElementById('section-customers');
       if (!container) return;
 
       const activeCustomers = data.filter(c => c.Status === 'Active').length;
-      const customersWithDebt = data.filter(c => parseFloat(c.Balance || 0) < 0).length;
+      const customersWithDebt = data.filter(c => parseFloat(c.Current_Balance || c.Balance || 0) < 0).length;
+      
+      // Calculate totals
       const totalDebt = data.reduce((sum, c) => {
-        const balance = parseFloat(c.Balance || 0);
+        const balance = parseFloat(c.Current_Balance || c.Balance || 0);
         return sum + (balance < 0 ? Math.abs(balance) : 0);
       }, 0);
 
+      // Build HTML
       let html = `
-        <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-primary" onclick="toggleQuickAdd('customer')">
-            <i class="bi bi-person-plus"></i> Add Customer
-          </button>
-          <button class="btn btn-outline-secondary" onclick="loadCustomersSection(true)">
-            <i class="bi bi-arrow-clockwise"></i> Refresh
-          </button>
-        </div>
-        <div id="quickAddCustomer" class="quick-add-card d-none mb-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <h6 class="mb-0"><i class="bi bi-stars"></i> Quick Add Customer</h6>
-            <button class="btn btn-sm btn-link text-decoration-none" onclick="toggleQuickAdd('customer')">Close</button>
+        <div class="mb-3">
+          <div class="mb-2 d-flex gap-2">
+            <button class="btn btn-primary btn-sm" onclick="toggleQuickAdd('customer')">
+              <i class="bi bi-person-plus"></i> Quick Add
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadCustomersSection(true)">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
           </div>
-          <form class="mt-2" onsubmit="handleQuickAdd(event, 'customer')">
-            <div class="row g-2">
-              <div class="col-md-4">
-                <label class="form-label">Full Name</label>
-                <input type="text" class="form-control" name="name" placeholder="Jane Doe" required>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Phone</label>
-                <input type="tel" class="form-control" name="phone" placeholder="07xx xxx xxx" required>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Email</label>
-                <input type="email" class="form-control" name="email" placeholder="name@example.com">
-              </div>
-            </div>
-            <div class="row g-2 mt-2">
-              <div class="col-md-4">
-                <label class="form-label">Opening Balance</label>
-                <input type="number" class="form-control" name="balance" step="0.01">
-              </div>
-              <div class="col-md-8 d-flex align-items-end justify-content-end">
-                <button class="btn btn-success" type="submit" id="quickAddCustomerBtn">
-                  <i class="bi bi-check-circle"></i> Save Customer
-                </button>
-              </div>
-            </div>
-            <div id="quickAddCustomerAlert" class="alert alert-success mt-3 d-none"></div>
-          </form>
+
+          <div id="quickAddCustomer" class="quick-add-card d-none mb-3">
+             <div class="d-flex justify-content-between align-items-center">
+               <h6 class="mb-0"><i class="bi bi-stars"></i> Quick Add Customer</h6>
+               <button class="btn btn-sm btn-link text-decoration-none" onclick="toggleQuickAdd('customer')">Close</button>
+             </div>
+             <form class="mt-2" onsubmit="handleQuickAdd(event, 'customer')">
+               <div class="row g-2">
+                 <div class="col-md-4">
+                   <label class="form-label">Full Name</label>
+                   <input type="text" class="form-control" name="name" placeholder="Jane Doe" required>
+                 </div>
+                 <div class="col-md-4">
+                   <label class="form-label">Phone</label>
+                   <input type="tel" class="form-control" name="phone" placeholder="07xx xxx xxx">
+                 </div>
+                 <div class="col-md-4">
+                   <label class="form-label">Email</label>
+                   <input type="email" class="form-control" name="email" placeholder="name@example.com">
+                 </div>
+               </div>
+               <div class="row g-2 mt-2">
+                 <div class="col-md-4">
+                   <label class="form-label">Opening Balance</label>
+                   <input type="number" class="form-control" name="Opening_Balance" step="0.01">
+                 </div>
+                 <div class="col-md-8 d-flex align-items-end justify-content-end">
+                   <button class="btn btn-success" type="submit">
+                     <i class="bi bi-check-circle"></i> Save Customer
+                   </button>
+                 </div>
+               </div>
+               <div id="quickAddCustomerAlert" class="alert alert-success mt-3 d-none"></div>
+             </form>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <select class="form-select form-select-sm" id="editCustomerSelect" style="max-width: 300px;" onchange="showCustomerEditButton()">
+              <option value="">-- Select Customer to Edit --</option>
+              ${data.map(c => `<option value="${c.Customer_ID}">${c.Customer_Name || c.Name}</option>`).join('')}
+            </select>
+            <button class="btn btn-warning btn-sm" id="editCustomerActionBtn" style="display: none;" onclick="executeEditCustomer()">
+              <i class="bi bi-pencil"></i> Edit
+            </button>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <select class="form-select form-select-sm" id="payCustomerSelect" style="max-width: 300px;" onchange="showCustomerReceiveButton()">
+              <option value="">-- Select Customer (Balance) --</option>
+              ${data.map(c => {
+                 const bal = parseFloat(c.Current_Balance || c.Balance || 0);
+                 let balText = bal < 0 ? `Owes ${Math.abs(bal).toLocaleString()}` : `Credit ${bal.toLocaleString()}`;
+                 return `<option value="${c.Customer_ID}">${c.Customer_Name || c.Name} (${balText})</option>`;
+              }).join('')}
+            </select>
+            <button class="btn btn-success btn-sm" id="receiveCustomerActionBtn" style="display: none;" onclick="executeReceiveCustomer()">
+              <i class="bi bi-cash-coin"></i> Receive
+            </button>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <select class="form-select form-select-sm" id="stmtCustomerSelect" style="max-width: 300px;" onchange="showCustomerStmtButton()">
+              <option value="">-- Select Customer for Statement --</option>
+              ${data.map(c => `<option value="${c.Customer_ID}">${c.Customer_Name || c.Name}</option>`).join('')}
+            </select>
+            <button class="btn btn-info btn-sm" id="stmtCustomerActionBtn" style="display: none;" onclick="executeCustomerStatement()">
+              <i class="bi bi-file-text"></i> Statement
+            </button>
+          </div>
         </div>
+
         <div class="row mb-4">
           <div class="col-md-3">
             <div class="stat-card">
@@ -2882,7 +2999,7 @@
           </div>
           <div class="col-md-3">
             <div class="stat-card">
-              <h6>Active Customers</h6>
+              <h6>Active</h6>
               <h3 class="text-success">${activeCustomers}</h3>
             </div>
           </div>
@@ -2899,6 +3016,7 @@
             </div>
           </div>
         </div>
+
         <div class="card">
           <div class="card-header"><i class="bi bi-people"></i> Customers List</div>
           <div class="card-body">
@@ -2921,7 +3039,7 @@
         html += '<tr><td colspan="6" class="text-center text-muted py-4">No customers found</td></tr>';
       } else {
         data.slice(0, 50).forEach(function(customer) {
-          const balance = parseFloat(customer.Balance || 0);
+          const balance = parseFloat(customer.Current_Balance || customer.Balance || 0);
           const balanceClass = balance < 0 ? 'text-danger' : balance > 0 ? 'text-success' : '';
           const balanceText = balance < 0 ? 'Owes: ' + formatCurrency(Math.abs(balance)) :
                              balance > 0 ? 'Credit: ' + formatCurrency(balance) : formatCurrency(0);
@@ -2932,7 +3050,7 @@
           html += `
             <tr>
               <td>${customer.Customer_ID || ''}</td>
-              <td><strong>${customer.Name || ''}</strong></td>
+              <td><strong>${customer.Customer_Name || customer.Name || ''}</strong></td>
               <td>${customer.Phone || '-'}</td>
               <td>${customer.Email || '-'}</td>
               <td class="${balanceClass}">${balanceText}</td>
@@ -2951,6 +3069,105 @@
       `;
 
       container.innerHTML = html;
+    }
+
+    // --- CUSTOMER DASHBOARD ACTIONS ---
+
+    function showCustomerEditButton() {
+      const val = document.getElementById('editCustomerSelect').value;
+      document.getElementById('editCustomerActionBtn').style.display = val ? 'inline-block' : 'none';
+    }
+    
+    function showCustomerReceiveButton() {
+      const val = document.getElementById('payCustomerSelect').value;
+      document.getElementById('receiveCustomerActionBtn').style.display = val ? 'inline-block' : 'none';
+    }
+
+    function showCustomerStmtButton() {
+      const val = document.getElementById('stmtCustomerSelect').value;
+      document.getElementById('stmtCustomerActionBtn').style.display = val ? 'inline-block' : 'none';
+    }
+
+    function executeEditCustomer() {
+      const id = document.getElementById('editCustomerSelect').value;
+      if(!id) return;
+      const c = dashboardCustomersData.find(x => x.Customer_ID === id);
+      
+      // Populate Modal
+      document.getElementById('editCustomerId').value = id;
+      document.getElementById('editCustomerName').value = c.Customer_Name || c.Name;
+      document.getElementById('editCustomerPhone').value = c.Phone;
+      document.getElementById('editCustomerEmail').value = c.Email || '';
+      document.getElementById('editCustomerLocation').value = c.Location || '';
+      
+      new bootstrap.Modal(document.getElementById('dashboardCustomerEditModal')).show();
+    }
+
+    function executeReceiveCustomer() {
+      const id = document.getElementById('payCustomerSelect').value;
+      if(!id) return;
+      const c = dashboardCustomersData.find(x => x.Customer_ID === id);
+      const balance = parseFloat(c.Current_Balance || c.Balance || 0);
+
+      document.getElementById('recvCustomerId').value = id;
+      document.getElementById('recvCustomerName').innerText = c.Customer_Name || c.Name;
+      document.getElementById('recvCustomerBal').innerText = formatCurrency(balance);
+      // If negative (debt), suggest positive amount
+      document.getElementById('recvAmount').value = balance < 0 ? Math.abs(balance).toFixed(2) : '';
+
+      new bootstrap.Modal(document.getElementById('dashboardCustomerPayModal')).show();
+    }
+
+    function dashboardSubmitCustomerEdit() {
+        const id = document.getElementById('editCustomerId').value;
+        const data = {
+            Customer_Name: document.getElementById('editCustomerName').value,
+            Phone: document.getElementById('editCustomerPhone').value,
+            Email: document.getElementById('editCustomerEmail').value,
+            Location: document.getElementById('editCustomerLocation').value,
+            User: sessionStorage.getItem('userName')
+        };
+        
+        const btn = document.getElementById('btnSubmitCustEdit');
+        btn.disabled = true; btn.innerText = 'Updating...';
+
+        google.script.run.withSuccessHandler(() => {
+            btn.disabled = false; btn.innerText = 'Update';
+            bootstrap.Modal.getInstance(document.getElementById('dashboardCustomerEditModal')).hide();
+            loadCustomersSection(true);
+            alert('Customer updated');
+        }).withFailureHandler(e => {
+            btn.disabled = false; btn.innerText = 'Update';
+            alert(e.message);
+        }).updateCustomer(id, data);
+    }
+
+    function dashboardSubmitCustomerPay() {
+        const id = document.getElementById('recvCustomerId').value;
+        const amt = document.getElementById('recvAmount').value;
+        const acc = document.getElementById('recvAccount').value;
+        const ref = document.getElementById('recvRef').value;
+        
+        if(!amt) return alert("Enter amount");
+
+        const btn = document.getElementById('btnSubmitCustPay');
+        btn.disabled = true; btn.innerText = 'Processing...';
+
+        google.script.run.withSuccessHandler(() => {
+            btn.disabled = false; btn.innerText = 'Confirm Payment';
+            bootstrap.Modal.getInstance(document.getElementById('dashboardCustomerPayModal')).hide();
+            loadCustomersSection(true);
+            alert('Payment Received');
+        }).withFailureHandler(e => {
+            btn.disabled = false; btn.innerText = 'Confirm Payment';
+            alert(e.message);
+        }).recordCustomerPayment({
+            Customer_ID: id,
+            Amount: amt,
+            Account: acc,
+            Reference: ref,
+            User: sessionStorage.getItem('userName')
+        });
     }
 
     // Quotations Section
@@ -3309,7 +3526,6 @@
     }
 
     // Dashboard Supplier Action Functions
-    let dashboardSuppliersData = [];
 
     // Store suppliers data for later use
     function displaySuppliers(data) {
