@@ -174,22 +174,43 @@
 
   <!-- Customer Selection and Actions -->
   <div class="filter-section">
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label for="customerSelect" class="form-label">Select Customer</label>
-        <select class="form-select" id="customerSelect" onchange="onCustomerSelected()">
-          <option value="">-- Select a customer --</option>
-        </select>
+    <div class="row g-3 align-items-end">
+      <div class="col-md-2 d-grid gap-2">
+        <button class="btn btn-success" onclick="showAddCustomerModal()">
+          <i class="bi bi-person-plus"></i> Add
+        </button>
+        <button class="btn btn-primary" onclick="loadCustomers()">
+          <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
       </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Actions</label>
+      <div class="col-md-3">
+        <label for="customerEditSelect" class="form-label">-- Select Customer to Edit --</label>
         <div class="d-flex gap-2">
+          <select class="form-select" id="customerEditSelect" onchange="updateCustomerActionButtons()">
+            <option value="">-- Select Customer to Edit --</option>
+          </select>
           <button type="button" class="btn btn-warning" id="editCustomerBtn" onclick="editSelectedCustomer()" disabled>
             <i class="bi bi-pencil"></i> Edit
           </button>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label for="customerPaymentSelect" class="form-label">-- Select Customer to Receive Payment --</label>
+        <div class="d-flex gap-2">
+          <select class="form-select" id="customerPaymentSelect" onchange="updateCustomerActionButtons()">
+            <option value="">-- Select Customer to Receive Payment --</option>
+          </select>
           <button type="button" class="btn btn-success" id="receivePaymentBtn" onclick="receiveSelectedPayment()" disabled>
             <i class="bi bi-cash"></i> Receive
           </button>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label for="customerStatementSelect" class="form-label">-- Select Customer for Statement --</label>
+        <div class="d-flex gap-2">
+          <select class="form-select" id="customerStatementSelect" onchange="updateCustomerActionButtons()">
+            <option value="">-- Select Customer for Statement --</option>
+          </select>
           <button type="button" class="btn btn-info" id="customerStatementBtn" onclick="viewSelectedCustomerStatement()" disabled>
             <i class="bi bi-file-text"></i> Statement
           </button>
@@ -201,25 +222,15 @@
   <!-- Filter Section -->
   <div class="filter-section">
     <div class="row">
-      <div class="col-md-4">
+      <div class="col-md-6 col-lg-4">
         <input type="text" class="form-control" id="searchInput" placeholder="Search by name, phone, or email...">
       </div>
-      <div class="col-md-2">
+      <div class="col-md-3 col-lg-2">
         <select class="form-select" id="statusFilter">
           <option value="">All Status</option>
           <option value="Active">Active</option>
           <option value="Inactive">Inactive</option>
         </select>
-      </div>
-      <div class="col-md-3">
-        <button class="btn btn-primary" onclick="loadCustomers()">
-          <i class="bi bi-arrow-clockwise"></i> Refresh
-        </button>
-      </div>
-      <div class="col-md-3">
-        <button class="btn btn-success w-100" onclick="showAddCustomerModal()">
-          <i class="bi bi-person-plus"></i> Add Customer
-        </button>
       </div>
     </div>
   </div>
@@ -661,13 +672,18 @@
     }
 
     function populateCustomerDropdown(data) {
-      const select = document.getElementById('customerSelect');
-      const currentValue = select.value;
-
-      select.innerHTML = '<option value="">-- Select a customer --</option>';
+      const actionSelects = [
+        { id: 'customerEditSelect', placeholder: '-- Select Customer to Edit --' },
+        { id: 'customerPaymentSelect', placeholder: '-- Select Customer to Receive Payment --' },
+        { id: 'customerStatementSelect', placeholder: '-- Select Customer for Statement --' }
+      ];
 
       if (!data || data.length === 0) {
-        toggleCustomerActionButtons(true);
+        actionSelects.forEach(({ id, placeholder }) => {
+          const select = document.getElementById(id);
+          if (select) select.innerHTML = `<option value="">${placeholder}</option>`;
+        });
+        updateCustomerActionButtons();
         return;
       }
 
@@ -677,67 +693,71 @@
         return nameA.localeCompare(nameB);
       });
 
-      sorted.forEach(customer => {
-        const option = document.createElement('option');
-        option.value = customer.Customer_ID;
-        option.textContent = `${customer.Customer_Name || customer.Name || ''} (${customer.Customer_ID})`;
-        select.appendChild(option);
+      actionSelects.forEach(({ id, placeholder }) => {
+        const select = document.getElementById(id);
+        if (!select) return;
+
+        const currentValue = select.value;
+        select.innerHTML = `<option value="">${placeholder}</option>`;
+
+        sorted.forEach(customer => {
+          const option = document.createElement('option');
+          option.value = customer.Customer_ID;
+          option.textContent = `${customer.Customer_Name || customer.Name || ''} (${customer.Customer_ID})`;
+          select.appendChild(option);
+        });
+
+        if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
+          select.value = currentValue;
+        }
       });
 
-      if (currentValue) {
-        select.value = currentValue;
-        onCustomerSelected();
-      } else {
-        toggleCustomerActionButtons(true);
-      }
+      updateCustomerActionButtons();
     }
 
-    function toggleCustomerActionButtons(disabled) {
-      document.getElementById('editCustomerBtn').disabled = disabled;
-      document.getElementById('receivePaymentBtn').disabled = disabled;
-      document.getElementById('customerStatementBtn').disabled = disabled;
+    function updateCustomerActionButtons() {
+      const editSelect = document.getElementById('customerEditSelect');
+      document.getElementById('editCustomerBtn').disabled = !(editSelect && editSelect.value);
+
+      const paymentSelect = document.getElementById('customerPaymentSelect');
+      const paymentCustomer = paymentSelect ? findCustomerById(paymentSelect.value) : null;
+      const paymentBalance = paymentCustomer ? getNumericField(paymentCustomer, ['Current_Balance', 'Balance']) : 0;
+      document.getElementById('receivePaymentBtn').disabled = !(paymentCustomer && paymentBalance < 0);
+
+      const statementSelect = document.getElementById('customerStatementSelect');
+      document.getElementById('customerStatementBtn').disabled = !(statementSelect && statementSelect.value);
     }
 
-    function onCustomerSelected() {
-      const customerId = document.getElementById('customerSelect').value;
-      const customer = customersData.find(c => c.Customer_ID === customerId);
-
-      if (!customerId || !customer) {
-        toggleCustomerActionButtons(true);
-        return;
+    function getSelectedCustomerId(selectId, actionText) {
+      const select = document.getElementById(selectId);
+      if (!select || !select.value) {
+        alert(`Please select a customer ${actionText}`);
+        return null;
       }
-
-      const balance = getNumericField(customer, ['Current_Balance', 'Balance']);
-      document.getElementById('editCustomerBtn').disabled = false;
-      document.getElementById('customerStatementBtn').disabled = false;
-      document.getElementById('receivePaymentBtn').disabled = balance >= 0;
+      return select.value;
     }
 
     function editSelectedCustomer() {
-      const customerId = document.getElementById('customerSelect').value;
-      if (!customerId) {
-        alert('Please select a customer first');
-        return;
-      }
+      const customerId = getSelectedCustomerId('customerEditSelect', 'to edit');
+      if (!customerId) return;
       openCustomerEditor(customerId);
     }
 
     function receiveSelectedPayment() {
-      const customerId = document.getElementById('customerSelect').value;
-      if (!customerId) {
-        alert('Please select a customer first');
-        return;
-      }
+      const customerId = getSelectedCustomerId('customerPaymentSelect', 'to receive payment from');
+      if (!customerId) return;
       openPaymentModal(customerId);
     }
 
     function viewSelectedCustomerStatement() {
-      const customerId = document.getElementById('customerSelect').value;
-      if (!customerId) {
-        alert('Please select a customer first');
-        return;
-      }
+      const customerId = getSelectedCustomerId('customerStatementSelect', 'for the statement');
+      if (!customerId) return;
       viewCustomerStatement(customerId);
+    }
+
+    function findCustomerById(customerId) {
+      if (!customerId) return null;
+      return customersData.find(c => c.Customer_ID === customerId) || null;
     }
 
     function getNumericField(record, fields) {
