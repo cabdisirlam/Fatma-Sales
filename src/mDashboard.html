@@ -2659,9 +2659,20 @@
 
       google.script.run
         .withSuccessHandler(function(data) {
-          // 3. Save to Cache
-          DATA_CACHE['inventory'] = data;
-          displayInventory(data);
+          try {
+            // 3. Save to Cache
+            const normalized = Array.isArray(data) ? data : [];
+
+            if (!Array.isArray(data)) {
+              console.error('Unexpected inventory payload received in dashboard', data);
+            }
+
+            DATA_CACHE['inventory'] = normalized;
+            displayInventory(normalized);
+          } catch (renderError) {
+            console.error('Error rendering dashboard inventory', renderError);
+            contentDiv.innerHTML = '<div class="alert alert-danger">Error rendering inventory. Please try again.</div>';
+          }
         })
         .withFailureHandler(function(error) {
           contentDiv.innerHTML = '<div class="alert alert-danger">Error loading inventory: ' + error.message + '</div>';
