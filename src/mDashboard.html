@@ -26,6 +26,30 @@
       -webkit-overflow-scrolling: touch;
     }
 
+    /* Quick Sale Specific Styles */
+    .quick-sale-card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .table-cart th {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+
+    .table-cart td {
+      vertical-align: middle;
+      font-size: 0.9rem;
+    }
+
+    .total-display {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #2ecc71;
+    }
+
     /* Sidebar Styles */
     .sidebar {
       position: fixed;
@@ -919,21 +943,21 @@
       <div class="dashboard-content">
         <h3><i class="bi bi-cart-plus"></i> Quick Sale</h3>
         <p class="text-muted">Process a sale directly from the dashboard</p>
-        
+
         <div class="row">
           <div class="col-md-8">
-            <div class="card shadow-sm">
+            <div class="card quick-sale-card">
               <div class="card-body">
                 <form id="dashboardSaleForm">
                   <div class="row mb-3">
                     <div class="col-md-6">
-                      <label class="form-label">Customer</label>
+                      <label class="form-label fw-bold small text-uppercase">Customer</label>
                       <select class="form-select" id="dashSaleCustomer">
                         <option value="WALK-IN">Walk-in Customer</option>
                         </select>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label">Payment Mode</label>
+                      <label class="form-label fw-bold small text-uppercase">Payment Mode</label>
                       <select class="form-select" id="dashSalePayment">
                         <option value="Cash">Cash</option>
                         <option value="M-Pesa">M-Pesa</option>
@@ -943,22 +967,22 @@
                     </div>
                   </div>
 
-                  <hr>
+                  <hr class="text-muted opacity-25">
 
                   <div class="row align-items-end mb-3">
-                    <div class="col-md-6">
-                      <label class="form-label">Select Product</label>
+                    <div class="col-md-5">
+                      <label class="form-label fw-bold small text-uppercase">Select Product</label>
                       <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()">
                         <option value="">-- Choose Item --</option>
                         </select>
                     </div>
                     <div class="col-md-2">
-                      <label class="form-label">Qty</label>
+                      <label class="form-label fw-bold small text-uppercase">Qty</label>
                       <input type="number" class="form-control" id="dashSaleQty" value="1" min="1">
                     </div>
-                    <div class="col-md-2">
-                      <label class="form-label">Price</label>
-                      <input type="number" class="form-control" id="dashSalePrice" readonly disabled>
+                    <div class="col-md-3">
+                      <label class="form-label fw-bold small text-uppercase">Price</label>
+                      <input type="number" class="form-control" id="dashSalePrice" min="0" step="0.01">
                     </div>
                     <div class="col-md-2">
                       <button type="button" class="btn btn-primary w-100" onclick="addDashCartItem()">
@@ -967,31 +991,34 @@
                     </div>
                   </div>
 
-                  <div class="table-responsive border rounded mb-3" style="max-height: 250px; overflow-y: auto;">
-                    <table class="table table-sm table-striped mb-0">
+                  <div class="table-responsive border rounded mb-3 bg-white" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-sm table-striped table-cart mb-0">
                       <thead class="table-light sticky-top">
                         <tr>
                           <th>Item</th>
                           <th>Qty</th>
                           <th>Price</th>
                           <th>Total</th>
-                          <th>Action</th>
+                          <th class="text-end">Action</th>
                         </tr>
                       </thead>
                       <tbody id="dashCartBody">
-                        <tr><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted py-4">Cart is empty</td></tr>
                       </tbody>
                     </table>
                   </div>
 
-                  <div class="d-flex justify-content-between align-items-center mt-3">
+                  <div class="d-flex justify-content-between align-items-center mt-4">
                     <div>
-                      <h4 class="mb-0 text-success">Total: <span id="dashCartTotal">Ksh 0.00</span></h4>
+                      <small class="text-muted text-uppercase fw-bold">Total Amount</small>
+                      <div class="total-display" id="dashCartTotal">Ksh 0.00</div>
                     </div>
                     <div>
-                      <button type="button" class="btn btn-secondary me-2" onclick="clearDashCart()">Clear</button>
+                      <button type="button" class="btn btn-outline-secondary me-2" onclick="clearDashCart()">
+                        <i class="bi bi-x-lg"></i> Clear
+                      </button>
                       <button type="button" class="btn btn-success px-4" onclick="submitDashSale()">
-                        <i class="bi bi-check-circle"></i> Complete Sale
+                        <i class="bi bi-check-circle-fill"></i> Complete Sale
                       </button>
                     </div>
                   </div>
@@ -999,21 +1026,22 @@
               </div>
             </div>
           </div>
-          
+
           <div class="col-md-4">
-            <div class="card bg-light border-0">
+            <div class="card bg-light border-0 h-100">
               <div class="card-body">
-                <h6>Product Details</h6>
-                <div id="dashProductInfo" class="text-muted small">Select a product to see details.</div>
+                <h6 class="fw-bold mb-3"><i class="bi bi-info-circle"></i> Product Details</h6>
+                <div id="dashProductInfo" class="text-muted small">
+                  Select a product from the list to see stock levels and pricing details.
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      
-      <div class="navigation-controls">
-        <button class="nav-btn" onclick="navigateToPrevious()"><i class="bi bi-chevron-left"></i> Previous</button>
-        <button class="nav-btn" onclick="navigateToNext()">Next <i class="bi bi-chevron-right"></i></button>
+
+      <div class="navigation-controls mt-3 d-flex justify-content-between p-3 bg-white rounded shadow-sm">
+        <button class="btn btn-outline-primary" onclick="showSection('sales')"><i class="bi bi-arrow-left"></i> Back to Overview</button>
       </div>
     </div>
 
@@ -2310,13 +2338,10 @@
 
     // Sales helpers
     function formatCurrency(value) {
-      return new Intl.NumberFormat('en-KE', {
-        style: 'currency',
-        currency: 'KES',
-        currencyDisplay: 'narrowSymbol',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      }).format(parseFloat(value) || 0);
+      return 'Ksh ' + (parseFloat(value) || 0).toLocaleString('en-KE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
     }
 
     function showSalesAlert(message, type) {
@@ -2666,27 +2691,35 @@
     // --- DASHBOARD QUICK SALE LOGIC ---
     let dashCart = [];
     let dashProducts = [];
+    let dashCustomers = [];
 
     // Call this when 'Quick Sale' section is loaded
     function loadNewSaleInDashboard() {
+      clearDashCart();
+
       // 1. Load Customers
       google.script.run.withSuccessHandler(function(customers) {
+        dashCustomers = customers || [];
         const sel = document.getElementById('dashSaleCustomer');
         sel.innerHTML = '<option value="WALK-IN">Walk-in Customer</option>';
-        if (customers && customers.length > 0) {
-          customers.forEach(c => {
-            sel.add(new Option(c.Customer_Name, c.Customer_ID));
+
+        if (dashCustomers.length > 0) {
+          dashCustomers.sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
+
+          dashCustomers.forEach(c => {
+            const label = `${c.Customer_Name} (${c.Phone || '-'})`;
+            sel.add(new Option(label, c.Customer_ID));
           });
         }
       }).getCustomers();
 
       // 2. Load Inventory
       google.script.run.withSuccessHandler(function(items) {
-        dashProducts = items; // Store globally for lookups
+        dashProducts = items || []; // Store globally for lookups
         const sel = document.getElementById('dashSaleProduct');
         sel.innerHTML = '<option value="">-- Choose Item --</option>';
-        if (items && items.length > 0) {
-          items.forEach(i => {
+        if (dashProducts.length > 0) {
+          dashProducts.forEach(i => {
             // Only show items in stock
             const stock = i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty;
             if (stock > 0) {
@@ -2704,22 +2737,26 @@
         document.getElementById('dashSalePrice').value = product.Selling_Price;
         const stock = product.Current_Qty !== undefined ? product.Current_Qty : product.Stock_Qty;
         document.getElementById('dashProductInfo').innerHTML = `
-           <strong>${product.Item_Name}</strong><br>
-           Stock: ${stock}<br>
-           Price: Ksh ${product.Selling_Price}
+           <div class="mb-2"><strong>Item:</strong> ${product.Item_Name}</div>
+           <div class="mb-2"><strong>Category:</strong> ${product.Category || '-'}</div>
+           <div class="mb-2 text-primary"><strong>Standard Price:</strong> Ksh ${product.Selling_Price}</div>
+           <div class="mb-2 ${stock < 10 ? 'text-danger' : 'text-success'}"><strong>Current Stock:</strong> ${stock}</div>
         `;
       } else {
         document.getElementById('dashSalePrice').value = '';
-        document.getElementById('dashProductInfo').innerText = 'Select a product to see details.';
+        document.getElementById('dashProductInfo').innerText = 'Select a product from the list to see stock levels and pricing details.';
       }
     }
 
     function addDashCartItem() {
       const id = document.getElementById('dashSaleProduct').value;
       const qty = parseFloat(document.getElementById('dashSaleQty').value);
+      const price = parseFloat(document.getElementById('dashSalePrice').value);
       const product = dashProducts.find(p => p.Item_ID === id);
 
-      if (!product || qty <= 0) return alert("Select product and valid quantity");
+      if (!product || !id) return alert("Please select a product.");
+      if (isNaN(qty) || qty <= 0) return alert("Please enter a valid quantity.");
+      if (isNaN(price) || price < 0) return alert("Please enter a valid price.");
 
       // Check stock
       const stock = product.Current_Qty !== undefined ? product.Current_Qty : product.Stock_Qty;
@@ -2730,15 +2767,16 @@
         Item_ID: id,
         Item_Name: product.Item_Name,
         Qty: qty,
-        Unit_Price: product.Selling_Price,
-        Total: qty * product.Selling_Price
+        Unit_Price: price,
+        Total: qty * price
       });
 
       renderDashCart();
       // Reset inputs
       document.getElementById('dashSaleProduct').value = '';
       document.getElementById('dashSaleQty').value = 1;
-      updateDashProductDetails();
+      document.getElementById('dashSalePrice').value = '';
+      document.getElementById('dashProductInfo').innerText = 'Select a product from the list to see stock levels and pricing details.';
     }
 
     function renderDashCart() {
@@ -2752,16 +2790,20 @@
           <tr>
             <td>${item.Item_Name}</td>
             <td>${item.Qty}</td>
-            <td>${item.Unit_Price}</td>
-            <td>${item.Total}</td>
-            <td><button class="btn btn-sm btn-danger" onclick="removeDashItem(${index})">X</button></td>
+            <td>${formatCurrency(item.Unit_Price)}</td>
+            <td>${formatCurrency(item.Total)}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-danger" onclick="removeDashItem(${index})">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
           </tr>
         `;
       });
 
       document.getElementById('dashCartTotal').innerText = formatCurrency(total);
-      
-      if (dashCart.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="text-center">Cart is empty</td></tr>';
+
+      if (dashCart.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Cart is empty</td></tr>';
     }
 
     function removeDashItem(index) {
@@ -2772,35 +2814,63 @@
     function clearDashCart() {
       dashCart = [];
       renderDashCart();
+      const customerSelect = document.getElementById('dashSaleCustomer');
+      if (customerSelect) customerSelect.value = 'WALK-IN';
+      const paymentSelect = document.getElementById('dashSalePayment');
+      if (paymentSelect) paymentSelect.value = 'Cash';
+      const info = document.getElementById('dashProductInfo');
+      if (info) info.innerText = 'Select a product from the list to see stock levels and pricing details.';
     }
 
     function submitDashSale() {
-      if (dashCart.length === 0) return alert("Cart is empty");
+      if (dashCart.length === 0) return alert("Cart is empty. Add items before submitting.");
+
+      const customerId = document.getElementById('dashSaleCustomer').value;
+      const paymentMode = document.getElementById('dashSalePayment').value;
+
+      if (customerId === 'WALK-IN' && paymentMode === 'Credit') {
+        return alert("Error: Walk-in customers cannot buy on Credit. Please register the customer first or choose a different payment method.");
+      }
+
+      const custSelect = document.getElementById('dashSaleCustomer');
+      const customerName = custSelect.options[custSelect.selectedIndex].text;
 
       const saleData = {
-        Customer_ID: document.getElementById('dashSaleCustomer').value,
-        Payment_Mode: document.getElementById('dashSalePayment').value,
+        Customer_ID: customerId,
+        Customer_Name: customerName,
+        Payment_Mode: paymentMode,
         items: dashCart,
         User: sessionStorage.getItem('userName') || 'SYSTEM',
         Delivery_Charge: 0,
         Discount: 0
       };
-      
-      // Get customer name from dropdown text
-      const custSelect = document.getElementById('dashSaleCustomer');
-      saleData.Customer_Name = custSelect.options[custSelect.selectedIndex].text;
+
+      const btn = document.querySelector('button[onclick="submitDashSale()"]');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
 
       // Submit
-      google.script.run.withSuccessHandler(function(res) {
-        if (res.success) {
-          alert("Sale Successful! ID: " + res.transactionId);
-          clearDashCart();
-          // Refresh inventory to update stock counts
-          loadNewSaleInDashboard();
-        } else {
-          alert("Error: " + res.message);
-        }
-      }).withFailureHandler(e => alert(e.message)).createSale(saleData);
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+
+          if (res.success) {
+            alert("Sale Successful! Receipt ID: " + res.transactionId);
+            clearDashCart();
+            // Refresh inventory to update stock counts
+            loadNewSaleInDashboard();
+          } else {
+            alert("Error: " + res.message);
+          }
+        })
+        .withFailureHandler(function(e) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          alert("System Error: " + e.message);
+        })
+        .createSale(saleData);
     }
 
     // Inventory Section
