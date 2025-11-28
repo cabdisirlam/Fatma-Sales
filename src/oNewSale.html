@@ -18,7 +18,7 @@
 <body>
   <div class="header-section">
     <h2><i class="bi bi-cart-plus"></i> New Transaction</h2>
-    <p class="mb-0">Process Sales, Quotations & Returns</p>
+    <p class="mb-0">Process sales and returns</p>
   </div>
 
   <div class="card">
@@ -97,7 +97,7 @@
           <hr>
           <div class="d-flex justify-content-center gap-2">
             <button class="btn btn-dark" onclick="printDocument()">
-              <i class="bi bi-printer"></i> Print Receipt/Quotation
+              <i class="bi bi-printer"></i> Print Receipt
             </button>
             <button class="btn btn-outline-secondary" onclick="resetForm()">
               <i class="bi bi-arrow-repeat"></i> New Transaction
@@ -186,9 +186,6 @@
       if (type === 'Return') {
         btn.className = 'btn btn-danger btn-lg';
         btn.innerHTML = '<i class="bi bi-arrow-return-left"></i> Process Return';
-      } else if (type === 'Quotation') {
-        btn.className = 'btn btn-warning btn-lg';
-        btn.innerHTML = '<i class="bi bi-file-text"></i> Create Quotation';
       } else {
         btn.className = 'btn btn-primary btn-lg';
         btn.innerHTML = '<i class="bi bi-check-circle"></i> Complete Sale';
