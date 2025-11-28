@@ -228,7 +228,6 @@
 
       // Determine backend function
       let backendFunc = 'createSale';
-      if (type === 'Quotation') backendFunc = 'createQuotation';
       // For Return, we might handle it via createSale but with logic, 
       // or calling 'processSaleReturn' if checking against old sale. 
       // For simplicity here, we'll treat Return as a Sale but handle via createSale logic
@@ -267,7 +266,7 @@
       if (!lastTransactionId) return alert("No transaction ID found.");
       
       const type = document.getElementById('txnType').value;
-      const func = type === 'Quotation' ? 'generateQuotationHTML' : 'generateReceiptHTML';
+      const func = 'generateReceiptHTML';
 
       // Open a new window immediately to avoid popup blockers
       const printWindow = window.open('', '_blank', 'width=800,height=600');

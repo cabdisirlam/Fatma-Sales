@@ -19,29 +19,30 @@ function generateReceiptHTML(transactionId) {
       <html>
       <head>
         <style>
-          /* Reset margins for thermal printer */
           @page { margin: 0; size: auto; }
           body { 
-            font-family: 'Courier New', monospace; 
+            font-family: 'monospace', 'Courier New', Courier, mono; 
             margin: 0; 
             padding: 5px; 
             width: 100%;
-            max-width: 300px; /* Constraints width for 80mm paper */
-            font-size: 12px;
-            line-height: 1.2;
+            max-width: 300px; /* For 80mm paper */
+            font-size: 10px;
+            line-height: 1.3;
             color: #000;
           }
-          .header { text-align: center; margin-bottom: 10px; }
-          .shop-name { font-size: 16px; font-weight: bold; }
-          .divider { border-top: 1px dashed #000; margin: 5px 0; }
-          .item-row { display: flex; justify-content: space-between; }
-          .item-name { font-weight: bold; margin-top: 4px;}
-          .item-details { display: flex; justify-content: space-between; font-size: 11px; padding-left: 10px; }
-          .totals { margin-top: 10px; font-weight: bold; }
-          .footer { margin-top: 15px; text-align: center; font-size: 10px; }
+          .header { text-align: center; margin-bottom: 8px; }
+          .shop-name { font-size: 14px; font-weight: bold; }
+          .divider { border-top: 1px dashed #000; margin: 4px 0; }
+          .item-table { width: 100%; border-collapse: collapse; }
+          .item-table th, .item-table td { padding: 2px 0; }
+          .item-table .item-name { font-weight: bold; }
+          .item-table .item-details { text-align: right; }
+          .totals-table { width: 100%; margin-top: 8px; font-weight: bold; }
+          .totals-table td { padding: 1px 0; }
+          .footer { margin-top: 12px; text-align: center; font-size: 9px; }
         </style>
       </head>
-      <body onload="window.print()">
+      <body>
         <div class="header">
           <div class="shop-name">${settings.Shop_Name || CONFIG.SHOP_NAME}</div>
           <div>${settings.Receipt_Header || ''}</div>
@@ -49,36 +50,41 @@ function generateReceiptHTML(transactionId) {
         
         <div class="divider"></div>
         
-        <div>
-          Receipt #: ${sale.Transaction_ID}<br>
-          Date: ${dateStr}<br>
-          Served By: ${sale.Sold_By}
-        </div>
+        <div>Receipt #: ${sale.Transaction_ID}</div>
+        <div>Date: ${dateStr}</div>
+        <div>Served By: ${sale.Sold_By}</div>
         
         <div class="divider"></div>
         
-        <div>
-          ${sale.items.map(i => `
-            <div>
-              <div class="item-name">${i.Item_Name}</div>
-              <div class="item-details">
-                <span>${i.Qty} x ${formatNumber(i.Unit_Price)}</span>
-                <span>${formatNumber(i.Line_Total)}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
+        <table class="item-table">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Item</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sale.items.map(i => `
+              <tr>
+                <td colspan="2" class="item-name">${i.Item_Name}</td>
+              </tr>
+              <tr>
+                <td>  ${i.Qty} x ${formatNumber(i.Unit_Price)}</td>
+                <td class="item-details">${formatNumber(i.Line_Total)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
 
         <div class="divider"></div>
         
-        <div class="totals">
-          <div class="item-row"><span>Subtotal:</span> <span>${formatNumber(sale.Subtotal)}</span></div>
-          ${sale.Discount > 0 ? `<div class="item-row"><span>Discount:</span> <span>-${formatNumber(sale.Discount)}</span></div>` : ''}
-          <div class="item-row" style="font-size: 14px; margin-top: 5px;">
-            <span>TOTAL:</span> 
-            <span>${settings.Currency_Symbol || 'Ksh'} ${formatNumber(sale.Grand_Total)}</span>
-          </div>
-        </div>
+        <table class="totals-table">
+          <tbody>
+            <tr><td>Subtotal:</td><td style="text-align:right;">${formatNumber(sale.Subtotal)}</td></tr>
+            ${sale.Discount > 0 ? `<tr><td>Discount:</td><td style="text-align:right;">-${formatNumber(sale.Discount)}</td></tr>` : ''}
+            <tr style="font-size: 14px;"><td>TOTAL:</td><td style="text-align:right;">${settings.Currency_Symbol || 'Ksh'} ${formatNumber(sale.Grand_Total)}</td></tr>
+          </tbody>
+        </table>
         
         <div class="footer">
           <p>${settings.Receipt_Footer || 'Thank you!'}</p>

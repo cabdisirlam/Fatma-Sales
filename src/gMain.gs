@@ -26,7 +26,6 @@ function onOpen() {
     .addSeparator()
     .addItem('💰 Financials', 'showFinancials')
     .addItem('💳 Expenses', 'showExpenses')
-    // .addItem('📋 Quotations', 'showQuotations')  // REMOVED: Quotations feature
     .addSeparator();
 
   // Only show admin menu items if user has "Admin" role (case-sensitive)
@@ -208,16 +207,7 @@ function showExpenses() {
   SpreadsheetApp.getUi().showModalDialog(html, 'Expenses Management');
 }
 
-/**
- * Show quotations
- */
-function showQuotations() {
-  const html = HtmlService.createHtmlOutputFromFile('xQuotations')
-    .setTitle('Quotations Management')
-    .setWidth(1000)
-    .setHeight(700);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Quotations Management');
-}
+
 
 /**
  * Get active user email

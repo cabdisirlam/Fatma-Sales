@@ -1,8 +1,6 @@
-**/**
-!src/**/*.js
-!appsscript.json
-.git/**
-node_modules/**
-.gitignore
-.claspignore
-README.md
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# You generally don't need to ignore much else
+# because "rootDir": "./src" handles the rest.
