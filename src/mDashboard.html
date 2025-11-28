@@ -759,12 +759,7 @@
         </a>
       </li>
 
-      <li class="menu-item">
-        <a href="#" id="menu-quotations" onclick="showSection('quotations', event);">
-          <i class="bi bi-file-text"></i>
-          <span>Quotations</span>
-        </a>
-      </li>
+      <!-- REMOVED: Quotations menu item -->
 
       <li class="menu-item">
         <a href="#" id="menu-financials" onclick="showSection('financials', event);">
@@ -1017,10 +1012,8 @@
                         <option value="Credit">Credit (Debt)</option>
                       </select>
 
-                      <button type="button" class="btn btn-warning text-dark" onclick="submitDashTransaction('Quotation')">
-                        <i class="bi bi-file-text"></i> Quotation
-                      </button>
-                      
+                      <!-- REMOVED: Quotation button -->
+
                       <button type="button" class="btn btn-success px-4" onclick="submitDashTransaction('Sale')">
                         <i class="bi bi-check-circle"></i> Sale
                       </button>
@@ -2832,20 +2825,36 @@
     function loadSalesHistory() {
       const tbody = document.getElementById('salesHistoryBody');
       if(!tbody) return;
-      
+
       tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><span class="spinner-border text-primary"></span> Loading...</td></tr>';
 
-      // Uses the new mixed transaction function
-      google.script.run.withSuccessHandler(function(rows) {
+      // Use getRecentSales which filters ONLY sales (ignoring quotations)
+      google.script.run
+        .withSuccessHandler(function(rows) {
           if (!rows || rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No recent transactions found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No recent sales found</td></tr>';
             return;
           }
 
           tbody.innerHTML = rows.map(function(row) {
-            const isQuot = row.Transaction_ID.startsWith('QUOT');
-            const typeLabel = isQuot ? 'Quotation' : 'Sale';
-            const badgeClass = isQuot ? 'bg-warning text-dark' : 'bg-success';
+            const isReturned = row.Status === 'Returned' || row.Status === 'Cancelled';
+
+            // Status Badge Logic
+            let statusBadge = '<span class="badge bg-success">Completed</span>';
+            if (row.Status === 'Returned') statusBadge = '<span class="badge bg-warning text-dark">Returned</span>';
+            if (row.Status === 'Cancelled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
+
+            // Return Button Logic (Visible only if not already returned)
+            const returnBtn = !isReturned
+              ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="initiateReturn('${row.Transaction_ID}')" title="Return Sale">
+                   <i class="bi bi-arrow-return-left"></i>
+                 </button>`
+              : '';
+
+            // Print Button
+            const printBtn = `<button class="btn btn-sm btn-outline-dark" onclick="printDocument('${row.Transaction_ID}', 'Sale')" title="Print Receipt">
+                 <i class="bi bi-printer"></i>
+               </button>`;
 
             return `
               <tr>
@@ -2854,16 +2863,22 @@
                 <td>${row.Customer_Name || 'Walk-in'}</td>
                 <td>${row.Payment_Mode || '-'}</td>
                 <td class="text-end">${formatCurrency(row.Grand_Total)}</td>
-                <td><span class="badge ${badgeClass}">${typeLabel}</span></td>
+                <td>${statusBadge}</td>
                 <td>
-                  <button class="btn btn-sm btn-outline-dark" onclick="printDocument('${row.Transaction_ID}', '${typeLabel}')">
-                    <i class="bi bi-printer"></i>
-                  </button>
+                  <div class="d-flex">
+                    ${printBtn}
+                    ${returnBtn}
+                  </div>
                 </td>
               </tr>
             `;
           }).join('');
-        }).getRecentTransactionsMixed(); // Ensure this backend function exists
+        })
+        .withFailureHandler(function(error) {
+          console.error(error);
+          tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center py-4">Error: ' + error.message + '</td></tr>';
+        })
+        .getRecentSales(20); // Calls the specific sales function in aCode.gs
     }
 
     // --- UPDATED FUNCTIONS FOR SALES & QUOTATIONS ---

@@ -4,7 +4,7 @@
  */
 
 /**
- * Generate receipt HTML for sale
+ * Generate receipt HTML for sale (Thermal Printer Optimized)
  */
 function generateReceiptHTML(transactionId) {
   try {
@@ -14,44 +14,73 @@ function generateReceiptHTML(transactionId) {
     const settings = getAllSettings();
     const dateStr = Utilities.formatDate(new Date(sale.DateTime), 'GMT+3', 'dd/MM/yyyy HH:mm');
 
+    // Thermal Printer Optimized HTML
     const html = `
       <html>
-      <body style="font-family: monospace; padding: 20px; max-width: 350px; margin: 0 auto;">
-        <div style="text-align: center; border-bottom: 1px dashed black; padding-bottom: 10px;">
-          <h2 style="margin: 0;">${settings.Shop_Name || CONFIG.SHOP_NAME}</h2>
-          <p style="margin: 5px 0;">${settings.Receipt_Header || ''}</p>
+      <head>
+        <style>
+          @page { margin: 0; size: auto; }
+          body {
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 5px;
+            width: 100%;
+            max-width: 300px; /* Force 58mm/80mm width constraint */
+            font-size: 12px;
+            line-height: 1.2;
+            color: #000;
+          }
+          .text-center { text-align: center; }
+          .text-right { text-align: right; }
+          .bold { font-weight: bold; }
+          .divider { border-top: 1px dashed #000; margin: 5px 0; }
+          .item-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+          .item-name { width: 100%; display: block; }
+          .item-meta { display: flex; justify-content: space-between; font-size: 11px; }
+          .totals { margin-top: 10px; }
+          .footer { margin-top: 15px; font-size: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="text-center">
+          <h2 style="margin: 0; font-size: 16px;">${settings.Shop_Name || CONFIG.SHOP_NAME}</h2>
+          <div>${settings.Receipt_Header || ''}</div>
         </div>
-        
-        <div style="margin: 10px 0;">
-          <div><strong>Date:</strong> ${dateStr}</div>
-          <div><strong>Receipt #:</strong> ${sale.Transaction_ID}</div>
-          <div><strong>Customer:</strong> ${sale.Customer_Name}</div>
-          <div><strong>Served By:</strong> ${sale.Sold_By}</div>
-        </div>
-        
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
-          <tr style="border-bottom: 1px solid black;">
-            <th style="text-align: left;">Item</th>
-            <th style="text-align: center;">Qty</th>
-            <th style="text-align: right;">Total</th>
-          </tr>
-          ${sale.items.map(i => `
-            <tr>
-              <td>${i.Item_Name}</td>
-              <td style="text-align: center;">${i.Qty}</td>
-              <td style="text-align: right;">${formatNumber(i.Line_Total)}</td>
-            </tr>
-          `).join('')}
-        </table>
 
-        <div style="border-top: 1px dashed black; padding-top: 5px;">
-          <div style="display: flex; justify-content: space-between;">
-            <strong>TOTAL:</strong>
-            <strong>${settings.Currency_Symbol || 'Ksh'} ${formatNumber(sale.Grand_Total)}</strong>
+        <div class="divider"></div>
+
+        <div>
+          Receipt #: ${sale.Transaction_ID}<br>
+          Date: ${dateStr}<br>
+          Served By: ${sale.Sold_By}
+        </div>
+
+        <div class="divider"></div>
+
+        <div>
+          ${sale.items.map(i => `
+            <div style="margin-bottom: 5px;">
+              <div class="item-name bold">${i.Item_Name}</div>
+              <div class="item-meta">
+                <span>${i.Qty} x ${formatNumber(i.Unit_Price)}</span>
+                <span>${formatNumber(i.Line_Total)}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="totals">
+          <div class="item-row"><span>Subtotal:</span> <span>${formatNumber(sale.Subtotal)}</span></div>
+          ${sale.Discount > 0 ? `<div class="item-row"><span>Discount:</span> <span>-${formatNumber(sale.Discount)}</span></div>` : ''}
+          <div class="item-row bold" style="font-size: 14px; margin-top: 5px;">
+            <span>TOTAL:</span>
+            <span>${settings.Currency_Symbol || 'Ksh'} ${formatNumber(sale.Grand_Total)}</span>
           </div>
         </div>
-        
-        <div style="text-align: center; margin-top: 20px; font-size: 12px;">
+
+        <div class="text-center footer">
           <p>${settings.Receipt_Footer || 'Thank you!'}</p>
         </div>
       </body>
