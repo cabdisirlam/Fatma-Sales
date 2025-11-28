@@ -26,7 +26,7 @@ function onOpen() {
     .addSeparator()
     .addItem('💰 Financials', 'showFinancials')
     .addItem('💳 Expenses', 'showExpenses')
-    .addItem('📋 Quotations', 'showQuotations')
+    // .addItem('📋 Quotations', 'showQuotations')  // REMOVED: Quotations feature
     .addSeparator();
 
   // Only show admin menu items if user has "Admin" role (case-sensitive)
