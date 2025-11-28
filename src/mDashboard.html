@@ -118,21 +118,12 @@
       transition: all 0.3s ease;
     }
 
-    .main-content.expanded {
-      margin-left: 90px;
+    .content-section {
+      display: none; /* Hidden by default */
     }
 
-    .glass-card {
-      background: var(--card-background);
-      backdrop-filter: blur(10px);
-      border-radius: var(--border-radius);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 20px;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    }
-
-    .top-bar {
-      margin-bottom: 20px;
+    .content-section.active {
+      display: block; /* Shown when active */
     }
     
     .table {
@@ -173,7 +164,10 @@
             transform: translateX(0);
         }
         .main-content {
-            margin-left: 10px !important;
+            margin-left: 0 !important; /* Remove margin on mobile */
+            padding: 15px; /* New padding for mobile */
+            width: 100%; /* Ensure full width */
+            box-sizing: border-box; /* Include padding in width */
         }
         .hamburger-btn {
             display: block;
