@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beipoa Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    
+    <style>
+        /* 1. MODERN DESIGN SYSTEM & RESET */
+        :root {
+            /* Color Palette */
+            --primary-color: #4F46E5;
+            --primary-hover: #4338CA;
+            --secondary-color: #10B981;
+            --accent-color: #F59E0B;
+            --danger-color: #EF4444;
+            --bg-color: #F9FAFB;
+            --sidebar-bg: #111827;
+            --sidebar-hover: #374151;
+            --card-bg: #FFFFFF;
+            --text-dark: #1F2937;
+            --text-light: #F9FAFB;
+            --text-muted: #6B7280;
+            --border-color: #E5E7EB;
+
+            /* Spacing Scale */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-6: 24px;
+            --space-8: 32px;
+            --space-12: 48px;
+
+            /* Border Radius */
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            
+            /* Transitions */
+            --transition-fast: 200ms ease-in-out;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        /* 10. ACCESSIBILITY - Skip to content link */
+        .skip-to-content {
+            position: absolute;
+            left: -9999px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            z-index: -999;
+        }
+        .skip-to-content:focus {
+            left: var(--space-4);
+            top: var(--space-4);
+            width: auto;
+            height: auto;
+            overflow: auto;
+            background: var(--primary-color);
+            color: var(--text-light);
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-md);
+            z-index: 9999;
+        }
+
+        /* 2. & 7. MAIN LAYOUT & HEADER */
+        .dashboard-container {
+            display: flex;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding-left: 260px; /* Sidebar width */
+            transition: padding-left var(--transition-fast);
+        }
+        
+        .content-wrapper {
+            padding: var(--space-6);
+        }
+
+        .main-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4) var(--space-6);
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .menu-toggle {
+            display: none; /* Hidden on desktop */
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--space-2);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+        }
+        .menu-toggle:hover {
+            background-color: var(--bg-color);
+        }
+        .menu-toggle svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--text-dark);
+        }
+        
+        .brand-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .search-bar {
+            position: relative;
+        }
+        .search-bar input {
+            padding-left: var(--space-8);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            height: 40px;
+            min-width: 300px;
+        }
+        .search-bar svg {
+            position: absolute;
+            left: var(--space-3);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--text-muted);
+        }
+
+        .notification-bell {
+            position: relative;
+        }
+        .notification-bell .dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--danger-color);
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            right: 0;
+            border: 2px solid var(--card-bg);
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        /* 6. SIDEBAR NAVIGATION */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background-color: var(--sidebar-bg);
+            color: var(--text-light);
+            padding: var(--space-6) 0;
+            display: flex;
+            flex-direction: column;
+            transition: transform var(--transition-fast);
+        }
+        .sidebar-header {
+            padding: 0 var(--space-6) var(--space-6);
+            border-bottom: 1px solid var(--sidebar-hover);
+        }
+        .sidebar-brand {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-light);
+        }
+        .sidebar-brand + p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: -var(--space-2);
+        }
+        .sidebar nav {
+            flex-grow: 1;
+            padding: var(--space-4) 0;
+            overflow-y: auto;
+        }
+        .nav-list {
+            list-style: none;
+        }
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            padding: var(--space-3) var(--space-6);
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            border-left: 4px solid transparent;
+            transition: all var(--transition-fast);
+        }
+        .nav-item a:hover {
+            background-color: var(--sidebar-hover);
+        }
+        .nav-item a.active {
+            background-color: var(--sidebar-hover);
+            border-left-color: var(--primary-color);
+            color: var(--text-light);
+        }
+        .nav-item a svg {
+            width: 20px;
+            height: 20px;
+            margin-right: var(--space-4);
+        }
+        
+        /* 7b. KPI CARDS */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+        .kpi-card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+            transition: transform var(--transition-fast);
+        }
+        .kpi-card:hover {
+            transform: translateY(-5px);
+        }
+        .kpi-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-4);
+            color: var(--text-muted);
+        }
+        .kpi-card .card-icon {
+            padding: var(--space-3);
+            border-radius: 50%;
+        }
+        .kpi-card .value {
+            font-size: 2.25rem;
+            font-weight: 700;
+        }
+        .kpi-card .trend {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-weight: 600;
+        }
+        .kpi-card .trend.positive { color: var(--secondary-color); }
+        .kpi-card .trend.negative { color: var(--danger-color); }
+
+        /* 7c. CHARTS SECTION */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+        .chart-container {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+        }
+        .chart-container h3 {
+            margin-bottom: var(--space-4);
+            font-size: 1.25rem;
+        }
+        
+        /* 7d. RECENT TRANSACTIONS TABLE */
+        .transactions-container {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+        }
+        .transactions-container h3 {
+            margin-bottom: var(--space-4);
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th, .data-table td {
+            padding: var(--space-3) var(--space-4);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .data-table th {
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .status-badge {
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .status-completed { background-color: #D1FAE5; color: #065F46; }
+        .status-pending { background-color: #FEF3C7; color: #92400E; }
+        .status-cancelled { background-color: #FEE2E2; color: #991B1B; }
+
+        /* 11. PERFORMANCE & 9. INTERACTIVE - Skeleton Loader */
+        .skeleton {
+            background-color: #e2e8f0;
+            border-radius: var(--radius-md);
+            position: relative;
+            overflow: hidden;
+        }
+        .skeleton::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 150%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            100% {
+                left: 150%;
+            }
+        }
+        
+        /* 1. MOBILE-FIRST RESPONSIVE DESIGN */
+        
+        /* Mobile Breakpoint: < 768px */
+        @media (max-width: 767px) {
+            body.sidebar-open {
+                overflow: hidden;
+            }
+            .main-content {
+                padding-left: 0;
+            }
+            .content-wrapper {
+                padding: var(--space-4);
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .search-bar {
+                display: none; /* Hide search bar in header on mobile */
+            }
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1000;
+                box-shadow: var(--shadow-lg);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.5);
+                z-index: 999;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity var(--transition-fast), visibility var(--transition-fast);
+            }
+            .sidebar-overlay.open {
+                opacity: 1;
+                visibility: visible;
+            }
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .transactions-container .data-table thead {
+                display: none;
+            }
+            .transactions-container .data-table tr {
+                display: block;
+                margin-bottom: var(--space-4);
+                border-radius: var(--radius-md);
+                border: 1px solid var(--border-color);
+                padding: var(--space-4);
+            }
+            .transactions-container .data-table td {
+                display: flex;
+                justify-content: space-between;
+                border: none;
+                padding: var(--space-2) 0;
+            }
+            .transactions-container .data-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                margin-right: var(--space-4);
+            }
+            
+            /* 8. MOBILE OPTIMIZATIONS - Bottom Nav */
+            .bottom-nav {
+                display: flex;
+                justify-content: space-around;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background-color: var(--card-bg);
+                border-top: 1px solid var(--border-color);
+                box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+                z-index: 800;
+            }
+            .bottom-nav-item {
+                flex-grow: 1;
+                text-align: center;
+                padding: var(--space-2) 0;
+                color: var(--text-muted);
+                text-decoration: none;
+            }
+            .bottom-nav-item.active {
+                color: var(--primary-color);
+            }
+            .bottom-nav-item svg {
+                width: 24px;
+                height: 24px;
+                margin-bottom: var(--space-1);
+            }
+            .bottom-nav-item span {
+                display: block;
+                font-size: 12px;
+            }
+            .main-content {
+                padding-bottom: 80px; /* Space for bottom nav */
+            }
+        }
+        
+        /* Tablet Breakpoint: 768px - 1023px */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Desktop Breakpoint: >= 1024px */
+        @media (min-width: 1024px) {
+            .bottom-nav {
+                display: none;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <a href="#main" class="skip-to-content">Skip to main content</a>
+    <div class="dashboard-container">
+        <!-- 6. SIDEBAR NAVIGATION -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-brand">Beipoa</h2>
+                <p>Sales Management System</p>
+            </div>
+            <nav>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="#" class="active" aria-current="page">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 012-2h2a2 2 0 012 2v6m-8-2.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0z M12 11V9m0 10v-2m-8 0h16"></path></svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item"><a href="#"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4z"></path></svg><span>Sales</span></a></li>
+                    <li class="nav-item"><a href="#"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg><span>Inventory</span></a></li>
+                    <li class="nav-item"><a href="#"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5.995 5.995 0 0012 12a5.995 5.995 0 00-3-5.197M15 21a2 2 0 002-2v-1a2 2 0 00-2-2h-3a2 2 0 00-2 2v1a2 2 0 002 2h3zm-3-4h3a2 2 0 002-2v-1a2 2 0 00-2-2h-3a2 2 0 00-2 2v1a2 2 0 002 2z"></path></svg><span>Customers</span></a></li>
+                    <li class="nav-item"><a href="#"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span>Suppliers</span></a></li>
+                    <li class="nav-item"><a href="#"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg><span>Financials</span></a></li>
+                    <li class="nav-item"><a href="#"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg><span>Reports</span></a></li>
+                    <li class="nav-item"><a href="#"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg><span>Users</span></a></li>
+                    <li class="nav-item"><a href="#"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span>Settings</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <div class="main-content">
+            <main id="main">
+                <!-- 7a. HEADER BAR -->
+                <header class="main-header">
+                    <div class="header-left">
+                        <button class="menu-toggle" id="menu-toggle" aria-label="Open menu">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </button>
+                        <h1 class="brand-name">Beipoa</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="search-bar">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" placeholder="Search transactions, products...">
+                        </div>
+                        <button class="notification-bell" aria-label="View notifications">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            <span class="dot"></span>
+                        </button>
+                        <div class="user-avatar" aria-label="User menu">
+                            <span>JD</span>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="content-wrapper">
+                    <!-- 7b. KPI CARDS -->
+                    <section class="kpi-grid" id="kpi-cards">
+                        <!-- Skeleton Loaders -->
+                        <div class="kpi-card skeleton" style="height: 150px;"></div>
+                        <div class="kpi-card skeleton" style="height: 150px;"></div>
+                        <div class="kpi-card skeleton" style="height: 150px;"></div>
+                        <div class="kpi-card skeleton" style="height: 150px;"></div>
+                    </section>
+
+                    <!-- 7c. CHARTS SECTION -->
+                    <section class="charts-grid">
+                        <div class="chart-container">
+                            <h3>Sales Trend (Last 30 Days)</h3>
+                            <canvas id="salesTrendChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Category Breakdown</h3>
+                            <canvas id="categoryPieChart"></canvas>
+                        </div>
+                    </section>
+                    
+                    <section class="charts-grid" style="grid-template-columns: 1fr 1fr;">
+                         <div class="chart-container">
+                            <h3>Top 5 Products</h3>
+                            <canvas id="topProductsBarChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Revenue by Month</h3>
+                            <canvas id="revenueByMonthChart"></canvas>
+                        </div>
+                    </section>
+
+                    <!-- 7d. RECENT TRANSACTIONS TABLE -->
+                    <section class="transactions-container">
+                        <h3>Recent Transactions</h3>
+                        <table class="data-table" id="transactions-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th>Product</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Skeleton Loaders -->
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="skeleton" style="height: 20px; width: 100%;"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="skeleton" style="height: 20px; width: 100%;"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+                </div>
+            </main>
+        </div>
+        
+        <!-- 8. BOTTOM NAVIGATION FOR MOBILE -->
+        <nav class="bottom-nav">
+            <a href="#" class="bottom-nav-item active" aria-current="page">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 012-2h2a2 2 0 012 2v6m-8-2.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0z M12 11V9m0 10v-2m-8 0h16"></path></svg>
+                <span>Home</span>
+            </a>
+            <a href="#" class="bottom-nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4z"></path></svg>
+                <span>Sales</span>
+            </a>
+            <a href="#" class="bottom-nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>Reports</span>
+            </a>
+            <a href="#" class="bottom-nav-item">
+                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span>Settings</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+    // 12. CODE STRUCTURE & 11. PERFORMANCE: Defer non-critical JS
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- Sample Data ---
+        const kpiData = {
+            totalRevenue: { value: 42598.50, trend: 5.2 },
+            salesCount: { value: 124, trend: -1.5 },
+            activeCustomers: { value: 87, trend: 10 },
+            lowStockItems: { value: 8, trend: 2 }
+        };
+
+        const salesTrendData = {
+            labels: Array.from({length: 30}, (_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - (29 - i));
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }),
+            values: Array.from({length: 30}, () => Math.floor(Math.random() * (2000 - 500 + 1) + 500))
+        };
+        
+        const categoryData = {
+            labels: ['Electronics', 'Furniture', 'Apparel', 'Groceries'],
+            values: [35, 25, 20, 20]
+        };
+
+        const topProductsData = {
+            labels: ['Laptop Pro', 'Ergo Chair', 'Smart Watch', 'Coffee Beans', 'LED TV'],
+            values: [150, 120, 95, 80, 60]
+        };
+        
+        const revenueByMonthData = {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            lastYear: [15000, 18000, 22000, 19000, 25000, 28000],
+            thisYear: [17000, 20000, 21000, 24000, 30000, 32000]
+        };
+
+        const recentTransactions = [
+            { date: '2023-10-28', customer: 'John Doe', product: 'Laptop Pro', amount: 1200.00, status: 'Completed' },
+            { date: '2023-10-28', customer: 'Jane Smith', product: 'Ergo Chair', amount: 350.00, status: 'Pending' },
+            { date: '2023-10-27', customer: 'Walk-in', product: 'Smart Watch', amount: 299.99, status: 'Completed' },
+            { date: '2023-10-26', customer: 'Peter Jones', product: 'LED TV', amount: 800.00, status: 'Cancelled' },
+            { date: '2023-10-25', customer: 'Mary Jane', product: 'Coffee Beans (1kg)', amount: 25.00, status: 'Completed' },
+        ];
+        
+        // --- UI Initialization ---
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const menuToggle = document.getElementById('menu-toggle');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+            document.body.classList.toggle('sidebar-open');
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        // --- Data Loading Simulation ---
+        function loadDashboardData() {
+            // Simulate fetching data after 1.5s
+            setTimeout(() => {
+                // 1. KPIs
+                const kpiContainer = document.getElementById('kpi-cards');
+                kpiContainer.innerHTML = `
+                    <div class="kpi-card">
+                        <div class="card-header">
+                            <span>Total Revenue</span>
+                            <div class="card-icon" style="background-color: #E0E7FF; color: #4338CA;">...</div>
+                        </div>
+                        <div class="value">\$${kpiData.totalRevenue.value.toLocaleString()}</div>
+                        <div class="trend positive">↑ ${kpiData.totalRevenue.trend}%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="card-header">
+                            <span>Sales</span>
+                            <div class="card-icon" style="background-color: #D1FAE5; color: #065F46;">...</div>
+                        </div>
+                        <div class="value">${kpiData.salesCount.value}</div>
+                        <div class="trend negative">↓ ${Math.abs(kpiData.salesCount.trend)}%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="card-header">
+                            <span>Active Customers</span>
+                            <div class="card-icon" style="background-color: #FEF3C7; color: #92400E;">...</div>
+                        </div>
+                        <div class="value">${kpiData.activeCustomers.value}</div>
+                        <div class="trend positive">↑ ${kpiData.activeCustomers.trend}%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="card-header">
+                            <span>Low Stock</span>
+                             <div class="card-icon" style="background-color: #FEE2E2; color: #991B1B;">...</div>
+                        </div>
+                        <div class="value">${kpiData.lowStockItems.value} Items</div>
+                        <div class="trend negative">↑ ${kpiData.lowStockItems.trend}</div>
+                    </div>
+                `;
+
+                // 2. Transactions
+                const transactionsTbody = document.querySelector('#transactions-table tbody');
+                transactionsTbody.innerHTML = recentTransactions.map(tx => `
+                    <tr>
+                        <td data-label="Date">${tx.date}</td>
+                        <td data-label="Customer">${tx.customer}</td>
+                        <td data-label="Product">${tx.product}</td>
+                        <td data-label="Amount">\$${tx.amount.toFixed(2)}</td>
+                        <td data-label="Status"><span class="status-badge status-${tx.status.toLowerCase()}">${tx.status}</span></td>
+                    </tr>
+                `).join('');
+
+            }, 1500);
+        }
+
+        // --- Chart Rendering ---
+        function renderCharts() {
+            // Sales Trend Chart (Line)
+            new Chart(document.getElementById('salesTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: salesTrendData.labels,
+                    datasets: [{
+                        label: 'Sales',
+                        data: salesTrendData.values,
+                        borderColor: 'var(--primary-color)',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // Category Breakdown (Pie)
+            new Chart(document.getElementById('categoryPieChart'), {
+                type: 'pie',
+                data: {
+                    labels: categoryData.labels,
+                    datasets: [{
+                        data: categoryData.values,
+                        backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#6B7280'],
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+            
+            // Top Products (Bar)
+            new Chart(document.getElementById('topProductsBarChart'), {
+                type: 'bar',
+                data: {
+                    labels: topProductsData.labels,
+                    datasets: [{
+                        label: 'Units Sold',
+                        data: topProductsData.values,
+                        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                        borderColor: 'var(--secondary-color)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
+            });
+            
+            // Revenue by Month (Grouped Bar)
+            new Chart(document.getElementById('revenueByMonthChart'), {
+                type: 'bar',
+                data: {
+                    labels: revenueByMonthData.labels,
+                    datasets: [
+                        {
+                            label: 'Last Year',
+                            data: revenueByMonthData.lastYear,
+                            backgroundColor: 'rgba(229, 231, 235, 0.8)',
+                        },
+                        {
+                            label: 'This Year',
+                            data: revenueByMonthData.thisYear,
+                            backgroundColor: 'rgba(79, 70, 229, 0.8)',
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+        
+        // --- Google Apps Script Integration Example ---
+        function fetchDataFromGoogleSheets() {
+            // This is a placeholder. In a real scenario, you'd call this
+            // to populate your sample data objects above.
+            /*
+            google.script.run
+                .withSuccessHandler(data => {
+                    console.log("Data received from Google Sheets:", data);
+                    // Update kpiData, salesTrendData, etc. with live data
+                    // Then call the render functions again
+                })
+                .withFailureHandler(error => {
+                    console.error("Error fetching data:", error);
+                })
+                .getDashboardData(); // Assumes a function `getDashboardData` exists in your .gs file
+            */
+        }
+        
+        // Initial Load
+        loadDashboardData();
+        renderCharts();
+        fetchDataFromGoogleSheets(); // Example call
+    });
+    </script>
+</body>
+</html>
