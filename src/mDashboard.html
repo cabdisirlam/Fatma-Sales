@@ -4208,67 +4208,53 @@
       const container = document.getElementById('section-users-roles');
       if (!container) return;
 
+      const roles = [
+        { 
+          name: 'Admin', 
+          icon: 'bi-star-fill', 
+          color: 'text-warning',
+          permissions: ['Full system access', 'User management', 'System settings', 'All financial reports'] 
+        },
+        { 
+          name: 'Manager', 
+          icon: 'bi-briefcase-fill',
+          color: 'text-primary',
+          permissions: ['Sales oversight', 'Inventory management', 'Customer management', 'Reports viewing'] 
+        },
+        { 
+          name: 'Sales', 
+          icon: 'bi-cart-fill',
+          color: 'text-success',
+          permissions: ['Process sales', 'Create quotations', 'Manage customers', 'View inventory'] 
+        },
+        { 
+          name: 'Cashier', 
+          icon: 'bi-cash-coin',
+          color: 'text-info',
+          permissions: ['Process payments', 'Issue receipts', 'View sales', 'Handle returns'] 
+        }
+      ];
+
       let html = `
         <div class="card">
           <div class="card-header"><i class="bi bi-shield-check"></i> User Roles & Responsibilities</div>
           <div class="card-body">
             <div class="row">
-              <div class="col-md-6 mb-3">
-                <div class="card">
-                  <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-star-fill text-warning"></i> Admin</h5>
-                    <p class="card-text">Full system access including:</p>
-                    <ul>
-                      <li>User management</li>
-                      <li>System settings</li>
-                      <li>All financial reports</li>
-                      <li>Data management</li>
-                    </ul>
+              ${roles.map(role => `
+                <div class="col-md-6 mb-4">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <h5 class="card-title d-flex align-items-center">
+                        <i class="bi ${role.icon} ${role.color} me-2"></i> ${role.name}
+                      </h5>
+                      <p class="card-text">Key responsibilities include:</p>
+                      <ul class="list-unstyled">
+                        ${role.permissions.map(p => `<li><i class="bi bi-check-circle-fill text-success me-2"></i>${p}</li>`).join('')}
+                      </ul>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <div class="card">
-                  <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-briefcase-fill text-primary"></i> Manager</h5>
-                    <p class="card-text">Management access including:</p>
-                    <ul>
-                      <li>Sales oversight</li>
-                      <li>Inventory management</li>
-                      <li>Customer management</li>
-                      <li>Reports viewing</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <div class="card">
-                  <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-cart-fill text-success"></i> Sales</h5>
-                    <p class="card-text">Sales operations including:</p>
-                    <ul>
-                      <li>Process sales</li>
-                      <li>Create quotations</li>
-                      <li>Manage customers</li>
-                      <li>View inventory</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <div class="card">
-                  <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-cash-coin text-info"></i> Cashier</h5>
-                    <p class="card-text">Cashier operations including:</p>
-                    <ul>
-                      <li>Process payments</li>
-                      <li>Issue receipts</li>
-                      <li>View sales</li>
-                      <li>Handle returns</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+              `).join('')}
             </div>
           </div>
         </div>
