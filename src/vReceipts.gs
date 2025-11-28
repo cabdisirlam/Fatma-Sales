@@ -13,55 +13,55 @@ function generateReceiptHTML(transactionId) {
 
     const settings = getAllSettings();
     const dateStr = Utilities.formatDate(new Date(sale.DateTime), 'GMT+3', 'dd/MM/yyyy HH:mm');
-
-    // Thermal Printer Optimized HTML
+    
+    // THERMAL PRINTER OPTIMIZED LAYOUT
     const html = `
       <html>
       <head>
         <style>
+          /* Reset margins for thermal printer */
           @page { margin: 0; size: auto; }
-          body {
-            font-family: 'Courier New', monospace;
-            margin: 0;
-            padding: 5px;
+          body { 
+            font-family: 'Courier New', monospace; 
+            margin: 0; 
+            padding: 5px; 
             width: 100%;
-            max-width: 300px; /* Force 58mm/80mm width constraint */
+            max-width: 300px; /* Constraints width for 80mm paper */
             font-size: 12px;
             line-height: 1.2;
             color: #000;
           }
-          .text-center { text-align: center; }
-          .text-right { text-align: right; }
-          .bold { font-weight: bold; }
+          .header { text-align: center; margin-bottom: 10px; }
+          .shop-name { font-size: 16px; font-weight: bold; }
           .divider { border-top: 1px dashed #000; margin: 5px 0; }
-          .item-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
-          .item-name { width: 100%; display: block; }
-          .item-meta { display: flex; justify-content: space-between; font-size: 11px; }
-          .totals { margin-top: 10px; }
-          .footer { margin-top: 15px; font-size: 10px; }
+          .item-row { display: flex; justify-content: space-between; }
+          .item-name { font-weight: bold; margin-top: 4px;}
+          .item-details { display: flex; justify-content: space-between; font-size: 11px; padding-left: 10px; }
+          .totals { margin-top: 10px; font-weight: bold; }
+          .footer { margin-top: 15px; text-align: center; font-size: 10px; }
         </style>
       </head>
-      <body>
-        <div class="text-center">
-          <h2 style="margin: 0; font-size: 16px;">${settings.Shop_Name || CONFIG.SHOP_NAME}</h2>
+      <body onload="window.print()">
+        <div class="header">
+          <div class="shop-name">${settings.Shop_Name || CONFIG.SHOP_NAME}</div>
           <div>${settings.Receipt_Header || ''}</div>
         </div>
-
+        
         <div class="divider"></div>
-
+        
         <div>
           Receipt #: ${sale.Transaction_ID}<br>
           Date: ${dateStr}<br>
           Served By: ${sale.Sold_By}
         </div>
-
+        
         <div class="divider"></div>
-
+        
         <div>
           ${sale.items.map(i => `
-            <div style="margin-bottom: 5px;">
-              <div class="item-name bold">${i.Item_Name}</div>
-              <div class="item-meta">
+            <div>
+              <div class="item-name">${i.Item_Name}</div>
+              <div class="item-details">
                 <span>${i.Qty} x ${formatNumber(i.Unit_Price)}</span>
                 <span>${formatNumber(i.Line_Total)}</span>
               </div>
@@ -70,17 +70,17 @@ function generateReceiptHTML(transactionId) {
         </div>
 
         <div class="divider"></div>
-
+        
         <div class="totals">
           <div class="item-row"><span>Subtotal:</span> <span>${formatNumber(sale.Subtotal)}</span></div>
           ${sale.Discount > 0 ? `<div class="item-row"><span>Discount:</span> <span>-${formatNumber(sale.Discount)}</span></div>` : ''}
-          <div class="item-row bold" style="font-size: 14px; margin-top: 5px;">
-            <span>TOTAL:</span>
+          <div class="item-row" style="font-size: 14px; margin-top: 5px;">
+            <span>TOTAL:</span> 
             <span>${settings.Currency_Symbol || 'Ksh'} ${formatNumber(sale.Grand_Total)}</span>
           </div>
         </div>
-
-        <div class="text-center footer">
+        
+        <div class="footer">
           <p>${settings.Receipt_Footer || 'Thank you!'}</p>
         </div>
       </body>
@@ -89,7 +89,7 @@ function generateReceiptHTML(transactionId) {
     return html;
   } catch (error) {
     logError('generateReceiptHTML', error);
-    return 'Error generating receipt: ' + error.message;
+    return 'Error: ' + error.message;
   }
 }
 

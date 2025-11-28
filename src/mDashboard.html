@@ -936,8 +936,8 @@
 
     <div class="content-section" id="section-sales-new">
       <div class="dashboard-content">
-        <h3><i class="bi bi-cart-plus"></i> Quick Sale / Quotation</h3>
-        <p class="text-muted">Process a sale or create a quotation</p>
+        <h3><i class="bi bi-cart-plus"></i> Quick Sale</h3>
+        <p class="text-muted">Process a sale quickly or handle a return</p>
         
         <div class="row">
           <div class="col-md-8">
@@ -1011,8 +1011,6 @@
                         <option value="Equity Bank">Equity Bank</option>
                         <option value="Credit">Credit (Debt)</option>
                       </select>
-
-                      <!-- REMOVED: Quotation button -->
 
                       <button type="button" class="btn btn-success px-4" onclick="submitDashTransaction('Sale')">
                         <i class="bi bi-check-circle"></i> Sale
@@ -2541,41 +2539,62 @@
     function loadSalesHistory() {
       const tbody = document.getElementById('salesHistoryBody');
       if (!tbody) return;
-      
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><span class="spinner-border text-primary"></span> Loading...</td></tr>';
 
-      google.script.run.withSuccessHandler(function(rows) {
+      // Set loading state
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><span class="ms-2">Loading...</span></td></tr>';
+
+      // Call backend function 'getRecentSales' which filters out Quotations automatically
+      google.script.run
+        .withSuccessHandler(function(rows) {
           if (!rows || rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No sales found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No recent sales found</td></tr>';
             return;
           }
 
           tbody.innerHTML = rows.map(function(row) {
-            const isReturned = row.Status === 'Returned';
-            const statusBadge = isReturned
-              ? '<span class="badge bg-warning text-dark">Returned</span>'
-              : '<span class="badge bg-success">Completed</span>';
+            const isReturned = row.Status === 'Returned' || row.Status === 'Cancelled';
             
-            // Only show return button for completed sales
-            const actionCell = !isReturned
-              ? `<button class="btn btn-sm btn-outline-danger" onclick="initiateReturn('${row.Transaction_ID}')">
-                   <i class="bi bi-arrow-return-left"></i> Return
-                 </button>`
-              : '-';
+            // 1. Status Badge
+            let statusBadge = '<span class="badge bg-success">Completed</span>';
+            if (row.Status === 'Returned') statusBadge = '<span class="badge bg-warning text-dark">Returned</span>';
+            if (row.Status === 'Cancelled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
+
+            // 2. Print Button (Thermal Printer Ready)
+            const printBtn = `
+              <button class="btn btn-sm btn-outline-dark me-1" onclick="printDocument('${row.Transaction_ID}', 'Sale')" title="Print Receipt">
+                <i class="bi bi-printer"></i>
+              </button>`;
+            
+            // 3. Return Button (Only visible if not already returned)
+            const returnBtn = !isReturned 
+              ? `<button class="btn btn-sm btn-outline-danger" onclick="initiateReturn('${row.Transaction_ID}')" title="Return Items">
+                   <i class="bi bi-arrow-return-left"></i>
+                 </button>` 
+              : '';
 
             return `
               <tr>
-                <td>${row.Transaction_ID}</td>
+                <td><strong>${row.Transaction_ID}</strong></td>
                 <td>${new Date(row.DateTime).toLocaleDateString()}</td>
                 <td>${row.Customer_Name || 'Walk-in'}</td>
                 <td>${row.Payment_Mode || '-'}</td>
                 <td class="text-end">${formatCurrency(row.Grand_Total)}</td>
                 <td>${statusBadge}</td>
-                <td>${actionCell}</td>
+                <td>
+                  <div class="d-flex justify-content-start">
+                    ${printBtn}
+                    ${returnBtn}
+                  </div>
+                </td>
               </tr>
             `;
           }).join('');
-        }).getSalesHistory(20);
+        })
+        .withFailureHandler(function(error) {
+          console.error("Sales History Load Error:", error);
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading data: ' + error.message + '</td></tr>';
+        })
+        .getRecentSales(20); 
     }
 
     function initiateReturn(saleId) {
@@ -2819,66 +2838,6 @@
            alert("System Error: " + e.message);
         })
         [backendFunc](transactionData);
-    }
-
-    // --- CLIENT SIDE PRINTING (Fixes "Loading..." hang) ---
-    function loadSalesHistory() {
-      const tbody = document.getElementById('salesHistoryBody');
-      if(!tbody) return;
-
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><span class="spinner-border text-primary"></span> Loading...</td></tr>';
-
-      // Use getRecentSales which filters ONLY sales (ignoring quotations)
-      google.script.run
-        .withSuccessHandler(function(rows) {
-          if (!rows || rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No recent sales found</td></tr>';
-            return;
-          }
-
-          tbody.innerHTML = rows.map(function(row) {
-            const isReturned = row.Status === 'Returned' || row.Status === 'Cancelled';
-
-            // Status Badge Logic
-            let statusBadge = '<span class="badge bg-success">Completed</span>';
-            if (row.Status === 'Returned') statusBadge = '<span class="badge bg-warning text-dark">Returned</span>';
-            if (row.Status === 'Cancelled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
-
-            // Return Button Logic (Visible only if not already returned)
-            const returnBtn = !isReturned
-              ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="initiateReturn('${row.Transaction_ID}')" title="Return Sale">
-                   <i class="bi bi-arrow-return-left"></i>
-                 </button>`
-              : '';
-
-            // Print Button
-            const printBtn = `<button class="btn btn-sm btn-outline-dark" onclick="printDocument('${row.Transaction_ID}', 'Sale')" title="Print Receipt">
-                 <i class="bi bi-printer"></i>
-               </button>`;
-
-            return `
-              <tr>
-                <td><strong>${row.Transaction_ID}</strong></td>
-                <td>${new Date(row.DateTime).toLocaleDateString()}</td>
-                <td>${row.Customer_Name || 'Walk-in'}</td>
-                <td>${row.Payment_Mode || '-'}</td>
-                <td class="text-end">${formatCurrency(row.Grand_Total)}</td>
-                <td>${statusBadge}</td>
-                <td>
-                  <div class="d-flex">
-                    ${printBtn}
-                    ${returnBtn}
-                  </div>
-                </td>
-              </tr>
-            `;
-          }).join('');
-        })
-        .withFailureHandler(function(error) {
-          console.error(error);
-          tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center py-4">Error: ' + error.message + '</td></tr>';
-        })
-        .getRecentSales(20); // Calls the specific sales function in aCode.gs
     }
 
     // --- UPDATED FUNCTIONS FOR SALES & QUOTATIONS ---
