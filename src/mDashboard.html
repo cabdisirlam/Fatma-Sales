@@ -116,14 +116,30 @@
       margin-left: 250px;
       padding: 10px;
       transition: all 0.3s ease;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
     .content-section {
       display: none; /* Hidden by default */
+      margin-bottom: 2rem;
+    }
+
+    .card, .stat-card, .glass-card {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border-radius: 12px;
+        border: none;
     }
 
     .content-section.active {
       display: block; /* Shown when active */
+    }
+    
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
     }
     
     .table {
@@ -470,9 +486,10 @@
                   <div class="row mb-3">
                     <div class="col-md-6">
                       <label class="form-label fw-bold">Customer</label>
-                      <select class="form-select" id="dashSaleCustomer">
+                      <select class="form-select" id="dashSaleCustomer" onchange="onCustomerSelect(this.value)">
                         <option value="WALK-IN">Walk-in Customer</option>
                       </select>
+                      <div id="customerDetailsBox" class="mt-2" style="display: none;"></div>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label fw-bold">Date</label>
@@ -1400,6 +1417,33 @@
   </div>
 
   <script>
+    function onCustomerSelect(customerId) {
+      const detailsBox = document.getElementById('customerDetailsBox');
+      if (!customerId || customerId === 'WALK-IN') {
+        detailsBox.style.display = 'none';
+        return;
+      }
+
+      google.script.run.withSuccessHandler(details => {
+        if (details) {
+          let balanceHtml = '';
+          if (details.Current_Balance < 0) {
+            balanceHtml = ` | <span class="text-danger">Debt: ${formatCurrency(details.Current_Balance)}</span>`;
+          } else if (details.Current_Balance > 0) {
+            balanceHtml = ` | <span class="text-success">Credit: ${formatCurrency(details.Current_Balance)}</span>`;
+          }
+
+          detailsBox.innerHTML = `<div class="alert alert-info py-1 px-2 small"><strong>Phone:</strong> ${details.Phone || 'N/A'}${balanceHtml}</div>`;
+          detailsBox.style.display = 'block';
+        } else {
+          detailsBox.style.display = 'none';
+        }
+      }).withFailureHandler(err => {
+        detailsBox.innerHTML = `<div class="alert alert-danger py-1 px-2 small">Error: ${err.message}</div>`;
+        detailsBox.style.display = 'block';
+      }).getCustomerDetails(customerId);
+    }
+
     function loadSalesHistory() {
         const tableBody = document.getElementById('salesHistoryBody');
         tableBody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading...</td></tr>';
@@ -1411,32 +1455,23 @@
             }
 
             let rowsHtml = '';
-            const formatter = new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'KES',
-                maximumFractionDigits: 0
-            });
-
             sales.forEach(sale => {
-                const saleDate = new Date(sale.Date).toLocaleDateString();
-                const isReturned = sale.Status === 'Returned';
-                
                 rowsHtml += `
                     <tr>
-                        <td data-label="ID">${sale.SaleID}</td>
-                        <td data-label="Date">${saleDate}</td>
-                        <td data-label="Customer">${sale.Customer}</td>
-                        <td data-label="Amount">${formatter.format(sale.TotalAmount)}</td>
+                        <td data-label="Ref">${sale.Transaction_ID}</td>
+                        <td data-label="Date">${new Date(sale.DateTime).toLocaleDateString()}</td>
+                        <td data-label="Customer">${sale.Customer_Name}</td>
+                        <td data-label="Amount">${formatCurrency(sale.Grand_Total)}</td>
                         <td data-label="Action" class="actions-cell">
-                            <button class="btn-icon" onclick="printReceipt('${sale.SaleID}')" title="Print Receipt"><i class="bi bi-printer"></i></button>
-                            ${!isReturned ? `<button class="btn-icon" onclick="showReturnModal('${sale.SaleID}')" title="Return Sale"><i class="bi bi-arrow-return-left"></i></button>` : ''}
+                            <button class="btn-icon" onclick="printDocument('${sale.Transaction_ID}', 'Sale')" title="Print Receipt"><i class="bi bi-printer"></i></button>
+                            ${sale.Status !== 'Returned' ? `<button class="btn-icon" onclick="initiateReturn('${sale.Transaction_ID}')" title="Return Sale"><i class="bi bi-arrow-return-left"></i></button>` : ''}
                         </td>
                     </tr>`;
             });
             tableBody.innerHTML = rowsHtml;
         }).withFailureHandler(err => {
             tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error: ${err.message}</td></tr>`;
-        }).getRecentSales();
+        }).getRecentSales(50); // Fetch more sales
     }
 
     // Global cache object to prevent redundant server calls

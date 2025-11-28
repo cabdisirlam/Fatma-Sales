@@ -1794,33 +1794,58 @@ function getTodayExpenses() {
 }
 
 /**
- * Gets recent sales
- * Updated for new Sales sheet structure (deduplicates line items)
+ * Gets recent sales, ensuring uniqueness and correct sorting.
  */
-function getRecentSales(limit) {
+function getRecentSales(limit = 20) {
   try {
-    const sales = sheetToObjects('Sales', null);
+    const salesSheet = getSheet('Sales');
+    const allData = salesSheet.getDataRange().getValues();
+    const headers = allData[0];
+    
+    // Find column indices dynamically
+    const typeCol = headers.indexOf('Type');
+    const idCol = headers.indexOf('Transaction_ID');
+    const dateCol = headers.indexOf('DateTime');
+    const customerCol = headers.indexOf('Customer_Name');
+    const totalCol = headers.indexOf('Grand_Total');
+    const statusCol = headers.indexOf('Status');
+    const paymentCol = headers.indexOf('Payment_Mode');
 
-    // Filter to only Sales (not Quotations) and deduplicate by Transaction_ID
-    const uniqueSales = [];
-    const seenIds = new Set();
+    if (typeCol === -1 || idCol === -1 || dateCol === -1) {
+        throw new Error("One or more required columns (Type, Transaction_ID, DateTime) not found in Sales sheet.");
+    }
 
-    for (const sale of sales) {
-      if (sale.Type === 'Sale' && !seenIds.has(sale.Transaction_ID)) {
-        uniqueSales.push(sale);
-        seenIds.add(sale.Transaction_ID);
+    const uniqueSales = new Map();
+
+    // Iterate backwards to get recent sales first
+    for (let i = allData.length - 1; i > 0; i--) {
+      const row = allData[i];
+      const type = row[typeCol];
+      const transactionId = row[idCol];
+
+      // Process only 'Sale' types and only if we haven't seen this ID before
+      if (type === 'Sale' && !uniqueSales.has(transactionId)) {
+        uniqueSales.set(transactionId, {
+          Transaction_ID: transactionId,
+          DateTime: new Date(row[dateCol]),
+          Customer_Name: row[customerCol],
+          Grand_Total: parseFloat(row[totalCol]) || 0,
+          Status: row[statusCol],
+          Payment_Mode: row[paymentCol]
+        });
       }
     }
 
-    // Sort by date descending
-    uniqueSales.sort((a, b) => new Date(b.DateTime) - new Date(a.DateTime));
+    // Convert map values to an array, sort by date descending
+    const sortedSales = Array.from(uniqueSales.values())
+      .sort((a, b) => b.DateTime.getTime() - a.DateTime.getTime());
 
-    // Return limited results
-    return uniqueSales.slice(0, limit || 10);
+    // Return the top 'limit' results
+    return sortedSales.slice(0, limit);
 
   } catch (error) {
     logError('getRecentSales', error);
-    return [];
+    return []; // Return empty array on error
   }
 }
 
@@ -1888,5 +1913,32 @@ function initializeAccounts() {
 
   } catch (error) {
     logError('initializeAccounts', error);
+  }
+}
+
+/**
+ * Gets details for a specific customer.
+ */
+function getCustomerDetails(customerId) {
+  if (!customerId || customerId === 'WALK-IN') {
+    return null;
+  }
+  
+  try {
+    const customer = findRowById('Customers', 'Customer_ID', customerId);
+    
+    if (!customer) {
+      return null;
+    }
+    
+    return {
+      Phone: customer.Phone,
+      Email: customer.Email,
+      Current_Balance: parseFloat(customer.Current_Balance) || 0
+    };
+    
+  } catch (error) {
+    logError('getCustomerDetails', error);
+    return null;
   }
 }
