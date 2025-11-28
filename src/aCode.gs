@@ -1798,54 +1798,29 @@ function getTodayExpenses() {
  */
 function getRecentSales(limit = 20) {
   try {
-    const salesSheet = getSheet('Sales');
-    const allData = salesSheet.getDataRange().getValues();
-    const headers = allData[0];
-    
-    // Find column indices dynamically
-    const typeCol = headers.indexOf('Type');
-    const idCol = headers.indexOf('Transaction_ID');
-    const dateCol = headers.indexOf('DateTime');
-    const customerCol = headers.indexOf('Customer_Name');
-    const totalCol = headers.indexOf('Grand_Total');
-    const statusCol = headers.indexOf('Status');
-    const paymentCol = headers.indexOf('Payment_Mode');
-
-    if (typeCol === -1 || idCol === -1 || dateCol === -1) {
-        throw new Error("One or more required columns (Type, Transaction_ID, DateTime) not found in Sales sheet.");
-    }
-
+    const allSales = sheetToObjects('Sales');
     const uniqueSales = new Map();
 
-    // Iterate backwards to get recent sales first
-    for (let i = allData.length - 1; i > 0; i--) {
-      const row = allData[i];
-      const type = row[typeCol];
-      const transactionId = row[idCol];
-
-      // Process only 'Sale' types and only if we haven't seen this ID before
-      if (type === 'Sale' && !uniqueSales.has(transactionId)) {
-        uniqueSales.set(transactionId, {
-          Transaction_ID: transactionId,
-          DateTime: new Date(row[dateCol]),
-          Customer_Name: row[customerCol],
-          Grand_Total: parseFloat(row[totalCol]) || 0,
-          Status: row[statusCol],
-          Payment_Mode: row[paymentCol]
+    for (const sale of allSales) {
+      if (sale.Type === 'Sale' && sale.Transaction_ID && !uniqueSales.has(sale.Transaction_ID)) {
+        uniqueSales.set(sale.Transaction_ID, {
+          Transaction_ID: sale.Transaction_ID,
+          DateTime: new Date(sale.DateTime),
+          Customer_Name: sale.Customer_Name || 'Walk-in',
+          Grand_Total: parseFloat(sale.Grand_Total) || 0,
+          Status: sale.Status || 'Completed',
+          Payment_Mode: sale.Payment_Mode
         });
       }
     }
 
-    // Convert map values to an array, sort by date descending
     const sortedSales = Array.from(uniqueSales.values())
       .sort((a, b) => b.DateTime.getTime() - a.DateTime.getTime());
 
-    // Return the top 'limit' results
     return sortedSales.slice(0, limit);
-
   } catch (error) {
     logError('getRecentSales', error);
-    return []; // Return empty array on error
+    return [];
   }
 }
 
