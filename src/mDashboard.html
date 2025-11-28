@@ -1318,61 +1318,111 @@
     </div>
   </div>
 
-  <div class="modal fade" id="dashboardAddUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-person-plus"></i> Add New User</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="dashboardAddUserForm" onsubmit="handleDashboardAddUser(event)">
-            <div class="mb-3">
-              <label class="form-label">Username *</label>
-              <input type="text" class="form-control" id="newUsername" required>
+      <div class="modal fade" id="dashboardAddUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><i class="bi bi-person-plus"></i> Add New User</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Email *</label>
-                <input type="email" class="form-control" id="newEmail" required>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Phone</label>
-                <input type="text" class="form-control" id="newPhone">
-              </div>
+            <div class="modal-body">
+              <form id="dashboardAddUserForm" onsubmit="handleDashboardAddUser(event)">
+                <div class="mb-3">
+                  <label class="form-label">Username *</label>
+                  <input type="text" class="form-control" id="newUsername" required>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Email *</label>
+                    <input type="email" class="form-control" id="newEmail" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="newPhone">
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">PIN (4 Digits) *</label>
+                    <input type="password" class="form-control" id="newPin" maxlength="4" pattern="[0-9]{4}" required>
+                    <div class="form-text">Must be 4 numbers.</div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Role *</label>
+                    <select class="form-select" id="newRole" required>
+                      <option value="Admin">Admin</option>
+                      <option value="Manager">Manager</option>
+                      <option value="Sales">Sales</option>
+                      <option value="Cashier">Cashier</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Status</label>
+                  <select class="form-select" id="newStatus">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-primary" id="btnSaveUser">Save User</button>
+                </div>
+              </form>
             </div>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">PIN (4 Digits) *</label>
-                <input type="password" class="form-control" id="newPin" maxlength="4" pattern="[0-9]{4}" required>
-                <div class="form-text">Must be 4 numbers.</div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Role *</label>
-                <select class="form-select" id="newRole" required>
-                  <option value="Admin">Admin</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Sales">Sales</option>
-                  <option value="Cashier">Cashier</option>
-                </select>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Status</label>
-              <select class="form-select" id="newStatus">
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-            <div class="d-grid">
-              <button type="submit" class="btn btn-primary" id="btnSaveUser">Save User</button>
-            </div>
-          </form>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-
+  
+      <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit User</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="dashboardEditUserForm" onsubmit="handleDashboardEditUser(event)">
+                <input type="hidden" id="editUserId">
+                <div class="mb-3">
+                  <label class="form-label">Username *</label>
+                  <input type="text" class="form-control" id="editUsername" required>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Email *</label>
+                    <input type="email" class="form-control" id="editEmail" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="editPhone">
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Role *</label>
+                    <select class="form-select" id="editRole" required>
+                      <option value="Admin">Admin</option>
+                      <option value="Manager">Manager</option>
+                      <option value="Sales">Sales</option>
+                      <option value="Cashier">Cashier</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="editStatus">
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-primary" id="btnUpdateUser">Update User</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
   <div class="modal fade" id="dashboardCustomerEditModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1809,58 +1859,86 @@
         .getUsers();
     }
 
-    // 2. DISPLAY USERS LIST
     function displayUsersList(users) {
       const tbody = document.getElementById('usersTableBody');
-      if (!tbody) return; // Safety check
+      if (!tbody) return;
 
-      if (!users || users.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="6" class="text-center py-4">
-              <i class="bi bi-people" style="font-size: 48px; color: #ccc;"></i>
-              <p class="text-muted mt-2">No users found.</p>
-            </td>
-          </tr>
-        `;
-        return;
-      }
+      try {
+        if (!Array.isArray(users)) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error: Invalid user data received.</td></tr>';
+          return;
+        }
 
-      tbody.innerHTML = users.map(user => {
-        // Create avatar initial
-        const initial = user.Username ? user.Username.charAt(0).toUpperCase() : 'U';
-        
-        // Status Badge Color
-        const statusBadge = user.Status === 'Active' 
-          ? '<span class="badge bg-success">Active</span>' 
-          : '<span class="badge bg-secondary">Inactive</span>';
+        if (users.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center py-4">
+                <i class="bi bi-people" style="font-size: 48px; color: #ccc;"></i>
+                <p class="text-muted mt-2">No users found.</p>
+              </td>
+            </tr>`;
+          return;
+        }
 
-        // Role Badge Color
-        let roleClass = 'bg-secondary';
-        if(user.Role === 'Admin') roleClass = 'bg-danger';
-        if(user.Role === 'Manager') roleClass = 'bg-primary';
-        if(user.Role === 'Sales') roleClass = 'bg-info text-dark';
+        tbody.innerHTML = users.map(user => {
+          const initial = user.Username ? user.Username.charAt(0).toUpperCase() : 'U';
+          const statusBadge = user.Status === 'Active' 
+            ? `<span class="badge bg-success">${user.Status}</span>` 
+            : `<span class="badge bg-secondary">${user.Status}</span>`;
 
-        return `
-          <tr>
-            <td>
-              <div class="d-flex align-items-center">
-                <div class="user-avatar me-2" style="width:35px;height:35px;background:#667eea;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">
-                  ${initial}
+          let roleClass = 'bg-secondary';
+          if(user.Role === 'Admin') roleClass = 'bg-danger';
+          if(user.Role === 'Manager') roleClass = 'bg-primary';
+          if(user.Role === 'Sales') roleClass = 'bg-info text-dark';
+          
+          return `
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="user-avatar me-2" style="width:35px;height:35px;background:#667eea;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">
+                    ${initial}
+                  </div>
+                  <strong>${user.Username || 'Unknown'}</strong>
                 </div>
-                <strong>${user.Username || 'Unknown'}</strong>
-              </div>
-            </td>
-            <td>${user.Email || '-'}</td>
-            <td>${user.Phone || '-'}</td>
-            <td><span class="badge ${roleClass}">${user.Role || 'User'}</span></td>
-            <td>${statusBadge}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary" onclick="alert('Edit feature coming soon')">Edit</button>
-            </td>
-          </tr>
-        `;
-      }).join('');
+              </td>
+              <td>${user.Email || '-'}</td>
+              <td>${user.Phone || '-'}</td>
+              <td><span class="badge ${roleClass}">${user.Role || 'User'}</span></td>
+              <td>${statusBadge}</td>
+              <td class="actions-cell">
+                <button class="btn btn-sm btn-outline-primary" onclick="editUser('${user.User_ID}')"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user.User_ID}', '${user.Username}')"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error rendering user list.</td></tr>';
+        console.error('Error in displayUsersList:', error);
+      }
+    }
+
+    function editUser(userId) {
+      alert('Editing user: ' + userId);
+      // Here you would typically open a modal pre-filled with user data
+      // For example:
+      // const user = usersData.find(u => u.User_ID === userId);
+      // document.getElementById('editUserId').value = user.User_ID;
+      // ... populate other fields ...
+      // const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+      // modal.show();
+    }
+
+    function deleteUser(userId, username) {
+      if (confirm(`Are you sure you want to delete user "${username}"?`)) {
+        alert('Deleting user: ' + userId);
+        // google.script.run.withSuccessHandler(() => {
+        //   showUsersAlert('User deleted successfully.', 'success');
+        //   loadUsersList();
+        // }).withFailureHandler(err => {
+        //   showUsersAlert('Error deleting user: ' + err.message, 'danger');
+        // }).deleteUser(userId);
+      }
     }
 
     // 3. SHOW ADD USER MODAL
@@ -1915,6 +1993,28 @@
           alert('Error saving user: ' + error.message);
         })
         .addUser(userData);
+    }
+
+    function handleDashboardEditUser(event) {
+      event.preventDefault();
+      alert('Updating user...');
+      // This is a placeholder. Implement the actual update logic here.
+      // For example:
+      // const btn = document.getElementById('btnUpdateUser');
+      // btn.disabled = true;
+      // const userData = {
+      //   User_ID: document.getElementById('editUserId').value,
+      //   Username: document.getElementById('editUsername').value,
+      //   Email: document.getElementById('editEmail').value,
+      //   Phone: document.getElementById('editPhone').value,
+      //   Role: document.getElementById('editRole').value,
+      //   Status: document.getElementById('editStatus').value
+      // };
+      // google.script.run.withSuccessHandler(res => {
+      //   ... handle success ...
+      // }).withFailureHandler(err => {
+      //   ... handle error ...
+      // }).updateUser(userData);
     }
 
     // Show alert in users section
