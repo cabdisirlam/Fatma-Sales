@@ -18,7 +18,7 @@
       --warning-color: #ffc107; /* Bootstrap Warning Yellow */
       --info-color: #0dcaf0;    /* Bootstrap Info Cyan */
       
-      --background-color: #f8f9fa; /* Light Grey */
+      --background-color: #ffffff; /* White */
       --sidebar-background: #212529; /* Dark Grey */
       --card-background: #ffffff;
       --text-color: #212529;
@@ -127,10 +127,10 @@
       margin-bottom: 2rem;
     }
 
-    .card, .stat-card, .glass-card {
+    .card, .stat-card, .glass-card, .quick-add-card {
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         border-radius: 12px;
-        border: none;
+        border: 1px solid #dee2e6;
     }
 
     .content-section.active {
@@ -201,6 +201,19 @@
         gap: 5px;
     }
     
+    .hamburger-btn {
+        display: block;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1002;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+    }
+
     @media (max-width: 768px) {
         .sidebar {
             transform: translateX(-100%);
@@ -214,18 +227,6 @@
             padding: 15px; /* New padding for mobile */
             width: 100%; /* Ensure full width */
             box-sizing: border-box; /* Include padding in width */
-        }
-        .hamburger-btn {
-            display: block;
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1002;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 12px;
         }
         .menu-overlay.active {
           display: block;
@@ -264,12 +265,6 @@
         }
         #salesHistoryTable thead {
           display: none;
-        }
-    }
-
-    @media (min-width: 769px) {
-        .hamburger-btn {
-            display: none;
         }
     }
   </style>
@@ -2296,7 +2291,7 @@
           }).join('');
         })
         .withFailureHandler(function(error) {
-          console.error("Sales History Load Error:", error);
+          console.error(error);
           tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading data: ' + error.message + '</td></tr>';
         })
         .getRecentSales(20); 
@@ -2382,6 +2377,7 @@
           }).join('');
         })
         .withFailureHandler(function(error) {
+          console.error(error);
           tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-4">' + error.message + '</td></tr>';
         })
         .getSalesReturns();

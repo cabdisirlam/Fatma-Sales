@@ -1805,7 +1805,7 @@ function getRecentSales(limit = 20) {
       if (sale.Type === 'Sale' && sale.Transaction_ID && !uniqueSales.has(sale.Transaction_ID)) {
         uniqueSales.set(sale.Transaction_ID, {
           Transaction_ID: sale.Transaction_ID,
-          DateTime: new Date(sale.DateTime),
+          DateTime: sale.DateTime ? new Date(sale.DateTime).toISOString() : null,
           Customer_Name: sale.Customer_Name || 'Walk-in',
           Grand_Total: parseFloat(sale.Grand_Total) || 0,
           Status: sale.Status || 'Completed',
@@ -1815,7 +1815,7 @@ function getRecentSales(limit = 20) {
     }
 
     const sortedSales = Array.from(uniqueSales.values())
-      .sort((a, b) => b.DateTime.getTime() - a.DateTime.getTime());
+      .sort((a, b) => new Date(b.DateTime).getTime() - new Date(a.DateTime).getTime());
 
     return sortedSales.slice(0, limit);
   } catch (error) {

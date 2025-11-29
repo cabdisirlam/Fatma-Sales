@@ -119,7 +119,7 @@ function getSalesReturns() {
       if (row.Status === 'Returned') {
         returns.push({
           Transaction_ID: row.Transaction_ID,
-          DateTime: row.DateTime,
+          DateTime: row.DateTime ? new Date(row.DateTime).toISOString() : null,
           Customer_Name: row.Customer_Name,
           Grand_Total: parseFloat(row.Grand_Total) || 0,
           Item_ID: row.Item_ID,
