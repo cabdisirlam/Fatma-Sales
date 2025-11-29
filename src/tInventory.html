@@ -201,6 +201,70 @@
       border-radius: 4px;
       font-size: 12px;
     }
+
+    /* Custom Searchable Dropdown Styles */
+    .searchable-dropdown {
+      position: relative;
+    }
+
+    .searchable-dropdown .dropdown-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #dee2e6;
+      border-top: none;
+      border-radius: 0 0 0.375rem 0.375rem;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      display: none;
+    }
+
+    .searchable-dropdown .dropdown-results.show {
+      display: block;
+    }
+
+    .searchable-dropdown .dropdown-item {
+      padding: 10px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background-color 0.2s;
+    }
+
+    .searchable-dropdown .dropdown-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    .searchable-dropdown .dropdown-item.add-new {
+      color: #667eea;
+      font-weight: 600;
+      background-color: #f8f9ff;
+    }
+
+    .searchable-dropdown .dropdown-item.add-new:hover {
+      background-color: #e8ebff;
+    }
+
+    .searchable-dropdown .dropdown-item .item-name {
+      font-weight: 500;
+      color: #2c3e50;
+    }
+
+    .searchable-dropdown .dropdown-item .item-category {
+      font-size: 0.875rem;
+      color: #7f8c8d;
+      margin-left: 8px;
+    }
+
+    .searchable-dropdown .no-results {
+      padding: 15px;
+      text-align: center;
+      color: #7f8c8d;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -338,13 +402,18 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Item Name *</label>
-              <div class="input-group">
-                <select class="form-select" id="itemNameDropdown" name="Item_Name" required onchange="handleItemSelection()">
-                  <option value="">-- Select Item --</option>
-                </select>
-                <button class="btn btn-outline-secondary" type="button" onclick="showAddMasterItemModal()">
-                  <i class="bi bi-plus-circle"></i> Add New Item
-                </button>
+              <div class="searchable-dropdown">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="itemNameInput"
+                  name="Item_Name"
+                  placeholder="Type to search items..."
+                  autocomplete="off"
+                  required
+                  onfocus="showDropdown()"
+                  oninput="filterMasterItems()">
+                <div class="dropdown-results" id="itemDropdownResults"></div>
               </div>
             </div>
             <div class="mb-3">
@@ -506,7 +575,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Master Item</h5>
+          <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Create Master Item</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -517,11 +586,18 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Category *</label>
-              <input type="text" class="form-control" id="masterCategory" name="Category" required placeholder="e.g., Electronics, Food, Clothing">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Description (Optional)</label>
-              <textarea class="form-control" id="masterDescription" name="Description" rows="2" placeholder="Brief description of the item"></textarea>
+              <input
+                type="text"
+                class="form-control"
+                id="masterCategory"
+                name="Category"
+                list="categoryOptions"
+                required
+                placeholder="Select or type new category">
+              <datalist id="categoryOptions">
+                <!-- Will be populated dynamically -->
+              </datalist>
+              <div class="form-text">Select an existing category or type a new one</div>
             </div>
           </form>
           <div id="masterItemAlert" class="alert mt-3" style="display: none;"></div>
@@ -541,9 +617,10 @@
     // Load inventory on page load
     document.addEventListener('DOMContentLoaded', function() {
       loadInventory();
-      loadCategories();
+      loadCategoryFilter();
       loadSuppliers();
-      loadMasterData();
+      loadMasterItems();
+      loadCategories(); // For master data category datalist
     });
 
     // Search functionality
@@ -718,13 +795,13 @@
       document.getElementById('totalValue').textContent = 'Ksh ' + totalValue.toFixed(2);
     }
 
-    function loadCategories() {
+    function loadCategoryFilter() {
       google.script.run
         .withSuccessHandler(function(data) {
           const categoryFilter = document.getElementById('categoryFilter');
-          const categories = [...new Set(data.map(item => item.Category).filter(cat => cat))];
+          const cats = [...new Set(data.map(item => item.Category).filter(cat => cat))];
 
-          categories.forEach(function(category) {
+          cats.forEach(function(category) {
             const option = document.createElement('option');
             option.value = category;
             option.textContent = category;
@@ -732,7 +809,7 @@
           });
         })
         .withFailureHandler(function(error) {
-          console.error('Error loading categories:', error);
+          console.error('Error loading category filter:', error);
         })
         .getInventory({});
     }
@@ -783,81 +860,136 @@
       });
     }
 
-    // ===== HELPER FUNCTIONS =====
-    function showAlert(alertId, message, type) {
-      const alertDiv = document.getElementById(alertId);
-      if (alertDiv) {
-        alertDiv.className = 'alert alert-' + type + ' mt-3';
-        alertDiv.textContent = message;
-        alertDiv.style.display = 'block';
-      }
-    }
+    // ===== MASTER DATA & SEARCHABLE DROPDOWN =====
+    let categories = []; // Store unique categories
 
-    // ===== MASTER DATA FUNCTIONS =====
-    function loadMasterData() {
+    function loadMasterItems() {
       google.script.run
         .withSuccessHandler(function(data) {
           masterData = data || [];
-          populateMasterItemDropdown();
         })
         .withFailureHandler(function(error) {
-          console.error('Error loading master data:', error);
+          console.error('Error loading master items:', error);
           masterData = [];
-          populateMasterItemDropdown();
         })
-        .getMasterData();
+        .getMasterItems();
     }
 
-    function populateMasterItemDropdown() {
-      const dropdown = document.getElementById('itemNameDropdown');
+    function loadCategories() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          categories = data || [];
+          populateCategoryDatalist();
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading categories:', error);
+        })
+        .getUniqueCategories();
+    }
 
-      if (!dropdown) return;
+    function populateCategoryDatalist() {
+      const datalist = document.getElementById('categoryOptions');
+      if (!datalist) return;
 
-      // Clear existing options except the first one
-      dropdown.innerHTML = '<option value="">-- Select Item --</option>';
-
-      if (!masterData || masterData.length === 0) {
+      datalist.innerHTML = '';
+      categories.forEach(function(cat) {
         const option = document.createElement('option');
-        option.value = '';
-        option.textContent = 'No items available - Add new item first';
-        option.disabled = true;
-        dropdown.appendChild(option);
-        return;
-      }
-
-      // Populate with master data items
-      masterData.forEach(function(item) {
-        const option = document.createElement('option');
-        option.value = item.Item_Name;
-        option.textContent = item.Item_Name + ' (' + item.Category + ')';
-        option.setAttribute('data-category', item.Category);
-        option.setAttribute('data-description', item.Description || '');
-        dropdown.appendChild(option);
+        option.value = cat;
+        datalist.appendChild(option);
       });
     }
 
-    function handleItemSelection() {
-      const dropdown = document.getElementById('itemNameDropdown');
-      const categoryField = document.getElementById('categoryField');
-
-      if (!dropdown || !categoryField) return;
-
-      const selectedOption = dropdown.options[dropdown.selectedIndex];
-
-      if (selectedOption && selectedOption.value) {
-        const category = selectedOption.getAttribute('data-category');
-        categoryField.value = category || '';
-      } else {
-        categoryField.value = '';
-      }
+    function showDropdown() {
+      filterMasterItems();
     }
 
-    function showAddMasterItemModal() {
-      // Clear the form
+    function filterMasterItems() {
+      const input = document.getElementById('itemNameInput');
+      const resultsDiv = document.getElementById('itemDropdownResults');
+
+      if (!input || !resultsDiv) return;
+
+      const searchTerm = input.value.toLowerCase().trim();
+
+      // Filter master items
+      const filteredItems = masterData.filter(function(item) {
+        return item.Item_Name.toLowerCase().includes(searchTerm);
+      });
+
+      // Clear results
+      resultsDiv.innerHTML = '';
+
+      // Scenario A: Matches found
+      if (filteredItems.length > 0) {
+        // Show matching items
+        filteredItems.forEach(function(item) {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'dropdown-item';
+          itemDiv.innerHTML = '<span class="item-name">' + item.Item_Name + '</span>' +
+                              '<span class="item-category">(' + item.Category + ')</span>';
+          itemDiv.onclick = function() {
+            selectItem(item.Item_Name, item.Category);
+          };
+          resultsDiv.appendChild(itemDiv);
+        });
+
+        // Add "Add New Item" at the BOTTOM
+        const addNewDiv = document.createElement('div');
+        addNewDiv.className = 'dropdown-item add-new';
+        addNewDiv.innerHTML = '<i class="bi bi-plus-circle"></i> Add New Item';
+        addNewDiv.onclick = function() {
+          showCreateMasterModal(input.value);
+        };
+        resultsDiv.appendChild(addNewDiv);
+      }
+      // Scenario B: No matches found
+      else {
+        // Show "Add New Item" at the TOP/FIRST
+        const addNewDiv = document.createElement('div');
+        addNewDiv.className = 'dropdown-item add-new';
+        addNewDiv.innerHTML = '<i class="bi bi-plus-circle"></i> Add New Item' +
+                              (searchTerm ? ': "' + input.value + '"' : '');
+        addNewDiv.onclick = function() {
+          showCreateMasterModal(input.value);
+        };
+        resultsDiv.appendChild(addNewDiv);
+      }
+
+      // Show the dropdown
+      resultsDiv.classList.add('show');
+    }
+
+    function selectItem(itemName, category) {
+      const input = document.getElementById('itemNameInput');
+      const categoryField = document.getElementById('categoryField');
+      const resultsDiv = document.getElementById('itemDropdownResults');
+
+      if (input) input.value = itemName;
+      if (categoryField) categoryField.value = category;
+      if (resultsDiv) resultsDiv.classList.remove('show');
+    }
+
+    function showCreateMasterModal(prefillName) {
+      // Close dropdown
+      const resultsDiv = document.getElementById('itemDropdownResults');
+      if (resultsDiv) resultsDiv.classList.remove('show');
+
+      // Clear form
       document.getElementById('addMasterItemForm').reset();
       document.getElementById('masterItemAlert').style.display = 'none';
 
-      // Show the modal
+      // Pre-fill item name if provided
+      const nameInput = document.getElementById('masterItemName');
+      if (nameInput && prefillName) {
+        nameInput.value = prefillName;
+      }
+
+      // Ensure categories are loaded
+      if (categories.length === 0) {
+        loadCategories();
+      }
+
+      // Show modal
       const modal = new bootstrap.Modal(document.getElementById('addMasterItemModal'));
       modal.show();
     }
@@ -870,54 +1002,32 @@
         return;
       }
 
-      const formData = new FormData(form);
-      const masterItemData = Object.fromEntries(formData);
-      masterItemData.User = currentUser;
-
+      const itemName = document.getElementById('masterItemName').value;
+      const category = document.getElementById('masterCategory').value;
       const alertDiv = document.getElementById('masterItemAlert');
+
       alertDiv.style.display = 'none';
 
       google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) {
-            alertDiv.className = 'alert alert-success mt-3';
-            alertDiv.textContent = 'Master item added successfully! ID: ' + result.masterId;
-            alertDiv.style.display = 'block';
+        .withSuccessHandler(function(newItem) {
+          // Add to local masterData
+          masterData.push(newItem);
 
-            // Reload master data
+          // Select the new item in the main form
+          selectItem(newItem.Item_Name, newItem.Category);
+
+          // Close modal
+          bootstrap.Modal.getInstance(document.getElementById('addMasterItemModal')).hide();
+
+          // Show success message
+          const productAlert = document.getElementById('addProductAlert');
+          if (productAlert) {
+            productAlert.className = 'alert alert-success mt-3';
+            productAlert.textContent = 'New item "' + newItem.Item_Name + '" created and selected!';
+            productAlert.style.display = 'block';
             setTimeout(function() {
-              google.script.run
-                .withSuccessHandler(function(data) {
-                  masterData = data || [];
-                  populateMasterItemDropdown();
-
-                  // Auto-select the newly added item
-                  const dropdown = document.getElementById('itemNameDropdown');
-                  if (dropdown) {
-                    const newOption = Array.from(dropdown.options).find(opt =>
-                      opt.value === result.itemName
-                    );
-                    if (newOption) {
-                      dropdown.value = result.itemName;
-                      handleItemSelection();
-                    }
-                  }
-
-                  // Close the master item modal and show success
-                  bootstrap.Modal.getInstance(document.getElementById('addMasterItemModal')).hide();
-
-                  // Show brief success message
-                  showAlert('addProductAlert', 'New item "' + result.itemName + '" has been added and selected. You can now add inventory details.', 'success');
-                })
-                .withFailureHandler(function(error) {
-                  console.error('Error reloading master data:', error);
-                })
-                .getMasterData();
-            }, 500);
-          } else {
-            alertDiv.className = 'alert alert-danger mt-3';
-            alertDiv.textContent = 'Error: ' + result.message;
-            alertDiv.style.display = 'block';
+              productAlert.style.display = 'none';
+            }, 3000);
           }
         })
         .withFailureHandler(function(error) {
@@ -925,8 +1035,18 @@
           alertDiv.textContent = 'Error: ' + error.message;
           alertDiv.style.display = 'block';
         })
-        .addMasterItem(masterItemData);
+        .addMasterItem(itemName, category, currentUser);
     }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const dropdown = document.querySelector('.searchable-dropdown');
+      const resultsDiv = document.getElementById('itemDropdownResults');
+
+      if (dropdown && resultsDiv && !dropdown.contains(e.target)) {
+        resultsDiv.classList.remove('show');
+      }
+    });
 
     function filterInventory() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -990,9 +1110,16 @@
       document.getElementById('sourceOpening').checked = true;
       toggleStockSourceFields();
 
-      // Populate dropdowns
+      // Populate supplier dropdown
       populateSupplierDropdowns();
-      populateMasterItemDropdown();
+
+      // Ensure master items and categories are loaded
+      if (masterData.length === 0) {
+        loadMasterItems();
+      }
+      if (categories.length === 0) {
+        loadCategories();
+      }
 
       const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
       modal.show();

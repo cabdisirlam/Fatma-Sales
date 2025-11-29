@@ -895,10 +895,11 @@ function checkStock(itemId, requiredQty) {
 // =====================================================
 
 /**
- * Get all active master items (Item Name + Category pairs)
- * Used to populate dropdown in inventory add form
+ * Get all active master items from Master_Data sheet
+ * Returns simplified format for dropdown: [{ Item_Name, Category }, ...]
+ * @returns {Array} - Array of master items
  */
-function getMasterData() {
+function getMasterItems() {
   try {
     const sheet = getSheet('Master_Data');
     const data = sheet.getDataRange().getValues();
@@ -918,19 +919,16 @@ function getMasterData() {
         item[header] = row[index];
       });
 
-      // Only return active items
+      // Only return active items with Item_Name
       if (item.Status === 'Active' && item.Item_Name) {
         masterItems.push({
-          Master_ID: item.Master_ID,
           Item_Name: item.Item_Name,
-          Category: item.Category || '',
-          Description: item.Description || '',
-          Status: item.Status
+          Category: item.Category || ''
         });
       }
     }
 
-    // Sort by Item_Name for easy lookup
+    // Sort alphabetically by Item_Name
     masterItems.sort((a, b) => {
       const nameA = (a.Item_Name || '').toLowerCase();
       const nameB = (b.Item_Name || '').toLowerCase();
@@ -940,41 +938,42 @@ function getMasterData() {
     return masterItems;
 
   } catch (error) {
-    logError('getMasterData', error);
-    throw new Error('Error loading master data: ' + error.message);
+    logError('getMasterItems', error);
+    throw new Error('Error loading master items: ' + error.message);
   }
 }
 
 /**
  * Add new master item to Master_Data sheet
- * @param {Object} data - { Item_Name, Category, Description }
- * @returns {Object} - { success, masterId, message }
+ * @param {string} name - Item name
+ * @param {string} category - Category name
+ * @param {string} user - Optional user name for audit
+ * @returns {Object} - The newly created item { Item_Name, Category }
  */
-function addMasterItem(data) {
+function addMasterItem(name, category, user) {
   try {
     // Validation
-    if (!data.Item_Name || data.Item_Name.trim() === '') {
+    if (!name || name.trim() === '') {
       throw new Error('Item Name is required');
     }
 
-    if (!data.Category || data.Category.trim() === '') {
+    if (!category || category.trim() === '') {
       throw new Error('Category is required');
     }
 
     const sheet = getSheet('Master_Data');
+    const itemName = name.trim();
+    const itemCategory = category.trim();
 
-    // Check for duplicates (same Item_Name and Category combination)
-    const existingItems = getMasterData();
+    // Check for duplicates
+    const existingItems = getMasterItems();
     const duplicate = existingItems.find(item =>
-      item.Item_Name.toLowerCase() === data.Item_Name.trim().toLowerCase() &&
-      item.Category.toLowerCase() === data.Category.trim().toLowerCase()
+      item.Item_Name.toLowerCase() === itemName.toLowerCase() &&
+      item.Category.toLowerCase() === itemCategory.toLowerCase()
     );
 
     if (duplicate) {
-      return {
-        success: false,
-        message: 'This item already exists in Master Data: ' + duplicate.Item_Name + ' (' + duplicate.Category + ')'
-      };
+      throw new Error('This item already exists: ' + duplicate.Item_Name + ' (' + duplicate.Category + ')');
     }
 
     // Generate Master_ID
@@ -984,35 +983,33 @@ function addMasterItem(data) {
     // Headers: Master_ID, Item_Name, Category, Description, Status
     const newMasterItem = [
       masterId,
-      data.Item_Name.trim(),
-      data.Category.trim(),
-      data.Description ? data.Description.trim() : '',
+      itemName,
+      itemCategory,
+      '', // Description empty by default
       'Active'
     ];
 
     sheet.appendRow(newMasterItem);
 
     logAudit(
-      data.User || 'SYSTEM',
+      user || 'SYSTEM',
       'Master_Data',
       'Create',
-      'Added master item: ' + data.Item_Name + ' (' + data.Category + ')',
+      'Added master item: ' + itemName + ' (' + itemCategory + ')',
       '',
       '',
-      JSON.stringify({ masterId, itemName: data.Item_Name, category: data.Category })
+      JSON.stringify({ masterId, itemName, itemCategory })
     );
 
+    // Return the new item in the expected format
     return {
-      success: true,
-      masterId: masterId,
-      itemName: data.Item_Name,
-      category: data.Category,
-      message: 'Master item added successfully'
+      Item_Name: itemName,
+      Category: itemCategory
     };
 
   } catch (error) {
     logError('addMasterItem', error);
-    throw new Error('Error adding master item: ' + error.message);
+    throw error;
   }
 }
 
