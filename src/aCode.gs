@@ -1234,62 +1234,106 @@ function checkOAuthStatus() {
  * Diagnostic function to check user data in the spreadsheet
  * This helps troubleshoot login issues by showing exactly what's stored
  */
-function checkUserData(email) {
+/**
+ * Adds a new user with validation
+ */
+function addUser(userData) {
   try {
-    const sheet = getSheet('Users');
-    const data = sheet.getDataRange().getValues();
-
-    if (data.length <= 1) {
-      return {
-        success: false,
-        message: 'No users found in the system',
-        totalUsers: 0
-      };
+    if (!userData.PIN || userData.PIN.toString().length !== CONFIG.PIN_LENGTH) {
+      throw new Error('PIN must be exactly ' + CONFIG.PIN_LENGTH + ' digits');
     }
 
-    const headers = data[0];
-    const emailCol = headers.indexOf('Email');
-    const usernameCol = headers.indexOf('Username');
-    const pinCol = headers.indexOf('PIN');
-    const statusCol = headers.indexOf('Status');
-    const roleCol = headers.indexOf('Role');
+    const sheet = getSheet('Users');
+    const userId = generateId('Users', 'User_ID', 'USR');
+    
+    // Check for duplicate email
+    const users = getUsers();
+    if(users.some(u => u.Email.toLowerCase() === userData.Email.toLowerCase())) {
+        throw new Error('User with this email already exists.');
+    }
 
-    // Find user by email
+    const newUser = [
+      userId,
+      userData.Username,
+      userData.PIN,
+      userData.Role,
+      userData.Email,
+      userData.Phone || '',
+      userData.Status || 'Active',
+      new Date()
+    ];
+    sheet.appendRow(newUser);
+
+    return { success: true, message: 'User created successfully', userId: userId };
+  } catch (error) {
+    logError('addUser', error);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Updates user information including Role and Status
+ */
+function updateUser(userData) {
+  try {
+    if (!userData.User_ID) throw new Error('User ID is required');
+
+    const result = updateRowById('Users', 'User_ID', userData.User_ID, {
+        Username: userData.Username,
+        Email: userData.Email,
+        Role: userData.Role,
+        Status: userData.Status, // Handles 'Active' or 'Inactive'
+        Phone: userData.Phone
+    });
+
+    logAudit(
+      Session.getActiveUser().getEmail() || 'ADMIN',
+      'Users',
+      'Update',
+      'User updated: ' + userData.Username + ' (Status: ' + userData.Status + ')',
+      '',
+      result.beforeValue,
+      result.afterValue
+    );
+
+    return { success: true, message: 'User updated successfully' };
+  } catch (error) {
+    logError('updateUser', error);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Deletes a user by User_ID
+ */
+function deleteUser(userId) {
+  try {
+    if (!userId) throw new Error('User ID is required');
+
+    const sheet = getSheet('Users');
+    const data = sheet.getDataRange().getValues();
+    const idIndex = data[0].indexOf('User_ID');
+    
+    if (idIndex === -1) throw new Error('User_ID column not found');
+
+    let rowIndex = -1;
     for (let i = 1; i < data.length; i++) {
-      const row = data[i];
-      if (row[emailCol] && row[emailCol].toLowerCase() === email.toLowerCase()) {
-        return {
-          success: true,
-          found: true,
-          user: {
-            email: row[emailCol],
-            username: row[usernameCol],
-            pinLength: row[pinCol] ? row[pinCol].toString().length : 0,
-            pinType: typeof row[pinCol],
-            status: row[statusCol],
-            role: row[roleCol]
-          },
-          message: 'User found',
-          headers: headers,
-          rowNumber: i + 1
-        };
+      if (data[i][idIndex] === userId) {
+        rowIndex = i + 1; // 1-based index
+        break;
       }
     }
 
-    return {
-      success: true,
-      found: false,
-      message: 'User with email ' + email + ' not found',
-      totalUsers: data.length - 1,
-      availableEmails: data.slice(1).map(row => row[emailCol]).filter(e => e)
-    };
+    if (rowIndex === -1) throw new Error('User not found');
 
+    sheet.deleteRow(rowIndex);
+    
+    logAudit(Session.getActiveUser().getEmail(), 'Users', 'Delete', 'Deleted user ID: ' + userId, '', '', '');
+    
+    return { success: true, message: 'User deleted successfully' };
   } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-      message: 'Error checking user data'
-    };
+    logError('deleteUser', error);
+    return { success: false, message: error.message };
   }
 }
 
