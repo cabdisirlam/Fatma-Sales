@@ -24,7 +24,8 @@ const CONFIG = {
     PURCHASE_ORDERS: 'Purchase_Orders',
     CHART_OF_ACCOUNTS: 'Chart_of_Accounts',
     AUDIT_TRAIL: 'Audit_Trail',
-    SETTINGS: 'Settings'
+    SETTINGS: 'Settings',
+    MASTER_DATA: 'Master_Data'
   },
 
   // Colors (Brand Colors)

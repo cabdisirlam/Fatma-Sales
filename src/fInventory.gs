@@ -891,6 +891,132 @@ function checkStock(itemId, requiredQty) {
 }
 
 // =====================================================
+// MASTER DATA FUNCTIONS
+// =====================================================
+
+/**
+ * Get all active master items (Item Name + Category pairs)
+ * Used to populate dropdown in inventory add form
+ */
+function getMasterData() {
+  try {
+    const sheet = getSheet('Master_Data');
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length <= 1) {
+      return [];
+    }
+
+    const headers = data[0];
+    const masterItems = [];
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const item = {};
+
+      headers.forEach((header, index) => {
+        item[header] = row[index];
+      });
+
+      // Only return active items
+      if (item.Status === 'Active' && item.Item_Name) {
+        masterItems.push({
+          Master_ID: item.Master_ID,
+          Item_Name: item.Item_Name,
+          Category: item.Category || '',
+          Description: item.Description || '',
+          Status: item.Status
+        });
+      }
+    }
+
+    // Sort by Item_Name for easy lookup
+    masterItems.sort((a, b) => {
+      const nameA = (a.Item_Name || '').toLowerCase();
+      const nameB = (b.Item_Name || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+
+    return masterItems;
+
+  } catch (error) {
+    logError('getMasterData', error);
+    throw new Error('Error loading master data: ' + error.message);
+  }
+}
+
+/**
+ * Add new master item to Master_Data sheet
+ * @param {Object} data - { Item_Name, Category, Description }
+ * @returns {Object} - { success, masterId, message }
+ */
+function addMasterItem(data) {
+  try {
+    // Validation
+    if (!data.Item_Name || data.Item_Name.trim() === '') {
+      throw new Error('Item Name is required');
+    }
+
+    if (!data.Category || data.Category.trim() === '') {
+      throw new Error('Category is required');
+    }
+
+    const sheet = getSheet('Master_Data');
+
+    // Check for duplicates (same Item_Name and Category combination)
+    const existingItems = getMasterData();
+    const duplicate = existingItems.find(item =>
+      item.Item_Name.toLowerCase() === data.Item_Name.trim().toLowerCase() &&
+      item.Category.toLowerCase() === data.Category.trim().toLowerCase()
+    );
+
+    if (duplicate) {
+      return {
+        success: false,
+        message: 'This item already exists in Master Data: ' + duplicate.Item_Name + ' (' + duplicate.Category + ')'
+      };
+    }
+
+    // Generate Master_ID
+    const masterId = generateId('Master_Data', 'Master_ID', 'MASTER');
+
+    // Prepare new row
+    // Headers: Master_ID, Item_Name, Category, Description, Status
+    const newMasterItem = [
+      masterId,
+      data.Item_Name.trim(),
+      data.Category.trim(),
+      data.Description ? data.Description.trim() : '',
+      'Active'
+    ];
+
+    sheet.appendRow(newMasterItem);
+
+    logAudit(
+      data.User || 'SYSTEM',
+      'Master_Data',
+      'Create',
+      'Added master item: ' + data.Item_Name + ' (' + data.Category + ')',
+      '',
+      '',
+      JSON.stringify({ masterId, itemName: data.Item_Name, category: data.Category })
+    );
+
+    return {
+      success: true,
+      masterId: masterId,
+      itemName: data.Item_Name,
+      category: data.Category,
+      message: 'Master item added successfully'
+    };
+
+  } catch (error) {
+    logError('addMasterItem', error);
+    throw new Error('Error adding master item: ' + error.message);
+  }
+}
+
+// =====================================================
 // LOW STOCK ALERT FUNCTIONS
 // =====================================================
 
