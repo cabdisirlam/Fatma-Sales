@@ -68,22 +68,12 @@ function doPost(e) {
 // =====================================================
 
 function getSpreadsheet() {
+  const SPREADSHEET_ID = '1m_IHBaz4PJZOo2sy5w4s27XQilQqGsFveMDRWt7tP-w';
   try {
-    const activeSS = SpreadsheetApp.getActiveSpreadsheet();
-    if (activeSS) return activeSS;
-
-    const scriptProperties = PropertiesService.getScriptProperties();
-    let spreadsheetId = scriptProperties.getProperty('SPREADSHEET_ID');
-
-    if (!spreadsheetId) {
-      spreadsheetId = '1m_IHBaz4PJZOo2sy5w4s27XQilQqGsFveMDRWt7tP-w'; // Fallback ID
-      scriptProperties.setProperty('SPREADSHEET_ID', spreadsheetId);
-    }
-
-    return SpreadsheetApp.openById(spreadsheetId);
+    return SpreadsheetApp.openById(SPREADSHEET_ID);
   } catch (error) {
-    logError('getSpreadsheet', error);
-    throw new Error('Cannot access spreadsheet. Check permissions and configuration.');
+    Logger.log(`Failed to open spreadsheet with ID: ${SPREADSHEET_ID}. Error: ${error.message}`);
+    throw new Error('Cannot access the system spreadsheet. Please check that the ID is correct and you have permissions.');
   }
 }
 

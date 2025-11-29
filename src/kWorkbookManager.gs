@@ -4,98 +4,73 @@
  */
 
 /**
- * Gets or creates the spreadsheet for the system.
- * This function is designed to work in any context (bound, standalone, web app).
- * @returns {Spreadsheet} The spreadsheet object.
+ * Main setup and cleanup function for the V3 system.
+ * - Enforces a single, hardcoded spreadsheet ID.
+ * - Deletes any sheets not defined in the V3 schema.
+ * - Creates missing V3 sheets.
+ * - Adds missing columns to existing V3 sheets.
+ * This is the primary function to run for a new installation or to force an update.
  */
-function getOrCreateSpreadsheet() {
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const storedId = scriptProperties.getProperty('SPREADSHEET_ID');
-
-  // Priority 1: Use stored ID if available
-  if (storedId) {
-    try {
-      const ss = SpreadsheetApp.openById(storedId);
-      Logger.log('Successfully opened spreadsheet by stored ID: ' + storedId);
-      return ss;
-    } catch (e) {
-      Logger.log('Warning: Could not open spreadsheet by stored ID. It may have been deleted. A new sheet will be created. Error: ' + e.message);
-    }
-  }
-
-  // Priority 2: Use the active spreadsheet if the script is bound
+function runV3Setup() {
+  const SPREADSHEET_ID = '1m_IHBaz4PJZOo2sy5w4s27XQilQqGsFveMDRWt7tP-w';
+  
   try {
-    const activeSS = SpreadsheetApp.getActiveSpreadsheet();
-    if (activeSS) {
-      scriptProperties.setProperty('SPREADSHEET_ID', activeSS.getId());
-      Logger.log('Using active spreadsheet. ID stored.');
-      return activeSS;
-    }
-  } catch(e) {
-      Logger.log('Not a bound script, no active spreadsheet.');
-  }
-
-  // Priority 3: Create a new spreadsheet
-  Logger.log('No active or stored spreadsheet found. Creating a new one...');
-  const newSS = SpreadsheetApp.create(CONFIG.WORKBOOK_NAME);
-  const newId = newSS.getId();
-  scriptProperties.setProperty('SPREADSHEET_ID', newId);
-  Logger.log('Created new spreadsheet with ID: ' + newId);
-  return newSS;
-}
-
-
-/**
- * Main setup function - creates or updates the Fatma System workbook.
- * This is the primary function to run for a new installation.
- */
-function setupFatmaSystem() {
-  try {
-    Logger.log('=== Starting Fatma System Setup/Update ===');
-    const ss = getOrCreateSpreadsheet();
+    Logger.log('=== Starting Fatma System V3 Setup/Cleanup ===');
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     
-    ss.rename(CONFIG.WORKBOOK_NAME);
-    Logger.log('Workbook name set to: ' + CONFIG.WORKBOOK_NAME);
+    // --- Phase 1: Cleanup extraneous sheets ---
+    const requiredSheetNames = new Set(Object.values(CONFIG.SHEETS));
+    const allSheets = ss.getSheets();
+    let deletedSheets = [];
 
-    // Initialize all sheets using the master V3 function
+    allSheets.forEach(sheet => {
+      const sheetName = sheet.getName();
+      if (!requiredSheetNames.has(sheetName)) {
+        ss.deleteSheet(sheet);
+        deletedSheets.push(sheetName);
+        Logger.log(`- Deleted extraneous sheet: "${sheetName}"`);
+      }
+    });
+
+    if(deletedSheets.length > 0) {
+        Logger.log(`Cleanup complete. Deleted ${deletedSheets.length} non-V3 sheets.`);
+    } else {
+        Logger.log('No extraneous sheets found to delete.');
+    }
+
+    // --- Phase 2: Initialize and verify all V3 sheets ---
     initializeSystemSheets(ss);
 
-    // Clean up default "Sheet1" if it exists
-    const defaultSheet = ss.getSheetByName('Sheet1');
-    if (defaultSheet && ss.getSheets().length > 1) {
-      ss.deleteSheet(defaultSheet);
-      Logger.log('Removed default "Sheet1".');
-    }
-
-    // Set active sheet for better user experience if context allows
+    // --- Phase 3: Finalization ---
     const usersSheet = ss.getSheetByName(CONFIG.SHEETS.USERS);
     if (usersSheet) ss.setActiveSheet(usersSheet);
 
-    Logger.log('=== Fatma System setup completed successfully! ===');
-    Logger.log('Spreadsheet URL: ' + ss.getUrl());
-
+    Logger.log('=== Fatma System V3 setup completed successfully! ===');
+    
     try {
-        SpreadsheetApp.getUi().alert(
-            'Setup Complete',
-            'Fatma System has been successfully initialized or updated to the V3 schema.',
-            SpreadsheetApp.getUi().ButtonSet.OK
-        );
+      let message = 'System setup complete. All sheets are aligned with the V3 schema.';
+      if(deletedSheets.length > 0) {
+          message += `\n\nDeleted non-V3 sheets: ${deletedSheets.join(', ')}.`;
+      }
+      SpreadsheetApp.getUi().alert('Setup Complete', message, SpreadsheetApp.getUi().ButtonSet.OK);
     } catch (e) {
-        Logger.log('UI context not available for alert.');
+      Logger.log('UI context not available for final alert.');
     }
 
     return { success: true, spreadsheetUrl: ss.getUrl() };
+
   } catch (error) {
-    Logger.log('ERROR in setupFatmaSystem: ' + error.message);
+    Logger.log('ERROR in runV3Setup: ' + error.message);
     Logger.log(error.stack);
     try {
-        SpreadsheetApp.getUi().alert('Setup Failed', 'An error occurred: ' + error.message, SpreadsheetApp.getUi().ButtonSet.OK);
+      SpreadsheetApp.getUi().alert('Setup Failed', 'An error occurred: ' + error.message, SpreadsheetApp.getUi().ButtonSet.OK);
     } catch (e) {
-        Logger.log('UI context not available for error alert.');
+      Logger.log('UI context not available for error alert.');
     }
     return { success: false, message: error.message };
   }
 }
+
 
 /**
  * Master V3 Sheet Initializer
@@ -166,7 +141,7 @@ function initializeSystemSheets(ss) {
 function formatHeader(sheet, headerRange) {
     try {
         headerRange
-            .setBackground(CONFIG.COLORS.HEADER)
+            .setBackground("#2c3e50") // Using hex from CONFIG as it might not be available
             .setFontColor('#FFFFFF')
             .setFontWeight('bold')
             .setHorizontalAlignment('center');
