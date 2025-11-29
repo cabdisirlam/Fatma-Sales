@@ -739,3 +739,132 @@ function createSettingsSheet() {
   Logger.log('Created Settings sheet (with expense categories)');
   return sheet;
 }
+// ==========================================
+// V3 UPGRADE: ADD MISSING SHEETS SAFELY
+// ==========================================
+
+/**
+ * Run this function to add Quotations, POs, and Accounts sheets
+ * WITHOUT deleting your existing data.
+ */
+function upgradeSystemToV3() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  
+  try {
+    Logger.log('Starting System Upgrade to V3...');
+
+    // 1. Create QUOTATIONS Sheet (Restoring it as a separate tab)
+    if (!ss.getSheetByName('Quotations')) {
+      createQuotationsSheetV3();
+      Logger.log('✓ Created Quotations sheet');
+    } else {
+      Logger.log('- Quotations sheet already exists (Skipped)');
+    }
+
+    // 2. Create PURCHASE ORDERS Sheet (New P2P Module)
+    if (!ss.getSheetByName('Purchase_Orders')) {
+      createPurchaseOrdersSheet();
+      Logger.log('✓ Created Purchase_Orders sheet');
+    } else {
+      Logger.log('- Purchase_Orders sheet already exists (Skipped)');
+    }
+
+    // 3. Create CHART OF ACCOUNTS (For Financial Integrity)
+    if (!ss.getSheetByName('Chart_of_Accounts')) {
+      createChartOfAccountsSheet();
+      Logger.log('✓ Created Chart_of_Accounts sheet');
+    } else {
+      Logger.log('- Chart_of_Accounts sheet already exists (Skipped)');
+    }
+
+    // 4. Create GENERAL LEDGER (Optional: detailed double-entry)
+    if (!ss.getSheetByName('General_Ledger')) {
+      createGeneralLedgerSheet();
+      Logger.log('✓ Created General_Ledger sheet');
+    }
+
+    ui.alert('Upgrade Complete', 'System has been updated to V3.\nNew sheets added:\n- Quotations\n- Purchase_Orders\n- Chart_of_Accounts', ui.ButtonSet.OK);
+
+  } catch (error) {
+    Logger.log('Error upgrading: ' + error.message);
+    ui.alert('Error', error.message, ui.ButtonSet.OK);
+  }
+}
+
+// --- HELPER FUNCTIONS FOR NEW SHEETS ---
+
+function createQuotationsSheetV3() {
+  const sheet = getOrCreateSheet('Quotations');
+  sheet.clear(); // Safe because we only run this if sheet didn't exist
+  
+  const headers = [
+    'Quotation_ID', 'DateTime', 'Customer_ID', 'Customer_Name',
+    'Item_ID', 'Item_Name', 'Qty', 'Unit_Price', 'Line_Total',
+    'Subtotal', 'Delivery_Charge', 'Discount', 'Grand_Total',
+    'Created_By', 'Location', 'KRA_PIN', 'Status',
+    'Valid_Until', 'Converted_Sale_ID'
+  ];
+
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
+  
+  // Set column widths
+  sheet.setColumnWidth(1, 120); // ID
+  sheet.setColumnWidth(4, 180); // Name
+  sheet.setColumnWidth(6, 200); // Item Name
+  return sheet;
+}
+
+function createPurchaseOrdersSheet() {
+  const sheet = getOrCreateSheet('Purchase_Orders');
+  sheet.clear();
+
+  const headers = [
+    'PO_ID', 'Date_Created', 'Supplier_ID', 'Supplier_Name',
+    'Expected_Date', 'Total_Amount', 'Status', 'Created_By', 
+    'Notes', 'Goods_Received_Ref'
+  ];
+
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
+  return sheet;
+}
+
+function createChartOfAccountsSheet() {
+  const sheet = getOrCreateSheet('Chart_of_Accounts');
+  sheet.clear();
+
+  const headers = ['Account_Code', 'Account_Name', 'Type', 'Category', 'Description', 'Balance'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
+
+  // Add Default Accounts
+  const defaultAccounts = [
+    ['1000', 'Cash', 'Asset', 'Current Asset', 'Petty Cash', 0],
+    ['1010', 'M-Pesa', 'Asset', 'Current Asset', 'Mobile Money', 0],
+    ['1020', 'Equity Bank', 'Asset', 'Current Asset', 'Bank Account', 0],
+    ['1200', 'Inventory Asset', 'Asset', 'Current Asset', 'Stock Value', 0],
+    ['4000', 'Sales Revenue', 'Revenue', 'Income', 'Product Sales', 0],
+    ['5000', 'Cost of Goods Sold', 'Expense', 'COGS', 'Cost of items sold', 0],
+    ['6000', 'Rent Expense', 'Expense', 'Operating', 'Shop Rent', 0],
+    ['6010', 'Salaries', 'Expense', 'Operating', 'Staff Salaries', 0]
+  ];
+  
+  sheet.getRange(2, 1, defaultAccounts.length, 6).setValues(defaultAccounts);
+  return sheet;
+}
+
+function createGeneralLedgerSheet() {
+  const sheet = getOrCreateSheet('General_Ledger');
+  sheet.clear();
+  
+  const headers = [
+    'Txn_ID', 'Date', 'Account_Name', 'Debit', 'Credit', 
+    'Description', 'Reference_ID', 'User'
+  ];
+  
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  formatHeaderRow(sheet, sheet.getRange(1, 1, 1, headers.length), headers.length);
+  return sheet;
+}
