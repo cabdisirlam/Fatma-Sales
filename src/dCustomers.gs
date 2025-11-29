@@ -595,42 +595,40 @@ function sendPaymentReminder(customerId, businessName) {
     const debtAmount = Math.abs(balance);
 
     // Build email content
-    let emailBody = '<html><body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">';
-    emailBody += '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">';
-    emailBody += '<h2 style="margin: 0;">💳 Payment Reminder</h2>';
-    emailBody += '</div>';
-    emailBody += '<div style="padding: 30px; background: #f9f9f9;">';
-    emailBody += '<p>Dear <strong>' + customer.Customer_Name + '</strong>,</p>';
-    emailBody += '<p>This is a friendly reminder that you have an outstanding balance with ' + businessName + '.</p>';
-    emailBody += '<div style="background: white; padding: 20px; border-left: 4px solid #e74c3c; margin: 20px 0;">';
-    emailBody += '<h3 style="color: #e74c3c; margin-top: 0;">Outstanding Balance</h3>';
-    emailBody += '<p style="font-size: 28px; font-weight: bold; color: #2c3e50; margin: 10px 0;">KSh ' + debtAmount.toLocaleString('en-KE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</p>';
-    emailBody += '</div>';
-
-    emailBody += '<p>Please arrange to settle this amount at your earliest convenience.</p>';
-    // Payment methods section
-    emailBody += '<div style="background: white; padding: 20px; margin: 20px 0; border-radius: 8px;">';
-    emailBody += '<h4 style="color: #667eea; margin-top: 0;">Payment Methods</h4>';
-    emailBody += '<ul style="list-style: none; padding: 0;">';
-    emailBody += '<li style="padding: 5px 0;">📱 <strong>M-Pesa:</strong> Pay via M-Pesa</li>';
-    emailBody += '<li style="padding: 5px 0;">🏦 <strong>Bank Transfer:</strong> Equity Bank</li>';
-    emailBody += '<li style="padding: 5px 0;">💵 <strong>Cash:</strong> Visit our location</li>';
-    emailBody += '</ul>';
-    emailBody += '</div>';
-    emailBody += '<p>If you have any questions or concerns regarding this balance, please don\'t hesitate to contact us.</p>';
-    emailBody += '<p style="margin-top: 30px;">Thank you for your business!</p>';
-    emailBody += '<p><strong>' + businessName + '</strong></p>';
-    emailBody += '</div>';
-    emailBody += '<div style="background: #2c3e50; color: #bdc3c7; padding: 20px; text-align: center; font-size: 12px;">';
-    emailBody += '<p style="margin: 5px 0;">This is an automated reminder from ' + businessName + '</p>';
-    emailBody += '<p style="margin: 5px 0;">Generated on: ' + new Date().toLocaleString() + '</p>';
-    emailBody += '</div>';
-    emailBody += '</body></html>';
+    let emailBody = `<html><body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
+<h2 style="margin: 0;">💳 Payment Reminder</h2>
+</div>
+<div style="padding: 30px; background: #f9f9f9;">
+<p>Dear <strong>${customer.Customer_Name}</strong>,</p>
+<p>This is a friendly reminder that you have an outstanding balance with ${businessName}.</p>
+<div style="background: white; padding: 20px; border-left: 4px solid #e74c3c; margin: 20px 0;">
+<h3 style="color: #e74c3c; margin-top: 0;">Outstanding Balance</h3>
+<p style="font-size: 28px; font-weight: bold; color: #2c3e50; margin: 10px 0;">KSh ${debtAmount.toLocaleString('en-KE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+</div>
+<p>Please arrange to settle this amount at your earliest convenience.</p>
+<div style="background: white; padding: 20px; margin: 20px 0; border-radius: 8px;">
+<h4 style="color: #667eea; margin-top: 0;">Payment Methods</h4>
+<ul style="list-style: none; padding: 0;">
+<li style="padding: 5px 0;">📱 <strong>M-Pesa:</strong> Pay via M-Pesa</li>
+<li style="padding: 5px 0;">🏦 <strong>Bank Transfer:</strong> Equity Bank</li>
+<li style="padding: 5px 0;">💵 <strong>Cash:</strong> Visit our location</li>
+</ul>
+</div>
+<p>If you have any questions or concerns regarding this balance, please don\'t hesitate to contact us.</p>
+<p style="margin-top: 30px;">Thank you for your business!</p>
+<p><strong>${businessName}</strong></p>
+</div>
+<div style="background: #2c3e50; color: #bdc3c7; padding: 20px; text-align: center; font-size: 12px;">
+<p style="margin: 5px 0;">This is an automated reminder from ${businessName}</p>
+<p style="margin: 5px 0;">Generated on: ${new Date().toLocaleString()}</p>
+</div>
+</body></html>`;
 
     // Send email
     MailApp.sendEmail({
       to: customer.Email,
-      subject: '💳 Payment Reminder - Outstanding Balance KSh ' + debtAmount.toLocaleString('en-KE'),
+      subject: `💳 Payment Reminder - Outstanding Balance KSh ${debtAmount.toLocaleString('en-KE')}`,
       htmlBody: emailBody
     });
 
@@ -638,7 +636,7 @@ function sendPaymentReminder(customerId, businessName) {
       'SYSTEM',
       'Customers',
       'Payment Reminder',
-      'Reminder sent to ' + customer.Customer_Name + ' for KSh ' + debtAmount.toLocaleString('en-KE'),
+      `Reminder sent to ${customer.Customer_Name} for KSh ${debtAmount.toLocaleString('en-KE')}`,
       '',
       '',
       customer.Customer_ID
@@ -709,28 +707,26 @@ function sendAllPaymentReminders() {
     });
 
     // Send summary to admin
-    let summaryEmail = '<html><body style="font-family: Arial, sans-serif;">';
-    summaryEmail += '<h2 style="color: #667eea;">📧 Payment Reminders Summary</h2>';
-    summaryEmail += '<p><strong>Total customers with debt:</strong> ' + customersWithDebt.length + '</p>';
-    summaryEmail += '<p><strong>Reminders sent:</strong> ' + sentCount + '</p>';
-    summaryEmail += '<p><strong>Failed/No email:</strong> ' + failedCount + '</p>';
-    summaryEmail += '<hr>';
-    summaryEmail += '<h3>Details:</h3>';
-    summaryEmail += '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">';
-    summaryEmail += '<tr style="background-color: #f0f0f0;"><th>Customer</th><th>Balance (KSh)</th><th>Status</th></tr>';
-
-    results.forEach(r => {
-      const status = r.result ? (r.result.success ? '✅ Sent' : '❌ ' + r.result.message) : '❌ ' + r.error;
-      summaryEmail += '<tr>';
-      summaryEmail += '<td>' + r.customerName + '</td>';
-      summaryEmail += '<td>KSh ' + Math.abs(parseFloat(r.balance)).toLocaleString('en-KE', {minimumFractionDigits: 2}) + '</td>';
-      summaryEmail += '<td>' + status + '</td>';
-      summaryEmail += '</tr>';
-    });
-
-    summaryEmail += '</table>';
-    summaryEmail += '<br><p style="color: #7f8c8d; font-size: 12px;">Generated on: ' + new Date().toLocaleString() + '</p>';
-    summaryEmail += '</body></html>';
+    let summaryEmail = `<html><body style="font-family: Arial, sans-serif;">
+<h2 style="color: #667eea;">📧 Payment Reminders Summary</h2>
+<p><strong>Total customers with debt:</strong> ${customersWithDebt.length}</p>
+<p><strong>Reminders sent:</strong> ${sentCount}</p>
+<p><strong>Failed/No email:</strong> ${failedCount}</p>
+<hr>
+<h3>Details:</h3>
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+<tr style="background-color: #f0f0f0;"><th>Customer</th><th>Balance (KSh)</th><th>Status</th></tr>
+${results.map(r => {
+      const status = r.result ? (r.result.success ? '✅ Sent' : `❌ ${r.result.message}`) : `❌ ${r.error}`;
+      return `<tr>
+<td>${r.customerName}</td>
+<td>KSh ${Math.abs(parseFloat(r.balance)).toLocaleString('en-KE', {minimumFractionDigits: 2})}</td>
+<td>${status}</td>
+</tr>`;
+    }).join('')}
+</table>
+<br><p style="color: #7f8c8d; font-size: 12px;">Generated on: ${new Date().toLocaleString()}</p>
+</body></html>`;
 
     MailApp.sendEmail({
       to: adminEmail,
