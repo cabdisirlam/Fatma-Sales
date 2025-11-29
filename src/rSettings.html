@@ -10,8 +10,9 @@
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f6fa; padding: 20px; }
     .header-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; }
     .card { border: none; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    .card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; font-weight: 600; }
+    .card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; font-weight: 600; border-radius: 15px 15px 0 0 !important; }
     .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 10px 20px; border-radius: 8px; }
+    .form-check-input:checked { background-color: #667eea; border-color: #667eea; }
   </style>
 </head>
 <body>
@@ -19,72 +20,86 @@
     <h2><i class="bi bi-gear"></i> System Settings</h2>
     <p class="mb-0">Configure Beipoa Kenya settings</p>
   </div>
+  
+  <div id="settings-alert"></div>
+
   <div class="row">
     <div class="col-md-6">
-      <div class="card">
-        <div class="card-header"><i class="bi bi-gear"></i> General Settings</div>
+      <div class="card h-100">
+        <div class="card-header"><i class="bi bi-sliders"></i> General Settings</div>
         <div class="card-body">
           <form id="general-settings-form">
             <div class="mb-3">
-              <label class="form-label">Shop Name</label>
+              <label class="form-label fw-bold">Shop Name</label>
               <input type="text" class="form-control" id="shop-name" placeholder="Beipoa Kenya">
             </div>
+            
             <div class="mb-3">
-              <label class="form-label">Currency</label>
-              <select class="form-select" id="currency" disabled>
-                <option value="KES" data-symbol="Ksh" selected>KES - Kenyan Shilling (Ksh)</option>
+              <label class="form-label fw-bold">Currency</label>
+              <select class="form-select" id="currency">
+                <option value="KES" selected>KES - Kenyan Shilling (Ksh)</option>
               </select>
-              <div class="form-text">System currency is locked to Ksh.</div>
             </div>
+
+            <div class="mb-3 p-3 bg-light rounded border">
+               <div class="form-check form-switch">
+                 <input class="form-check-input" type="checkbox" id="currency-rounding">
+                 <label class="form-check-label fw-bold" for="currency-rounding">Round to nearest Shilling</label>
+               </div>
+               <div class="form-text mt-1">
+                 <i class="bi bi-info-circle"></i> Enables rounding off decimals (e.g., 150.50 becomes 151).
+               </div>
+            </div>
+
             <div class="mb-3">
-              <label class="form-label">Tax Rate (%)</label>
+              <label class="form-label fw-bold">Tax Rate (%)</label>
               <input type="number" class="form-control" id="tax-rate" value="0" step="0.01" min="0">
             </div>
-            <div class="d-grid">
-              <button type="submit" class="btn btn-primary">Save General Settings</button>
+
+            <div class="d-grid mt-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Save General Settings
+              </button>
             </div>
           </form>
         </div>
       </div>
     </div>
+
     <div class="col-md-6">
-      <div class="card">
-        <div class="card-header"><i class="bi bi-receipt"></i> Receipt Settings</div>
+      <div class="card h-100">
+        <div class="card-header"><i class="bi bi-receipt"></i> Receipt Configuration</div>
         <div class="card-body">
           <form id="receipt-settings-form">
             <div class="mb-3">
-              <label class="form-label">Receipt Header</label>
+              <label class="form-label fw-bold">Receipt Header</label>
               <textarea class="form-control" id="receipt-header" rows="2" placeholder="Beipoa Kenya"></textarea>
+              <div class="form-text">Appears at the top of receipts.</div>
             </div>
+            
             <div class="mb-3">
-              <label class="form-label">Receipt Footer (Slogan)</label>
+              <label class="form-label fw-bold">Receipt Footer (Slogan)</label>
               <textarea class="form-control" id="receipt-footer" rows="2" placeholder="Pata Kila Kitu Na Bei Poa"></textarea>
+              <div class="form-text">Appears at the bottom of receipts.</div>
             </div>
-            <div class="mb-3">
-               <div class="form-check">
+            
+            <div class="mb-3 p-3 bg-light rounded border">
+               <div class="form-check form-switch">
                  <input class="form-check-input" type="checkbox" id="include-logo">
-                 <label class="form-check-label" for="include-logo">Include Shop Logo on Receipt</label>
+                 <label class="form-check-label fw-bold" for="include-logo">Include Shop Logo on Receipt</label>
                </div>
             </div>
-            <div class="d-grid">
-              <button type="submit" class="btn btn-primary">Save Receipt Settings</button>
+
+            <div class="d-grid mt-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Save Receipt Settings
+              </button>
             </div>
           </form>
         </div>
       </div>
     </div>
   </div>
-  <div class="card">
-    <div class="card-header"><i class="bi bi-tags"></i> Expense Categories</div>
-    <div class="card-body">
-      <p class="text-muted">Manage expense categories for better financial tracking</p>
-      <div class="d-flex flex-wrap gap-2" id="expense-categories-list">
-        <span class="badge bg-secondary">Loading...</span>
-      </div>
-      </div>
-  </div>
-  
-  <div id="settings-alert" class="mt-3"></div>
   
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -101,17 +116,34 @@
       const container = document.getElementById('settings-alert');
       container.innerHTML = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-          ${message}
+          <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'}"></i> ${message}
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       `;
+      // Auto close after 3 seconds
+      if(type === 'success') {
+        setTimeout(() => {
+            const alert = document.querySelector('.alert');
+            if(alert) { const bsAlert = new bootstrap.Alert(alert); bsAlert.close(); }
+        }, 3000);
+      }
     }
 
     function loadSettings() {
+      // Disable buttons while loading
+      const btns = document.querySelectorAll('button[type="submit"]');
+      btns.forEach(b => b.disabled = true);
+
       google.script.run
-        .withSuccessHandler(populateSettings)
-        .withFailureHandler(error => showAlert(error.message || 'Failed to load settings', 'danger'))
-        .getAllSettings();
+        .withSuccessHandler(settings => {
+            populateSettings(settings);
+            btns.forEach(b => b.disabled = false);
+        })
+        .withFailureHandler(error => {
+            showAlert(error.message || 'Failed to load settings', 'danger');
+            btns.forEach(b => b.disabled = false);
+        })
+        .getAllSettings(); // Using standard function to fetch all keys
     }
 
     function populateSettings(settings = {}) {
@@ -119,33 +151,20 @@
       document.getElementById('shop-name').value = settings.Shop_Name || DEFAULT_SHOP_NAME;
       document.getElementById('tax-rate').value = settings.Tax_Rate || 0;
       
+      // Set Currency to KES explicitly
+      document.getElementById('currency').value = 'KES';
+      
+      // Rounding Checkbox
+      const isRounding = settings.Currency_Rounding === true || settings.Currency_Rounding === 'true' || settings.Currency_Rounding === 'TRUE';
+      document.getElementById('currency-rounding').checked = isRounding;
+      
       // Populate Receipt
       document.getElementById('receipt-header').value = settings.Receipt_Header || DEFAULT_SHOP_NAME;
       document.getElementById('receipt-footer').value = settings.Receipt_Footer || DEFAULT_SLOGAN;
       
-      // Checkbox
-      const isLogo = settings.Include_Shop_Logo === true || settings.Include_Shop_Logo === 'true';
+      // Logo Checkbox
+      const isLogo = settings.Include_Shop_Logo === true || settings.Include_Shop_Logo === 'true' || settings.Include_Shop_Logo === 'TRUE';
       document.getElementById('include-logo').checked = isLogo;
-
-      // Populate Categories from keys
-      const categoriesDiv = document.getElementById('expense-categories-list');
-      categoriesDiv.innerHTML = '';
-      
-      const categories = Object.keys(settings)
-          .filter(k => k.startsWith('Expense_Category_'))
-          .map(k => k.replace('Expense_Category_', ''));
-          
-      if (categories.length === 0) {
-          // Defaults if none found
-          ['Rent', 'Utilities', 'Salaries', 'Marketing', 'Other'].forEach(cat => categories.push(cat));
-      }
-
-      categories.forEach(cat => {
-          const span = document.createElement('span');
-          span.className = 'badge bg-primary';
-          span.textContent = cat;
-          categoriesDiv.appendChild(span);
-      });
     }
 
     function handleGeneralSettingsSave(event) {
@@ -153,6 +172,8 @@
 
       const shopName = document.getElementById('shop-name').value.trim();
       const taxRate = document.getElementById('tax-rate').value;
+      const currency = document.getElementById('currency').value;
+      const isRounding = document.getElementById('currency-rounding').checked;
 
       if (!shopName) {
         showAlert('Shop name is required.', 'warning');
@@ -160,20 +181,23 @@
       }
 
       const btn = event.target.querySelector('button');
-      const originalText = btn.innerText;
-      btn.disabled = true; btn.innerText = 'Saving...';
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
 
       google.script.run
         .withSuccessHandler(() => {
              showAlert('General settings saved successfully.');
-             btn.disabled = false; btn.innerText = originalText;
+             btn.disabled = false; btn.innerHTML = originalHtml;
         })
         .withFailureHandler(error => {
              showAlert(error.message || 'Failed to save settings', 'danger');
-             btn.disabled = false; btn.innerText = originalText;
+             btn.disabled = false; btn.innerHTML = originalHtml;
         })
         .updateBusinessInfo({
           Shop_Name: shopName,
+          Currency: currency,
+          Currency_Symbol: 'Ksh',
+          Currency_Rounding: isRounding,
           Tax_Rate: parseFloat(taxRate) || 0
         });
     }
@@ -186,17 +210,17 @@
       const includeLogo = document.getElementById('include-logo').checked;
 
       const btn = event.target.querySelector('button');
-      const originalText = btn.innerText;
-      btn.disabled = true; btn.innerText = 'Saving...';
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
 
       google.script.run
         .withSuccessHandler(() => {
              showAlert('Receipt settings saved successfully.');
-             btn.disabled = false; btn.innerText = originalText;
+             btn.disabled = false; btn.innerHTML = originalHtml;
         })
         .withFailureHandler(error => {
              showAlert(error.message || 'Failed to save settings', 'danger');
-             btn.disabled = false; btn.innerText = originalText;
+             btn.disabled = false; btn.innerHTML = originalHtml;
         })
         .updateBusinessInfo({
           Receipt_Header: receiptHeader,
