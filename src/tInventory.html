@@ -613,329 +613,157 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // Load inventory on page load
+<script>
+    // Global state
+    let inventoryData = [];
+    let suppliersData = [];
+    let masterData = [];
+    let categories = [];
+    let currentUser = 'SYSTEM';
+
+    // Load initial data
     document.addEventListener('DOMContentLoaded', function() {
+      // Get current user email for logging
+      google.script.run.withSuccessHandler(email => currentUser = email || 'SYSTEM').getActiveUserEmail();
+      
       loadInventory();
       loadCategoryFilter();
       loadSuppliers();
-      loadMasterData(); // Replaces the two separate loads
+      loadMasterData();
     });
 
-    // Search functionality
+    // Event listeners for filters
     document.getElementById('searchInput').addEventListener('keyup', filterInventory);
     document.getElementById('categoryFilter').addEventListener('change', filterInventory);
     document.getElementById('stockFilter').addEventListener('change', filterInventory);
 
-    let inventoryData = [];
-    let suppliersData = [];
-    let masterData = [];
-
-    function getSupplierDisplayName(supplierId) {
-      if (!supplierId) return '-';
-      const supplier = suppliersData.find(function(entry) { return entry.Supplier_ID === supplierId; });
-      return supplier ? supplier.Supplier_Name + ' (' + supplier.Supplier_ID + ')' : supplierId;
-    }
-
+    // Main data loading functions
     function loadInventory() {
       document.getElementById('loadingIndicator').style.display = 'block';
       document.getElementById('inventoryTableContainer').style.display = 'none';
-      document.getElementById('noDataMessage').style.display = 'none';
-      document.getElementById('errorMessage').style.display = 'none';
-
       google.script.run
-        .withSuccessHandler(function(data) {
-          try {
-            // Hide loading indicator first
-            document.getElementById('loadingIndicator').style.display = 'none';
-
-            // Normalize the data to avoid runtime errors that leave the UI stuck on the loader
-            inventoryData = Array.isArray(data) ? data : [];
-
-            if (!Array.isArray(data)) {
-              console.error('Unexpected inventory payload received', data);
-            }
-
-            displayInventory(inventoryData);
-            updateStats(inventoryData);
-          } catch (renderError) {
-            console.error('Error rendering inventory data', renderError);
-            showInventoryError('Error rendering inventory. Please try again.');
-          }
-        })
-        .withFailureHandler(function(error) {
+        .withSuccessHandler(data => {
           document.getElementById('loadingIndicator').style.display = 'none';
-          showInventoryError('Error loading inventory: ' + (error && error.message ? error.message : error));
+          inventoryData = Array.isArray(data) ? data : [];
+          displayInventory(inventoryData);
+          updateStats(inventoryData);
         })
+        .withFailureHandler(error => showInventoryError(error.message))
         .getInventory({});
-    }
-
-    function showInventoryError(message) {
-      document.getElementById('loadingIndicator').style.display = 'none';
-      document.getElementById('inventoryTableContainer').style.display = 'none';
-      document.getElementById('noDataMessage').style.display = 'none';
-
-      const errorDiv = document.getElementById('errorMessage');
-      if (errorDiv) {
-        errorDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ' + message + '</div>';
-        errorDiv.style.display = 'block';
-      }
-    }
-
-    function displayInventory(data) {
-      const tbody = document.getElementById('inventoryTableBody');
-      tbody.innerHTML = '';
-
-      if (!data || data.length === 0) {
-        document.getElementById('noDataMessage').style.display = 'block';
-        return;
-      }
-
-      document.getElementById('inventoryTableContainer').style.display = 'block';
-
-      data.forEach(function(item) {
-        const row = document.createElement('tr');
-
-        let stockStatus = '';
-        let statusBadge = '';
-
-        const stockQty = item.Current_Qty !== undefined ? item.Current_Qty : (item.Stock_Qty || 0);
-
-        if (stockQty <= 0) {
-          stockStatus = 'stock-out';
-          statusBadge = '<span class="badge bg-danger">Out of Stock</span>';
-        } else if (stockQty <= (item.Reorder_Level || 10)) {
-          stockStatus = 'stock-low';
-          statusBadge = '<span class="badge bg-warning">Low Stock</span>';
-        } else {
-          stockStatus = 'stock-ok';
-          statusBadge = '<span class="badge bg-success">In Stock</span>';
-        }
-
-        const lastUpdated = item.Last_Updated ? new Date(item.Last_Updated) : null;
-        const lastUpdatedText = lastUpdated ? lastUpdated.toLocaleString() : '-';
-        const updatedBy = item.Updated_By || '-';
-
-        row.innerHTML = `
-          <td>${item.Item_ID || ''}</td>
-          <td><strong>${item.Item_Name || ''}</strong></td>
-          <td>${item.Category || ''}</td>
-          <td>Ksh ${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
-          <td class="${stockStatus}">${stockQty} ${statusBadge}</td>
-          <td>${item.Reorder_Level || 10}</td>
-          <td>${getSupplierDisplayName(item.Supplier)}</td>
-          <td>${lastUpdatedText}</td>
-          <td>${updatedBy}</td>
-          <td style="white-space: nowrap;">
-            <button class="btn btn-sm btn-success me-1 mb-1" onclick="openRestock('${item.Item_ID}', '${item.Item_Name || ''}')" title="Add Stock">
-              <i class="bi bi-plus-lg"></i><span class="d-none d-md-inline"> Stock</span>
-            </button>
-            <button class="btn btn-sm btn-primary me-1 mb-1" onclick="openEdit('${item.Item_ID}')" title="Edit">
-              <i class="bi bi-pencil"></i>
-            </button>
-            <button class="btn btn-sm btn-danger mb-1" onclick="deleteProductConfirm('${item.Item_ID}', '${item.Item_Name}')" title="Delete">
-              <i class="bi bi-trash"></i>
-            </button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    function openRestock(id, name) {
-      const qty = prompt('Enter quantity to ADD for ' + name + ':');
-      if (qty && !isNaN(qty)) {
-        google.script.run
-          .withSuccessHandler(function() {
-            alert('Stock updated!');
-            loadInventory();
-          })
-          .withFailureHandler(function(error) {
-            alert('Unable to update stock: ' + error.message);
-          })
-          .adjustStock(id, parseFloat(qty), 'Manual Restock', sessionStorage.getItem('userName'));
-      }
-    }
-
-    function openEdit(id) {
-      const item = inventoryData.find(function(entry) { return entry.Item_ID === id; });
-      if (item) {
-        showEditProductModal(item);
-      }
-    }
-
-    function updateStats(data) {
-      if (!data || data.length === 0) {
-        return;
-      }
-
-      const totalItems = data.length;
-      let lowStockCount = 0;
-      let outOfStockCount = 0;
-      let totalValue = 0;
-
-      data.forEach(function(item) {
-        const qty = parseFloat(item.Current_Qty || item.Stock_Qty || 0);
-        const costPrice = parseFloat(item.Cost_Price || 0);
-        const reorderLevel = parseFloat(item.Reorder_Level || 10);
-
-        totalValue += qty * costPrice;
-
-        if (qty <= 0) {
-          outOfStockCount++;
-        } else if (qty <= reorderLevel) {
-          lowStockCount++;
-        }
-      });
-
-      document.getElementById('totalItems').textContent = totalItems;
-      document.getElementById('lowStock').textContent = lowStockCount;
-      document.getElementById('outOfStock').textContent = outOfStockCount;
-      document.getElementById('totalValue').textContent = 'Ksh ' + totalValue.toFixed(2);
     }
 
     function loadCategoryFilter() {
       google.script.run
-        .withSuccessHandler(function(data) {
+        .withSuccessHandler(cats => {
           const categoryFilter = document.getElementById('categoryFilter');
-          const cats = [...new Set(data.map(item => item.Category).filter(cat => cat))];
-
-          cats.forEach(function(category) {
+          categoryFilter.innerHTML = '<option value="">All Categories</option>';
+          (cats || []).forEach(category => {
             const option = document.createElement('option');
             option.value = category;
             option.textContent = category;
             categoryFilter.appendChild(option);
           });
         })
-        .withFailureHandler(function(error) {
-          console.error('Error loading category filter:', error);
-        })
-        .getInventory({});
+        .getUniqueCategories(); // This should now read from Master_Data
     }
-
+    
     function loadSuppliers() {
-      google.script.run
-        .withSuccessHandler(function(data) {
-          suppliersData = data || [];
-          populateSupplierDropdowns();
-        })
-        .withFailureHandler(function(error) {
-          console.error('Error loading suppliers:', error);
-          suppliersData = [];
-          populateSupplierDropdowns();
-        })
-        .getSuppliers({});
+        google.script.run
+            .withSuccessHandler(data => {
+                suppliersData = (data || []).filter(s => s.Status === 'Active');
+                populateSupplierDropdowns();
+            })
+            .getSuppliers({});
     }
-
-    function populateSupplierDropdowns() {
-      const addDropdown = document.getElementById('addSupplierDropdown');
-      const editDropdown = document.getElementById('editSupplier');
-
-      [addDropdown, editDropdown].forEach(function(dropdown) {
-        if (!dropdown) return;
-
-        if (!suppliersData || suppliersData.length === 0) {
-          dropdown.innerHTML = '<option value="">No suppliers found - Add supplier first</option>';
-          dropdown.disabled = true;
-          return;
-        }
-
-        // Only show active suppliers
-        const activeSuppliers = suppliersData.filter(s => s.Status === 'Active');
-
-        if (activeSuppliers.length === 0) {
-          dropdown.innerHTML = '<option value="">No active suppliers available</option>';
-          dropdown.disabled = true;
-        } else {
-          dropdown.disabled = false;
-          dropdown.innerHTML = '<option value="">-- Select Supplier --</option>';
-          activeSuppliers.forEach(function(supplier) {
-            const option = document.createElement('option');
-            option.value = supplier.Supplier_ID;
-            option.textContent = supplier.Supplier_Name + ' (' + supplier.Supplier_ID + ')';
-            dropdown.appendChild(option);
-          });
-        }
-      });
-    }
-
-    // ===== MASTER DATA & SEARCHABLE DROPDOWN =====
-    let categories = []; // Store unique categories
 
     function loadMasterData() {
         google.script.run
-            .withSuccessHandler(function(data) {
+            .withSuccessHandler(data => {
                 masterData = data.items || [];
                 categories = data.categories || [];
                 populateCategoryDatalist();
             })
-            .withFailureHandler(function(error) {
-                console.error('Error loading master data:', error);
-            })
-            .getMasterDataForInventory(); // Assumes a new backend function
+            .withFailureHandler(error => console.error('Error loading master data:', error))
+            .getMasterDataForInventory();
     }
     
-    // This is a placeholder for the new backend function
-    // In fInventory.gs, you would add:
-    /*
-    function getMasterDataForInventory() {
-      return {
-        items: getMasterItems(),
-        categories: getUniqueCategories()
-      };
-    }
-    */
-
-    function populateCategoryDatalist() {
-      const datalist = document.getElementById('categoryOptions');
-      if (!datalist) return;
-
-      datalist.innerHTML = '';
-      categories.forEach(function(cat) {
-        const option = document.createElement('option');
-        option.value = cat;
-        datalist.appendChild(option);
+    // UI Rendering
+    function displayInventory(data) {
+      const tbody = document.getElementById('inventoryTableBody');
+      tbody.innerHTML = '';
+      if (!data || data.length === 0) {
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('inventoryTableContainer').style.display = 'none';
+        return;
+      }
+      document.getElementById('noDataMessage').style.display = 'none';
+      document.getElementById('inventoryTableContainer').style.display = 'block';
+      data.forEach(item => {
+        const row = document.createElement('tr');
+        const stockQty = item.Current_Qty !== undefined ? item.Current_Qty : (item.Stock_Qty || 0);
+        let statusBadge = stockQty <= 0 ? '<span class="badge bg-danger">Out of Stock</span>' : (stockQty <= (item.Reorder_Level || 10) ? '<span class="badge bg-warning">Low Stock</span>' : '<span class="badge bg-success">In Stock</span>');
+        
+        row.innerHTML = `
+          <td>${item.Item_ID || ''}</td>
+          <td><strong>${item.Item_Name || ''}</strong></td>
+          <td>${item.Category || ''}</td>
+          <td>Ksh ${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
+          <td>${stockQty} ${statusBadge}</td>
+          <td>${item.Reorder_Level || 10}</td>
+          <td>${getSupplierDisplayName(item.Supplier)}</td>
+          <td>${item.Last_Updated ? new Date(item.Last_Updated).toLocaleString() : '-'}</td>
+          <td>${item.Updated_By || '-'}</td>
+          <td style="white-space: nowrap;">
+            <button class="btn btn-sm btn-primary me-1 mb-1" onclick='openEdit(${JSON.stringify(item)})' title="Edit"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-danger mb-1" onclick="deleteProductConfirm('${item.Item_ID}', '${item.Item_Name}')" title="Delete"><i class="bi bi-trash"></i></button>
+          </td>
+        `;
+        tbody.appendChild(row);
       });
     }
 
-    function showDropdown() {
-      filterMasterItems();
+    function updateStats(data) {
+      document.getElementById('totalItems').textContent = data.length;
+      let lowStockCount = 0;
+      let outOfStockCount = 0;
+      let totalValue = 0;
+      data.forEach(item => {
+        const qty = parseFloat(item.Current_Qty || 0);
+        totalValue += qty * parseFloat(item.Cost_Price || 0);
+        if (qty <= 0) outOfStockCount++;
+        else if (qty <= (item.Reorder_Level || 10)) lowStockCount++;
+      });
+      document.getElementById('lowStock').textContent = lowStockCount;
+      document.getElementById('outOfStock').textContent = outOfStockCount;
+      document.getElementById('totalValue').textContent = 'Ksh ' + totalValue.toFixed(2);
     }
-
+    
+    // Smart Dropdown Logic
     function filterMasterItems() {
-      const input = document.getElementById('itemNameInput');
-      const resultsDiv = document.getElementById('itemDropdownResults');
-      if (!input || !resultsDiv) return;
+        const input = document.getElementById('itemNameInput');
+        const resultsDiv = document.getElementById('itemDropdownResults');
+        const searchTerm = input.value.toLowerCase().trim();
+        const filteredItems = masterData.filter(item => item.Item_Name.toLowerCase().includes(searchTerm));
+        
+        resultsDiv.innerHTML = '';
 
-      const searchTerm = input.value.toLowerCase().trim();
-      const filteredItems = masterData.filter(item => item.Item_Name.toLowerCase().includes(searchTerm));
-      resultsDiv.innerHTML = '';
-
-      // Scenario A: Matches found
-      if (filteredItems.length > 0) {
-        filteredItems.forEach(item => {
-          const itemDiv = document.createElement('div');
-          itemDiv.className = 'dropdown-item';
-          itemDiv.innerHTML = `<span class="item-name">${item.Item_Name}</span><span class="item-category">(${item.Category})</span>`;
-          itemDiv.onclick = () => selectItem(item.Item_Name, item.Category);
-          resultsDiv.appendChild(itemDiv);
-        });
-      }
-
-      // Add "+ Add New Item" button
-      // Position is determined by CSS/Flexbox order or as the only child
-      const addNewDiv = document.createElement('div');
-      addNewDiv.className = 'dropdown-item add-new';
-      addNewDiv.innerHTML = `<i class="bi bi-plus-circle"></i> Add New Item ${searchTerm ? `"${input.value}"` : ''}`;
-      addNewDiv.onclick = () => showCreateMasterModal(input.value);
-      
-      if(filteredItems.length === 0) {
-        resultsDiv.appendChild(addNewDiv); // Add as first/only item
-      } else {
-        resultsDiv.appendChild(addNewDiv); // Add at the bottom
-      }
-
-      resultsDiv.classList.add('show');
+        if (filteredItems.length > 0) {
+            filteredItems.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'dropdown-item';
+                itemDiv.innerHTML = `<span class="item-name">${item.Item_Name}</span><span class="item-category">(${item.Category})</span>`;
+                itemDiv.onclick = () => selectItem(item.Item_Name, item.Category);
+                resultsDiv.appendChild(itemDiv);
+            });
+        }
+        
+        const addNewDiv = document.createElement('div');
+        addNewDiv.className = 'dropdown-item add-new';
+        addNewDiv.innerHTML = `<i class="bi bi-plus-circle"></i> Add New Item: "${input.value}"`;
+        addNewDiv.onclick = () => showCreateMasterModal(input.value);
+        resultsDiv.appendChild(addNewDiv);
+        
+        resultsDiv.classList.add('show');
     }
 
     function selectItem(itemName, category) {
@@ -944,366 +772,115 @@
       document.getElementById('itemDropdownResults').classList.remove('show');
     }
 
+    // Modal Handling
+    function showAddProductModal() {
+      document.getElementById('addProductForm').reset();
+      document.getElementById('addProductAlert').style.display = 'none';
+      toggleStockSourceFields();
+      new bootstrap.Modal(document.getElementById('addProductModal')).show();
+    }
+
     function showCreateMasterModal(prefillName) {
       document.getElementById('itemDropdownResults').classList.remove('show');
-      document.getElementById('addMasterItemForm').reset();
-      document.getElementById('masterItemAlert').style.display = 'none';
-      if (prefillName) {
-        document.getElementById('masterItemName').value = prefillName;
-      }
-      if (categories.length === 0) loadMasterData(); // Ensure categories are loaded
-      
+      const form = document.getElementById('addMasterItemForm');
+      form.reset();
+      if (prefillName) form.elements['Item_Name'].value = prefillName;
       new bootstrap.Modal(document.getElementById('addMasterItemModal')).show();
     }
-
+    
     function submitAddMasterItem() {
-      const form = document.getElementById('addMasterItemForm');
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-      }
-
-      const itemName = document.getElementById('masterItemName').value;
-      const category = document.getElementById('masterCategory').value;
-      const alertDiv = document.getElementById('masterItemAlert');
-      alertDiv.style.display = 'none';
-
+        const form = document.getElementById('addMasterItemForm');
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+        
+        const itemName = form.elements['Item_Name'].value;
+        const category = form.elements['Category'].value;
+        const alertDiv = document.getElementById('masterItemAlert');
+        
+        google.script.run
+            .withSuccessHandler(newItem => {
+                masterData.push(newItem);
+                if (!categories.includes(newItem.Category)) {
+                    categories.push(newItem.Category);
+                    populateCategoryDatalist();
+                }
+                selectItem(newItem.Item_Name, newItem.Category);
+                bootstrap.Modal.getInstance(document.getElementById('addMasterItemModal')).hide();
+                showAlert('addProductAlert', `New master item "${newItem.Item_Name}" created and selected!`, 'success');
+            })
+            .withFailureHandler(error => showAlert('masterItemAlert', error.message, 'danger'))
+            .addMasterItem(itemName, category, currentUser);
+    }
+    
+    function submitAddProduct() {
+      const form = document.getElementById('addProductForm');
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      const productData = Object.fromEntries(new FormData(form));
+      productData.User = currentUser;
+      
       google.script.run
-        .withSuccessHandler(function(newItem) {
-          // Add to local data
-          masterData.push(newItem);
-          if (!categories.includes(newItem.Category)) {
-            categories.push(newItem.Category);
-            populateCategoryDatalist();
-          }
-
-          // Select the new item in the main form
-          selectItem(newItem.Item_Name, newItem.Category);
-          
-          bootstrap.Modal.getInstance(document.getElementById('addMasterItemModal')).hide();
-          
-          const productAlert = document.getElementById('addProductAlert');
-          productAlert.className = 'alert alert-success mt-3';
-          productAlert.textContent = `New item "${newItem.Item_Name}" created and selected!`;
-          productAlert.style.display = 'block';
-          setTimeout(() => productAlert.style.display = 'none', 3000);
+        .withSuccessHandler(result => {
+            if (result.success) {
+                showAlert('addProductAlert', `Product added! ID: ${result.itemId}`, 'success');
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+                    loadInventory();
+                }, 1500);
+            } else {
+                showAlert('addProductAlert', result.message, 'danger');
+            }
         })
-        .withFailureHandler(function(error) {
-          alertDiv.className = 'alert alert-danger mt-3';
-          alertDiv.textContent = 'Error: ' + error.message;
-          alertDiv.style.display = 'block';
-        })
-        .addMasterItem(itemName, category, currentUser);
+        .withFailureHandler(error => showAlert('addProductAlert', error.message, 'danger'))
+        .addProduct(productData);
+    }
+    
+    // Utility & Helpers
+    function showAlert(elementId, message, type = 'success') {
+        const alertDiv = document.getElementById(elementId);
+        alertDiv.className = `alert alert-${type} mt-3`;
+        alertDiv.textContent = message;
+        alertDiv.style.display = 'block';
+    }
+    
+    function populateSupplierDropdowns() {
+        [document.getElementById('addSupplierDropdown'), document.getElementById('editSupplier')].forEach(dropdown => {
+            if (!dropdown) return;
+            dropdown.innerHTML = '<option value="">-- Select Supplier --</option>';
+            if(suppliersData.length === 0) {
+                dropdown.innerHTML = '<option value="">No suppliers found</option>';
+                return;
+            }
+            suppliersData.forEach(supplier => {
+                const option = document.createElement('option');
+                option.value = supplier.Supplier_ID;
+                option.textContent = `${supplier.Supplier_Name} (${supplier.Supplier_ID})`;
+                dropdown.appendChild(option);
+            });
+        });
     }
 
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
+    function populateCategoryDatalist() {
+        const datalist = document.getElementById('categoryOptions');
+        if (!datalist) return;
+        datalist.innerHTML = '';
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            datalist.appendChild(option);
+        });
+    }
+
+    function toggleStockSourceFields() {
+      const isPurchase = document.getElementById('sourcePurchase').checked;
+      document.getElementById('purchaseFields').style.display = isPurchase ? 'block' : 'none';
+      document.getElementById('addSupplierDropdown').required = isPurchase;
+    }
+    
+    document.addEventListener('click', e => {
       const dropdown = document.querySelector('.searchable-dropdown');
       if (dropdown && !dropdown.contains(e.target)) {
         document.getElementById('itemDropdownResults').classList.remove('show');
       }
     });
-    
-    // In DOMContentLoaded:
-    // Replace loadMasterItems() and loadCategories() with:
-    // loadMasterData();
-    // And in showAddProductModal, if categories is empty, call loadMasterData()
 
-
-    function filterInventory() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const categoryFilter = document.getElementById('categoryFilter').value;
-      const stockFilter = document.getElementById('stockFilter').value;
-
-      const filtered = (Array.isArray(inventoryData) ? inventoryData : []).filter(function(item) {
-        const matchesSearch = !searchTerm ||
-          (item.Item_Name && item.Item_Name.toLowerCase().includes(searchTerm)) ||
-          (item.Item_ID && item.Item_ID.toLowerCase().includes(searchTerm));
-
-        const matchesCategory = !categoryFilter || item.Category === categoryFilter;
-
-        const qty = item.Current_Qty || item.Stock_Qty || 0;
-        let matchesStock = true;
-        if (stockFilter === 'low') {
-          matchesStock = qty > 0 && qty <= (item.Reorder_Level || 10);
-        } else if (stockFilter === 'out') {
-          matchesStock = qty <= 0;
-        } else if (stockFilter === 'ok') {
-          matchesStock = qty > (item.Reorder_Level || 10);
-        }
-
-        return matchesSearch && matchesCategory && matchesStock;
-      });
-
-      displayInventory(filtered);
-      updateStats(filtered);
-    }
-
-    // Get current user from session or server
-    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
-    if (!sessionStorage.getItem('userName')) {
-      google.script.run.withSuccessHandler(function(email) {
-        currentUser = email || 'SYSTEM';
-      }).getActiveUserEmail();
-    }
-
-    // ===== ADD PRODUCT MODAL =====
-    function toggleStockSourceFields() {
-      const isPurchase = document.getElementById('sourcePurchase').checked;
-      const purchaseFields = document.getElementById('purchaseFields');
-      const supplierDropdown = document.getElementById('addSupplierDropdown');
-
-      if (purchaseFields) {
-        purchaseFields.style.display = isPurchase ? 'block' : 'none';
-      }
-
-      if (supplierDropdown) {
-        if (isPurchase) {
-          supplierDropdown.setAttribute('required', 'required');
-        } else {
-          supplierDropdown.removeAttribute('required');
-        }
-      }
-    }
-
-    function showAddProductModal() {
-      document.getElementById('addProductForm').reset();
-      document.getElementById('addProductAlert').style.display = 'none';
-      document.getElementById('sourceOpening').checked = true;
-      toggleStockSourceFields();
-
-      // Populate supplier dropdown
-      populateSupplierDropdowns();
-
-      // Ensure master items and categories are loaded
-      if (masterData.length === 0) {
-        loadMasterItems();
-      }
-      if (categories.length === 0) {
-        loadCategories();
-      }
-
-      const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
-      modal.show();
-    }
-
-    function submitAddProduct() {
-      const form = document.getElementById('addProductForm');
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-      }
-
-      const formData = new FormData(form);
-      const productData = Object.fromEntries(formData);
-      productData.User = currentUser;
-
-      // Additional validation for purchase flow
-      if (productData.Stock_Source === 'purchase' && !productData.Supplier) {
-        showAlert('addProductAlert', 'Please choose a supplier for this purchase', 'warning');
-        return;
-      }
-
-      const alertDiv = document.getElementById('addProductAlert');
-      alertDiv.style.display = 'none';
-
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) {
-            alertDiv.className = 'alert alert-success mt-3';
-            alertDiv.textContent = 'Product added successfully! ID: ' + result.itemId;
-            alertDiv.style.display = 'block';
-            form.reset();
-            setTimeout(function() {
-              bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
-              loadInventory();
-            }, 1500);
-          } else {
-            alertDiv.className = 'alert alert-danger mt-3';
-            alertDiv.textContent = 'Error: ' + result.message;
-            alertDiv.style.display = 'block';
-          }
-        })
-        .withFailureHandler(function(error) {
-          alertDiv.className = 'alert alert-danger mt-3';
-          alertDiv.textContent = 'Error: ' + error.message;
-          alertDiv.style.display = 'block';
-        })
-        .addProduct(productData);
-    }
-
-    // ===== EDIT PRODUCT MODAL =====
-    function showEditProductModal(item) {
-      // First populate the dropdowns
-      populateSupplierDropdowns();
-
-      // Then set the values
-      document.getElementById('editItemId').value = item.Item_ID;
-      document.getElementById('editItemName').value = item.Item_Name || '';
-      document.getElementById('editCategory').value = item.Category || '';
-      document.getElementById('editCostPrice').value = item.Cost_Price || '';
-      document.getElementById('editReorderLevel').value = item.Reorder_Level || 10;
-
-      // Set supplier dropdown value
-      const editSupplier = document.getElementById('editSupplier');
-      if (editSupplier) {
-        const existingId = item.Supplier || '';
-        const matchById = suppliersData.find(function(s) { return s.Supplier_ID === existingId; });
-        const matchByName = suppliersData.find(function(s) { return s.Supplier_Name === existingId; });
-        const resolvedSupplier = matchById || matchByName;
-
-        if (resolvedSupplier) {
-          editSupplier.value = resolvedSupplier.Supplier_ID;
-        } else if (existingId) {
-          const fallbackOption = document.createElement('option');
-          fallbackOption.value = existingId;
-          fallbackOption.textContent = existingId;
-          editSupplier.appendChild(fallbackOption);
-          editSupplier.value = existingId;
-        }
-      }
-
-      document.getElementById('editProductAlert').style.display = 'none';
-
-      const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
-      modal.show();
-    }
-
-    function submitEditProduct() {
-      const itemId = document.getElementById('editItemId').value;
-      const form = document.getElementById('editProductForm');
-      const formData = new FormData(form);
-      const productData = Object.fromEntries(formData);
-      if (productData.Cost_Price === '') delete productData.Cost_Price;
-      if (productData.Reorder_Level === '') delete productData.Reorder_Level;
-      productData.User = currentUser;
-
-      const alertDiv = document.getElementById('editProductAlert');
-      alertDiv.style.display = 'none';
-
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) {
-            alertDiv.className = 'alert alert-success mt-3';
-            alertDiv.textContent = 'Product updated successfully!';
-            alertDiv.style.display = 'block';
-            setTimeout(function() {
-              bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
-              loadInventory();
-            }, 1500);
-          } else {
-            alertDiv.className = 'alert alert-danger mt-3';
-            alertDiv.textContent = 'Error: ' + result.message;
-            alertDiv.style.display = 'block';
-          }
-        })
-        .withFailureHandler(function(error) {
-          alertDiv.className = 'alert alert-danger mt-3';
-          alertDiv.textContent = 'Error: ' + error.message;
-          alertDiv.style.display = 'block';
-        })
-        .updateProduct(itemId, productData);
-    }
-
-    // ===== DELETE PRODUCT =====
-    function deleteProductConfirm(itemId, itemName) {
-      if (confirm('Are you sure you want to delete "' + itemName + '"?\n\nThis action cannot be undone.')) {
-        google.script.run
-          .withSuccessHandler(function(result) {
-            if (result.success) {
-              alert('Product deleted successfully!');
-              loadInventory();
-            } else {
-              alert('Error deleting product: ' + result.message);
-            }
-          })
-          .withFailureHandler(function(error) {
-            alert('Error deleting product: ' + error.message);
-          })
-          .deleteProduct(itemId, currentUser);
-      }
-    }
-
-    // ===== ADJUST STOCK MODAL =====
-    function showAdjustStockModal(item) {
-      document.getElementById('adjustItemId').value = item.Item_ID;
-      document.getElementById('adjustItemName').textContent = item.Item_Name;
-      document.getElementById('adjustCurrentStock').textContent = item.Current_Qty || item.Stock_Qty || 0;
-      document.getElementById('adjustmentType').value = 'increase';
-      document.getElementById('adjustmentQty').value = '';
-      document.getElementById('adjustmentReason').value = '';
-      document.getElementById('otherReason').value = '';
-      document.getElementById('otherReasonDiv').style.display = 'none';
-      document.getElementById('adjustStockAlert').style.display = 'none';
-
-      const modal = new bootstrap.Modal(document.getElementById('adjustStockModal'));
-      modal.show();
-    }
-
-    function updateAdjustmentSign() {
-      // This is called when adjustment type changes (just for UI feedback)
-    }
-
-    // Show "Other" reason text field when "Other" is selected
-    document.getElementById('adjustmentReason').addEventListener('change', function() {
-      const otherDiv = document.getElementById('otherReasonDiv');
-      otherDiv.style.display = this.value === 'Other' ? 'block' : 'none';
-    });
-
-    function submitAdjustStock() {
-      const itemId = document.getElementById('adjustItemId').value;
-      const type = document.getElementById('adjustmentType').value;
-      const qty = parseFloat(document.getElementById('adjustmentQty').value);
-      let reason = document.getElementById('adjustmentReason').value;
-
-      if (!qty || qty <= 0) {
-        alert('Please enter a valid quantity');
-        return;
-      }
-
-      if (!reason) {
-        alert('Please select a reason');
-        return;
-      }
-
-      if (reason === 'Other') {
-        const otherReason = document.getElementById('otherReason').value.trim();
-        if (!otherReason) {
-          alert('Please specify the reason');
-          return;
-        }
-        reason = otherReason;
-      }
-
-      // Adjust quantity sign based on type
-      const adjustmentQty = type === 'increase' ? qty : -qty;
-
-      const alertDiv = document.getElementById('adjustStockAlert');
-      alertDiv.style.display = 'none';
-
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) {
-            alertDiv.className = 'alert alert-success mt-3';
-            alertDiv.textContent = 'Stock adjusted successfully! New stock: ' + (result.newQty || 'N/A');
-            alertDiv.style.display = 'block';
-            setTimeout(function() {
-              bootstrap.Modal.getInstance(document.getElementById('adjustStockModal')).hide();
-              loadInventory();
-            }, 1500);
-          } else {
-            alertDiv.className = 'alert alert-danger mt-3';
-            alertDiv.textContent = 'Error: ' + result.message;
-            alertDiv.style.display = 'block';
-          }
-        })
-        .withFailureHandler(function(error) {
-          alertDiv.className = 'alert alert-danger mt-3';
-          alertDiv.textContent = 'Error: ' + error.message;
-          alertDiv.style.display = 'block';
-        })
-        .adjustStock(itemId, adjustmentQty, reason, currentUser);
-    }
-  </script>
-</body>
+  </script></body>
 </html>
