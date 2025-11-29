@@ -1012,7 +1012,7 @@
         </div>
 
         <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
-          <div class="module-card" onclick="alert('Create New Sale - Feature coming soon')">
+          <div class="module-card" onclick="showSection('sales-new')">
             <div class="module-icon">
               <i class="bi bi-plus-circle-fill"></i>
             </div>
@@ -1020,7 +1020,7 @@
             <p class="module-description">Process a new sales transaction</p>
           </div>
 
-          <div class="module-card" onclick="alert('View Sales History - Feature coming soon')">
+          <div class="module-card" onclick="showSection('sales-history')">
             <div class="module-icon">
               <i class="bi bi-clock-history"></i>
             </div>
@@ -1028,7 +1028,7 @@
             <p class="module-description">View all past transactions</p>
           </div>
 
-          <div class="module-card" onclick="alert('Sales Returns - Feature coming soon')">
+          <div class="module-card" onclick="showSection('sales-returns')">
             <div class="module-icon">
               <i class="bi bi-arrow-return-left"></i>
             </div>
@@ -1036,12 +1036,218 @@
             <p class="module-description">Manage product returns</p>
           </div>
 
-          <div class="module-card" onclick="alert('Sales Reports - Feature coming soon')">
+          <div class="module-card" onclick="showSection('sales-reports')">
             <div class="module-icon">
               <i class="bi bi-file-earmark-bar-graph"></i>
             </div>
             <h3 class="module-title">Reports</h3>
             <p class="module-description">Generate sales reports</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sales New Section -->
+      <div class="content-section" id="section-sales-new">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3><i class="bi bi-cart-plus"></i> Quick Sale</h3>
+          <p class="text-muted">Process a sale quickly or handle a return</p>
+
+          <div class="row">
+            <div class="col-md-8">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <form id="dashboardSaleForm">
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Customer</label>
+                        <select class="form-select" id="dashSaleCustomer" onchange="onCustomerSelect(this.value)">
+                          <option value="WALK-IN">Walk-in Customer</option>
+                        </select>
+                        <div id="customerDetailsBox" class="mt-2" style="display: none;"></div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Date</label>
+                        <input type="date" class="form-control" id="dashSaleDate">
+                      </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row align-items-end mb-3">
+                      <div class="col-md-5">
+                        <label class="form-label fw-bold">Product</label>
+                        <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()">
+                          <option value="">-- Choose Item --</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label">Qty</label>
+                        <input type="number" class="form-control" id="dashSaleQty" value="1" min="1">
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label">Price (Editable)</label>
+                        <input type="number" class="form-control" id="dashSalePrice" min="0" step="0.01">
+                      </div>
+                      <div class="col-md-2">
+                        <button type="button" class="btn btn-primary w-100" onclick="addDashCartItem()">
+                          <i class="bi bi-plus-lg"></i> Add
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="table-responsive border rounded mb-3" style="max-height: 250px; overflow-y: auto;">
+                      <table class="table table-sm table-striped mb-0">
+                        <thead class="table-light sticky-top">
+                          <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody id="dashCartBody">
+                          <tr><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                      <div>
+                        <h4 class="mb-0 text-success">Total: <span id="dashCartTotal">Ksh 0.00</span></h4>
+                      </div>
+                      <div class="d-flex gap-2 align-items-center">
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearDashCart()">Clear</button>
+
+                        <select class="form-select" id="dashSalePayment" style="width: auto;">
+                          <option value="Cash">Cash</option>
+                          <option value="M-Pesa">M-Pesa</option>
+                          <option value="Equity Bank">Equity Bank</option>
+                          <option value="Credit">Credit (Debt)</option>
+                        </select>
+
+                        <button type="button" class="btn btn-success px-4" onclick="submitDashTransaction('Sale')">
+                          <i class="bi bi-check-circle"></i> Sale
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="card bg-light border-0">
+                <div class="card-body">
+                  <h6>Product Details</h6>
+                  <div id="dashProductInfo" class="text-muted small">Select a product to see details.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sales History Section -->
+      <div class="content-section" id="section-sales-history">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3 class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-clock-history"></i> Sales History</span>
+            <small class="text-muted">Most recent transactions</small>
+          </h3>
+          <div class="table-responsive mt-3">
+            <table class="table table-striped align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Transaction</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Payment</th>
+                  <th class="text-end">Total</th>
+                  <th>Type</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="salesHistoryBody">
+                <tr><td colspan="7" class="text-center text-muted py-4">Loading sales history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sales Returns Section -->
+      <div class="content-section" id="section-sales-returns">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3 class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-arrow-return-left"></i> Sales Returns</span>
+            <small class="text-muted">Items marked as returned</small>
+          </h3>
+          <div class="table-responsive mt-3">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Transaction</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Item</th>
+                  <th>Qty</th>
+                  <th class="text-end">Total</th>
+                </tr>
+              </thead>
+              <tbody id="salesReturnsBody">
+                <tr><td colspan="6" class="text-center text-muted py-4">Loading return data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sales Reports Section -->
+      <div class="content-section" id="section-sales-reports">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3><i class="bi bi-file-earmark-bar-graph"></i> Sales Reports</h3>
+          <p class="text-muted">High level metrics to understand your performance.</p>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <p class="text-muted mb-1">Total Revenue</p>
+                  <h4 id="reportTotalRevenue">--</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <p class="text-muted mb-1">Total Sales</p>
+                  <h4 id="reportTotalSales">--</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <p class="text-muted mb-1">Credit Sales</p>
+                  <h4 id="reportCreditSales">--</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <p class="text-muted mb-1">Avg Order Value</p>
+                  <h4 id="reportAverageOrder">--</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card shadow-sm mt-3">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Last 30 Days Revenue</h5>
+              <p class="display-6" id="report30DayRevenue">--</p>
+              <p class="text-muted mb-0">Shows the total revenue generated in the last 30 days.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -1097,7 +1303,7 @@
         </div>
 
         <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
-          <div class="module-card" onclick="alert('Supplier List - Feature coming soon')">
+          <div class="module-card" onclick="showSection('suppliers-list')">
             <div class="module-icon">
               <i class="bi bi-list-ul"></i>
             </div>
@@ -1105,7 +1311,7 @@
             <p class="module-description">View all suppliers</p>
           </div>
 
-          <div class="module-card" onclick="alert('Add Supplier - Feature coming soon')">
+          <div class="module-card" onclick="showSection('suppliers-add')">
             <div class="module-icon">
               <i class="bi bi-plus-circle"></i>
             </div>
@@ -1113,7 +1319,7 @@
             <p class="module-description">Register new supplier</p>
           </div>
 
-          <div class="module-card" onclick="alert('Purchase Orders - Feature coming soon')">
+          <div class="module-card" onclick="showSection('suppliers-orders')">
             <div class="module-icon">
               <i class="bi bi-cart-plus"></i>
             </div>
@@ -1121,13 +1327,50 @@
             <p class="module-description">Manage orders</p>
           </div>
 
-          <div class="module-card" onclick="alert('Payments - Feature coming soon')">
+          <div class="module-card" onclick="showSection('suppliers-payments')">
             <div class="module-icon">
               <i class="bi bi-cash-stack"></i>
             </div>
             <h3 class="module-title">Payments</h3>
             <p class="module-description">Track supplier payments</p>
           </div>
+        </div>
+      </div>
+
+      <!-- Supplier Sub-Sections -->
+      <div class="content-section" id="section-suppliers-list">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3><i class="bi bi-truck"></i> Suppliers List</h3>
+          <p class="text-muted">View and manage all suppliers</p>
+          <hr>
+          <p>Suppliers list and management will be loaded here...</p>
+        </div>
+      </div>
+
+      <div class="content-section" id="section-suppliers-add">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3><i class="bi bi-plus-circle"></i> Add New Supplier</h3>
+          <p class="text-muted">Register a new supplier</p>
+          <hr>
+          <p>Add supplier form will be loaded here...</p>
+        </div>
+      </div>
+
+      <div class="content-section" id="section-suppliers-orders">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3><i class="bi bi-cart-plus"></i> Purchase Orders</h3>
+          <p class="text-muted">Manage purchase orders from suppliers</p>
+          <hr>
+          <p>Purchase orders management will be loaded here...</p>
+        </div>
+      </div>
+
+      <div class="content-section" id="section-suppliers-payments">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3><i class="bi bi-credit-card"></i> Supplier Payments</h3>
+          <p class="text-muted">Track and manage payments to suppliers</p>
+          <hr>
+          <p>Supplier payments tracking will be loaded here...</p>
         </div>
       </div>
 
@@ -1226,7 +1469,7 @@
         </div>
 
         <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
-          <div class="module-card" onclick="alert('User List - Feature coming soon')">
+          <div class="module-card" onclick="showSection('users-list')">
             <div class="module-icon">
               <i class="bi bi-people-fill"></i>
             </div>
@@ -1234,7 +1477,7 @@
             <p class="module-description">View all users</p>
           </div>
 
-          <div class="module-card" onclick="alert('Add User - Feature coming soon')">
+          <div class="module-card" onclick="showSection('users-add')">
             <div class="module-icon">
               <i class="bi bi-person-plus-fill"></i>
             </div>
@@ -1242,7 +1485,7 @@
             <p class="module-description">Create new user account</p>
           </div>
 
-          <div class="module-card" onclick="alert('Roles & Permissions - Feature coming soon')">
+          <div class="module-card" onclick="showSection('users-roles')">
             <div class="module-icon">
               <i class="bi bi-shield-lock-fill"></i>
             </div>
@@ -1250,13 +1493,84 @@
             <p class="module-description">Manage permissions</p>
           </div>
 
-          <div class="module-card" onclick="alert('Activity Log - Feature coming soon')">
+          <div class="module-card" onclick="showSection('users-permissions')">
             <div class="module-icon">
               <i class="bi bi-clock-history"></i>
             </div>
-            <h3 class="module-title">Activity Log</h3>
-            <p class="module-description">User activity history</p>
+            <h3 class="module-title">Permissions</h3>
+            <p class="module-description">User access control</p>
           </div>
+        </div>
+      </div>
+
+      <!-- User Sub-Sections -->
+      <div class="content-section" id="section-users-list">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3><i class="bi bi-people"></i> Users List</h3>
+          <p class="text-muted">View and manage all system users</p>
+          <hr>
+
+          <!-- Alert Container -->
+          <div id="usersAlertContainer"></div>
+
+          <!-- Add User Button -->
+          <div class="mb-3">
+            <button class="btn btn-primary" onclick="showAddUserModal()">
+              <i class="bi bi-person-plus"></i> Add New User
+            </button>
+          </div>
+
+          <!-- Users Table -->
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr>
+                  <td colspan="6" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section" id="section-users-add">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3><i class="bi bi-person-plus"></i> Add New User</h3>
+          <p class="text-muted">Create a new user account</p>
+          <hr>
+          <p>Add user form will be loaded here...</p>
+        </div>
+      </div>
+
+      <div class="content-section" id="section-users-roles">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3><i class="bi bi-shield-check"></i> User Roles</h3>
+          <p class="text-muted">Manage user roles and access levels</p>
+          <hr>
+          <p>User roles management will be loaded here...</p>
+        </div>
+      </div>
+
+      <div class="content-section" id="section-users-permissions">
+        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <h3><i class="bi bi-key"></i> User Permissions</h3>
+          <p class="text-muted">Configure user permissions and access control</p>
+          <hr>
+          <p>User permissions configuration will be loaded here...</p>
         </div>
       </div>
 
