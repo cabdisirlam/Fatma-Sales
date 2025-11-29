@@ -61,9 +61,9 @@ function createPurchase(purchaseData) {
       sheet.appendRow(purchaseRow);
     });
 
-    // Increase stock for each item
+    // Increase stock for each item (V3.0: Pass Cost_Price for batch tracking)
     for (const item of items) {
-      increaseStock(item.Item_ID, item.Qty, purchaseData.User);
+      increaseStock(item.Item_ID, item.Qty, purchaseData.User, item.Cost_Price);
     }
 
     // Update supplier totals
@@ -103,9 +103,13 @@ function createPurchase(purchaseData) {
 
 /**
  * Record purchase payment
+ * V3.0: Validates payment method against Chart of Accounts
  */
 function recordPurchasePayment(purchaseId, supplierId, amount, paymentMethod, user) {
   try {
+    // V3.0: Validate payment method exists in Chart of Accounts
+    validateAccount(paymentMethod);
+
     const financialTxnId = generateId('Financials', 'Transaction_ID', 'FIN');
     const sheet = getSheet('Financials');
 

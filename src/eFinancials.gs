@@ -58,19 +58,84 @@ function getFinancialUiData() {
 }
 
 // =====================================================
+// CHART OF ACCOUNTS VALIDATION
+// =====================================================
+
+/**
+ * Validate that an account exists in Chart of Accounts
+ * V3.0: Ensures only valid accounts are used in transactions
+ * @param {string} accountName - The account name to validate
+ * @throws {Error} if account is not found in Chart of Accounts
+ */
+function validateAccount(accountName) {
+  try {
+    if (!accountName || accountName.trim() === '') {
+      throw new Error('Account name is required');
+    }
+
+    const sheet = getSheet('Chart_of_Accounts');
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length <= 1) {
+      throw new Error('Chart of Accounts is empty. Please run upgradeSystemToV3() first.');
+    }
+
+    const headers = data[0];
+    const accountNameCol = headers.indexOf('Account_Name');
+
+    if (accountNameCol === -1) {
+      throw new Error('Chart_of_Accounts sheet is missing Account_Name column');
+    }
+
+    // Search for account (case-insensitive)
+    const searchName = accountName.trim().toLowerCase();
+    for (let i = 1; i < data.length; i++) {
+      const acctName = data[i][accountNameCol];
+      if (acctName && acctName.toString().trim().toLowerCase() === searchName) {
+        return true; // Account found
+      }
+    }
+
+    // Account not found - throw error with helpful message
+    const validAccounts = [];
+    for (let i = 1; i < data.length; i++) {
+      const acctName = data[i][accountNameCol];
+      if (acctName && acctName.toString().trim() !== '') {
+        validAccounts.push(acctName.toString().trim());
+      }
+    }
+
+    throw new Error(
+      'Invalid account: "' + accountName + '". ' +
+      'Valid accounts are: ' + validAccounts.join(', ')
+    );
+
+  } catch (error) {
+    logError('validateAccount', error);
+    throw error;
+  }
+}
+
+// =====================================================
 // TRANSACTION HANDLING
 // =====================================================
 
 /**
  * Master function to handle various financial transactions
  * Logic: Determines ID prefix based on Account (BANK, MPS, CASH)
+ * V3.0: Validates account against Chart of Accounts
  */
 function handleFinancialTransaction(data) {
   try {
+    // V3.0: Validate account exists in Chart of Accounts
+    if (data.account) {
+      validateAccount(data.account);
+    }
+
     const sheet = getSheet('Financials');
     const user = data.User || 'SYSTEM';
     const date = new Date();
-    
+
     // 1. Determine ID Prefix based on Account Name
     let prefix = 'TXN';
     const accountName = (data.account || '').toLowerCase();

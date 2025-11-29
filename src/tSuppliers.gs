@@ -95,52 +95,53 @@ function searchSuppliers(query) {
 }
 
 /**
- * Add new supplier with Hard-Coded Header Mapping
+ * Add new supplier
+ * V3.0: Complete validation and column mapping
+ * Headers: Supplier_ID, Supplier_Name, Contact_Person, Phone, Email, Address, Opening_Balance, Total_Purchased, Total_Paid, Current_Balance, Payment_Terms, Status
  */
 function addSupplier(supplierData) {
   try {
-    // 1. Validation: Ensure we have the minimum required data
-    // Matches the "required" fields in the HTML
-    validateRequired(supplierData, ['Supplier_Name', 'Phone']);
-
-    const sheet = getSheet('Suppliers');
-    const headers = sheet.getDataRange().getValues()[0];
-    const hasOpeningColumn = headers.indexOf('Opening_Balance') !== -1;
-
-    const supplierId = generateId('Suppliers', 'Supplier_ID', 'SUP');
-    const openingBalance = parseFloat(supplierData.Opening_Balance || supplierData.Current_Balance) || 0;
-
-    // Build row data using header names to avoid creating extra columns
-    const rowData = {
-      Supplier_ID: supplierId,
-      Supplier_Name: supplierData.Supplier_Name || '',
-      Contact_Person: supplierData.Contact_Person || '',
-      Phone: supplierData.Phone || '',
-      Email: supplierData.Email || '',
-      Address: supplierData.Address || '',
-      Total_Purchased: openingBalance,
-      Total_Paid: 0,
-      Current_Balance: openingBalance,
-      Payment_Terms: supplierData.Payment_Terms || 'Cash',
-      Status: 'Active'
-    };
-
-    // Only set Opening_Balance if the column exists to prevent creating a new field
-    if (hasOpeningColumn) {
-      rowData.Opening_Balance = openingBalance;
+    // Validation: Required fields
+    if (!supplierData || !supplierData.Supplier_Name) {
+      throw new Error('Supplier Name is required');
     }
 
-    const newSupplier = headers.map(header => rowData[header] !== undefined ? rowData[header] : '');
+    if (!supplierData.Phone || supplierData.Phone.trim() === '') {
+      throw new Error('Phone number is required');
+    }
+
+    const sheet = getSheet('Suppliers');
+    const supplierId = generateId('Suppliers', 'Supplier_ID', 'SUP');
+
+    const openingBalance = parseFloat(supplierData.Opening_Balance || supplierData.Current_Balance) || 0;
+    const createdBy = supplierData.User || 'SYSTEM';
+
+    // HARD-CODED COLUMN MAPPING (matches createSuppliersSheet exactly)
+    const newSupplier = [
+      supplierId,                                          // 1. Supplier_ID
+      supplierData.Supplier_Name.trim(),                   // 2. Supplier_Name
+      supplierData.Contact_Person || '',                   // 3. Contact_Person
+      supplierData.Phone.trim(),                           // 4. Phone
+      supplierData.Email ? supplierData.Email.trim() : '', // 5. Email
+      supplierData.Address || '',                          // 6. Address
+      openingBalance,                                      // 7. Opening_Balance
+      openingBalance,                                      // 8. Total_Purchased (starts with opening balance)
+      0,                                                   // 9. Total_Paid
+      openingBalance,                                      // 10. Current_Balance (starts with opening balance)
+      supplierData.Payment_Terms || 'Cash',                // 11. Payment_Terms
+      'Active'                                             // 12. Status
+    ];
+
     sheet.appendRow(newSupplier);
 
     logAudit(
-      supplierData.User || 'SYSTEM',
+      createdBy,
       'Suppliers',
       'Create',
-      'New supplier added: ' + supplierData.Supplier_Name,
+      'New supplier: ' + supplierData.Supplier_Name + ' (Phone: ' + supplierData.Phone + ')',
       '',
       '',
-      JSON.stringify(newSupplier)
+      JSON.stringify({supplierId, name: supplierData.Supplier_Name})
     );
 
     return { success: true, supplierId: supplierId, message: 'Supplier added successfully' };

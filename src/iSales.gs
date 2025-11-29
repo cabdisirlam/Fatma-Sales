@@ -167,9 +167,44 @@ function createSale(saleData) {
       sheet.appendRow(saleRow);
     });
 
-    // Decrease Stock
+    // Decrease Stock & Calculate COGS (V3.0 FIFO)
+    let totalCOGS = 0;
     for (const item of items) {
-      decreaseStock(item.Item_ID, item.Qty, saleData.User);
+      const stockResult = decreaseStock(item.Item_ID, item.Qty, saleData.User);
+      if (stockResult && stockResult.totalCOGS !== undefined) {
+        totalCOGS += stockResult.totalCOGS;
+      }
+    }
+
+    // Record COGS Transaction in Financials (V3.0)
+    if (totalCOGS > 0) {
+      const cogsSheet = getSheet('Financials');
+      const cogsTxnId = generateId('Financials', 'Transaction_ID', 'COGS');
+
+      const cogsRow = [
+        cogsTxnId,                                    // Transaction_ID
+        dateTime,                                     // DateTime
+        'COGS',                                       // Type
+        saleData.Customer_ID || '',                   // Customer_ID
+        'Cost of Goods Sold',                         // Category
+        'Inventory Asset',                            // Account
+        'Cost of goods for Sale ' + transactionId,    // Description
+        totalCOGS,                                    // Amount
+        totalCOGS,                                    // Debit (Expense)
+        0,                                            // Credit
+        0,                                            // Balance
+        '',                                           // Payment_Method
+        '',                                           // Payee
+        transactionId,                                // Receipt_No
+        transactionId,                                // Reference
+        'Approved',                                   // Status
+        saleData.User,                                // Approved_By
+        saleData.User                                 // User
+      ];
+
+      cogsSheet.appendRow(cogsRow);
+
+      Logger.log('COGS recorded: ' + totalCOGS + ' for sale ' + transactionId);
     }
 
     // Update Customer Stats & Debt
@@ -183,7 +218,7 @@ function createSale(saleData) {
       }
     }
 
-    logAudit(saleData.User, 'Sales', 'Create Sale', 'Sale ' + transactionId + ' created. Paid: ' + totalPaid + ', Credit: ' + creditAmount, '', '', '');
+    logAudit(saleData.User, 'Sales', 'Create Sale', 'Sale ' + transactionId + ' created. Revenue: ' + grandTotal + ', COGS: ' + totalCOGS + ', Gross Profit: ' + (grandTotal - totalCOGS), '', '', '');
 
     return {
       success: true,
@@ -191,6 +226,8 @@ function createSale(saleData) {
       grandTotal: grandTotal,
       paidAmount: totalPaid,
       balance: creditAmount,
+      totalCOGS: totalCOGS,
+      grossProfit: grandTotal - totalCOGS,
       message: creditAmount > 0 ? 'Sale recorded with partial payment.' : 'Sale completed successfully'
     };
 
@@ -324,18 +361,22 @@ function markAsPickedUp(transactionId, user) {
 
 /**
  * Create a quotation
+ * V3.0: Writes to separate 'Quotations' sheet instead of 'Sales' sheet
+ * Headers: Quotation_ID, DateTime, Customer_ID, Customer_Name, Item_ID, Item_Name, Qty, Unit_Price, Line_Total, Subtotal, Delivery_Charge, Discount, Grand_Total, Created_By, Location, KRA_PIN, Status, Valid_Until, Converted_Sale_ID
  */
 function createQuotation(quotationData) {
   try {
     validateRequired(quotationData, ['items', 'Customer_ID', 'User']);
-    if (!quotationData.items || quotationData.items.length === 0) throw new Error('Quotation must have at least one item');
+    if (!quotationData.items || quotationData.items.length === 0) {
+      throw new Error('Quotation must have at least one item');
+    }
 
-    const sheet = getSheet('Sales');
-    const transactionId = generateId('Sales', 'Transaction_ID', 'QUOT');
-    
+    const sheet = getSheet('Quotations');
+    const quotationId = generateId('Quotations', 'Quotation_ID', 'QUOT');
+
     // Handle Date (From form or default)
     let dateTime = new Date();
-    if(quotationData.DateTime) {
+    if (quotationData.DateTime) {
        dateTime = new Date(quotationData.DateTime);
        const now = new Date();
        dateTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
@@ -344,9 +385,9 @@ function createQuotation(quotationData) {
     // Handle Valid_Until (Parse string properly)
     let validUntil = new Date();
     if (quotationData.Valid_Until) {
-        validUntil = new Date(quotationData.Valid_Until); 
+        validUntil = new Date(quotationData.Valid_Until);
     } else {
-        validUntil.setDate(validUntil.getDate() + 14);
+        validUntil.setDate(validUntil.getDate() + 14); // Default: 14 days validity
     }
 
     let subtotal = 0;
@@ -369,36 +410,35 @@ function createQuotation(quotationData) {
     const discount = parseFloat(quotationData.Discount) || 0;
     const grandTotal = subtotal + deliveryCharge - discount;
 
+    // Append each line item to Quotations sheet
     items.forEach(item => {
       const quotRow = [
-        transactionId,
-        dateTime,
-        'Quotation',
-        quotationData.Customer_ID,
-        quotationData.Customer_Name || '',
-        item.Item_ID,
-        item.Item_Name,
-        item.Qty,
-        item.Unit_Price,
-        item.Line_Total,
-        subtotal,
-        deliveryCharge,
-        discount,
-        grandTotal,
-        '', // Payment Mode
-        quotationData.User,
-        quotationData.Location || '',
-        quotationData.KRA_PIN || '',
-        'Pending',
-        validUntil,
-        ''
+        quotationId,                        // 1. Quotation_ID
+        dateTime,                           // 2. DateTime
+        quotationData.Customer_ID,          // 3. Customer_ID
+        quotationData.Customer_Name || '',  // 4. Customer_Name
+        item.Item_ID,                       // 5. Item_ID
+        item.Item_Name,                     // 6. Item_Name
+        item.Qty,                           // 7. Qty
+        item.Unit_Price,                    // 8. Unit_Price
+        item.Line_Total,                    // 9. Line_Total
+        subtotal,                           // 10. Subtotal
+        deliveryCharge,                     // 11. Delivery_Charge
+        discount,                           // 12. Discount
+        grandTotal,                         // 13. Grand_Total
+        quotationData.User,                 // 14. Created_By
+        quotationData.Location || '',       // 15. Location
+        quotationData.KRA_PIN || '',        // 16. KRA_PIN
+        'Pending',                          // 17. Status
+        validUntil,                         // 18. Valid_Until
+        ''                                  // 19. Converted_Sale_ID
       ];
       sheet.appendRow(quotRow);
     });
 
-    logAudit(quotationData.User, 'Sales', 'Create Quotation', 'Created ' + transactionId, '', '', '');
-    
-    return { success: true, transactionId: transactionId, message: 'Quotation created successfully' };
+    logAudit(quotationData.User, 'Quotations', 'Create', 'Created quotation: ' + quotationId, '', '', '');
+
+    return { success: true, quotationId: quotationId, message: 'Quotation created successfully' };
   } catch (error) {
     logError('createQuotation', error);
     throw new Error('Error creating quotation: ' + error.message);
@@ -406,24 +446,76 @@ function createQuotation(quotationData) {
 }
 
 /**
+ * Get quotation by ID from Quotations sheet
+ * V3.0: Reads from 'Quotations' sheet instead of 'Sales' sheet
+ */
+function getQuotationById(quotationId) {
+  try {
+    const quotations = sheetToObjects('Quotations');
+
+    // Find all rows for this quotation
+    const quotRows = quotations.filter(q => q.Quotation_ID === quotationId);
+
+    if (quotRows.length === 0) {
+      return null;
+    }
+
+    // Use first row for header info
+    const first = quotRows[0];
+
+    // Collect items
+    const items = quotRows.map(row => ({
+      Item_ID: row.Item_ID,
+      Item_Name: row.Item_Name,
+      Qty: row.Qty,
+      Unit_Price: row.Unit_Price,
+      Line_Total: row.Line_Total
+    }));
+
+    return {
+      Quotation_ID: first.Quotation_ID,
+      DateTime: first.DateTime,
+      Customer_ID: first.Customer_ID,
+      Customer_Name: first.Customer_Name,
+      Subtotal: first.Subtotal,
+      Delivery_Charge: first.Delivery_Charge,
+      Discount: first.Discount,
+      Grand_Total: first.Grand_Total,
+      Created_By: first.Created_By,
+      Location: first.Location,
+      KRA_PIN: first.KRA_PIN,
+      Status: first.Status,
+      Valid_Until: first.Valid_Until,
+      Converted_Sale_ID: first.Converted_Sale_ID,
+      items: items
+    };
+
+  } catch (error) {
+    logError('getQuotationById', error);
+    return null;
+  }
+}
+
+/**
  * Convert quotation to sale
+ * V3.0: Fetches from 'Quotations' sheet and updates it after conversion
  */
 function convertQuotationToSale(quotationId, paymentMode, user) {
   try {
-    const quotation = getSaleById(quotationId);
+    const quotation = getQuotationById(quotationId);
 
-    if (!quotation || quotation.Type !== 'Quotation') {
-      throw new Error('Invalid quotation');
+    if (!quotation) {
+      throw new Error('Quotation not found: ' + quotationId);
     }
 
     if (quotation.Status !== 'Pending') {
-      throw new Error('Quotation already processed');
+      throw new Error('Quotation already processed (Status: ' + quotation.Status + ')');
     }
 
     // Check if quotation is still valid
     const validUntil = new Date(quotation.Valid_Until);
     if (validUntil < new Date()) {
-      throw new Error('Quotation has expired');
+      throw new Error('Quotation has expired on ' + validUntil.toDateString());
     }
 
     // Create sale from quotation
@@ -441,8 +533,10 @@ function convertQuotationToSale(quotationId, paymentMode, user) {
 
     const saleResult = createSale(saleData);
 
-    // Update quotation status
+    // Update quotation status in Quotations sheet
     updateQuotationStatus(quotationId, 'Converted', saleResult.transactionId, user);
+
+    logAudit(user, 'Quotations', 'Convert', 'Converted quotation ' + quotationId + ' to sale ' + saleResult.transactionId, '', '', '');
 
     return {
       success: true,
@@ -458,33 +552,44 @@ function convertQuotationToSale(quotationId, paymentMode, user) {
 }
 
 /**
- * Update quotation status
+ * Update quotation status in Quotations sheet
+ * V3.0: Updates 'Quotations' sheet instead of 'Sales' sheet
  */
 function updateQuotationStatus(quotationId, status, convertedSaleId, user) {
   try {
-    const sheet = getSheet('Sales');
+    const sheet = getSheet('Quotations');
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
 
-    const transIdCol = headers.indexOf('Transaction_ID');
+    const quotIdCol = headers.indexOf('Quotation_ID');
     const statusCol = headers.indexOf('Status');
     const convertedCol = headers.indexOf('Converted_Sale_ID');
 
+    if (quotIdCol === -1 || statusCol === -1) {
+      throw new Error('Quotations sheet is missing required columns');
+    }
+
     // Update all rows with this quotation ID
+    let updated = false;
     for (let i = 1; i < data.length; i++) {
-      if (data[i][transIdCol] === quotationId) {
+      if (data[i][quotIdCol] === quotationId) {
         sheet.getRange(i + 1, statusCol + 1).setValue(status);
-        if (convertedSaleId) {
+        if (convertedSaleId && convertedCol !== -1) {
           sheet.getRange(i + 1, convertedCol + 1).setValue(convertedSaleId);
         }
+        updated = true;
       }
+    }
+
+    if (!updated) {
+      throw new Error('Quotation not found: ' + quotationId);
     }
 
     logAudit(
       user || 'SYSTEM',
-      'Sales',
-      'Update Quotation',
-      'Quotation ' + quotationId + ' status updated to: ' + status,
+      'Quotations',
+      'Update Status',
+      'Quotation ' + quotationId + ' status updated to: ' + status + (convertedSaleId ? ' (Sale: ' + convertedSaleId + ')' : ''),
       '',
       '',
       ''
@@ -498,9 +603,13 @@ function updateQuotationStatus(quotationId, status, convertedSaleId, user) {
 
 /**
  * Record sale payment in Financials
+ * V3.0: Validates payment method against Chart of Accounts
  */
 function recordSalePayment(transactionId, paymentMethod, amount, customerId, user) {
   try {
+    // V3.0: Validate payment method exists in Chart of Accounts
+    validateAccount(paymentMethod);
+
     const financialTxnId = generateId('Financials', 'Transaction_ID', 'FIN');
     const sheet = getSheet('Financials');
 
@@ -633,38 +742,37 @@ function getSales(filters) {
 
 /**
  * Get all quotations
+ * V3.0: Reads from 'Quotations' sheet instead of 'Sales' sheet
  */
 function getQuotations(filters) {
   try {
-    const sales = sheetToObjects('Sales');
+    const quotations = sheetToObjects('Quotations');
 
-    // Filter for Quotations only
-    let quotations = sales.filter(s => s.Type === 'Quotation');
-
-    // Apply additional filters
+    // Apply filters if provided
+    let filteredQuots = quotations;
     if (filters) {
       for (let key in filters) {
-        quotations = quotations.filter(q => q[key] === filters[key]);
+        filteredQuots = filteredQuots.filter(q => q[key] === filters[key]);
       }
     }
 
-    // Group by Transaction_ID
+    // Group by Quotation_ID
     const groupedQuots = {};
-    quotations.forEach(quot => {
-      if (!groupedQuots[quot.Transaction_ID]) {
-        groupedQuots[quot.Transaction_ID] = {
-          Transaction_ID: quot.Transaction_ID,
+    filteredQuots.forEach(quot => {
+      if (!groupedQuots[quot.Quotation_ID]) {
+        groupedQuots[quot.Quotation_ID] = {
+          Quotation_ID: quot.Quotation_ID,
           DateTime: quot.DateTime,
           Customer_Name: quot.Customer_Name,
           Grand_Total: quot.Grand_Total,
-          Sold_By: quot.Sold_By,
+          Created_By: quot.Created_By,
           Status: quot.Status,
           Valid_Until: quot.Valid_Until,
           Converted_Sale_ID: quot.Converted_Sale_ID,
           itemCount: 0
         };
       }
-      groupedQuots[quot.Transaction_ID].itemCount++;
+      groupedQuots[quot.Quotation_ID].itemCount++;
     });
 
     return Object.values(groupedQuots);

@@ -116,44 +116,61 @@ function searchCustomers(query) {
 
 /**
  * Add new customer
- * Handles opening balance (Debt) and precise column mapping
+ * V3.0: Complete validation and column mapping
+ * Headers: Customer_ID, Customer_Name, Phone, Email, Location, KRA_PIN, Customer_Type, Credit_Limit, Current_Balance, Total_Purchases, Last_Purchase_Date, Loyalty_Points, Status, Created_Date, Created_By
  */
 function addCustomer(customerData) {
   try {
+    // Validation: Required fields
     if (!customerData || !customerData.Customer_Name) {
       throw new Error('Customer Name is required');
     }
 
+    if (!customerData.Phone || customerData.Phone.trim() === '') {
+      throw new Error('Phone number is required');
+    }
+
     const sheet = getSheet('Customers');
     const customerId = generateId('Customers', 'Customer_ID', 'CUST');
-    
-    let openingBalance = parseFloat(customerData.Opening_Balance) || 0;
+
+    // Handle opening balance (Debt is stored as negative)
+    let openingBalance = parseFloat(customerData.Opening_Balance || customerData.Current_Balance) || 0;
     if (openingBalance > 0) {
       openingBalance = -Math.abs(openingBalance); // Convert to negative (Debt)
     }
 
     const createdBy = customerData.User || 'SYSTEM';
 
+    // HARD-CODED COLUMN MAPPING (matches createCustomersSheet exactly)
     const newCustomer = [
-      customerId,
-      customerData.Customer_Name,
-      customerData.Phone || '',
-      customerData.Email || '',
-      customerData.Location || '',  // Added Location
-      customerData.KRA_PIN || '',   // Added KRA PIN
-      customerData.Customer_Type || 'Walk-in',
-      parseFloat(customerData.Credit_Limit) || 0,
-      openingBalance,
-      0, // Total Purchases
-      '', // Last Purchase Date
-      0, // Loyalty Points
-      'Active',
-      new Date(),
-      createdBy
+      customerId,                                      // 1. Customer_ID
+      customerData.Customer_Name.trim(),               // 2. Customer_Name
+      customerData.Phone.trim(),                       // 3. Phone
+      customerData.Email ? customerData.Email.trim() : '', // 4. Email
+      customerData.Location || '',                     // 5. Location
+      customerData.KRA_PIN || '',                      // 6. KRA_PIN
+      customerData.Customer_Type || 'Walk-in',         // 7. Customer_Type
+      parseFloat(customerData.Credit_Limit) || 0,      // 8. Credit_Limit
+      openingBalance,                                  // 9. Current_Balance
+      0,                                               // 10. Total_Purchases
+      '',                                              // 11. Last_Purchase_Date
+      0,                                               // 12. Loyalty_Points
+      'Active',                                        // 13. Status
+      new Date(),                                      // 14. Created_Date
+      createdBy                                        // 15. Created_By
     ];
 
     sheet.appendRow(newCustomer);
-    logAudit(createdBy, 'Customers', 'Create', 'New customer: ' + customerData.Customer_Name, '', '', JSON.stringify(newCustomer));
+
+    logAudit(
+      createdBy,
+      'Customers',
+      'Create',
+      'New customer: ' + customerData.Customer_Name + ' (Phone: ' + customerData.Phone + ')',
+      '',
+      '',
+      JSON.stringify({customerId, name: customerData.Customer_Name})
+    );
 
     return { success: true, customerId: customerId, message: 'Customer added successfully' };
   } catch (error) {

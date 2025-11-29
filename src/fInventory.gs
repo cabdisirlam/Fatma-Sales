@@ -12,6 +12,8 @@ const INVENTORY_CACHE_KEY = 'inventory_cache_all';
 
 /**
  * Get all inventory items with optional filters
+ * V3.0: Aggregates batches by Item_ID (Batch-per-Row Architecture)
+ * Returns one consolidated object per product with summed quantities
  */
 function getInventory(filters) {
   try {
@@ -44,15 +46,60 @@ function getInventory(filters) {
     }
 
     const headers = data[0];
-    const items = [];
+    const batchesByItemId = {}; // Group batches by Item_ID
 
+    // Step 1: Read all rows and group by Item_ID
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
-      const item = {};
+      const batch = {};
 
       headers.forEach((header, index) => {
-        item[header] = row[index];
+        batch[header] = row[index];
       });
+
+      const itemId = batch.Item_ID;
+      if (!itemId) continue; // Skip empty rows
+
+      if (!batchesByItemId[itemId]) {
+        batchesByItemId[itemId] = [];
+      }
+
+      batchesByItemId[itemId].push(batch);
+    }
+
+    // Step 2: Aggregate batches into single items
+    const items = [];
+
+    for (const itemId in batchesByItemId) {
+      const batches = batchesByItemId[itemId];
+
+      // Sort batches by Date_Received (most recent first for display)
+      batches.sort((a, b) => {
+        const dateA = a.Date_Received ? new Date(a.Date_Received) : new Date(0);
+        const dateB = b.Date_Received ? new Date(b.Date_Received) : new Date(0);
+        return dateB - dateA;
+      });
+
+      const mostRecentBatch = batches[0]; // Use most recent batch for details
+
+      // Sum quantities across all batches
+      const totalQty = batches.reduce((sum, batch) => {
+        return sum + (parseFloat(batch.Current_Qty) || 0);
+      }, 0);
+
+      // Create consolidated item
+      const item = {
+        Item_ID: mostRecentBatch.Item_ID,
+        Item_Name: mostRecentBatch.Item_Name,
+        Category: mostRecentBatch.Category,
+        Cost_Price: mostRecentBatch.Cost_Price,
+        Selling_Price: mostRecentBatch.Selling_Price,
+        Current_Qty: totalQty,
+        Reorder_Level: mostRecentBatch.Reorder_Level,
+        Supplier: mostRecentBatch.Supplier,
+        Last_Updated: mostRecentBatch.Last_Updated,
+        Updated_By: mostRecentBatch.Updated_By
+      };
 
       // Backwards compatibility: expose Stock_Qty for UIs expecting this field
       item.Stock_Qty = item.Current_Qty;
@@ -72,9 +119,6 @@ function getInventory(filters) {
       // Add stock status
       item.stock_status = getStockStatus(item.Current_Qty, item.Reorder_Level);
       item.stock_value = (item.Current_Qty || 0) * (item.Cost_Price || 0);
-
-      // Add compatibility alias for frontend (Stock_Qty -> Current_Qty)
-      item.Stock_Qty = item.Current_Qty;
 
       items.push(item);
     }
@@ -108,22 +152,71 @@ function clearInventoryCache() {
 
 /**
  * Get inventory item by ID
+ * V3.0: Aggregates all batches for the item and returns consolidated quantity
  */
 function getInventoryItemById(itemId) {
   try {
-    const item = findRowById('Inventory', 'Item_ID', itemId);
-    if (!item) {
+    const sheet = getSheet('Inventory');
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length <= 1) {
       throw new Error('Product not found: ' + itemId);
     }
+
+    const headers = data[0];
+    const batches = [];
+
+    // Find all batches for this Item_ID
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const batch = {};
+
+      headers.forEach((header, index) => {
+        batch[header] = row[index];
+      });
+
+      if (batch.Item_ID === itemId) {
+        batches.push(batch);
+      }
+    }
+
+    if (batches.length === 0) {
+      throw new Error('Product not found: ' + itemId);
+    }
+
+    // Sort batches by Date_Received (most recent first)
+    batches.sort((a, b) => {
+      const dateA = a.Date_Received ? new Date(a.Date_Received) : new Date(0);
+      const dateB = b.Date_Received ? new Date(b.Date_Received) : new Date(0);
+      return dateB - dateA;
+    });
+
+    const mostRecentBatch = batches[0];
+
+    // Sum quantities across all batches
+    const totalQty = batches.reduce((sum, batch) => {
+      return sum + (parseFloat(batch.Current_Qty) || 0);
+    }, 0);
+
+    // Create consolidated item
+    const item = {
+      Item_ID: mostRecentBatch.Item_ID,
+      Item_Name: mostRecentBatch.Item_Name,
+      Category: mostRecentBatch.Category,
+      Cost_Price: mostRecentBatch.Cost_Price,
+      Selling_Price: mostRecentBatch.Selling_Price,
+      Current_Qty: totalQty,
+      Reorder_Level: mostRecentBatch.Reorder_Level,
+      Supplier: mostRecentBatch.Supplier,
+      Last_Updated: mostRecentBatch.Last_Updated,
+      Updated_By: mostRecentBatch.Updated_By
+    };
 
     // Backwards compatibility: expose Stock_Qty for UIs expecting this field
     item.Stock_Qty = item.Current_Qty;
 
     item.stock_status = getStockStatus(item.Current_Qty, item.Reorder_Level);
     item.stock_value = (item.Current_Qty || 0) * (item.Cost_Price || 0);
-
-    // Add compatibility alias for frontend (Stock_Qty -> Current_Qty)
-    item.Stock_Qty = item.Current_Qty;
 
     return item;
   } catch (error) {
@@ -197,6 +290,42 @@ function getProductCategories() {
 }
 
 /**
+ * Get unique categories from Inventory sheet
+ * V3.0: Helper function that reads directly from sheet and returns sorted unique categories
+ */
+function getUniqueCategories() {
+  try {
+    const sheet = getSheet('Inventory');
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length <= 1) {
+      return [];
+    }
+
+    const headers = data[0];
+    const categoryIndex = headers.indexOf('Category');
+
+    if (categoryIndex === -1) {
+      return [];
+    }
+
+    const categories = new Set();
+
+    for (let i = 1; i < data.length; i++) {
+      const category = data[i][categoryIndex];
+      if (category && category.toString().trim() !== '') {
+        categories.add(category.toString().trim());
+      }
+    }
+
+    return Array.from(categories).sort();
+  } catch (error) {
+    logError('getUniqueCategories', error);
+    return [];
+  }
+}
+
+/**
  * Add new product to inventory
  */
 function addProduct(productData) {
@@ -216,39 +345,78 @@ function addProduct(productData) {
     const itemId = generateId('Inventory', 'Item_ID', 'ITEM');
 
     const purchaseQty = parseFloat(productData.Current_Qty) || 0;
-    const startingQty = isPurchase ? 0 : purchaseQty;
 
     // 2. HARD-CODED MAPPING (Matches your Header String Exactly)
-    // Headers: Item_ID, Item_Name, Category, Cost_Price, Selling_Price, Current_Qty, Reorder_Level, Supplier, Last_Updated, Updated_By
+    // V3.0: We'll create the first batch row directly (only for opening stock)
     const sellingPrice =
       productData.Selling_Price !== undefined && productData.Selling_Price !== ''
         ? parseFloat(productData.Selling_Price)
         : parseFloat(productData.Cost_Price) || 0;
 
-    const newProduct = [
-      itemId,                                  // 1. Item_ID
-      productData.Item_Name || '',             // 2. Item_Name
-      productData.Category || 'General',       // 3. Category
-      parseFloat(productData.Cost_Price) || 0, // 4. Cost_Price
-      sellingPrice,                            // 5. Selling_Price
-      startingQty,                             // 6. Current_Qty
-      parseFloat(productData.Reorder_Level)||10,// 7. Reorder_Level
-      productData.Supplier || '',              // 8. Supplier
-      new Date(),                              // 9. Last_Updated
-      productData.User || 'SYSTEM'             // 10. Updated_By
-    ];
+    const costPrice = parseFloat(productData.Cost_Price) || 0;
+    const timestamp = new Date().getTime();
+    const batchId = 'BATCH-' + itemId + '-' + timestamp;
 
-    sheet.appendRow(newProduct);
+    // V3.0: Create FIRST BATCH ROW (only if NOT a purchase, because createPurchase will handle that)
+    if (!isPurchase && purchaseQty > 0) {
+      // Headers: Item_ID, Item_Name, Category, Cost_Price, Selling_Price, Current_Qty, Reorder_Level, Supplier, Last_Updated, Updated_By, Batch_ID, Date_Received
+      const newProduct = [
+        itemId,                                  // 1. Item_ID
+        productData.Item_Name || '',             // 2. Item_Name
+        productData.Category || 'General',       // 3. Category
+        costPrice,                               // 4. Cost_Price
+        sellingPrice,                            // 5. Selling_Price
+        purchaseQty,                             // 6. Current_Qty (opening stock)
+        parseFloat(productData.Reorder_Level)||10,// 7. Reorder_Level
+        productData.Supplier || '',              // 8. Supplier
+        new Date(),                              // 9. Last_Updated
+        productData.User || 'SYSTEM',            // 10. Updated_By
+        batchId,                                 // 11. Batch_ID (V3.0)
+        new Date()                               // 12. Date_Received (V3.0)
+      ];
 
-    logAudit(
-      productData.User || 'SYSTEM',
-      'Inventory',
-      'Create',
-      'Added: ' + productData.Item_Name + ' via ' + (isPurchase ? 'Purchase' : 'Opening Balance'),
-      '',
-      '',
-      JSON.stringify(newProduct)
-    );
+      sheet.appendRow(newProduct);
+
+      logAudit(
+        productData.User || 'SYSTEM',
+        'Inventory',
+        'Create',
+        'Added: ' + productData.Item_Name + ' via Opening Balance (Batch: ' + batchId + ')',
+        '',
+        '',
+        JSON.stringify({itemId, batchId, qty: purchaseQty})
+      );
+    } else if (isPurchase) {
+      // For purchases, we need to create a "template" batch with the product metadata
+      // so that increaseStock can find the item details
+      // This batch will have 0 quantity, and createPurchase will add the actual stock
+      const templateBatch = [
+        itemId,                                  // 1. Item_ID
+        productData.Item_Name || '',             // 2. Item_Name
+        productData.Category || 'General',       // 3. Category
+        costPrice,                               // 4. Cost_Price
+        sellingPrice,                            // 5. Selling_Price
+        0,                                       // 6. Current_Qty (0 - will be added by createPurchase)
+        parseFloat(productData.Reorder_Level)||10,// 7. Reorder_Level
+        productData.Supplier || '',              // 8. Supplier
+        new Date(),                              // 9. Last_Updated
+        productData.User || 'SYSTEM',            // 10. Updated_By
+        batchId,                                 // 11. Batch_ID (V3.0)
+        new Date()                               // 12. Date_Received (V3.0)
+      ];
+
+      sheet.appendRow(templateBatch);
+
+      logAudit(
+        productData.User || 'SYSTEM',
+        'Inventory',
+        'Create',
+        'Created product template: ' + productData.Item_Name + ' (will be stocked via purchase)',
+        '',
+        '',
+        JSON.stringify({itemId, batchId: 'template'})
+      );
+    }
 
     // If this is a purchase, create a purchase record to update supplier balances and payments
     if (isPurchase && productData.Supplier) {
@@ -258,7 +426,7 @@ function addProduct(productData) {
       createPurchase({
         Supplier_ID: productData.Supplier,
         Supplier_Name: supplier.Supplier_Name,
-        items: [{ Item_ID: itemId, Qty: purchaseQty, Cost_Price: productData.Cost_Price }],
+        items: [{ Item_ID: itemId, Qty: purchaseQty, Cost_Price: costPrice }],
         Payment_Method: productData.Payment_Method || 'Cash',
         Paid_Amount: paidAmount,
         User: productData.User || 'SYSTEM'
@@ -266,7 +434,7 @@ function addProduct(productData) {
     }
 
     clearInventoryCache();
-    return { success: true, itemId: itemId, message: 'Product added successfully' };
+    return { success: true, itemId: itemId, batchId: batchId, message: 'Product added successfully with batch tracking' };
 
   } catch (error) {
     logError('addProduct', error);
@@ -444,29 +612,109 @@ function adjustStock(itemId, adjustmentQty, reason, user) {
 
 /**
  * Update stock after sale (decrease)
+ * V3.0: FIFO DEDUCTION - Deducts from oldest batches first
+ * CRITICAL: Calculates and returns totalCOGS based on actual batch costs
  */
 function decreaseStock(itemId, qty, user) {
   try {
-    const item = getInventoryItemById(itemId);
-    const currentQty = parseFloat(item.Current_Qty) || 0;
-    const newQty = currentQty - parseFloat(qty);
+    const sheet = getSheet('Inventory');
+    const data = sheet.getDataRange().getValues();
 
-    if (newQty < 0) {
-      throw new Error('Insufficient stock for ' + item.Item_Name + '. Available: ' + currentQty + ', Required: ' + qty);
+    if (data.length <= 1) {
+      throw new Error('Product not found: ' + itemId);
     }
 
-    updateRowById('Inventory', 'Item_ID', itemId, {
-      Current_Qty: newQty,
-      Last_Updated: new Date(),
-      Updated_By: user || 'SYSTEM'
-    });
+    const headers = data[0];
+    const itemIdIndex = headers.indexOf('Item_ID');
+    const qtyIndex = headers.indexOf('Current_Qty');
+    const costPriceIndex = headers.indexOf('Cost_Price');
+    const dateReceivedIndex = headers.indexOf('Date_Received');
+    const batchIdIndex = headers.indexOf('Batch_ID');
+
+    // Step 1: Find all batches for this item
+    const batches = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (row[itemIdIndex] === itemId) {
+        const batchQty = parseFloat(row[qtyIndex]) || 0;
+        if (batchQty > 0) { // Only include batches with stock
+          batches.push({
+            rowIndex: i + 1, // Google Sheets is 1-indexed
+            qty: batchQty,
+            costPrice: parseFloat(row[costPriceIndex]) || 0,
+            dateReceived: row[dateReceivedIndex] ? new Date(row[dateReceivedIndex]) : new Date(0),
+            batchId: row[batchIdIndex] || 'UNKNOWN'
+          });
+        }
+      }
+    }
+
+    if (batches.length === 0) {
+      throw new Error('Product not found or out of stock: ' + itemId);
+    }
+
+    // Step 2: Sort batches by Date_Received (OLDEST FIRST for FIFO)
+    batches.sort((a, b) => a.dateReceived - b.dateReceived);
+
+    // Step 3: Calculate total available quantity
+    const totalAvailable = batches.reduce((sum, batch) => sum + batch.qty, 0);
+
+    if (totalAvailable < parseFloat(qty)) {
+      throw new Error('Insufficient stock. Available: ' + totalAvailable + ', Required: ' + qty);
+    }
+
+    // Step 4: FIFO Deduction - Deduct from oldest batches first
+    let remainingQtyToDeduct = parseFloat(qty);
+    let totalCOGS = 0;
+    const batchUpdates = [];
+
+    for (const batch of batches) {
+      if (remainingQtyToDeduct <= 0) break;
+
+      const qtyToDeduct = Math.min(batch.qty, remainingQtyToDeduct);
+      const newBatchQty = batch.qty - qtyToDeduct;
+
+      // Calculate COGS for this batch
+      totalCOGS += qtyToDeduct * batch.costPrice;
+
+      batchUpdates.push({
+        rowIndex: batch.rowIndex,
+        newQty: newBatchQty,
+        batchId: batch.batchId,
+        qtyDeducted: qtyToDeduct
+      });
+
+      remainingQtyToDeduct -= qtyToDeduct;
+    }
+
+    // Step 5: Apply updates to sheet
+    for (const update of batchUpdates) {
+      if (update.newQty === 0) {
+        // DELETE the row if fully consumed
+        sheet.deleteRow(update.rowIndex);
+        Logger.log('FIFO: Deleted fully consumed batch ' + update.batchId);
+
+        // Adjust subsequent row indices after deletion
+        batchUpdates.forEach(u => {
+          if (u.rowIndex > update.rowIndex) {
+            u.rowIndex--;
+          }
+        });
+      } else {
+        // UPDATE the row with new quantity
+        sheet.getRange(update.rowIndex, qtyIndex + 1).setValue(update.newQty);
+        Logger.log('FIFO: Reduced batch ' + update.batchId + ' by ' + update.qtyDeducted + ', new qty: ' + update.newQty);
+      }
+    }
 
     clearInventoryCache();
 
     return {
       success: true,
-      oldQty: currentQty,
-      newQty: newQty
+      qtyDeducted: parseFloat(qty),
+      totalCOGS: totalCOGS,
+      batchesUsed: batchUpdates.length,
+      message: 'FIFO deduction completed'
     };
 
   } catch (error) {
@@ -477,25 +725,50 @@ function decreaseStock(itemId, qty, user) {
 
 /**
  * Update stock after purchase (increase)
+ * V3.0: Creates a NEW BATCH ROW instead of updating existing row
+ * FIFO Architecture: Each purchase creates a separate batch for accurate cost tracking
  */
-function increaseStock(itemId, qty, user) {
+function increaseStock(itemId, qty, user, unitCost) {
   try {
+    // Get item details from the most recent batch (for metadata like Item_Name, Category, etc.)
     const item = getInventoryItemById(itemId);
-    const currentQty = parseFloat(item.Current_Qty) || 0;
-    const newQty = currentQty + parseFloat(qty);
 
-    updateRowById('Inventory', 'Item_ID', itemId, {
-      Current_Qty: newQty,
-      Last_Updated: new Date(),
-      Updated_By: user || 'SYSTEM'
-    });
+    // Generate unique Batch_ID
+    const timestamp = new Date().getTime();
+    const batchId = 'BATCH-' + itemId + '-' + timestamp;
+
+    // Use provided unitCost or fallback to existing Cost_Price
+    const costPrice = unitCost !== undefined ? parseFloat(unitCost) : parseFloat(item.Cost_Price || 0);
+
+    const sheet = getSheet('Inventory');
+
+    // Append NEW BATCH ROW
+    // Headers: Item_ID, Item_Name, Category, Cost_Price, Selling_Price, Current_Qty, Reorder_Level, Supplier, Last_Updated, Updated_By, Batch_ID, Date_Received
+    const newBatchRow = [
+      itemId,
+      item.Item_Name,
+      item.Category,
+      costPrice,
+      item.Selling_Price,
+      parseFloat(qty),
+      item.Reorder_Level,
+      item.Supplier,
+      new Date(),
+      user || 'SYSTEM',
+      batchId,
+      new Date()
+    ];
+
+    sheet.appendRow(newBatchRow);
 
     clearInventoryCache();
 
     return {
       success: true,
-      oldQty: currentQty,
-      newQty: newQty
+      batchId: batchId,
+      qty: parseFloat(qty),
+      unitCost: costPrice,
+      message: 'New batch created: ' + batchId
     };
 
   } catch (error) {
