@@ -68,9 +68,9 @@ function getBusinessInfo() {
  */
 function updateBusinessInfo(businessData, user) {
   try {
-    // 1. Enforce Defaults for this system version
-    if (!businessData.Currency) businessData.Currency = 'KES';
-    if (!businessData.Currency_Symbol) businessData.Currency_Symbol = 'Ksh';
+    // 1. Strictly enforce currency for this system version
+    businessData.Currency = 'KES';
+    businessData.Currency_Symbol = 'Ksh';
     
     // Log for debugging
     Logger.log('Saving Settings: ' + JSON.stringify(businessData));
@@ -82,8 +82,13 @@ function updateBusinessInfo(businessData, user) {
       if (!isValidSettingKey(key)) {
         Logger.log('Blocked invalid setting key: ' + key);
       } else {
-        // Valid key, save it
-        setSettingValue(key, businessData[key]);
+        // Coerce boolean for rounding before saving
+        if (key === 'Currency_Rounding') {
+            const valueToSave = businessData[key] === true || String(businessData[key]).toLowerCase() === 'true';
+            setSettingValue(key, valueToSave);
+        } else {
+            setSettingValue(key, businessData[key]);
+        }
       }
     }
 

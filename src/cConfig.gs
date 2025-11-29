@@ -17,11 +17,14 @@ const CONFIG = {
     SUPPLIERS: 'Suppliers',
     CUSTOMERS: 'Customers',
     INVENTORY: 'Inventory',
-    SALES: 'Sales',              // Merged: Sales_Data + Sales_Items + Quotations + Quotation_Items
-    PURCHASES: 'Purchases',      // Merged: Purchases + Purchase_Items
-    FINANCIALS: 'Financials',    // Merged: Customer_Transactions + Financials + Expenses
+    SALES: 'Sales',
+    PURCHASES: 'Purchases',
+    FINANCIALS: 'Financials',
+    QUOTATIONS: 'Quotations',
+    PURCHASE_ORDERS: 'Purchase_Orders',
+    CHART_OF_ACCOUNTS: 'Chart_of_Accounts',
     AUDIT_TRAIL: 'Audit_Trail',
-    SETTINGS: 'Settings'         // Now includes Expense_Categories as settings
+    SETTINGS: 'Settings'
   },
 
   // Colors (Brand Colors)

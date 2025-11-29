@@ -23,12 +23,13 @@
   
   <div id="settings-alert"></div>
 
-  <div class="row">
-    <div class="col-md-6">
-      <div class="card h-100">
-        <div class="card-header"><i class="bi bi-sliders"></i> General Settings</div>
-        <div class="card-body">
-          <form id="general-settings-form">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header"><i class="bi bi-sliders"></i> System Configuration</div>
+        <div class="card-body p-4">
+          <form id="settings-form">
+            <h5 class="mb-3"><i class="bi bi-shop"></i> Business Info</h5>
             <div class="mb-3">
               <label class="form-label fw-bold">Shop Name</label>
               <input type="text" class="form-control" id="shop-name" placeholder="Beipoa Kenya">
@@ -36,41 +37,20 @@
             
             <div class="mb-3">
               <label class="form-label fw-bold">Currency</label>
-              <select class="form-select" id="currency">
+              <select class="form-select" id="currency" disabled>
                 <option value="KES" selected>KES - Kenyan Shilling (Ksh)</option>
               </select>
+               <div class="form-text">Currency is locked to KES for this version.</div>
             </div>
 
-            <div class="mb-3 p-3 bg-light rounded border">
-               <div class="form-check form-switch">
-                 <input class="form-check-input" type="checkbox" id="currency-rounding">
-                 <label class="form-check-label fw-bold" for="currency-rounding">Round to nearest Shilling</label>
-               </div>
-               <div class="form-text mt-1">
-                 <i class="bi bi-info-circle"></i> Enables rounding off decimals (e.g., 150.50 becomes 151).
-               </div>
-            </div>
-
-            <div class="mb-3">
+            <div class="mb-4">
               <label class="form-label fw-bold">Tax Rate (%)</label>
               <input type="number" class="form-control" id="tax-rate" value="0" step="0.01" min="0">
             </div>
 
-            <div class="d-grid mt-4">
-              <button type="submit" class="btn btn-primary">
-                <i class="bi bi-save"></i> Save General Settings
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+            <hr class="my-4">
 
-    <div class="col-md-6">
-      <div class="card h-100">
-        <div class="card-header"><i class="bi bi-receipt"></i> Receipt Configuration</div>
-        <div class="card-body">
-          <form id="receipt-settings-form">
+            <h5 class="mb-3"><i class="bi bi-receipt"></i> Receipt & Invoicing</h5>
             <div class="mb-3">
               <label class="form-label fw-bold">Receipt Header</label>
               <textarea class="form-control" id="receipt-header" rows="2" placeholder="Beipoa Kenya"></textarea>
@@ -85,14 +65,24 @@
             
             <div class="mb-3 p-3 bg-light rounded border">
                <div class="form-check form-switch">
+                 <input class="form-check-input" type="checkbox" id="currency-rounding">
+                 <label class="form-check-label fw-bold" for="currency-rounding">Round to nearest Shilling</label>
+               </div>
+               <div class="form-text mt-1">
+                 <i class="bi bi-info-circle"></i> Enables rounding off decimals on the final total (e.g., 150.50 becomes 151).
+               </div>
+            </div>
+            
+            <div class="mb-3 p-3 bg-light rounded border">
+               <div class="form-check form-switch">
                  <input class="form-check-input" type="checkbox" id="include-logo">
                  <label class="form-check-label fw-bold" for="include-logo">Include Shop Logo on Receipt</label>
                </div>
             </div>
 
             <div class="d-grid mt-4">
-              <button type="submit" class="btn btn-primary">
-                <i class="bi bi-save"></i> Save Receipt Settings
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-save"></i> Save All Settings
               </button>
             </div>
           </form>
@@ -108,8 +98,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadSettings();
-      document.getElementById('general-settings-form').addEventListener('submit', handleGeneralSettingsSave);
-      document.getElementById('receipt-settings-form').addEventListener('submit', handleReceiptSettingsSave);
+      document.getElementById('settings-form').addEventListener('submit', handleSaveSettings);
     });
 
     function showAlert(message, type = 'success') {
@@ -130,84 +119,55 @@
     }
 
     function loadSettings() {
-      // Disable buttons while loading
-      const btns = document.querySelectorAll('button[type="submit"]');
-      btns.forEach(b => b.disabled = true);
+      const btn = document.querySelector('button[type="submit"]');
+      btn.disabled = true;
 
       google.script.run
         .withSuccessHandler(settings => {
             populateSettings(settings);
-            btns.forEach(b => b.disabled = false);
+            btn.disabled = false;
         })
         .withFailureHandler(error => {
             showAlert(error.message || 'Failed to load settings', 'danger');
-            btns.forEach(b => b.disabled = false);
+            btn.disabled = false;
         })
-        .getAllSettings(); // Using standard function to fetch all keys
+        .getBusinessInfo();
     }
 
     function populateSettings(settings = {}) {
-      // Populate General
       document.getElementById('shop-name').value = settings.Shop_Name || DEFAULT_SHOP_NAME;
       document.getElementById('tax-rate').value = settings.Tax_Rate || 0;
-      
-      // Set Currency to KES explicitly
-      document.getElementById('currency').value = 'KES';
-      
-      // Rounding Checkbox
-      const isRounding = settings.Currency_Rounding === true || settings.Currency_Rounding === 'true' || settings.Currency_Rounding === 'TRUE';
-      document.getElementById('currency-rounding').checked = isRounding;
-      
-      // Populate Receipt
       document.getElementById('receipt-header').value = settings.Receipt_Header || DEFAULT_SHOP_NAME;
       document.getElementById('receipt-footer').value = settings.Receipt_Footer || DEFAULT_SLOGAN;
       
-      // Logo Checkbox
-      const isLogo = settings.Include_Shop_Logo === true || settings.Include_Shop_Logo === 'true' || settings.Include_Shop_Logo === 'TRUE';
+      document.getElementById('currency').value = 'KES';
+      
+      const isRounding = settings.Currency_Rounding === true || String(settings.Currency_Rounding).toLowerCase() === 'true';
+      document.getElementById('currency-rounding').checked = isRounding;
+      
+      const isLogo = settings.Include_Shop_Logo === true || String(settings.Include_Shop_Logo).toLowerCase() === 'true';
       document.getElementById('include-logo').checked = isLogo;
     }
 
-    function handleGeneralSettingsSave(event) {
+    function handleSaveSettings(event) {
       event.preventDefault();
 
       const shopName = document.getElementById('shop-name').value.trim();
-      const taxRate = document.getElementById('tax-rate').value;
-      const currency = document.getElementById('currency').value;
-      const isRounding = document.getElementById('currency-rounding').checked;
-
       if (!shopName) {
         showAlert('Shop name is required.', 'warning');
         return;
       }
 
-      const btn = event.target.querySelector('button');
-      const originalHtml = btn.innerHTML;
-      btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
-
-      google.script.run
-        .withSuccessHandler(() => {
-             showAlert('General settings saved successfully.');
-             btn.disabled = false; btn.innerHTML = originalHtml;
-        })
-        .withFailureHandler(error => {
-             showAlert(error.message || 'Failed to save settings', 'danger');
-             btn.disabled = false; btn.innerHTML = originalHtml;
-        })
-        .updateBusinessInfo({
-          Shop_Name: shopName,
-          Currency: currency,
-          Currency_Symbol: 'Ksh',
-          Currency_Rounding: isRounding,
-          Tax_Rate: parseFloat(taxRate) || 0
-        });
-    }
-
-    function handleReceiptSettingsSave(event) {
-      event.preventDefault();
-
-      const receiptHeader = document.getElementById('receipt-header').value.trim();
-      const receiptFooter = document.getElementById('receipt-footer').value.trim();
-      const includeLogo = document.getElementById('include-logo').checked;
+      const settingsData = {
+        Shop_Name: shopName,
+        Currency: 'KES',
+        Currency_Symbol: 'Ksh',
+        Tax_Rate: parseFloat(document.getElementById('tax-rate').value) || 0,
+        Receipt_Header: document.getElementById('receipt-header').value.trim(),
+        Receipt_Footer: document.getElementById('receipt-footer').value.trim(),
+        Currency_Rounding: document.getElementById('currency-rounding').checked,
+        Include_Shop_Logo: document.getElementById('include-logo').checked
+      };
 
       const btn = event.target.querySelector('button');
       const originalHtml = btn.innerHTML;
@@ -215,18 +175,14 @@
 
       google.script.run
         .withSuccessHandler(() => {
-             showAlert('Receipt settings saved successfully.');
+             showAlert('Settings saved successfully.');
              btn.disabled = false; btn.innerHTML = originalHtml;
         })
         .withFailureHandler(error => {
              showAlert(error.message || 'Failed to save settings', 'danger');
              btn.disabled = false; btn.innerHTML = originalHtml;
         })
-        .updateBusinessInfo({
-          Receipt_Header: receiptHeader,
-          Receipt_Footer: receiptFooter,
-          Include_Shop_Logo: includeLogo
-        });
+        .updateBusinessInfo(settingsData);
     }
   </script>
 </body>
