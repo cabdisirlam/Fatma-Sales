@@ -113,7 +113,16 @@ function authenticate(email, pin) {
                         return { success: false, message: 'User account is inactive.' };
                     }
                     const user = {};
-                    headers.forEach((h, j) => { if (h !== 'PIN') user[h] = row[j]; });
+                    headers.forEach((h, j) => {
+                        if (h !== 'PIN') {
+                            let value = row[j];
+                            if (value instanceof Date) {
+                                user[h] = value.toISOString();
+                            } else {
+                                user[h] = value;
+                            }
+                        }
+                    });
                     return { success: true, user };
                 }
                 return { success: false, message: 'Invalid PIN.' };
@@ -140,7 +149,16 @@ function getUsers() {
     const headers = data[0];
     const users = data.slice(1).map(row => {
       const user = {};
-      headers.forEach((h, i) => { if (h !== 'PIN') user[h] = row[i]; });
+      headers.forEach((h, i) => {
+        if (h !== 'PIN') {
+            let value = row[i];
+            if (value instanceof Date) {
+                user[h] = value.toISOString();
+            } else {
+                user[h] = value;
+            }
+        }
+      });
       return user;
     }).filter(u => u.User_ID); // Filter out empty rows
 
