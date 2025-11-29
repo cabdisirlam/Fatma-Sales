@@ -4,25 +4,61 @@
  */
 
 /**
+ * Gets or creates the spreadsheet for the system.
+ * This function is designed to work in any context (bound, standalone, web app).
+ * @returns {Spreadsheet} The spreadsheet object.
+ */
+function getOrCreateSpreadsheet() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const storedId = scriptProperties.getProperty('SPREADSHEET_ID');
+
+  // Priority 1: Use stored ID if available
+  if (storedId) {
+    try {
+      const ss = SpreadsheetApp.openById(storedId);
+      Logger.log('Successfully opened spreadsheet by stored ID: ' + storedId);
+      return ss;
+    } catch (e) {
+      Logger.log('Warning: Could not open spreadsheet by stored ID. It may have been deleted. A new sheet will be created. Error: ' + e.message);
+    }
+  }
+
+  // Priority 2: Use the active spreadsheet if the script is bound
+  try {
+    const activeSS = SpreadsheetApp.getActiveSpreadsheet();
+    if (activeSS) {
+      scriptProperties.setProperty('SPREADSHEET_ID', activeSS.getId());
+      Logger.log('Using active spreadsheet. ID stored.');
+      return activeSS;
+    }
+  } catch(e) {
+      Logger.log('Not a bound script, no active spreadsheet.');
+  }
+
+  // Priority 3: Create a new spreadsheet
+  Logger.log('No active or stored spreadsheet found. Creating a new one...');
+  const newSS = SpreadsheetApp.create(CONFIG.WORKBOOK_NAME);
+  const newId = newSS.getId();
+  scriptProperties.setProperty('SPREADSHEET_ID', newId);
+  Logger.log('Created new spreadsheet with ID: ' + newId);
+  return newSS;
+}
+
+
+/**
  * Main setup function - creates or updates the Fatma System workbook.
  * This is the primary function to run for a new installation.
  */
 function setupFatmaSystem() {
   try {
     Logger.log('=== Starting Fatma System Setup/Update ===');
-    let ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    // Store or verify spreadsheet ID
-    const scriptProperties = PropertiesService.getScriptProperties();
-    if (!scriptProperties.getProperty('SPREADSHEET_ID')) {
-        scriptProperties.setProperty('SPREADSHEET_ID', ss.getId());
-    }
+    const ss = getOrCreateSpreadsheet();
     
     ss.rename(CONFIG.WORKBOOK_NAME);
     Logger.log('Workbook name set to: ' + CONFIG.WORKBOOK_NAME);
 
     // Initialize all sheets using the master V3 function
-    initializeSystemSheets();
+    initializeSystemSheets(ss);
 
     // Clean up default "Sheet1" if it exists
     const defaultSheet = ss.getSheetByName('Sheet1');
@@ -31,24 +67,32 @@ function setupFatmaSystem() {
       Logger.log('Removed default "Sheet1".');
     }
 
-    // Set active sheet to Dashboard or Users for better user experience
+    // Set active sheet for better user experience if context allows
     const usersSheet = ss.getSheetByName(CONFIG.SHEETS.USERS);
     if (usersSheet) ss.setActiveSheet(usersSheet);
 
     Logger.log('=== Fatma System setup completed successfully! ===');
     Logger.log('Spreadsheet URL: ' + ss.getUrl());
 
-    SpreadsheetApp.getUi().alert(
-        'Setup Complete',
-        'Fatma System has been successfully initialized or updated to the V3 schema.',
-        SpreadsheetApp.getUi().ButtonSet.OK
-    );
+    try {
+        SpreadsheetApp.getUi().alert(
+            'Setup Complete',
+            'Fatma System has been successfully initialized or updated to the V3 schema.',
+            SpreadsheetApp.getUi().ButtonSet.OK
+        );
+    } catch (e) {
+        Logger.log('UI context not available for alert.');
+    }
 
     return { success: true, spreadsheetUrl: ss.getUrl() };
   } catch (error) {
     Logger.log('ERROR in setupFatmaSystem: ' + error.message);
     Logger.log(error.stack);
-    SpreadsheetApp.getUi().alert('Setup Failed', 'An error occurred: ' + error.message, SpreadsheetApp.getUi().ButtonSet.OK);
+    try {
+        SpreadsheetApp.getUi().alert('Setup Failed', 'An error occurred: ' + error.message, SpreadsheetApp.getUi().ButtonSet.OK);
+    } catch (e) {
+        Logger.log('UI context not available for error alert.');
+    }
     return { success: false, message: error.message };
   }
 }
@@ -57,9 +101,9 @@ function setupFatmaSystem() {
  * Master V3 Sheet Initializer
  * This function is the single source of truth for the system's sheet structure.
  * It creates missing sheets and safely adds missing columns to existing sheets.
+ * @param {Spreadsheet} ss The spreadsheet object to initialize.
  */
-function initializeSystemSheets() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+function initializeSystemSheets(ss) {
   Logger.log('--- Running Master V3 Sheet Initializer ---');
 
   const v3Schema = {
