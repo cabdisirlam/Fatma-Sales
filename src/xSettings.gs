@@ -1,6 +1,6 @@
 /**
  * Settings Management Module
- * Handles: System settings, expense categories, business information
+ * Handles: System settings, business information configuration
  */
 
 const ALLOWED_SETTINGS_KEYS = [
@@ -8,6 +8,7 @@ const ALLOWED_SETTINGS_KEYS = [
   'Admin_Email',
   'Currency',
   'Currency_Symbol',
+  'Currency_Rounding', // Added for rounding feature
   'Date_Format',
   'Timezone',
   'System_Version',
@@ -23,6 +24,7 @@ const ALLOWED_SETTINGS_KEYS = [
 ];
 
 function isValidSettingKey(key) {
+  // We removed expense categories from UI, but keeping backend logic safe
   if (key && key.startsWith('Expense_Category_')) {
     return true;
   }
@@ -34,17 +36,19 @@ function getSetting(key) {
 }
 
 /**
- * Get business information
+ * Get business information for the Settings UI
  */
 function getBusinessInfo() {
   try {
     const includeLogo = getSetting('Include_Shop_Logo');
+    const rounding = getSetting('Currency_Rounding');
+    
     return {
       Shop_Name: getSetting('Shop_Name') || CONFIG.SHOP_NAME,
       Admin_Email: getSetting('Admin_Email') || CONFIG.ADMIN_EMAIL,
-      // Force Currency to Ksh
-      Currency: 'KES',
-      Currency_Symbol: 'Ksh',
+      Currency: getSetting('Currency') || 'KES',
+      Currency_Symbol: getSetting('Currency_Symbol') || 'Ksh',
+      Currency_Rounding: rounding === true || rounding === 'true' || rounding === 'TRUE',
       Tax_Rate: getSetting('Tax_Rate') || 0,
       Receipt_Header: getSetting('Receipt_Header') || 'Beipoa Kenya',
       Receipt_Footer: getSetting('Receipt_Footer') || 'Pata Kila Kitu Na Bei Poa',
@@ -60,27 +64,22 @@ function getBusinessInfo() {
 }
 
 /**
- * Update business information
+ * Update business information from the Settings UI
  */
 function updateBusinessInfo(businessData, user) {
   try {
-    // 1. Enforce Defaults
-    businessData.Currency = 'KES';
-    businessData.Currency_Symbol = 'Ksh';
+    // 1. Enforce Defaults for this system version
+    if (!businessData.Currency) businessData.Currency = 'KES';
+    if (!businessData.Currency_Symbol) businessData.Currency_Symbol = 'Ksh';
     
-    // Handle Checkbox for Logo (HTML sends boolean, we store string/boolean)
-    if (businessData.Include_Shop_Logo === undefined) {
-       // If not sent in object, assume false? No, usually sent as true/false
-       // Keep as is.
-    }
-
-    const invalidKeys = [];
+    // Log for debugging
+    Logger.log('Saving Settings: ' + JSON.stringify(businessData));
 
     for (let key in businessData) {
+      // Skip undefined, but allow empty strings (to clear a setting)
       if (businessData[key] === undefined) continue;
 
       if (!isValidSettingKey(key)) {
-        invalidKeys.push(key);
         Logger.log('Blocked invalid setting key: ' + key);
       } else {
         // Valid key, save it
@@ -108,40 +107,12 @@ function updateBusinessInfo(businessData, user) {
   }
 }
 
-/**
- * Add expense category
- */
-function addExpenseCategory(categoryName, budget, user) {
-  try {
-    const key = 'Expense_Category_' + categoryName;
-    setSettingValue(key, budget || 0);
-
-    logAudit(
-      user || 'SYSTEM',
-      'Settings',
-      'Add Expense Category',
-      'New expense category added: ' + categoryName,
-      '',
-      '',
-      budget
-    );
-    return {
-      success: true,
-      message: 'Expense category added successfully'
-    };
-  } catch (error) {
-    logError('addExpenseCategory', error);
-    throw new Error('Error adding expense category: ' + error.message);
-  }
-}
-
 // ==========================================
-// LOW LEVEL DB FUNCTIONS (Using getSpreadsheet)
+// LOW LEVEL DB FUNCTIONS
 // ==========================================
 
 function setSettingValue(key, value) {
   try {
-    // Use getSpreadsheet() from aCode.gs to ensure we get the correct file
     const ss = getSpreadsheet();
     const sheet = ss.getSheetByName('Settings');
     if (!sheet) throw new Error("Settings sheet not found");
