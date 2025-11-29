@@ -90,6 +90,30 @@ function getSheet(sheetName) {
 // =====================================================
 // AUTHENTICATION
 // =====================================================
+
+/**
+ * Test connection to server (for debugging)
+ */
+function testConnection() {
+  try {
+    return { success: true, message: 'Server connection is working' };
+  } catch (error) {
+    return { success: false, message: 'Server connection failed: ' + error.message };
+  }
+}
+
+/**
+ * Returns the dashboard HTML content
+ */
+function getDashboardHTML() {
+  try {
+    return HtmlService.createHtmlOutputFromFile('mDashboard').getContent();
+  } catch (error) {
+    logError('getDashboardHTML', error);
+    throw new Error('Failed to load dashboard: ' + error.message);
+  }
+}
+
 function authenticate(email, pin) {
     try {
         if (!email || !pin) return { success: false, message: 'Email and PIN are required.' };
@@ -123,7 +147,20 @@ function authenticate(email, pin) {
                             }
                         }
                     });
-                    return { success: true, user };
+
+                    // Generate session ID and token
+                    const sessionId = 'SESSION-' + new Date().getTime() + '-' + Math.random().toString(36).substr(2, 9);
+                    const token = 'TOKEN-' + Math.random().toString(36).substr(2, 15) + Math.random().toString(36).substr(2, 15);
+
+                    // Log successful authentication
+                    logAudit(email, 'Authentication', 'Login', 'User logged in successfully', sessionId, '', '');
+
+                    return {
+                        success: true,
+                        user: user,
+                        sessionId: sessionId,
+                        token: token
+                    };
                 }
                 return { success: false, message: 'Invalid PIN.' };
             }
