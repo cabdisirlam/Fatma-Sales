@@ -89,38 +89,11 @@ function getSpreadsheet() {
 
 function getSheet(sheetName) {
   const ss = getSpreadsheet();
-  let sheet = ss.getSheetByName(sheetName);
+  const sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
-    sheet = createSheet(sheetName);
+    throw new Error(`Sheet "${sheetName}" not found. The system may not be initialized correctly.`);
   }
   return sheet;
-}
-
-function createSheet(sheetName) {
-  const ss = getSpreadsheet();
-  const sheet = ss.insertSheet(sheetName);
-  const headers = getSheetHeaders(sheetName);
-  if (headers && headers.length > 0) {
-    const headerRange = sheet.getRange(1, 1, 1, headers.length);
-    headerRange.setValues([headers]).setFontWeight('bold');
-    sheet.setFrozenRows(1);
-  }
-  return sheet;
-}
-
-function getSheetHeaders(sheetName) {
-  const headerMap = {
-    'Users': ['User_ID', 'Username', 'PIN', 'Role', 'Email', 'Phone', 'Status', 'Created_Date'],
-    'Suppliers': ['Supplier_ID', 'Supplier_Name', 'Contact_Person', 'Phone', 'Email', 'Address', 'Opening_Balance', 'Total_Purchased', 'Total_Paid', 'Current_Balance', 'Payment_Terms', 'Status'],
-    'Customers': ['Customer_ID', 'Customer_Name', 'Phone', 'Email', 'Location', 'KRA_PIN', 'Customer_Type', 'Credit_Limit', 'Current_Balance', 'Total_Purchases', 'Last_Purchase_Date', 'Loyalty_Points', 'Status', 'Created_Date', 'Created_By'],
-    'Inventory': ['Item_ID', 'Item_Name', 'Category', 'Cost_Price', 'Selling_Price', 'Current_Qty', 'Reorder_Level', 'Supplier', 'Last_Updated', 'Updated_By'],
-    'Sales': ['Transaction_ID', 'DateTime', 'Type', 'Customer_ID', 'Customer_Name', 'Item_ID', 'Item_Name', 'Qty', 'Unit_Price', 'Line_Total', 'Subtotal', 'Delivery_Charge', 'Discount', 'Grand_Total', 'Payment_Mode', 'Sold_By', 'Location', 'KRA_PIN', 'Status', 'Valid_Until', 'Converted_Sale_ID'],
-    'Purchases': ['Purchase_ID', 'Date', 'Supplier_ID', 'Supplier_Name', 'Item_ID', 'Item_Name', 'Qty', 'Cost_Price', 'Line_Total', 'Total_Amount', 'Payment_Status', 'Payment_Method', 'Paid_Amount', 'Balance', 'Recorded_By'],
-    'Financials': ['Transaction_ID', 'DateTime', 'Type', 'Customer_ID', 'Category', 'Account', 'Description', 'Amount', 'Debit', 'Credit', 'Balance', 'Payment_Method', 'Payee', 'Receipt_No', 'Reference', 'Status', 'Approved_By', 'User'],
-    'Audit_Trail': ['Timestamp', 'User', 'Module', 'Action', 'Details', 'Session_ID', 'Before_Value', 'After_Value'],
-    'Settings': ['Setting_Key', 'Setting_Value']
-  };
-  return headerMap[sheetName] || [];
 }
 
 
