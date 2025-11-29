@@ -619,8 +619,7 @@
       loadInventory();
       loadCategoryFilter();
       loadSuppliers();
-      loadMasterItems();
-      loadCategories(); // For master data category datalist
+      loadMasterData(); // Replaces the two separate loads
     });
 
     // Search functionality
@@ -863,29 +862,29 @@
     // ===== MASTER DATA & SEARCHABLE DROPDOWN =====
     let categories = []; // Store unique categories
 
-    function loadMasterItems() {
-      google.script.run
-        .withSuccessHandler(function(data) {
-          masterData = data || [];
-        })
-        .withFailureHandler(function(error) {
-          console.error('Error loading master items:', error);
-          masterData = [];
-        })
-        .getMasterItems();
+    function loadMasterData() {
+        google.script.run
+            .withSuccessHandler(function(data) {
+                masterData = data.items || [];
+                categories = data.categories || [];
+                populateCategoryDatalist();
+            })
+            .withFailureHandler(function(error) {
+                console.error('Error loading master data:', error);
+            })
+            .getMasterDataForInventory(); // Assumes a new backend function
     }
-
-    function loadCategories() {
-      google.script.run
-        .withSuccessHandler(function(data) {
-          categories = data || [];
-          populateCategoryDatalist();
-        })
-        .withFailureHandler(function(error) {
-          console.error('Error loading categories:', error);
-        })
-        .getUniqueCategories();
+    
+    // This is a placeholder for the new backend function
+    // In fInventory.gs, you would add:
+    /*
+    function getMasterDataForInventory() {
+      return {
+        items: getMasterItems(),
+        categories: getUniqueCategories()
+      };
     }
+    */
 
     function populateCategoryDatalist() {
       const datalist = document.getElementById('categoryOptions');
@@ -906,97 +905,59 @@
     function filterMasterItems() {
       const input = document.getElementById('itemNameInput');
       const resultsDiv = document.getElementById('itemDropdownResults');
-
       if (!input || !resultsDiv) return;
 
       const searchTerm = input.value.toLowerCase().trim();
-
-      // Filter master items
-      const filteredItems = masterData.filter(function(item) {
-        return item.Item_Name.toLowerCase().includes(searchTerm);
-      });
-
-      // Clear results
+      const filteredItems = masterData.filter(item => item.Item_Name.toLowerCase().includes(searchTerm));
       resultsDiv.innerHTML = '';
 
       // Scenario A: Matches found
       if (filteredItems.length > 0) {
-        // Show matching items
-        filteredItems.forEach(function(item) {
+        filteredItems.forEach(item => {
           const itemDiv = document.createElement('div');
           itemDiv.className = 'dropdown-item';
-          itemDiv.innerHTML = '<span class="item-name">' + item.Item_Name + '</span>' +
-                              '<span class="item-category">(' + item.Category + ')</span>';
-          itemDiv.onclick = function() {
-            selectItem(item.Item_Name, item.Category);
-          };
+          itemDiv.innerHTML = `<span class="item-name">${item.Item_Name}</span><span class="item-category">(${item.Category})</span>`;
+          itemDiv.onclick = () => selectItem(item.Item_Name, item.Category);
           resultsDiv.appendChild(itemDiv);
         });
-
-        // Add "Add New Item" at the BOTTOM
-        const addNewDiv = document.createElement('div');
-        addNewDiv.className = 'dropdown-item add-new';
-        addNewDiv.innerHTML = '<i class="bi bi-plus-circle"></i> Add New Item';
-        addNewDiv.onclick = function() {
-          showCreateMasterModal(input.value);
-        };
-        resultsDiv.appendChild(addNewDiv);
-      }
-      // Scenario B: No matches found
-      else {
-        // Show "Add New Item" at the TOP/FIRST
-        const addNewDiv = document.createElement('div');
-        addNewDiv.className = 'dropdown-item add-new';
-        addNewDiv.innerHTML = '<i class="bi bi-plus-circle"></i> Add New Item' +
-                              (searchTerm ? ': "' + input.value + '"' : '');
-        addNewDiv.onclick = function() {
-          showCreateMasterModal(input.value);
-        };
-        resultsDiv.appendChild(addNewDiv);
       }
 
-      // Show the dropdown
+      // Add "+ Add New Item" button
+      // Position is determined by CSS/Flexbox order or as the only child
+      const addNewDiv = document.createElement('div');
+      addNewDiv.className = 'dropdown-item add-new';
+      addNewDiv.innerHTML = `<i class="bi bi-plus-circle"></i> Add New Item ${searchTerm ? `"${input.value}"` : ''}`;
+      addNewDiv.onclick = () => showCreateMasterModal(input.value);
+      
+      if(filteredItems.length === 0) {
+        resultsDiv.appendChild(addNewDiv); // Add as first/only item
+      } else {
+        resultsDiv.appendChild(addNewDiv); // Add at the bottom
+      }
+
       resultsDiv.classList.add('show');
     }
 
     function selectItem(itemName, category) {
-      const input = document.getElementById('itemNameInput');
-      const categoryField = document.getElementById('categoryField');
-      const resultsDiv = document.getElementById('itemDropdownResults');
-
-      if (input) input.value = itemName;
-      if (categoryField) categoryField.value = category;
-      if (resultsDiv) resultsDiv.classList.remove('show');
+      document.getElementById('itemNameInput').value = itemName;
+      document.getElementById('categoryField').value = category;
+      document.getElementById('itemDropdownResults').classList.remove('show');
     }
 
     function showCreateMasterModal(prefillName) {
-      // Close dropdown
-      const resultsDiv = document.getElementById('itemDropdownResults');
-      if (resultsDiv) resultsDiv.classList.remove('show');
-
-      // Clear form
+      document.getElementById('itemDropdownResults').classList.remove('show');
       document.getElementById('addMasterItemForm').reset();
       document.getElementById('masterItemAlert').style.display = 'none';
-
-      // Pre-fill item name if provided
-      const nameInput = document.getElementById('masterItemName');
-      if (nameInput && prefillName) {
-        nameInput.value = prefillName;
+      if (prefillName) {
+        document.getElementById('masterItemName').value = prefillName;
       }
-
-      // Ensure categories are loaded
-      if (categories.length === 0) {
-        loadCategories();
-      }
-
-      // Show modal
-      const modal = new bootstrap.Modal(document.getElementById('addMasterItemModal'));
-      modal.show();
+      if (categories.length === 0) loadMasterData(); // Ensure categories are loaded
+      
+      new bootstrap.Modal(document.getElementById('addMasterItemModal')).show();
     }
 
     function submitAddMasterItem() {
       const form = document.getElementById('addMasterItemForm');
-
       if (!form.checkValidity()) {
         form.reportValidity();
         return;
@@ -1005,30 +966,27 @@
       const itemName = document.getElementById('masterItemName').value;
       const category = document.getElementById('masterCategory').value;
       const alertDiv = document.getElementById('masterItemAlert');
-
       alertDiv.style.display = 'none';
 
       google.script.run
         .withSuccessHandler(function(newItem) {
-          // Add to local masterData
+          // Add to local data
           masterData.push(newItem);
+          if (!categories.includes(newItem.Category)) {
+            categories.push(newItem.Category);
+            populateCategoryDatalist();
+          }
 
           // Select the new item in the main form
           selectItem(newItem.Item_Name, newItem.Category);
-
-          // Close modal
+          
           bootstrap.Modal.getInstance(document.getElementById('addMasterItemModal')).hide();
-
-          // Show success message
+          
           const productAlert = document.getElementById('addProductAlert');
-          if (productAlert) {
-            productAlert.className = 'alert alert-success mt-3';
-            productAlert.textContent = 'New item "' + newItem.Item_Name + '" created and selected!';
-            productAlert.style.display = 'block';
-            setTimeout(function() {
-              productAlert.style.display = 'none';
-            }, 3000);
-          }
+          productAlert.className = 'alert alert-success mt-3';
+          productAlert.textContent = `New item "${newItem.Item_Name}" created and selected!`;
+          productAlert.style.display = 'block';
+          setTimeout(() => productAlert.style.display = 'none', 3000);
         })
         .withFailureHandler(function(error) {
           alertDiv.className = 'alert alert-danger mt-3';
@@ -1041,12 +999,16 @@
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
       const dropdown = document.querySelector('.searchable-dropdown');
-      const resultsDiv = document.getElementById('itemDropdownResults');
-
-      if (dropdown && resultsDiv && !dropdown.contains(e.target)) {
-        resultsDiv.classList.remove('show');
+      if (dropdown && !dropdown.contains(e.target)) {
+        document.getElementById('itemDropdownResults').classList.remove('show');
       }
     });
+    
+    // In DOMContentLoaded:
+    // Replace loadMasterItems() and loadCategories() with:
+    // loadMasterData();
+    // And in showAddProductModal, if categories is empty, call loadMasterData()
+
 
     function filterInventory() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();

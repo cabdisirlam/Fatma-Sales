@@ -295,7 +295,7 @@ function getProductCategories() {
  */
 function getUniqueCategories() {
   try {
-    const sheet = getSheet('Inventory');
+    const sheet = getSheet('Master_Data');
     const data = sheet.getDataRange().getValues();
 
     if (data.length <= 1) {
@@ -320,7 +320,7 @@ function getUniqueCategories() {
 
     return Array.from(categories).sort();
   } catch (error) {
-    logError('getUniqueCategories', error);
+    logError('getUniqueCategories from Master', error);
     return [];
   }
 }
