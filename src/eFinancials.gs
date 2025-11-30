@@ -520,3 +520,16 @@ function parseTxnDate(value) {
   if (!isNaN(fallback.getTime())) return fallback;
   return new Date(0); // ultimate fallback
 }
+
+/**
+ * Normalize account names for consistency across UI/storage.
+ */
+function canonicalizeAccountName(name) {
+  if (!name) return '';
+  const raw = name.toString().trim();
+  const lower = raw.toLowerCase();
+  if (lower.includes('mpesa') || lower.includes('m-pesa')) return 'M-Pesa';
+  if (lower.includes('cash')) return 'Cash';
+  if (lower.includes('equity')) return 'Equity Bank';
+  return raw;
+}

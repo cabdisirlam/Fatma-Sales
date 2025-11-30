@@ -1420,7 +1420,7 @@
       <!-- Suppliers Section -->
       <div class="content-section" id="section-suppliers">
         <div class="d-flex justify-content-end mb-3">
-          <button class="btn btn-outline-primary" onclick="loadSuppliersSection()" title="Refresh">
+          <button class="btn btn-outline-primary" onclick="loadSuppliersSection(true)" title="Refresh">
             <i class="bi bi-arrow-clockwise"></i> Refresh
           </button>
         </div>
@@ -1607,10 +1607,10 @@
 
       <!-- Users Section -->
       <div class="content-section" id="section-users">
-        <div class="welcome-section" style="margin-bottom: 24px; padding: 32px;">
-          <i class="bi bi-person-badge-fill" style="font-size: 2.5rem; margin-bottom: 12px;"></i>
-          <h2 style="font-size: 1.75rem; margin-bottom: 8px;">User Management</h2>
-          <p style="font-size: 1rem;">Manage user accounts, roles, and permissions</p>
+        <div class="d-flex justify-content-end mb-3">
+          <button class="btn btn-outline-primary" onclick="loadUsersSection(true)" title="Refresh">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
         </div>
 
         <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
@@ -2669,19 +2669,21 @@
         'quotations': 'Quotations',
         'financials': 'Financial Management',
         'reports': 'Reports & Analytics',
+        'suppliers': 'Suppliers',
         'suppliers-list': 'Suppliers List',
         'suppliers-add': 'Add New Supplier',
         'suppliers-orders': 'Purchase Orders',
         'suppliers-payments': 'Supplier Payments',
+        'users': 'User Management',
         'users-list': 'Users List',
         'users-add': 'Create New User',
         'users-roles': 'User Roles',
         'users-permissions': 'User Permissions',
-      'settings': 'System Settings'
-    };
+        'settings': 'System Settings'
+      };
 
-    document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
-  }
+      document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
+    }
 
 
     function updateBackButton() {
@@ -2720,7 +2722,7 @@
         loadReportsSection();
       } else if (sectionName === 'suppliers') {
         loadSuppliersOverview();
-        loadSuppliersSection();
+        loadSuppliersSection(true);
       } else if (sectionName === 'suppliers-list') {
         loadSuppliersList();
       } else if (sectionName === 'suppliers-add') {
@@ -2731,7 +2733,7 @@
         loadSupplierPayments();
       } else if (sectionName === 'users') {
         loadUsersOverview();
-        loadUsersSection();
+        loadUsersSection(true);
       } else if (sectionName === 'users-list') {
         loadUsersList();
       } else if (sectionName === 'users-add') {
@@ -3186,16 +3188,19 @@
       console.log("Sales section loaded");
     }
 
-    function loadSuppliersSection() {
-      // This function is a placeholder.
-      // You can add logic here to load any specific data needed for the main suppliers section.
-      console.log("Suppliers section loaded");
+    function loadSuppliersSection(forceRefresh) {
+      // Refresh suppliers list preview and stats if needed
+      if (forceRefresh) {
+        loadSuppliersOverview();
+        loadSuppliersList();
+      }
     }
 
-    function loadUsersSection() {
-      // This function is a placeholder.
-      // You can add logic here to load any specific data needed for the main users section.
-      console.log("Users section loaded");
+    function loadUsersSection(forceRefresh) {
+      if (forceRefresh) {
+        loadUsersOverview();
+        loadUsersList();
+      }
     }
 
     function logout() {
