@@ -2076,10 +2076,31 @@
     let sectionHistory = [];
 
     // ==================== INITIALIZATION ====================
+    // ==================== MAIN INITIALIZATION ====================
     document.addEventListener('DOMContentLoaded', function() {
+      // Initialize user info
       loadUserInfo();
       loadDashboardStats();
-      document.querySelector('.dashboard-grid').classList.add('hidden');
+
+      // Initialize dashboard (from restored JS)
+      const userName = sessionStorage.getItem('userName');
+      const userRole = sessionStorage.getItem('userRole');
+      if (userName && userRole) {
+        initDashboard(userName, userRole);
+      }
+
+      // Initialize navigation
+      updateNavigationButtons();
+      updateBackButton();
+
+      // Initialize History API
+      history.replaceState({section: 'dashboard'}, 'Dashboard', '#dashboard');
+
+      // Initialize sales date field if exists
+      const dateInput = document.getElementById('dashSaleDate');
+      if (dateInput) {
+        dateInput.valueAsDate = new Date();
+      }
     });
 
     // ==================== USER INFO ====================
@@ -2334,12 +2355,6 @@
 
       loadSectionInternal(sectionName);
       updateBackButton();
-
-      if (sectionName === 'dashboard') {
-        document.querySelector('.dashboard-grid').classList.remove('hidden');
-      } else {
-        document.querySelector('.dashboard-grid').classList.add('hidden');
-      }
     }
 
     function goBack() {
@@ -3101,17 +3116,6 @@
     let dashProducts = [];
     let dashCustomers = [];
     let dashCart = [];
-
-    // Initialize Dashboard
-    document.addEventListener('DOMContentLoaded', function() {
-      const dateInput = document.getElementById('dashSaleDate');
-      if (dateInput) {
-        dateInput.valueAsDate = new Date();
-      }
-
-      loadNewSaleInDashboard();
-      loadSalesHistory();
-    });
 
     // --- INVENTORY & CUSTOMER LOADER ---
     function loadNewSaleInDashboard() {
@@ -5250,18 +5254,6 @@
     };
 
     // Auto-initialize on page load
-    window.addEventListener('DOMContentLoaded', function() {
-      const userName = sessionStorage.getItem('userName');
-      const userRole = sessionStorage.getItem('userRole');
-      if (userName && userRole) {
-        initDashboard(userName, userRole);
-      }
-      updateNavigationButtons();
-      updateBackButton();
-
-      // Initialize History API: Replace current state so we have a starting point
-      history.replaceState({section: 'dashboard'}, 'Dashboard', '#dashboard');
-    });
   </script>
 </body>
 </html>
