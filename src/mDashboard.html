@@ -2431,35 +2431,51 @@
 
     // Centralized Data Loader (Called only when needed)
     function loadSectionData(sectionName) {
-      if (sectionName.startsWith('sales')) {
+      if (sectionName === 'sales') {
         loadSalesOverview();
-      if (sectionName === 'sales-new') loadNewSaleInDashboard();
-      if (sectionName === 'sales-history') loadSalesHistory();
-      if (sectionName === 'sales-returns') loadSalesReturns();
-      if (sectionName === 'sales-reports') loadSalesReports();
-      if (sectionName === 'sales') loadSalesSection();
-    }
-    else if (sectionName === 'inventory') loadInventorySection();
-    else if (sectionName === 'customers') loadCustomersSection();
-      else if (sectionName === 'quotations') loadQuotationsSection();
-      else if (sectionName === 'financials') loadFinancialsSection();
-      else if (sectionName === 'reports') loadReportsSection();
-      else if (sectionName.startsWith('suppliers')) {
-          loadSuppliersOverview();
-          if (sectionName === 'suppliers-list') loadSuppliersList();
-          if (sectionName === 'suppliers-add') loadAddSupplier();
-          if (sectionName === 'suppliers-orders') loadPurchaseOrders();
-          if (sectionName === 'suppliers-payments') loadSupplierPayments();
-          if (sectionName === 'suppliers') loadSuppliersSection();
-        }
-      else if (sectionName.startsWith('users')) {
-          loadUsersOverview();
-          if (sectionName === 'users-list') loadUsersList();
-          if (sectionName === 'users-add') loadCreateUser();
-          if (sectionName === 'users-roles') loadUserRoles();
-          if (sectionName === 'users-permissions') loadUserPermissions();
-        }
-      else if (sectionName === 'settings') loadSettingsSection();
+        loadSalesSection();
+      } else if (sectionName === 'sales-new') {
+        loadNewSaleInDashboard();
+      } else if (sectionName === 'sales-history') {
+        loadSalesHistory();
+      } else if (sectionName === 'sales-returns') {
+        loadSalesReturns();
+      } else if (sectionName === 'sales-reports') {
+        loadSalesReports();
+      } else if (sectionName === 'inventory') {
+        loadInventorySection();
+      } else if (sectionName === 'customers') {
+        loadCustomersSection();
+      } else if (sectionName === 'quotations') {
+        loadQuotationsSection();
+      } else if (sectionName === 'financials') {
+        loadFinancialsSection();
+      } else if (sectionName === 'reports') {
+        loadReportsSection();
+      } else if (sectionName === 'suppliers') {
+        loadSuppliersOverview();
+        loadSuppliersSection();
+      } else if (sectionName === 'suppliers-list') {
+        loadSuppliersList();
+      } else if (sectionName === 'suppliers-add') {
+        loadAddSupplier();
+      } else if (sectionName === 'suppliers-orders') {
+        loadPurchaseOrders();
+      } else if (sectionName === 'suppliers-payments') {
+        loadSupplierPayments();
+      } else if (sectionName === 'users') {
+        loadUsersOverview();
+      } else if (sectionName === 'users-list') {
+        loadUsersList();
+      } else if (sectionName === 'users-add') {
+        loadCreateUser();
+      } else if (sectionName === 'users-roles') {
+        loadUserRoles();
+      } else if (sectionName === 'users-permissions') {
+        loadUserPermissions();
+      } else if (sectionName === 'settings') {
+        loadSettingsSection();
+      }
     }
 
     // 1. LOAD USERS LIST
