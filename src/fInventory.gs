@@ -958,7 +958,7 @@ function getMasterItems() {
  * @param {string} user - Optional user name for audit
  * @returns {Object} - The newly created item { Item_Name, Category }
  */
-function addMasterItem(name, category, user) {
+function addMasterItem(name, category, description, status, user) {
   try {
     // Validation
     if (!name || name.trim() === '') {
@@ -972,6 +972,9 @@ function addMasterItem(name, category, user) {
     const sheet = getSheet('Master_Data');
     const itemName = name.trim();
     const itemCategory = category.trim();
+    const itemDescription = description ? description.trim() : '';
+    const statusValue = status ? status.trim() : 'Active';
+    const itemStatus = (statusValue.toLowerCase() === 'inactive') ? 'Inactive' : 'Active';
 
     // Check for duplicates
     const existingItems = getMasterItems();
@@ -993,8 +996,8 @@ function addMasterItem(name, category, user) {
       masterId,
       itemName,
       itemCategory,
-      '', // Description empty by default
-      'Active'
+      itemDescription,
+      itemStatus
     ];
 
     sheet.appendRow(newMasterItem);
@@ -1006,13 +1009,16 @@ function addMasterItem(name, category, user) {
       'Added master item: ' + itemName + ' (' + itemCategory + ')',
       '',
       '',
-      JSON.stringify({ masterId, itemName, itemCategory })
+      JSON.stringify({ masterId, itemName, itemCategory, itemStatus })
     );
 
     // Return the new item in the expected format
     return {
+      Master_ID: masterId,
       Item_Name: itemName,
-      Category: itemCategory
+      Category: itemCategory,
+      Description: itemDescription,
+      Status: itemStatus
     };
 
   } catch (error) {

@@ -683,6 +683,43 @@
   </style>
 </head>
 <body>
+  <!-- Master Item Modal -->
+  <div class="modal fade" id="masterItemModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add Master Item</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="masterItemModalAlert" class="alert d-none" role="alert"></div>
+          <div class="mb-3">
+            <label class="form-label">Item Name</label>
+            <input type="text" class="form-control" id="masterItemName" placeholder="e.g., Coffee Beans" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Category</label>
+            <input type="text" class="form-control" id="masterItemCategory" placeholder="e.g., Beverages" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" id="masterItemDescription" rows="3" placeholder="Optional description"></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="masterItemStatus">
+              <option value="Active" selected>Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="masterItemSaveBtn" onclick="saveMasterItem()">Save Item</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -2079,6 +2116,7 @@
     let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
     const DATA_CACHE = {};
     let masterDataCache = [];
+    let lastAddedMasterItemName = null;
     let dashboardSuppliersData = [];
     let dashboardCustomersData = [];
 
@@ -2095,6 +2133,15 @@
       google.script.run.withSuccessHandler(function(data) {
         masterDataCache = data || [];
         updateMasterDataDropdown();
+        // If we just added a master item, re-select it to auto-fill category
+        if (lastAddedMasterItemName) {
+          const selectEl = document.getElementById('masterDataSelect');
+          if (selectEl && masterDataCache.some(i => i.Item_Name === lastAddedMasterItemName)) {
+            selectEl.value = lastAddedMasterItemName;
+            onMasterItemSelect(selectEl);
+          }
+          lastAddedMasterItemName = null;
+        }
       }).getMasterItems();
     }
 
@@ -2464,11 +2511,12 @@
         'users-add': 'Create New User',
         'users-roles': 'User Roles',
         'users-permissions': 'User Permissions',
-        'settings': 'System Settings'
-      };
+      'settings': 'System Settings'
+    };
 
-      document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
-    }
+    document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
+  }
+
 
     function updateBackButton() {
       const backBtn = document.getElementById('backBtn');
@@ -3421,11 +3469,11 @@
                     ${masterDataCache.map(item => `<option value="${item.Item_Name}">${item.Item_Name}</option>`).join('')}
                     <option value="__custom">+ Add new item</option>
                   </select>
-                  <button class="btn btn-outline-secondary" type="button" onclick="beginAddCustomItem()">
+                  <button class="btn btn-outline-secondary" type="button" onclick="openMasterItemModal()">
                     <i class="bi bi-plus-circle"></i>
                   </button>
                 </div>
-                <input type="text" class="form-control mt-2 ${masterDataCache.length ? 'd-none' : ''}" name="customItemName" id="customItemName" placeholder="Enter new item name">
+                <input type="text" class="form-control mt-2 d-none" name="customItemName" id="customItemName" placeholder="Enter new item name">
               </div>
               <div class="col-md-3">
                 <label class="form-label">Category</label>
@@ -5194,21 +5242,18 @@
       const customInput = document.getElementById('customItemName');
 
       if (selectedName === '__custom' || !masterDataCache.length) {
+        openMasterItemModal();
+        selectEl.value = '';
         if (customInput) {
-          customInput.classList.remove('d-none');
-          customInput.focus();
+          customInput.classList.add('d-none');
+          customInput.value = '';
         }
         if (categoryInput) {
-          categoryInput.readOnly = false;
-          categoryInput.style.backgroundColor = '';
+          categoryInput.readOnly = true;
+          categoryInput.style.backgroundColor = '#e9ecef';
           categoryInput.value = '';
         }
         return;
-      }
-
-      if (customInput) {
-        customInput.classList.add('d-none');
-        customInput.value = '';
       }
 
       if (categoryInput) {
@@ -5224,12 +5269,67 @@
       }
     }
 
-    function beginAddCustomItem() {
-      const selectEl = document.getElementById('masterDataSelect');
-      if (selectEl) {
-        selectEl.value = '__custom';
-        onMasterItemSelect(selectEl);
+    function openMasterItemModal() {
+      const alertBox = document.getElementById('masterItemModalAlert');
+      if (alertBox) alertBox.classList.add('d-none');
+      document.getElementById('masterItemName').value = '';
+      document.getElementById('masterItemCategory').value = '';
+      document.getElementById('masterItemDescription').value = '';
+      document.getElementById('masterItemStatus').value = 'Active';
+      const modalEl = document.getElementById('masterItemModal');
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
+
+    function setMasterModalAlert(type, message) {
+      const alertBox = document.getElementById('masterItemModalAlert');
+      if (!alertBox) return;
+      alertBox.className = 'alert alert-' + type;
+      alertBox.textContent = message;
+      alertBox.classList.remove('d-none');
+    }
+
+    function saveMasterItem() {
+      const name = document.getElementById('masterItemName').value.trim();
+      const category = document.getElementById('masterItemCategory').value.trim();
+      const description = document.getElementById('masterItemDescription').value.trim();
+      const status = document.getElementById('masterItemStatus').value;
+      const saveBtn = document.getElementById('masterItemSaveBtn');
+
+      if (!name || !category) {
+        setMasterModalAlert('danger', 'Item Name and Category are required.');
+        return;
       }
+
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+      }
+
+      google.script.run
+        .withSuccessHandler(function(newItem) {
+          lastAddedMasterItemName = newItem && newItem.Item_Name ? newItem.Item_Name : name;
+          setMasterModalAlert('success', 'Item saved to Master_Data.');
+          // Refresh dropdown and inventory
+          loadMasterData();
+          const modalEl = document.getElementById('masterItemModal');
+          const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modal.hide();
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = 'Save Item';
+          }
+          // Force refresh of inventory section to reflect new master item if needed
+          loadInventorySection(true);
+        })
+        .withFailureHandler(function(error) {
+          setMasterModalAlert('danger', error.message || 'Failed to save item.');
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = 'Save Item';
+          }
+        })
+        .addMasterItem(name, category, description, status, currentUser || 'SYSTEM');
     }
 
     // Refresh the master data dropdown if data loads after UI renders
@@ -5247,7 +5347,7 @@
           selectEl.value = currentValue;
           onMasterItemSelect(selectEl);
         } else if (!masterDataCache.length) {
-          selectEl.value = '__custom';
+          selectEl.value = '';
           onMasterItemSelect(selectEl);
         }
       }
