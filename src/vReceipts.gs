@@ -101,13 +101,13 @@ function generateReceiptHTML(transactionId) {
         </table>
 
         <div class="divider"></div>
-        
+
         <table class="totals-table">
           <tbody>
-            <tr><td>Subtotal:</td><td style="text-align:right;">${formatNumber(sale.Subtotal)}</td></tr>
-            ${sale.Delivery_Charge && parseFloat(sale.Delivery_Charge) !== 0 ? `<tr><td>Delivery:</td><td style="text-align:right;">${formatNumber(sale.Delivery_Charge)}</td></tr>` : ''}
-            ${sale.Discount > 0 ? `<tr><td>Discount:</td><td style="text-align:right;">-${formatNumber(sale.Discount)}</td></tr>` : ''}
-            <tr style="font-size: 14px;"><td>TOTAL:</td><td style="text-align:right;">${settings.Currency_Symbol || 'Ksh'} ${formatNumber(sale.Grand_Total)}</td></tr>
+            <tr><td>Subtotal:</td><td style="text-align:right;">${formatNumber(Math.abs(parseFloat(sale.Subtotal) || 0))}</td></tr>
+            ${(sale.Delivery_Charge && Math.abs(parseFloat(sale.Delivery_Charge)) > 0) ? `<tr><td>Delivery Charge:</td><td style="text-align:right;">+${formatNumber(Math.abs(parseFloat(sale.Delivery_Charge)))}</td></tr>` : ''}
+            ${(sale.Discount && Math.abs(parseFloat(sale.Discount)) > 0) ? `<tr><td>Discount:</td><td style="text-align:right;">-${formatNumber(Math.abs(parseFloat(sale.Discount)))}</td></tr>` : ''}
+            <tr style="font-size: 14px;"><td><strong>TOTAL:</strong></td><td style="text-align:right;"><strong>${settings.Currency_Symbol || 'Ksh'} ${formatNumber(Math.abs(parseFloat(sale.Grand_Total) || 0))}</strong></td></tr>
           </tbody>
         </table>
 
@@ -240,10 +240,10 @@ function generateQuotationHTML(transactionId) {
   </div>
 
   <div class="totals">
-    <div class="row"><span>Subtotal:</span> <span>${currency} ${formatNumber(quotation.Subtotal)}</span></div>
-    ${quotation.Delivery_Charge > 0 ? '<div class="row"><span>Delivery Charge:</span> <span>' + currency + ' ' + formatNumber(quotation.Delivery_Charge) + '</span></div>' : ''}
-    ${quotation.Discount > 0 ? '<div class="row"><span>Discount:</span> <span>-' + currency + ' ' + formatNumber(quotation.Discount) + '</span></div>' : ''}
-    <div class="row grand-total"><span>GRAND TOTAL:</span> <span>${currency} ${formatNumber(quotation.Grand_Total)}</span></div>
+    <div class="row"><span>Subtotal:</span> <span>${currency} ${formatNumber(Math.abs(parseFloat(quotation.Subtotal) || 0))}</span></div>
+    ${(quotation.Delivery_Charge && Math.abs(parseFloat(quotation.Delivery_Charge)) > 0) ? '<div class="row"><span>Delivery Charge:</span> <span>+' + currency + ' ' + formatNumber(Math.abs(parseFloat(quotation.Delivery_Charge))) + '</span></div>' : ''}
+    ${(quotation.Discount && Math.abs(parseFloat(quotation.Discount)) > 0) ? '<div class="row"><span>Discount:</span> <span>-' + currency + ' ' + formatNumber(Math.abs(parseFloat(quotation.Discount))) + '</span></div>' : ''}
+    <div class="row grand-total"><span>GRAND TOTAL:</span> <span>${currency} ${formatNumber(Math.abs(parseFloat(quotation.Grand_Total) || 0))}</span></div>
   </div>
 
   <div class="footer">
