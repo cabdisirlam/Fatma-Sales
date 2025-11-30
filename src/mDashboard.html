@@ -2109,6 +2109,9 @@
         });
       });
 
+      // Preload master data so inventory dropdown is ready
+      loadMasterData();
+
       // Initialize user info
       loadUserInfo();
       loadDashboardStats();
@@ -3414,7 +3417,7 @@
                 <label class="form-label">Item Name</label>
                 <div class="input-group">
                   <select class="form-select" name="itemName" id="masterDataSelect" onchange="onMasterItemSelect(this)" required>
-                    <option value="">Select item...</option>
+                    <option value="">${masterDataCache.length ? 'Select item...' : 'No master data found'}</option>
                     ${masterDataCache.map(item => `<option value="${item.Item_Name}">${item.Item_Name}</option>`).join('')}
                     <option value="__custom">+ Add new item</option>
                   </select>
@@ -3422,11 +3425,11 @@
                     <i class="bi bi-plus-circle"></i>
                   </button>
                 </div>
-                <input type="text" class="form-control mt-2 d-none" name="customItemName" id="customItemName" placeholder="Enter new item name">
+                <input type="text" class="form-control mt-2 ${masterDataCache.length ? 'd-none' : ''}" name="customItemName" id="customItemName" placeholder="Enter new item name">
               </div>
               <div class="col-md-3">
                 <label class="form-label">Category</label>
-                <input type="text" class="form-control" name="category" id="quickAddCategory" placeholder="Auto-filled" readonly style="background-color: #e9ecef;">
+                <input type="text" class="form-control" name="category" id="quickAddCategory" placeholder="Auto-filled" ${masterDataCache.length ? 'readonly style="background-color: #e9ecef;"' : ''}>
               </div>
               <div class="col-md-2">
                 <label class="form-label">Cost</label>
@@ -5190,7 +5193,7 @@
       const categoryInput = document.getElementById('quickAddCategory');
       const customInput = document.getElementById('customItemName');
 
-      if (selectedName === '__custom') {
+      if (selectedName === '__custom' || !masterDataCache.length) {
         if (customInput) {
           customInput.classList.remove('d-none');
           customInput.focus();
@@ -5235,13 +5238,16 @@
       if (selectEl) {
         const currentValue = selectEl.value;
         const optionsHtml = [
-          '<option value=\"\">Select item...</option>',
+          `<option value=\"\">${masterDataCache.length ? 'Select item...' : 'No master data found'}</option>`,
           masterDataCache.map(item => `<option value=\"${item.Item_Name}\">${item.Item_Name}</option>`).join(''),
           '<option value=\"__custom\">+ Add new item</option>'
         ].join('');
         selectEl.innerHTML = optionsHtml;
         if (currentValue && currentValue !== '__custom') {
           selectEl.value = currentValue;
+          onMasterItemSelect(selectEl);
+        } else if (!masterDataCache.length) {
+          selectEl.value = '__custom';
           onMasterItemSelect(selectEl);
         }
       }
