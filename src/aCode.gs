@@ -53,6 +53,14 @@ function validateRequired(data, fields) {
 }
 
 /**
+ * Format a number as currency (KES-style)
+ */
+function formatCurrency(amount) {
+  const num = parseFloat(amount) || 0;
+  return 'Ksh ' + num.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/**
  * Returns the published web app URL for client-side navigation
  */
 function getWebAppUrl() {
