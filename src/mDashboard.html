@@ -2914,7 +2914,19 @@
         .getSuppliersOverview();
     }
 
-
+    function loadUsersOverview() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          const usersCountEl = document.getElementById('usersCount');
+          if (usersCountEl) {
+            usersCountEl.textContent = data.length || 0;
+          }
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading users overview:', error);
+        })
+        .getUsers();
+    }
 
     function loadSalesSection() {
       // This function is a placeholder.
