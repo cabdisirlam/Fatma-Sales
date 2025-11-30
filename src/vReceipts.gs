@@ -28,6 +28,10 @@ function generateReceiptHTML(transactionId) {
 
     const settings = getAllSettings();
     const dateStr = Utilities.formatDate(new Date(sale.DateTime), 'GMT+3', 'dd/MM/yyyy HH:mm');
+    const currencySymbol = settings.Currency_Symbol || 'Ksh';
+    const vatRate = 0.16;
+    const grossTotal = Math.abs(parseFloat(sale.Grand_Total) || 0);
+    const vatAmount = grossTotal - (grossTotal / (1 + vatRate));
     
     // THERMAL PRINTER OPTIMIZED LAYOUT
     const html = `
@@ -107,7 +111,8 @@ function generateReceiptHTML(transactionId) {
             <tr><td>Subtotal:</td><td style="text-align:right;">${formatNumber(Math.abs(parseFloat(sale.Subtotal) || 0))}</td></tr>
             ${(sale.Delivery_Charge && Math.abs(parseFloat(sale.Delivery_Charge)) > 0) ? `<tr><td>Delivery Charge:</td><td style="text-align:right;">+${formatNumber(Math.abs(parseFloat(sale.Delivery_Charge)))}</td></tr>` : ''}
             ${(sale.Discount && Math.abs(parseFloat(sale.Discount)) > 0) ? `<tr><td>Discount:</td><td style="text-align:right;">-${formatNumber(Math.abs(parseFloat(sale.Discount)))}</td></tr>` : ''}
-            <tr style="font-size: 14px;"><td><strong>TOTAL:</strong></td><td style="text-align:right;"><strong>${settings.Currency_Symbol || 'Ksh'} ${formatNumber(Math.abs(parseFloat(sale.Grand_Total) || 0))}</strong></td></tr>
+            <tr><td>VAT (16% incl.):</td><td style="text-align:right;">${formatNumber(vatAmount)}</td></tr>
+            <tr style="font-size: 14px;"><td><strong>TOTAL:</strong></td><td style="text-align:right;"><strong>${currencySymbol} ${formatNumber(grossTotal)}</strong></td></tr>
           </tbody>
         </table>
 
@@ -122,6 +127,7 @@ function generateReceiptHTML(transactionId) {
         
         <div class="footer">
           <p>${settings.Receipt_Footer || 'Thank you!'}</p>
+          <p style="font-size:8px; margin-top:2px;">All prices include 16% VAT.</p>
         </div>
       </body>
       </html>

@@ -51,10 +51,24 @@ function generateIdSafe(sheetName, columnName, prefix) {
       // Find the highest existing number
       for (let i = 1; i < data.length; i++) {
         const id = data[i][columnIndex];
-        if (id && typeof id === 'string' && id.startsWith(prefix + '-')) {
-          const numberPart = id.split('-')[1];
+        if (!id) continue;
+        const idStr = id.toString();
+
+        if (prefix === 'SALE') {
+          const match = idStr.match(/(\d+)/);
+          if (match) {
+            const number = parseInt(match[1], 10);
+            if (!isNaN(number) && number > maxNumber) {
+              maxNumber = number;
+            }
+          }
+          continue;
+        }
+
+        if (typeof id === 'string' && idStr.startsWith(prefix + '-')) {
+          const numberPart = idStr.split('-')[1];
           if (numberPart) {
-            const number = parseInt(numberPart);
+            const number = parseInt(numberPart, 10);
             if (!isNaN(number) && number > maxNumber) {
               maxNumber = number;
             }
@@ -63,6 +77,12 @@ function generateIdSafe(sheetName, columnName, prefix) {
       }
 
       // Generate new ID
+      if (prefix === 'SALE') {
+        const baseStart = 110000; // receipts start from 110001
+        const newNumber = Math.max(maxNumber, baseStart) + 1;
+        return String(newNumber);
+      }
+
       const newNumber = maxNumber + 1;
       const newId = prefix + '-' + String(newNumber).padStart(3, '0');
 
