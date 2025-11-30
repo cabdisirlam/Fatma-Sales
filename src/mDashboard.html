@@ -3430,6 +3430,7 @@
 
             DATA_CACHE['inventory'] = normalized;
             displayInventory(normalized);
+            loadSuppliersOverview();
           } catch (renderError) {
             console.error('Error rendering dashboard inventory', renderError);
             contentDiv.innerHTML = '<div class="alert alert-danger">Error rendering inventory. Please try again.</div>';
