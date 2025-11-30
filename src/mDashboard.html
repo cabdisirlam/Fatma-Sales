@@ -2888,6 +2888,9 @@
           Customer_Name: form.name.value.trim(),
           Phone: form.phone.value.trim(),
           Email: form.email.value.trim(),
+          KRA_PIN: form.kra_pin.value.trim(),
+          Location: form.location.value.trim(),
+          Loyalty_Points: form.loyalty_points.value,
           Opening_Balance: parseFloat(form.Opening_Balance.value) || 0,
           User: currentUser || 'SYSTEM'
         };
@@ -3711,12 +3714,12 @@
              <form class="mt-2" onsubmit="handleQuickAdd(event, 'customer')">
                <div class="row g-2">
                  <div class="col-md-4">
-                   <label class="form-label">Full Name</label>
+                   <label class="form-label">Full Name *</label>
                    <input type="text" class="form-control" name="name" placeholder="Jane Doe" required>
                  </div>
                  <div class="col-md-4">
-                   <label class="form-label">Phone</label>
-                   <input type="tel" class="form-control" name="phone" placeholder="07xx xxx xxx">
+                   <label class="form-label">Phone *</label>
+                   <input type="tel" class="form-control" name="phone" placeholder="07xx xxx xxx" required>
                  </div>
                  <div class="col-md-4">
                    <label class="form-label">Email</label>
@@ -3725,11 +3728,26 @@
                </div>
                <div class="row g-2 mt-2">
                  <div class="col-md-4">
+                   <label class="form-label">KRA PIN</label>
+                   <input type="text" class="form-control" name="kra_pin" placeholder="A00...">
+                 </div>
+                 <div class="col-md-4">
+                   <label class="form-label">Location</label>
+                   <input type="text" class="form-control" name="location" placeholder="e.g. Nairobi">
+                 </div>
+                 <div class="col-md-4">
+                   <label class="form-label">Initial Loyalty Points</label>
+                   <input type="number" class="form-control" name="loyalty_points" value="0">
+                 </div>
+               </div>
+               
+               <div class="row g-2 mt-2">
+                 <div class="col-md-4">
                    <label class="form-label">Opening Balance</label>
                    <input type="number" class="form-control" name="Opening_Balance" step="0.01">
                  </div>
                  <div class="col-md-8 d-flex align-items-end justify-content-end">
-                   <button class="btn btn-success" type="submit">
+                   <button class="btn btn-success" type="submit" id="quickAddCustomerBtn">
                      <i class="bi bi-check-circle"></i> Save Customer
                    </button>
                  </div>

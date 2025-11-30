@@ -142,6 +142,8 @@ function addCustomer(customerData) {
     const createdBy = customerData.User || 'SYSTEM';
 
     // HARD-CODED COLUMN MAPPING (matches createCustomersSheet exactly)
+    const initialPoints = parseInt(customerData.Loyalty_Points) || 0;
+
     const newCustomer = [
       customerId,                                      // 1. Customer_ID
       customerData.Customer_Name.trim(),               // 2. Customer_Name
@@ -154,7 +156,7 @@ function addCustomer(customerData) {
       openingBalance,                                  // 9. Current_Balance
       0,                                               // 10. Total_Purchases
       '',                                              // 11. Last_Purchase_Date
-      0,                                               // 12. Loyalty_Points
+      initialPoints,                                   // 12. Loyalty_Points
       'Active',                                        // 13. Status
       new Date(),                                      // 14. Created_Date
       createdBy                                        // 15. Created_By

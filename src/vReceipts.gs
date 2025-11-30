@@ -11,6 +11,17 @@ function generateReceiptHTML(transactionId) {
     const sale = getSaleById(transactionId);
     if (!sale) throw new Error('Sale not found');
 
+    // Fetch customer loyalty points if not walk-in
+    let customerPoints = 0;
+    if (sale.Customer_ID && sale.Customer_ID !== 'WALK-IN') {
+      try {
+        const customer = getCustomerById(sale.Customer_ID);
+        customerPoints = customer && customer.Loyalty_Points ? customer.Loyalty_Points : 0;
+      } catch (e) {
+        // ignore
+      }
+    }
+
     const settings = getAllSettings();
     const dateStr = Utilities.formatDate(new Date(sale.DateTime), 'GMT+3', 'dd/MM/yyyy HH:mm');
     
@@ -40,6 +51,7 @@ function generateReceiptHTML(transactionId) {
           .totals-table { width: 100%; margin-top: 8px; font-weight: bold; }
           .totals-table td { padding: 1px 0; }
           .footer { margin-top: 12px; text-align: center; font-size: 9px; }
+          .customer-info { margin: 8px 0; font-size: 9px; border-bottom: 1px dashed #000; padding-bottom: 4px; }
         </style>
       </head>
       <body>
@@ -53,6 +65,12 @@ function generateReceiptHTML(transactionId) {
         <div>Receipt #: ${sale.Transaction_ID}</div>
         <div>Date: ${dateStr}</div>
         <div>Served By: ${sale.Sold_By}</div>
+
+        <div class="customer-info">
+          <div>Customer: ${sale.Customer_Name}</div>
+          ${sale.KRA_PIN ? `<div>KRA PIN: ${sale.KRA_PIN}</div>` : ''}
+          ${sale.Location ? `<div>Loc: ${sale.Location}</div>` : ''}
+        </div>
         
         <div class="divider"></div>
         
@@ -85,6 +103,12 @@ function generateReceiptHTML(transactionId) {
             <tr style="font-size: 14px;"><td>TOTAL:</td><td style="text-align:right;">${settings.Currency_Symbol || 'Ksh'} ${formatNumber(sale.Grand_Total)}</td></tr>
           </tbody>
         </table>
+
+        ${sale.Customer_ID !== 'WALK-IN' ? 
+          `<div style="text-align:center; margin-top:5px; font-size:9px;">
+             <strong>Loyalty Points: ${customerPoints}</strong>
+           </div>` 
+          : ''}
         
         <div class="footer">
           <p>${settings.Receipt_Footer || 'Thank you!'}</p>
