@@ -2006,19 +2006,19 @@
           <input type="hidden" id="editCustomerId">
           <div class="mb-3">
             <label class="form-label">Name</label>
-            <input type="text" class="form-control" id="editCustomerName">
+            <input type="text" class="form-control" id="customerEditCustomerName">
           </div>
           <div class="mb-3">
             <label class="form-label">Phone</label>
-            <input type="text" class="form-control" id="editCustomerPhone">
+            <input type="text" class="form-control" id="customerEditCustomerPhone">
           </div>
           <div class="mb-3">
             <label class="form-label">Email</label>
-            <input type="email" class="form-control" id="editCustomerEmail">
+            <input type="email" class="form-control" id="customerEditCustomerEmail">
           </div>
           <div class="mb-3">
             <label class="form-label">Location</label>
-            <input type="text" class="form-control" id="editCustomerLocation">
+            <input type="text" class="form-control" id="customerEditCustomerLocation">
           </div>
         </div>
         <div class="modal-footer">
@@ -2192,7 +2192,10 @@
 
       // Show user management menu if admin
       if (userRole === 'Admin') {
-        document.getElementById('userManagementMenu').style.display = 'block';
+        const userManagementMenu = document.getElementById('userManagementMenu');
+        if (userManagementMenu) {
+          userManagementMenu.style.display = 'block';
+        }
       }
 
       // Load dashboard stats (placeholder values for now)
@@ -2926,7 +2929,10 @@
     }
 
     function closeMobileMenu() {
-      document.getElementById('sidebar').classList.remove('show');
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar) {
+        sidebar.classList.remove('show');
+      }
     }
 
     function loadSalesHistory() {
