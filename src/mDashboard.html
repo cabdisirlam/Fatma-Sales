@@ -2766,8 +2766,12 @@
         }
 
         // Collect form data
+        const itemName = form.itemName.value === '__custom'
+          ? (form.customItemName ? form.customItemName.value.trim() : '')
+          : form.itemName.value.trim();
+
         const productData = {
-          Item_Name: form.itemName.value.trim(),
+          Item_Name: itemName,
           Category: form.category.value.trim() || 'General',
           Cost_Price: parseFloat(form.cost.value) || 0,
           Selling_Price: parseFloat(form.price.value) || 0,
@@ -3406,14 +3410,21 @@
           </div>
           <form class="mt-2" onsubmit="handleQuickAdd(event, 'product')">
             <div class="row g-2">
-              <div class="col-md-4">
+              <div class="col-md-5">
                 <label class="form-label">Item Name</label>
-                <input type="text" class="form-control" name="itemName" list="masterDataList" placeholder="Search master list..." autocomplete="off" required onchange="onQuickAddItemSelect(this)">
-                <datalist id="masterDataList">
-                  ${masterDataCache.map(item => `<option value="${item.Item_Name}">`).join('')}
-                </datalist>
+                <div class="input-group">
+                  <select class="form-select" name="itemName" id="masterDataSelect" onchange="onMasterItemSelect(this)" required>
+                    <option value="">Select item...</option>
+                    ${masterDataCache.map(item => `<option value="${item.Item_Name}">${item.Item_Name}</option>`).join('')}
+                    <option value="__custom">+ Add new item</option>
+                  </select>
+                  <button class="btn btn-outline-secondary" type="button" onclick="beginAddCustomItem()">
+                    <i class="bi bi-plus-circle"></i>
+                  </button>
+                </div>
+                <input type="text" class="form-control mt-2 d-none" name="customItemName" id="customItemName" placeholder="Enter new item name">
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label">Category</label>
                 <input type="text" class="form-control" name="category" id="quickAddCategory" placeholder="Auto-filled" readonly style="background-color: #e9ecef;">
               </div>
@@ -5173,27 +5184,66 @@
       }
     }
 
-    // Helper to populate category when an Item Name is selected from master list
-    function onQuickAddItemSelect(inputElement) {
-      const selectedName = inputElement.value;
-      const item = masterDataCache.find(i => i.Item_Name === selectedName);
+    // Helper to handle master item dropdown selection
+    function onMasterItemSelect(selectEl) {
+      const selectedName = selectEl.value;
       const categoryInput = document.getElementById('quickAddCategory');
+      const customInput = document.getElementById('customItemName');
 
-      if (item && categoryInput) {
-        categoryInput.value = item.Category;
+      if (selectedName === '__custom') {
+        if (customInput) {
+          customInput.classList.remove('d-none');
+          customInput.focus();
+        }
+        if (categoryInput) {
+          categoryInput.readOnly = false;
+          categoryInput.style.backgroundColor = '';
+          categoryInput.value = '';
+        }
+        return;
+      }
+
+      if (customInput) {
+        customInput.classList.add('d-none');
+        customInput.value = '';
+      }
+
+      if (categoryInput) {
+        categoryInput.readOnly = true;
+        categoryInput.style.backgroundColor = '#e9ecef';
+        const item = masterDataCache.find(i => i.Item_Name === selectedName);
+        categoryInput.value = item ? item.Category : '';
 
         // Optional usability: focus cost for faster data entry
-        const form = inputElement.closest('form');
+        const form = selectEl.closest('form');
         const costInput = form ? form.querySelector('input[name=\"cost\"]') : null;
         if (costInput) costInput.focus();
       }
     }
 
-    // Refresh the datalist if master data loads after UI renders
+    function beginAddCustomItem() {
+      const selectEl = document.getElementById('masterDataSelect');
+      if (selectEl) {
+        selectEl.value = '__custom';
+        onMasterItemSelect(selectEl);
+      }
+    }
+
+    // Refresh the master data dropdown if data loads after UI renders
     function updateMasterDataDropdown() {
-      const dataList = document.getElementById('masterDataList');
-      if (dataList && masterDataCache.length > 0) {
-        dataList.innerHTML = masterDataCache.map(item => `<option value=\"${item.Item_Name}\">`).join('');
+      const selectEl = document.getElementById('masterDataSelect');
+      if (selectEl) {
+        const currentValue = selectEl.value;
+        const optionsHtml = [
+          '<option value=\"\">Select item...</option>',
+          masterDataCache.map(item => `<option value=\"${item.Item_Name}\">${item.Item_Name}</option>`).join(''),
+          '<option value=\"__custom\">+ Add new item</option>'
+        ].join('');
+        selectEl.innerHTML = optionsHtml;
+        if (currentValue && currentValue !== '__custom') {
+          selectEl.value = currentValue;
+          onMasterItemSelect(selectEl);
+        }
       }
     }
 
