@@ -1108,7 +1108,7 @@
                           <button class="btn btn-sm btn-outline-secondary" type="button" onclick="refreshQuickSaleCustomers()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
                           <button class="btn btn-sm btn-outline-primary" type="button" onclick="showSection('customers')"><i class="bi bi-plus-circle"></i> Add Customer</button>
                         </div>
-                        <select class="form-select" id="dashSaleCustomer" onchange="onCustomerSelect(this.value)">
+                        <select class="form-select" id="dashSaleCustomer" onchange="onCustomerSelect(this.value)" required>
                           <option value="">-- Select Customer --</option>
                         </select>
 
@@ -1165,7 +1165,7 @@
                       </div>
                       <div class="col-md-3">
                         <label class="form-label">Price (Editable)</label>
-                        <input type="number" class="form-control" id="dashSalePrice" min="0" step="0.01">
+                        <input type="number" class="form-control" id="dashSalePrice" min="0" step="1">
                       </div>
                       <div class="col-md-2">
                         <button type="button" class="btn btn-primary w-100" onclick="addDashCartItem()">
@@ -1198,9 +1198,9 @@
                       <div class="d-flex gap-2 align-items-center flex-wrap">
                         <button type="button" class="btn btn-outline-secondary" onclick="clearDashCart()">Clear</button>
 
-                        <input type="number" class="form-control" id="dashSaleDiscount" style="width: 130px;" placeholder="Discount" value="0" min="0" step="0.01">
+                        <input type="number" class="form-control" id="dashSaleDiscount" style="width: 130px;" placeholder="Enter discount" value="0" min="0" step="1">
 
-                        <input type="number" class="form-control" id="dashDeliveryCharge" style="width: 140px;" placeholder="Delivery" value="0" min="0" step="1" oninput="renderDashCart()">
+                        <input type="number" class="form-control" id="dashDeliveryCharge" style="width: 140px;" placeholder="Enter delivery charge" value="0" min="0" step="1" oninput="renderDashCart()">
 
                         <select class="form-select" id="dashSalePayment" style="width: auto;">
                           <option value="Cash">Cash</option>
@@ -1758,7 +1758,7 @@
 
           <div class="mb-3">
             <label for="paymentAmount" class="form-label">Payment Amount (Ksh) *</label>
-            <input type="number" class="form-control" id="paymentAmount" min="0" step="0.01" required>
+            <input type="number" class="form-control" id="paymentAmount" min="0" step="1" required>
             <div class="form-text">Enter the amount you're paying to this supplier</div>
           </div>
 
@@ -3346,6 +3346,7 @@
     // --- TRANSACTION SUBMISSION ---
     function submitDashTransaction(type) {
       if(dashCart.length === 0) return alert("Cart is empty. Add items first.");
+      if(!document.getElementById('dashSaleCustomer').value) return alert("Please select a customer.");
 
       const btnText = type === 'Quotation' ? 'Quotation' : 'Sale';
       // Disable buttons
@@ -3399,10 +3400,13 @@
            }
            
            if(res.success) {
-             alert((type === 'Quotation' ? "Quotation Saved: " : "Sale Complete: ") + res.transactionId);
+             const txnId = res.transactionId || res.saleId || res.id;
+             alert((type === 'Quotation' ? "Quotation Saved: " : "Sale Complete: ") + (txnId || ''));
              
-             // Trigger Client-Side Print
-             printDocument(res.transactionId, type);
+             // Trigger Client-Side Print after a short delay
+             if (txnId) {
+               setTimeout(function() { printDocument(txnId, type); }, 200);
+             }
 
              // Refresh Inventory & History
              clearDashCart();
@@ -3569,11 +3573,11 @@
               </div>
               <div class="col-md-2">
                 <label class="form-label">Cost</label>
-                <input type="number" class="form-control" name="cost" min="0" step="0.01" required>
+                <input type="number" class="form-control" name="cost" min="0" step="1" required>
               </div>
               <div class="col-md-2">
                 <label class="form-label">Price</label>
-                <input type="number" class="form-control" name="price" min="0" step="0.01">
+                <input type="number" class="form-control" name="price" min="0" step="1">
               </div>
             </div>
             <div class="row g-2 mt-2">
@@ -3826,7 +3830,7 @@
                <div class="row g-2 mt-2">
                  <div class="col-md-4">
                    <label class="form-label">Opening Balance</label>
-                   <input type="number" class="form-control" name="Opening_Balance" step="0.01">
+                   <input type="number" class="form-control" name="Opening_Balance" step="1">
                  </div>
                  <div class="col-md-8 d-flex align-items-end justify-content-end">
                    <button class="btn btn-success" type="submit" id="quickAddCustomerBtn">
@@ -4355,7 +4359,7 @@
                 </div>
                 <div class="col-md-4 mb-3">
                   <label class="form-label">Opening Balance</label>
-                  <input type="number" class="form-control" name="Opening_Balance" step="0.01" min="0" placeholder="0.00">
+                  <input type="number" class="form-control" name="Opening_Balance" step="1" min="0" placeholder="0.00">
                   <div class="form-text">Starting payable balance to carry forward.</div>
                 </div>
                 <div class="col-md-4 mb-3">
@@ -5265,7 +5269,7 @@
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Tax Rate (%)</label>
-                    <input type="number" class="form-control" value="0" step="0.01">
+                    <input type="number" class="form-control" value="0" step="1">
                   </div>
                   <button type="button" class="btn btn-primary">Save Settings</button>
                 </form>
