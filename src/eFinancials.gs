@@ -26,15 +26,46 @@ function getFinancialUiData() {
       }
     }
 
-    // 2. Get Expense Categories from Settings
-    const settings = sheetToObjects('Settings');
-    const categories = [];
-    settings.forEach(s => {
-      if (s.Setting_Key && s.Setting_Key.startsWith('Expense_Category_')) {
-        categories.push(s.Setting_Key.replace('Expense_Category_', ''));
+    // 2. Get Expense Categories from Chart of Accounts (prefer 6000* expenses), fallback to provided list
+    const fallbackCategories = ['Rent Expense', 'Salaries', 'Utilities', 'Marketing', 'Delivery', 'Maintenance', 'Other Expenses'];
+    let categories = [];
+    try {
+      const coaSheet = getSheet('Chart_of_Accounts');
+      const coaData = coaSheet.getDataRange().getValues();
+      if (coaData.length > 1) {
+        const headers = coaData[0];
+        const codeCol = headers.indexOf('Account_Code');
+        const nameCol = headers.indexOf('Account_Name');
+        const typeCol = headers.indexOf('Account_Type');
+        const catCol = headers.indexOf('Category');
+
+        for (let i = 1; i < coaData.length; i++) {
+          const code = codeCol > -1 ? coaData[i][codeCol] : '';
+          const name = nameCol > -1 ? coaData[i][nameCol] : '';
+          const type = typeCol > -1 ? coaData[i][typeCol] : '';
+          const cat = catCol > -1 ? coaData[i][catCol] : '';
+
+          const codeStr = code ? code.toString() : '';
+          const typeStr = type ? type.toString().toLowerCase() : '';
+          const catStr = cat ? cat.toString().toLowerCase() : '';
+
+          const isExpense = (codeStr.startsWith('6000')) || typeStr.includes('expense') || catStr.includes('expense');
+          if (isExpense) {
+            const label = name || cat || codeStr;
+            if (label) categories.push(label);
+          }
+        }
       }
-    });
-    if (categories.length === 0) categories.push('Rent', 'Utilities', 'Salaries', 'Other');
+    } catch (e) {
+      logError('getFinancialUiData.expenseCategories', e);
+    }
+
+    // Deduplicate + fallback
+    const categorySet = new Set(categories.filter(Boolean));
+    if (categorySet.size === 0) {
+      fallbackCategories.forEach(c => categorySet.add(c));
+    }
+    categories = Array.from(categorySet);
 
     // 3. Get Customers for "Receive Payment"
     const custSheet = getSheet('Customers');
