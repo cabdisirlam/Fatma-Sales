@@ -431,8 +431,8 @@ function getAccountReport(accountName, startDate, endDate) {
     
     // Sort safely even if DateTime missing/invalid
     financials.sort((a, b) => {
-      const da = new Date(a.DateTime);
-      const db = new Date(b.DateTime);
+      const da = parseTxnDate(a.DateTime);
+      const db = parseTxnDate(b.DateTime);
       return da - db;
     });
     
@@ -440,8 +440,7 @@ function getAccountReport(accountName, startDate, endDate) {
       const acc = (txn.Account || '').toString().trim().toLowerCase();
       if (acc !== target) return;
 
-      const txnDateRaw = txn.DateTime ? new Date(txn.DateTime) : new Date();
-      const txnDate = isNaN(txnDateRaw.getTime()) ? new Date() : txnDateRaw;
+      const txnDate = parseTxnDate(txn.DateTime);
       const credit = parseFloat(txn.Credit) || 0;
       const debit = parseFloat(txn.Debit) || 0;
 
@@ -473,4 +472,24 @@ function getAccountReport(accountName, startDate, endDate) {
     logError('getAccountReport', error);
     throw error;
   }
+}
+
+/**
+ * Robust DateTime parser for Financials DateTime values.
+ * Handles Date objects, date strings, and Google Sheets serial numbers.
+ */
+function parseTxnDate(value) {
+  if (value instanceof Date) {
+    return value;
+  }
+  if (typeof value === 'number' && !isNaN(value)) {
+    // Google Sheets stores dates as days since 1899-12-30
+    const ms = (value - 25569) * 86400000; // convert to ms from Unix epoch
+    return new Date(ms);
+  }
+  const parsed = new Date(value);
+  if (isNaN(parsed.getTime())) {
+    return new Date(0); // fallback epoch
+  }
+  return parsed;
 }
