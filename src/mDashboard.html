@@ -601,6 +601,15 @@
         border: none !important;
         box-shadow: none !important;
       }
+
+      /* Tighten fonts for print */
+      .modal-body,
+      .modal-body table {
+        font-size: 12px !important;
+      }
+      .modal-body .badge {
+        font-size: 10px !important;
+      }
     }
 
     /* ==================== RESPONSIVE ==================== */
@@ -2260,6 +2269,7 @@
               <div class="col-6 text-end">
                 <small class="text-uppercase text-muted fw-bold">Current Balance</small>
                 <div id="stmtCustBalance" class="fs-4 fw-bold">Ksh 0.00</div>
+                <div class="small text-muted">Opening: <span id="stmtCustOpening">Ksh 0.00</span></div>
               </div>
             </div>
 
@@ -4834,7 +4844,7 @@
       }
 
       const payload = {
-        txnType: 'expense',
+        txnType: supplierId ? 'supplier_payment' : 'expense',
         account: form.account.value,
         category: form.category.value,
         payee: form.payee.value,
@@ -5689,9 +5699,10 @@
       document.getElementById('statementContact').textContent = supplier.Contact_Person || '-';
       document.getElementById('statementPhone').textContent = supplier.Phone || '-';
 
-      const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
-      document.getElementById('statementBalance').textContent = 'Ksh ' + Math.round(balance).toLocaleString();
-      document.getElementById('statementOpening').textContent = 'Ksh ' + Math.round(statement.openingBalance || 0).toLocaleString();
+      const closingBalance = parseFloat(statement.closingBalance || 0) || 0;
+      const openingBalance = parseFloat(statement.openingBalance || 0) || 0;
+      document.getElementById('statementBalance').textContent = 'Ksh ' + Math.round(closingBalance).toLocaleString();
+      document.getElementById('statementOpening').textContent = 'Ksh ' + Math.round(openingBalance).toLocaleString();
       document.getElementById('statementDebits').textContent = 'Ksh ' + Math.round(statement.totalDebits || 0).toLocaleString();
       document.getElementById('statementCredits').textContent = 'Ksh ' + Math.round(statement.totalCredits || 0).toLocaleString();
 
@@ -6384,6 +6395,8 @@
       const balEl = document.getElementById('stmtCustBalance');
       balEl.innerText = formatCurrency(balance);
       balEl.className = balance < 0 ? 'fs-4 fw-bold text-danger' : 'fs-4 fw-bold text-success'; // Negative = Debt
+      const opening = balance - ((data.totalCredits || 0) - (data.totalDebits || 0));
+      document.getElementById('stmtCustOpening').innerText = formatCurrency(opening);
 
       document.getElementById('stmtCustTotalSpent').innerText = formatCurrency(data.totalDebits);
       document.getElementById('stmtCustTotalPaid').innerText = formatCurrency(data.totalCredits);

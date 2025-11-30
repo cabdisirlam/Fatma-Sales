@@ -235,7 +235,7 @@ function handleFinancialTransaction(data) {
         }
         break;
 
-      case 'expense': // Money Out
+      case 'expense': // Money Out (generic expense)
         type = 'Expense';
         desc = data.category + ': ' + (data.notes || '');
         debit = amount; 
@@ -244,6 +244,22 @@ function handleFinancialTransaction(data) {
             updateSupplierPayment(data.supplierId, amount, user);
           } catch (e) {
             // If supplier update fails, log but continue recording expense
+            logError('handleFinancialTransaction.updateSupplierPayment', e);
+          }
+        }
+        break;
+
+      case 'supplier_payment': // Dedicated supplier payment
+        type = 'Supplier_Payment';
+        desc = 'Payment to ' + (data.payee || data.supplierId || data.category || 'Supplier');
+        if (data.supplierId) {
+          desc += ' (Supplier: ' + data.supplierId + ')';
+        }
+        debit = amount;
+        if (data.supplierId) {
+          try {
+            updateSupplierPayment(data.supplierId, amount, user);
+          } catch (e) {
             logError('handleFinancialTransaction.updateSupplierPayment', e);
           }
         }

@@ -430,8 +430,13 @@ function getSupplierPaymentHistory(supplierId) {
 
     // Filter for supplier payments
     const payments = financials.filter(txn => {
-      return (txn.Type === 'Supplier_Payment' || txn.Type === 'Purchase_Payment') &&
-             txn.Description && txn.Description.indexOf(supplierId) !== -1;
+      const isSupplierType = (txn.Type === 'Supplier_Payment' || txn.Type === 'Purchase_Payment');
+      if (!isSupplierType) return false;
+
+      const desc = (txn.Description || '').toString();
+      const payee = (txn.Payee || '').toString();
+      const reference = (txn.Reference || '').toString();
+      return desc.indexOf(supplierId) !== -1 || payee.indexOf(supplierId) !== -1 || reference.indexOf(supplierId) !== -1;
     });
 
     // Sort by date descending
