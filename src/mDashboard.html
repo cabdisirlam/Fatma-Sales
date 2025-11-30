@@ -1104,10 +1104,39 @@
                     <div class="row mb-3">
                       <div class="col-md-6">
                         <label class="form-label fw-bold">Customer</label>
-                        <select class="form-select" id="dashSaleCustomer" onchange="onCustomerSelect(this.value)">
-                          <option value="WALK-IN">Walk-in Customer</option>
-                        </select>
-                        <div id="customerDetailsBox" class="mt-2" style="display: none;"></div>
+                        
+                        <div class="input-group">
+                          <input type="text" class="form-control" id="customerSearchInput" 
+                                 list="customerDatalist" 
+                                 placeholder="Type to search Name or Phone..." 
+                                 onchange="handleCustomerSearch(this)"
+                                 autocomplete="off">
+                          <button class="btn btn-outline-secondary" type="button" onclick="resetToWalkIn()" title="Clear / Walk-in">
+                            <i class="bi bi-x-lg"></i>
+                          </button>
+                        </div>
+
+                        <datalist id="customerDatalist"></datalist>
+
+                        <input type="hidden" id="dashSaleCustomer" value="WALK-IN">
+                        
+                        <input type="hidden" id="custNameVal">
+                        <input type="hidden" id="custPhoneVal">
+                        <input type="hidden" id="custEmailVal">
+                        <input type="hidden" id="custKraVal">
+                        <input type="hidden" id="custLocVal">
+                        
+                        <div id="customerDetailsPanel" class="mt-2 p-2 border rounded bg-light" style="display:none; font-size: 0.85rem;">
+                          <div class="d-flex justify-content-between">
+                              <span><strong>Phone:</strong> <span id="dispPhone">-</span></span>
+                              <span><strong>Loyalty:</strong> <span id="dispLoyalty" class="badge bg-info text-dark">0</span></span>
+                          </div>
+                          <div class="d-flex justify-content-between mt-1">
+                              <span><strong>KRA:</strong> <span id="dispKra">-</span></span>
+                              <span><strong>Loc:</strong> <span id="dispLoc">-</span></span>
+                          </div>
+                          <div class="mt-1 text-muted small"><span id="dispEmail">-</span></div>
+                        </div>
                       </div>
                       <div class="col-md-6">
                         <label class="form-label fw-bold">Date</label>
@@ -2208,29 +2237,43 @@
 
     // ==================== RESTORED FUNCTIONS START HERE ====================
     function onCustomerSelect(customerId) {
-      const detailsBox = document.getElementById('customerDetailsBox');
+      const panel = document.getElementById('customerDetailsPanel');
+      const dispPhone = document.getElementById('dispPhone');
+      const dispLoyalty = document.getElementById('dispLoyalty');
+      const dispKra = document.getElementById('dispKra');
+      const dispLoc = document.getElementById('dispLoc');
+      const dispEmail = document.getElementById('dispEmail');
+
       if (!customerId || customerId === 'WALK-IN') {
-        detailsBox.style.display = 'none';
+        if (panel) panel.style.display = 'none';
+        document.getElementById('custNameVal').value = 'Walk-in Customer';
+        document.getElementById('custPhoneVal').value = '';
+        document.getElementById('custEmailVal').value = '';
+        document.getElementById('custKraVal').value = '';
+        document.getElementById('custLocVal').value = '';
         return;
       }
 
       google.script.run.withSuccessHandler(details => {
         if (details) {
-          let balanceHtml = '';
-          if (details.Current_Balance < 0) {
-            balanceHtml = ` | <span class="text-danger">Debt: ${formatCurrency(details.Current_Balance)}</span>`;
-          } else if (details.Current_Balance > 0) {
-            balanceHtml = ` | <span class="text-success">Credit: ${formatCurrency(details.Current_Balance)}</span>`;
-          }
+          document.getElementById('custNameVal').value = details.Customer_Name || '';
+          document.getElementById('custPhoneVal').value = details.Phone || '';
+          document.getElementById('custEmailVal').value = details.Email || '';
+          document.getElementById('custKraVal').value = details.KRA_PIN || '';
+          document.getElementById('custLocVal').value = details.Location || '';
 
-          detailsBox.innerHTML = `<div class="alert alert-info py-1 px-2 small"><strong>Phone:</strong> ${details.Phone || 'N/A'}${balanceHtml}</div>`;
-          detailsBox.style.display = 'block';
-        } else {
-          detailsBox.style.display = 'none';
+          if (dispPhone) dispPhone.textContent = details.Phone || '-';
+          if (dispLoyalty) dispLoyalty.textContent = details.Loyalty_Points || 0;
+          if (dispKra) dispKra.textContent = details.KRA_PIN || '-';
+          if (dispLoc) dispLoc.textContent = details.Location || '-';
+          if (dispEmail) dispEmail.textContent = details.Email || '-';
+          if (panel) panel.style.display = 'block';
+        } else if (panel) {
+          panel.style.display = 'none';
         }
       }).withFailureHandler(err => {
-        detailsBox.innerHTML = `<div class="alert alert-danger py-1 px-2 small">Error: ${err.message}</div>`;
-        detailsBox.style.display = 'block';
+        if (dispEmail) dispEmail.textContent = 'Error: ' + err.message;
+        if (panel) panel.style.display = 'block';
       }).getCustomerDetails(customerId);
     }
 
@@ -3225,14 +3268,19 @@
       // Load Customers
       google.script.run.withSuccessHandler(function(customers) {
         dashCustomers = customers || [];
-        const sel = document.getElementById('dashSaleCustomer');
-        sel.innerHTML = '<option value="WALK-IN">Walk-in Customer</option>';
-        if (dashCustomers.length > 0) {
-          dashCustomers.sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
-          dashCustomers.forEach(c => {
-            sel.add(new Option(`${c.Customer_Name} (${c.Phone || '-'})`, c.Customer_ID));
-          });
+        const datalist = document.getElementById('customerDatalist');
+        if (datalist) {
+          datalist.innerHTML = '';
+          if (dashCustomers.length > 0) {
+            dashCustomers.sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
+            dashCustomers.forEach(c => {
+              const opt = document.createElement('option');
+              opt.value = `${c.Customer_Name} | ${c.Phone}`;
+              datalist.appendChild(opt);
+            });
+          }
         }
+        resetToWalkIn();
       }).getCustomers();
 
       // Load Inventory (Forces refresh of stock levels)
@@ -3250,6 +3298,31 @@
           });
         }
       }).getInventory();
+    }
+
+    // --- Handle customer selection via searchable datalist ---
+    function handleCustomerSearch(inputElement) {
+      const val = inputElement.value;
+      const customer = dashCustomers.find(c => `${c.Customer_Name} | ${c.Phone}` === val);
+      if (customer) {
+        document.getElementById('dashSaleCustomer').value = customer.Customer_ID;
+        onCustomerSelect(customer.Customer_ID);
+      } else {
+        if (val === '') resetToWalkIn();
+      }
+    }
+
+    function resetToWalkIn() {
+      const searchInput = document.getElementById('customerSearchInput');
+      if (searchInput) searchInput.value = '';
+      document.getElementById('dashSaleCustomer').value = 'WALK-IN';
+      document.getElementById('custNameVal').value = 'Walk-in Customer';
+      document.getElementById('custPhoneVal').value = '';
+      document.getElementById('custEmailVal').value = '';
+      document.getElementById('custKraVal').value = '';
+      document.getElementById('custLocVal').value = '';
+      const panel = document.getElementById('customerDetailsPanel');
+      if (panel) panel.style.display = 'none';
     }
 
     // --- UPDATE PRODUCT DETAILS ON SELECTION ---
@@ -3299,16 +3372,24 @@
           validUntilStr = d.toISOString().split('T')[0];
       }
 
+      const customerId = document.getElementById('dashSaleCustomer').value || 'WALK-IN';
+      const customerName =
+        customerId === 'WALK-IN'
+          ? 'Walk-in Customer'
+          : (document.getElementById('custNameVal').value || document.getElementById('customerSearchInput').value.split('|')[0] || 'Customer');
+
       const transactionData = {
-        Customer_ID: document.getElementById('dashSaleCustomer').value,
-        Customer_Name: document.getElementById('dashSaleCustomer').options[document.getElementById('dashSaleCustomer').selectedIndex].text,
+        Customer_ID: customerId,
+        Customer_Name: customerName.trim(),
         DateTime: document.getElementById('dashSaleDate').value, // Manual Date
         Payment_Mode: document.getElementById('dashSalePayment').value,
         items: dashCart,
         User: sessionStorage.getItem('userName') || 'SYSTEM',
         Delivery_Charge: 0,
         Discount: 0,
-        Valid_Until: validUntilStr // Send String
+        Valid_Until: validUntilStr, // Send String
+        KRA_PIN: document.getElementById('custKraVal').value || '',
+        Location: document.getElementById('custLocVal').value || ''
       };
 
       const backendFunc = type === 'Quotation' ? 'createQuotation' : 'createSale';
