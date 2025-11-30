@@ -107,8 +107,11 @@ function createPurchase(purchaseData) {
  */
 function recordPurchasePayment(purchaseId, supplierId, amount, paymentMethod, user) {
   try {
+    // ✅ FIX: Canonicalize account name for consistency with financial statements
+    const canonicalAccount = canonicalizeAccountName(paymentMethod);
+
     // V3.0: Validate payment method exists in Chart of Accounts
-    validateAccount(paymentMethod);
+    validateAccount(canonicalAccount);
 
     const financialTxnId = generateId('Financials', 'Transaction_ID', 'FIN');
     const sheet = getSheet('Financials');
@@ -119,13 +122,13 @@ function recordPurchasePayment(purchaseId, supplierId, amount, paymentMethod, us
       'Purchase_Payment',
       '', // Customer_ID (not applicable)
       'Purchases',
-      paymentMethod, // Account
+      canonicalAccount, // ✅ FIX: Use canonical account name
       'Payment for purchase ' + purchaseId,
       parseFloat(amount),
       parseFloat(amount), // Debit (money out)
       0, // Credit
       0, // Balance
-      paymentMethod,
+      canonicalAccount, // ✅ FIX: Payment method canonicalized
       supplierId, // Payee
       purchaseId, // Receipt_No
       purchaseId, // Reference
@@ -137,7 +140,7 @@ function recordPurchasePayment(purchaseId, supplierId, amount, paymentMethod, us
     sheet.appendRow(txnRow);
 
     // Update account balance (decrease)
-    updateAccountBalance(paymentMethod, -parseFloat(amount), user);
+    updateAccountBalance(canonicalAccount, -parseFloat(amount), user); // ✅ FIX: Use canonical account
 
     // Update supplier payment
     updateSupplierPayment(supplierId, parseFloat(amount), user);

@@ -11,6 +11,11 @@ const CONFIG = {
   // Workbook Configuration
   WORKBOOK_NAME: 'Smatika System',
 
+  // ⚠️ SECURITY: Spreadsheet ID
+  // NOTE: If sharing this code publicly, move this to a separate config file
+  // and add that file to .gitignore to prevent exposure
+  SPREADSHEET_ID: '1m_IHBaz4PJZOo2sy5w4s27XQilQqGsFveMDRWt7tP-w',
+
   // Sheet Names - Reorganized to 9 sheets for simplified management
   SHEETS: {
     USERS: 'Users',
@@ -49,7 +54,14 @@ const CONFIG = {
 
   // Authentication
   PIN_LENGTH: 4,
-  USE_TOKEN_AUTH: true
+  USE_TOKEN_AUTH: true,
+  SESSION_TIMEOUT_HOURS: 8, // Token expiry time
+  MAX_LOGIN_ATTEMPTS: 5, // Lock account after 5 failed attempts
+  LOCKOUT_DURATION_MINUTES: 15, // How long to lock account
+
+  // Security Settings
+  ALLOW_IFRAME_EMBEDDING: false, // Set to true only if you need iframe embedding
+  ENABLE_RATE_LIMITING: true
 };
 
 /**

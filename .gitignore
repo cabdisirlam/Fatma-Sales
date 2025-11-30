@@ -17,3 +17,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Sensitive Configuration (if you split config)
+# src/cConfig.secret.gs
+# config.secret.json

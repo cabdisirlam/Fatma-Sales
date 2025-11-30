@@ -486,6 +486,9 @@ function recordSupplierPayment(supplierId, amount, paymentMethod, reference, not
     const txnId = generateId('Financials', 'Transaction_ID', 'SPY');
     const sheet = getSheet('Financials');
 
+    // ✅ FIX: Canonicalize account name for consistency with financial statements
+    const canonicalAccount = canonicalizeAccountName(paymentMethod);
+
     const description = 'Payment to ' + supplier.Supplier_Name +
                        (notes ? ' - ' + notes : '') +
                        (reference ? ' [Ref: ' + reference + ']' : '');
@@ -496,13 +499,13 @@ function recordSupplierPayment(supplierId, amount, paymentMethod, reference, not
       'Supplier_Payment',
       '', // Customer_ID (not applicable)
       'Purchases',
-      paymentMethod, // Account (Cash/M-Pesa/Equity Bank)
+      canonicalAccount, // ✅ FIX: Use canonical account name
       description,
       paymentAmount,
       paymentAmount, // Debit (money out)
       0, // Credit
       0, // Balance (calculated separately)
-      paymentMethod,
+      canonicalAccount, // ✅ FIX: Payment method canonicalized
       supplierId, // Payee
       reference || '', // Receipt_No
       'Supplier: ' + supplierId, // Reference (for filtering)
@@ -514,7 +517,7 @@ function recordSupplierPayment(supplierId, amount, paymentMethod, reference, not
     sheet.appendRow(txnRow);
 
     // Update account balance (decrease)
-    updateAccountBalance(paymentMethod, -paymentAmount, user);
+    updateAccountBalance(canonicalAccount, -paymentAmount, user); // ✅ FIX: Use canonical account
 
     // Update supplier totals directly to allow overpayment
     const oldBalance = parseFloat(supplier.Current_Balance) || 0;

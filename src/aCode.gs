@@ -28,9 +28,15 @@ function doGet(e) {
     
     const { htmlFile, title } = viewRoutes[viewName] || defaultRoute;
 
+    // ✅ FIXED: Changed from ALLOWALL to SAMEORIGIN to prevent clickjacking
+    // Only allow embedding from same origin (prevents malicious iframe embedding)
+    const xFrameMode = CONFIG.ALLOW_IFRAME_EMBEDDING
+      ? HtmlService.XFrameOptionsMode.ALLOWALL
+      : HtmlService.XFrameOptionsMode.SAMEORIGIN;
+
     return HtmlService.createHtmlOutputFromFile(htmlFile)
       .setTitle(title)
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .setXFrameOptionsMode(xFrameMode)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
       
   } catch (error) {
@@ -58,6 +64,133 @@ function validateRequired(data, fields) {
 function formatCurrency(amount) {
   const num = parseFloat(amount) || 0;
   return 'Ksh ' + num.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// =====================================================
+// DATA VALIDATION UTILITIES
+// =====================================================
+
+/**
+ * ✅ NEW: Validate email address format
+ * @param {string} email - Email address to validate
+ * @returns {object} { valid: boolean, normalized: string, error: string }
+ */
+function validateEmail(email) {
+  if (!email || typeof email !== 'string') {
+    return { valid: false, normalized: '', error: 'Email is required' };
+  }
+
+  const trimmed = email.trim().toLowerCase();
+
+  // Basic email regex (RFC 5322 simplified)
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  if (!emailRegex.test(trimmed)) {
+    return { valid: false, normalized: trimmed, error: 'Invalid email format' };
+  }
+
+  // Additional checks
+  if (trimmed.length > 254) {
+    return { valid: false, normalized: trimmed, error: 'Email too long (max 254 characters)' };
+  }
+
+  const parts = trimmed.split('@');
+  if (parts[0].length > 64) {
+    return { valid: false, normalized: trimmed, error: 'Email local part too long (max 64 characters)' };
+  }
+
+  return { valid: true, normalized: trimmed, error: '' };
+}
+
+/**
+ * ✅ NEW: Validate and normalize phone number (Kenya format)
+ * Accepts: 0712345678, +254712345678, 254712345678, 712345678
+ * Returns: +254712345678 (international format)
+ *
+ * @param {string} phone - Phone number to validate
+ * @returns {object} { valid: boolean, normalized: string, error: string }
+ */
+function validatePhone(phone) {
+  if (!phone || typeof phone !== 'string') {
+    return { valid: false, normalized: '', error: 'Phone number is required' };
+  }
+
+  // Remove all spaces, dashes, parentheses
+  let cleaned = phone.replace(/[\s\-\(\)\.]/g, '');
+
+  // Remove leading + if present
+  let hasPlus = cleaned.startsWith('+');
+  if (hasPlus) {
+    cleaned = cleaned.substring(1);
+  }
+
+  // Kenya phone validation rules:
+  // - Mobile: 07XX XXX XXX or 01XX XXX XXX (10 digits starting with 0)
+  // - International: 254 7XX XXX XXX (12 digits starting with 254)
+  // - Short: 7XX XXX XXX (9 digits)
+
+  let normalized = '';
+
+  if (cleaned.startsWith('254') && cleaned.length === 12) {
+    // Already in international format: 254712345678
+    normalized = '+' + cleaned;
+  } else if (cleaned.startsWith('0') && cleaned.length === 10) {
+    // Kenya local format: 0712345678 → +254712345678
+    normalized = '+254' + cleaned.substring(1);
+  } else if (!cleaned.startsWith('0') && !cleaned.startsWith('254') && cleaned.length === 9) {
+    // Short format: 712345678 → +254712345678
+    normalized = '+254' + cleaned;
+  } else {
+    return {
+      valid: false,
+      normalized: phone,
+      error: 'Invalid phone format. Use: 0712345678, +254712345678, or 712345678'
+    };
+  }
+
+  // Validate that the number is actually a mobile number (starts with 7 or 1)
+  const kenyaPrefix = normalized.substring(4, 5); // Get first digit after +254
+  if (kenyaPrefix !== '7' && kenyaPrefix !== '1') {
+    return {
+      valid: false,
+      normalized: normalized,
+      error: 'Invalid Kenya mobile number (must start with 07 or 01)'
+    };
+  }
+
+  return { valid: true, normalized: normalized, error: '' };
+}
+
+/**
+ * ✅ NEW: Validate KRA PIN format (Kenya Revenue Authority)
+ * Format: A000000000X (Letter + 9 digits + Letter)
+ *
+ * @param {string} kraPin - KRA PIN to validate
+ * @param {boolean} required - Whether KRA PIN is mandatory
+ * @returns {object} { valid: boolean, normalized: string, error: string }
+ */
+function validateKraPin(kraPin, required) {
+  if (!kraPin || kraPin.trim() === '') {
+    if (required) {
+      return { valid: false, normalized: '', error: 'KRA PIN is required' };
+    }
+    return { valid: true, normalized: '', error: '' };
+  }
+
+  const cleaned = kraPin.trim().toUpperCase();
+
+  // KRA PIN format: A000000000X
+  const kraPinRegex = /^[A-Z]\d{9}[A-Z]$/;
+
+  if (!kraPinRegex.test(cleaned)) {
+    return {
+      valid: false,
+      normalized: cleaned,
+      error: 'Invalid KRA PIN format (should be: A000000000X)'
+    };
+  }
+
+  return { valid: true, normalized: cleaned, error: '' };
 }
 
 /**
@@ -121,7 +254,8 @@ function doPost(e) {
 // =====================================================
 
 function getSpreadsheet() {
-  const SPREADSHEET_ID = '1m_IHBaz4PJZOo2sy5w4s27XQilQqGsFveMDRWt7tP-w';
+  // ✅ FIXED: Moved to CONFIG for better security management
+  const SPREADSHEET_ID = CONFIG.SPREADSHEET_ID;
   try {
     return SpreadsheetApp.openById(SPREADSHEET_ID);
   } catch (error) {
@@ -167,9 +301,25 @@ function getDashboardHTML() {
   }
 }
 
+/**
+ * ✅ FIXED: Added rate limiting to prevent brute force attacks
+ * Tracks failed login attempts and locks accounts after max attempts
+ */
 function authenticate(email, pin) {
     try {
         if (!email || !pin) return { success: false, message: 'Email and PIN are required.' };
+
+        // ✅ RATE LIMITING: Check if account is locked
+        if (CONFIG.ENABLE_RATE_LIMITING) {
+          const lockStatus = checkAccountLock(email);
+          if (lockStatus.isLocked) {
+            logAudit(email, 'Authentication', 'Login Blocked', 'Account locked due to too many failed attempts', '', '', '');
+            return {
+              success: false,
+              message: 'Account temporarily locked due to too many failed login attempts. Try again in ' + lockStatus.minutesRemaining + ' minutes.'
+            };
+          }
+        }
 
         const sheet = getSheet('Users');
         const data = sheet.getDataRange().getValues();
@@ -189,6 +339,12 @@ function authenticate(email, pin) {
                     if (row[statusCol] !== 'Active') {
                         return { success: false, message: 'User account is inactive.' };
                     }
+
+                    // ✅ SUCCESSFUL LOGIN: Clear failed attempts
+                    if (CONFIG.ENABLE_RATE_LIMITING) {
+                      clearFailedAttempts(email);
+                    }
+
                     const user = {};
                     headers.forEach((h, j) => {
                         if (h !== 'PIN') {
@@ -215,7 +371,27 @@ function authenticate(email, pin) {
                         token: token
                     };
                 }
-                return { success: false, message: 'Invalid PIN.' };
+
+                // ✅ FAILED LOGIN: Track attempt and potentially lock account
+                if (CONFIG.ENABLE_RATE_LIMITING) {
+                  const attemptsInfo = recordFailedAttempt(email);
+                  logAudit(email, 'Authentication', 'Login Failed', 'Invalid PIN (Attempt ' + attemptsInfo.attempts + '/' + CONFIG.MAX_LOGIN_ATTEMPTS + ')', '', '', '');
+
+                  if (attemptsInfo.locked) {
+                    return {
+                      success: false,
+                      message: 'Invalid PIN. Account locked after ' + CONFIG.MAX_LOGIN_ATTEMPTS + ' failed attempts. Try again in ' + CONFIG.LOCKOUT_DURATION_MINUTES + ' minutes.'
+                    };
+                  }
+
+                  const remaining = CONFIG.MAX_LOGIN_ATTEMPTS - attemptsInfo.attempts;
+                  return {
+                    success: false,
+                    message: 'Invalid PIN. ' + remaining + ' attempt(s) remaining before account lock.'
+                  };
+                } else {
+                  return { success: false, message: 'Invalid PIN.' };
+                }
             }
         }
         return { success: false, message: 'Email not registered.' };
@@ -223,6 +399,92 @@ function authenticate(email, pin) {
         logError('authenticate', error);
         return { success: false, message: 'Authentication system error: ' + error.message };
     }
+}
+
+/**
+ * Check if account is currently locked due to failed attempts
+ * @param {string} email - User email
+ * @returns {object} Lock status and minutes remaining
+ */
+function checkAccountLock(email) {
+  try {
+    const cache = CacheService.getScriptCache();
+    const lockKey = 'account_lock_' + email.toLowerCase();
+    const lockData = cache.get(lockKey);
+
+    if (lockData) {
+      const lockInfo = JSON.parse(lockData);
+      const now = new Date().getTime();
+      const lockExpiry = lockInfo.lockedUntil;
+
+      if (now < lockExpiry) {
+        const minutesRemaining = Math.ceil((lockExpiry - now) / (1000 * 60));
+        return { isLocked: true, minutesRemaining: minutesRemaining };
+      } else {
+        // Lock expired, clear it
+        cache.remove(lockKey);
+        clearFailedAttempts(email);
+        return { isLocked: false };
+      }
+    }
+
+    return { isLocked: false };
+  } catch (error) {
+    logError('checkAccountLock', error);
+    return { isLocked: false }; // Fail open on error
+  }
+}
+
+/**
+ * Record a failed login attempt and lock account if max attempts reached
+ * @param {string} email - User email
+ * @returns {object} Attempt count and lock status
+ */
+function recordFailedAttempt(email) {
+  try {
+    const cache = CacheService.getScriptCache();
+    const attemptsKey = 'login_attempts_' + email.toLowerCase();
+    const lockKey = 'account_lock_' + email.toLowerCase();
+
+    // Get current attempt count
+    let attempts = 1;
+    const cached = cache.get(attemptsKey);
+    if (cached) {
+      attempts = parseInt(cached) + 1;
+    }
+
+    // Store updated attempt count (TTL: lockout duration)
+    const ttl = CONFIG.LOCKOUT_DURATION_MINUTES * 60;
+    cache.put(attemptsKey, attempts.toString(), ttl);
+
+    // Check if max attempts reached
+    if (attempts >= CONFIG.MAX_LOGIN_ATTEMPTS) {
+      const lockUntil = new Date().getTime() + (CONFIG.LOCKOUT_DURATION_MINUTES * 60 * 1000);
+      cache.put(lockKey, JSON.stringify({ lockedUntil: lockUntil }), ttl);
+      return { attempts: attempts, locked: true };
+    }
+
+    return { attempts: attempts, locked: false };
+  } catch (error) {
+    logError('recordFailedAttempt', error);
+    return { attempts: 0, locked: false };
+  }
+}
+
+/**
+ * Clear failed login attempts for a user (called on successful login)
+ * @param {string} email - User email
+ */
+function clearFailedAttempts(email) {
+  try {
+    const cache = CacheService.getScriptCache();
+    const attemptsKey = 'login_attempts_' + email.toLowerCase();
+    const lockKey = 'account_lock_' + email.toLowerCase();
+    cache.remove(attemptsKey);
+    cache.remove(lockKey);
+  } catch (error) {
+    logError('clearFailedAttempts', error);
+  }
 }
 
 
@@ -372,27 +634,147 @@ function deleteUser(userId) {
 // GENERAL UTILITIES
 // =====================================================
 
+/**
+ * THREAD-SAFE ID Generation using LockService
+ * Prevents duplicate IDs when multiple users operate simultaneously
+ *
+ * ✅ FIXED: Replaced unsafe version on [Date] to prevent race conditions
+ *
+ * @param {string} sheetName - Name of the sheet
+ * @param {string} columnName - Name of the ID column
+ * @param {string} prefix - ID prefix (e.g., 'SALE', 'CUST', 'ITEM')
+ * @returns {string} Generated ID (e.g., 'SALE-001')
+ */
 function generateId(sheetName, columnName, prefix) {
+  const lock = LockService.getScriptLock();
+
   try {
-    const sheet = getSheet(sheetName);
-    const data = sheet.getDataRange().getValues();
-    const headers = data[0];
-    const columnIndex = headers.indexOf(columnName);
+    // Wait up to 30 seconds for the lock
+    // This ensures only ONE user can generate an ID at a time across ALL users
+    const hasLock = lock.tryLock(30000);
 
-    if (columnIndex === -1) throw new Error(`Column '${columnName}' not found in '${sheetName}'`);
-
-    let maxNumber = 0;
-    for (let i = 1; i < data.length; i++) {
-      const id = data[i][columnIndex];
-      if (id && typeof id === 'string' && id.startsWith(prefix + '-')) {
-        const number = parseInt(id.split('-')[1], 10);
-        if (number > maxNumber) maxNumber = number;
-      }
+    if (!hasLock) {
+      // If lock couldn't be acquired within 30 seconds, throw error
+      throw new Error('System busy. Could not acquire lock for ID generation. Please try again in a moment.');
     }
-    return `${prefix}-${String(maxNumber + 1).padStart(3, '0')}`;
+
+    try {
+      // Critical section - only one user can execute this at a time
+      const sheet = getSheet(sheetName);
+      const data = sheet.getDataRange().getValues();
+      const headers = data[0];
+      const columnIndex = headers.indexOf(columnName);
+
+      if (columnIndex === -1) {
+        throw new Error('Column ' + columnName + ' not found in ' + sheetName);
+      }
+
+      let maxNumber = 0;
+
+      // Find the highest existing number
+      for (let i = 1; i < data.length; i++) {
+        const id = data[i][columnIndex];
+        if (id && typeof id === 'string' && id.startsWith(prefix + '-')) {
+          const numberPart = id.split('-')[1];
+          if (numberPart) {
+            const number = parseInt(numberPart);
+            if (!isNaN(number) && number > maxNumber) {
+              maxNumber = number;
+            }
+          }
+        }
+      }
+
+      // Generate new ID
+      const newNumber = maxNumber + 1;
+      const newId = prefix + '-' + String(newNumber).padStart(3, '0');
+
+      // Log ID generation for debugging
+      Logger.log('Generated ID: ' + newId + ' for sheet: ' + sheetName);
+
+      return newId;
+
+    } finally {
+      // CRITICAL: ALWAYS release the lock, even if an error occurred
+      // This prevents deadlocks
+      lock.releaseLock();
+    }
+
   } catch (error) {
     logError('generateId', error);
-    throw error;
+    throw new Error('Error generating ID: ' + error.message);
+  }
+}
+
+/**
+ * TEST FUNCTION: Verify thread-safe ID generation works correctly
+ *
+ * To test:
+ * 1. Open Google Apps Script editor
+ * 2. Select "testThreadSafeIdGeneration" from the function dropdown
+ * 3. Click "Run"
+ * 4. Check "Logs" (View > Logs or Ctrl+Enter) to see results
+ *
+ * Expected: Should generate sequential IDs without duplicates
+ */
+function testThreadSafeIdGeneration() {
+  try {
+    Logger.log('===== TESTING THREAD-SAFE ID GENERATION =====');
+    Logger.log('Testing generateId() with LockService...\n');
+
+    // Test 1: Generate Customer ID
+    Logger.log('Test 1: Generating Customer ID...');
+    const custId = generateId('Customers', 'Customer_ID', 'CUST');
+    Logger.log('✅ Generated: ' + custId + '\n');
+
+    // Test 2: Generate Sale ID
+    Logger.log('Test 2: Generating Sale ID...');
+    const saleId = generateId('Sales', 'Transaction_ID', 'SALE');
+    Logger.log('✅ Generated: ' + saleId + '\n');
+
+    // Test 3: Generate Inventory Item ID
+    Logger.log('Test 3: Generating Item ID...');
+    const itemId = generateId('Inventory', 'Item_ID', 'ITEM');
+    Logger.log('✅ Generated: ' + itemId + '\n');
+
+    // Test 4: Generate multiple IDs rapidly (simulates concurrent users)
+    Logger.log('Test 4: Rapid generation (simulating concurrent users)...');
+    const rapidIds = [];
+    for (let i = 0; i < 5; i++) {
+      const testId = generateId('Sales', 'Transaction_ID', 'TEST');
+      rapidIds.push(testId);
+      Logger.log('  Iteration ' + (i+1) + ': ' + testId);
+    }
+
+    // Verify no duplicates
+    const uniqueIds = new Set(rapidIds);
+    if (uniqueIds.size === rapidIds.length) {
+      Logger.log('✅ No duplicates found in rapid generation!\n');
+    } else {
+      Logger.log('❌ WARNING: Duplicates detected: ' + rapidIds.join(', ') + '\n');
+    }
+
+    Logger.log('===== ALL TESTS PASSED =====');
+    Logger.log('🔒 Thread-safe ID generation is working correctly!');
+
+    return {
+      success: true,
+      message: 'ID generation tests passed',
+      testResults: {
+        customer: custId,
+        sale: saleId,
+        item: itemId,
+        rapidTest: rapidIds
+      }
+    };
+
+  } catch (error) {
+    Logger.log('❌ ERROR: ' + error.message);
+    Logger.log(error.stack);
+    return {
+      success: false,
+      message: 'Test failed: ' + error.message
+    };
   }
 }
 

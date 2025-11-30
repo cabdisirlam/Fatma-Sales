@@ -533,3 +533,114 @@ function canonicalizeAccountName(name) {
   if (lower.includes('equity')) return 'Equity Bank';
   return raw;
 }
+
+/**
+ * 🔧 ONE-TIME CLEANUP: Canonicalize all existing account names in Financials sheet
+ *
+ * This function fixes all existing transactions to use canonical account names:
+ * - Converts "mpesa", "m-pesa", etc. → "M-Pesa"
+ * - Converts "cash", "CASH", etc. → "Cash"
+ * - Converts "equity", "equity bank", etc. → "Equity Bank"
+ *
+ * Run this ONCE in the Apps Script editor after deployment.
+ *
+ * @returns {object} Summary of changes made
+ */
+function cleanupFinancialAccountNames() {
+  try {
+    Logger.log('===== STARTING FINANCIAL ACCOUNT CLEANUP =====');
+
+    const sheet = getSheet('Financials');
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length <= 1) {
+      return { success: true, message: 'No data to cleanup', updatedRows: 0 };
+    }
+
+    const headers = data[0];
+    const accountCol = headers.indexOf('Account');
+    const paymentMethodCol = headers.indexOf('Payment_Method');
+
+    if (accountCol === -1) {
+      throw new Error('Account column not found in Financials sheet');
+    }
+
+    let updatedRows = 0;
+    const changes = {
+      accountChanges: 0,
+      paymentMethodChanges: 0,
+      details: []
+    };
+
+    // Process each row (skip header)
+    for (let i = 1; i < data.length; i++) {
+      let rowChanged = false;
+      const rowNum = i + 1;
+
+      // Fix Account column
+      if (accountCol !== -1 && data[i][accountCol]) {
+        const originalAccount = data[i][accountCol];
+        const canonicalAccount = canonicalizeAccountName(originalAccount);
+
+        if (originalAccount !== canonicalAccount) {
+          sheet.getRange(rowNum, accountCol + 1).setValue(canonicalAccount);
+          changes.accountChanges++;
+          rowChanged = true;
+
+          Logger.log(`Row ${rowNum}: Account "${originalAccount}" → "${canonicalAccount}"`);
+        }
+      }
+
+      // Fix Payment_Method column
+      if (paymentMethodCol !== -1 && data[i][paymentMethodCol]) {
+        const originalMethod = data[i][paymentMethodCol];
+        const canonicalMethod = canonicalizeAccountName(originalMethod);
+
+        if (originalMethod !== canonicalMethod) {
+          sheet.getRange(rowNum, paymentMethodCol + 1).setValue(canonicalMethod);
+          changes.paymentMethodChanges++;
+          rowChanged = true;
+
+          Logger.log(`Row ${rowNum}: Payment_Method "${originalMethod}" → "${canonicalMethod}"`);
+        }
+      }
+
+      if (rowChanged) {
+        updatedRows++;
+      }
+    }
+
+    // Log summary
+    Logger.log('===== CLEANUP COMPLETE =====');
+    Logger.log(`Total rows updated: ${updatedRows}`);
+    Logger.log(`Account column changes: ${changes.accountChanges}`);
+    Logger.log(`Payment_Method column changes: ${changes.paymentMethodChanges}`);
+
+    // Log audit trail
+    logAudit(
+      'SYSTEM',
+      'Financials',
+      'Cleanup',
+      'Canonicalized account names in existing transactions',
+      '',
+      '',
+      `Updated ${updatedRows} rows`
+    );
+
+    return {
+      success: true,
+      message: 'Cleanup completed successfully',
+      updatedRows: updatedRows,
+      accountChanges: changes.accountChanges,
+      paymentMethodChanges: changes.paymentMethodChanges
+    };
+
+  } catch (error) {
+    logError('cleanupFinancialAccountNames', error);
+    return {
+      success: false,
+      message: 'Cleanup failed: ' + error.message,
+      error: error.stack
+    };
+  }
+}

@@ -8,8 +8,15 @@
 // =====================================================
 
 /**
- * Get all customers with optional filters
+ * Get all customers with optional filters and pagination
+ * ✅ IMPROVED: Added pagination support for large datasets
  * FIXED: Sanitizes Date objects to prevent "Uncaught hz" errors
+ *
+ * @param {Object} filters - Optional filters to apply
+ * @param {number} filters.limit - Maximum number of records to return (default: all)
+ * @param {number} filters.offset - Number of records to skip (default: 0)
+ * @param {string} filters.status - Filter by status (e.g., 'Active')
+ * @param {string} filters.Customer_Type - Filter by customer type
  */
 function getCustomers(filters) {
   try {
@@ -22,6 +29,13 @@ function getCustomers(filters) {
 
     const headers = data[0];
     const customers = [];
+
+    // Extract pagination parameters
+    const limit = (filters && filters.limit) ? parseInt(filters.limit) : null;
+    const offset = (filters && filters.offset) ? parseInt(filters.offset) : 0;
+
+    let recordsProcessed = 0;
+    let recordsSkipped = 0;
 
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
@@ -42,10 +56,13 @@ function getCustomers(filters) {
         customer[header] = value;
       });
 
-      // Apply filters if provided
+      // Apply filters if provided (excluding pagination params)
       if (filters) {
         let matches = true;
         for (let key in filters) {
+          // Skip pagination parameters
+          if (key === 'limit' || key === 'offset') continue;
+
           if (customer[key] !== filters[key]) {
             matches = false;
             break;
@@ -54,7 +71,21 @@ function getCustomers(filters) {
         if (!matches) continue;
       }
 
+      // ✅ NEW: Pagination logic
+      // Skip records based on offset
+      if (recordsSkipped < offset) {
+        recordsSkipped++;
+        continue;
+      }
+
+      // Add to results
       customers.push(customer);
+      recordsProcessed++;
+
+      // Stop if we've reached the limit
+      if (limit && recordsProcessed >= limit) {
+        break;
+      }
     }
 
     return customers;
@@ -121,6 +152,7 @@ function searchCustomers(query) {
  */
 function addCustomer(customerData) {
   try {
+    // ✅ IMPROVED: Enhanced validation with normalization
     // Validation: Required fields
     if (!customerData || !customerData.Customer_Name) {
       throw new Error('Customer Name is required');
@@ -128,6 +160,32 @@ function addCustomer(customerData) {
 
     if (!customerData.Phone || customerData.Phone.trim() === '') {
       throw new Error('Phone number is required');
+    }
+
+    // ✅ NEW: Validate and normalize phone number
+    const phoneValidation = validatePhone(customerData.Phone);
+    if (!phoneValidation.valid) {
+      throw new Error('Invalid phone number: ' + phoneValidation.error);
+    }
+
+    // ✅ NEW: Validate email if provided
+    let normalizedEmail = '';
+    if (customerData.Email && customerData.Email.trim() !== '') {
+      const emailValidation = validateEmail(customerData.Email);
+      if (!emailValidation.valid) {
+        throw new Error('Invalid email: ' + emailValidation.error);
+      }
+      normalizedEmail = emailValidation.normalized;
+    }
+
+    // ✅ NEW: Validate KRA PIN if provided
+    let normalizedKraPin = '';
+    if (customerData.KRA_PIN && customerData.KRA_PIN.trim() !== '') {
+      const kraPinValidation = validateKraPin(customerData.KRA_PIN, false);
+      if (!kraPinValidation.valid) {
+        throw new Error('Invalid KRA PIN: ' + kraPinValidation.error);
+      }
+      normalizedKraPin = kraPinValidation.normalized;
     }
 
     const sheet = getSheet('Customers');
@@ -144,10 +202,10 @@ function addCustomer(customerData) {
     const newCustomer = [
       customerId,                                      // 1. Customer_ID
       customerData.Customer_Name.trim(),               // 2. Customer_Name
-      customerData.Phone.trim(),                       // 3. Phone
-      customerData.Email ? customerData.Email.trim() : '', // 4. Email
+      phoneValidation.normalized,                      // 3. Phone (normalized to +254...)
+      normalizedEmail,                                 // 4. Email (normalized)
       customerData.Location || '',                     // 5. Location
-      customerData.KRA_PIN || '',                      // 6. KRA_PIN
+      normalizedKraPin,                                // 6. KRA_PIN (normalized)
       customerData.Customer_Type || 'Walk-in',         // 7. Customer_Type
       parseFloat(customerData.Credit_Limit) || 0,      // 8. Credit_Limit
       openingBalance,                                  // 9. Current_Balance
@@ -429,26 +487,32 @@ function recordCustomerPayment(paymentData) {
 
     if (paymentAmount <= 0) throw new Error('Payment amount must be greater than zero');
 
+    // ✅ FIX: Canonicalize account name for consistency with financial statements
+    const canonicalAccount = canonicalizeAccountName(paymentData.Account);
+
     const txnId = generateId('Financials', 'Transaction_ID', 'CPY');
     const sheet = getSheet('Financials');
 
     const description = 'Payment from ' + customer.Customer_Name +
                        (paymentData.Reference ? ' [Ref: ' + paymentData.Reference + ']' : '');
-                       
+
     const txnRow = [
       txnId, new Date(), 'Customer_Payment', customerId, 'Sales',
-      paymentData.Account, description, paymentAmount,
+      canonicalAccount, description, paymentAmount, // ✅ FIX: Use canonical account
       0, paymentAmount, 0,
-      paymentData.Account, customer.Customer_Name, 
+      canonicalAccount, customer.Customer_Name, // ✅ FIX: Payment method canonicalized
       paymentData.Reference || '', 'Customer: ' + customerId,
       'Approved', paymentData.User, paymentData.User
     ];
-    
+
     sheet.appendRow(txnRow);
+
+    // ✅ FIX: Update account balance (customer payment increases account balance)
+    updateAccountBalance(canonicalAccount, paymentAmount, paymentData.User);
 
     // Update customer balance (positive balance means customer owes)
     const currentBalance = parseFloat(customer.Current_Balance) || 0;
-    const newCustomerBalance = currentBalance - paymentAmount; 
+    const newCustomerBalance = currentBalance - paymentAmount;
     const newTotalPaid = (parseFloat(customer.Total_Paid) || 0) + paymentAmount;
     updateRowById('Customers', 'Customer_ID', customerId, { Current_Balance: newCustomerBalance, Total_Paid: newTotalPaid });
 

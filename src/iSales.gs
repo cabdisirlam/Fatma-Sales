@@ -140,21 +140,38 @@ function createSale(saleData) {
     const deliveryStatus = saleData.Delivery_Status || 'Completed';
 
     // Decrease Stock first & Capture batch details (V3.0 FIFO)
+    // ✅ FIXED: Added strict error handling for COGS calculation
     let totalCOGS = 0;
     const itemBatchMap = {}; // Map Item_ID to batch details
 
     for (const item of items) {
       const stockResult = decreaseStock(item.Item_ID, item.Qty, saleData.User);
-      if (stockResult) {
-        if (stockResult.totalCOGS !== undefined) {
-          totalCOGS += stockResult.totalCOGS;
-        }
-        // Store batch details for this item
-        itemBatchMap[item.Item_ID] = stockResult.batchDetails || [];
+
+      // Critical validation: Stock deduction must succeed
+      if (!stockResult || !stockResult.success) {
+        throw new Error('Failed to decrease stock for item: ' + item.Item_ID + '. Sale aborted.');
       }
+
+      // Critical validation: COGS must be calculated
+      if (stockResult.totalCOGS === undefined || stockResult.totalCOGS === null) {
+        Logger.log('WARNING: COGS not calculated for ' + item.Item_ID + '. Using fallback.');
+        // Fallback: Use cost price from product if COGS missing
+        const product = getInventoryItemById(item.Item_ID);
+        const fallbackCOGS = (parseFloat(product.Cost_Price) || 0) * parseFloat(item.Qty);
+        totalCOGS += fallbackCOGS;
+        Logger.log('Fallback COGS: ' + fallbackCOGS + ' for ' + item.Item_ID);
+      } else {
+        totalCOGS += stockResult.totalCOGS;
+      }
+
+      // Store batch details for this item
+      itemBatchMap[item.Item_ID] = stockResult.batchDetails || [];
     }
 
-    // Add each line item to Sales sheet WITH batch information
+    // ✅ IMPROVED: Batch write operations for better performance
+    // Collect all sale rows first, then write in a single operation
+    const saleRows = [];
+
     items.forEach(item => {
       const batchInfo = itemBatchMap[item.Item_ID] || [];
 
@@ -185,7 +202,7 @@ function createSale(saleData) {
             '', // Valid_Until (for quotations)
             '' // Converted_Sale_ID (for quotations)
           ];
-          sheet.appendRow(saleRow);
+          saleRows.push(saleRow);
         });
       } else {
         // Fallback if no batch info (shouldn't happen normally)
@@ -213,9 +230,20 @@ function createSale(saleData) {
           '',
           ''
         ];
-        sheet.appendRow(saleRow);
+        saleRows.push(saleRow);
       }
     });
+
+    // ✅ BATCH WRITE: Write all rows at once (much faster than individual appendRow calls)
+    if (saleRows.length > 0) {
+      const lastRow = sheet.getLastRow();
+      const startRow = lastRow + 1;
+      const numRows = saleRows.length;
+      const numCols = saleRows[0].length;
+
+      sheet.getRange(startRow, 1, numRows, numCols).setValues(saleRows);
+      Logger.log('Batch wrote ' + numRows + ' sale rows in single operation');
+    }
 
     // Record COGS Transaction in Financials (V3.0)
     if (totalCOGS > 0) {
@@ -302,18 +330,21 @@ function cancelSale(transactionId, reason, user) {
       const amount = parseFloat(payment.Amount);
       totalPaid += amount;
 
+      // ✅ FIX: Canonicalize account name for consistency with financial statements
+      const canonicalAccount = canonicalizeAccountName(payment.Account);
+
       // Record refund transaction
       const sheet = getSheet('Financials');
       const refundId = generateId('Financials', 'Transaction_ID', 'REF');
       sheet.appendRow([
         refundId, new Date(), 'Sale_Cancellation', sale.Customer_ID, 'Sales',
-        payment.Account, 'Refund for cancelled sale ' + transactionId,
+        canonicalAccount, 'Refund for cancelled sale ' + transactionId, // ✅ FIX: Use canonical account
         amount, amount, 0, 0, // Debit the account (money out)
-        payment.Account, sale.Customer_Name, transactionId, transactionId, 'Approved', user, user
+        canonicalAccount, sale.Customer_Name, transactionId, transactionId, 'Approved', user, user // ✅ FIX: Payment method canonicalized
       ]);
 
       // Update account balance
-      updateAccountBalance(payment.Account, -amount, user);
+      updateAccountBalance(canonicalAccount, -amount, user); // ✅ FIX: Use canonical account
     });
 
     // 3. Reverse Customer Debt (if any)
@@ -648,8 +679,11 @@ function updateQuotationStatus(quotationId, status, convertedSaleId, user) {
  */
 function recordSalePayment(transactionId, paymentMethod, amount, customerId, user, reference) {
   try {
+    // ✅ FIX: Canonicalize account name for consistency
+    const canonicalAccount = canonicalizeAccountName(paymentMethod);
+
     // V3.0: Validate payment method exists in Chart of Accounts
-    validateAccount(paymentMethod);
+    validateAccount(canonicalAccount);
 
     const financialTxnId = generateId('Financials', 'Transaction_ID', 'FIN');
     const sheet = getSheet('Financials');
@@ -660,13 +694,13 @@ function recordSalePayment(transactionId, paymentMethod, amount, customerId, use
       'Sale_Payment',
       customerId || '',
       'Sales',
-      paymentMethod, // Account (Cash/M-Pesa/Equity Bank)
+      canonicalAccount, // ✅ FIX: Use canonical account name (Cash/M-Pesa/Equity Bank)
       'Payment for sale ' + transactionId,
       parseFloat(amount),
       0, // Debit
       parseFloat(amount), // Credit (money in)
       0, // Balance (calculated separately)
-      paymentMethod,
+      canonicalAccount, // ✅ FIX: Payment method also canonicalized
       '', // Payee
       transactionId, // Receipt_No
       reference || transactionId, // Reference (e.g., Paybill/Ref)
@@ -677,8 +711,8 @@ function recordSalePayment(transactionId, paymentMethod, amount, customerId, use
 
     sheet.appendRow(txnRow);
 
-    // Update account balance
-    updateAccountBalance(paymentMethod, parseFloat(amount), user);
+    // ✅ FIX: Update account balance with canonical name
+    updateAccountBalance(canonicalAccount, parseFloat(amount), user);
 
   } catch (error) {
     logError('recordSalePayment', error);
@@ -876,19 +910,22 @@ function processSaleReturn(saleId, items, reason, user) {
     const refundTxnId = generateId('Financials', 'Transaction_ID', 'REF');
     const financialSheet = getSheet('Financials');
 
+    // ✅ FIX: Canonicalize account name for consistency with financial statements
+    const canonicalAccount = canonicalizeAccountName(sale.Payment_Mode);
+
     const refundRow = [
       refundTxnId,
       new Date(),
       'Sale_Refund',
       sale.Customer_ID || '',
       'Sales',
-      sale.Payment_Mode, // Account
+      canonicalAccount, // ✅ FIX: Use canonical account name
       'Refund for sale ' + saleId + ': ' + reason,
       parseFloat(refundAmount),
       parseFloat(refundAmount), // Debit (money out)
       0, // Credit
       0, // Balance
-      sale.Payment_Mode,
+      canonicalAccount, // ✅ FIX: Payment mode also canonicalized
       sale.Customer_Name,
       saleId, // Receipt_No
       saleId, // Reference
@@ -900,7 +937,7 @@ function processSaleReturn(saleId, items, reason, user) {
     financialSheet.appendRow(refundRow);
 
     // Update account balance (decrease)
-    updateAccountBalance(sale.Payment_Mode, -parseFloat(refundAmount), user);
+    updateAccountBalance(canonicalAccount, -parseFloat(refundAmount), user); // ✅ FIX: Use canonical account
 
     // Update customer balance if customer is not walk-in
     // For credit sales, reduce customer debt (they owe less now)
