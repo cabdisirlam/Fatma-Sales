@@ -2280,6 +2280,7 @@
                 <small class="text-uppercase text-muted fw-bold">Current Balance</small>
                 <div id="stmtCustBalance" class="fs-4 fw-bold">Ksh 0.00</div>
                 <div class="small text-muted">Opening: <span id="stmtCustOpening">Ksh 0.00</span></div>
+                <div class="small text-muted">Closing: <span id="stmtCustClosing">Ksh 0.00</span></div>
               </div>
             </div>
 
@@ -6408,6 +6409,7 @@
       balEl.className = balance < 0 ? 'fs-4 fw-bold text-danger' : 'fs-4 fw-bold text-success'; // Negative = Debt
       const opening = balance - ((data.totalCredits || 0) - (data.totalDebits || 0));
       document.getElementById('stmtCustOpening').innerText = formatCurrency(opening);
+      document.getElementById('stmtCustClosing').innerText = formatCurrency(balance);
 
       document.getElementById('stmtCustTotalSpent').innerText = formatCurrency(data.totalDebits);
       document.getElementById('stmtCustTotalPaid').innerText = formatCurrency(data.totalCredits);
