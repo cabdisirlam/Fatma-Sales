@@ -2235,16 +2235,18 @@
     // Toggle sidebar
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
-      const mainContent = document.getElementById('mainContent');
-      const toggleIcon = document.getElementById('toggleIcon');
+      if (!sidebar) return;
 
       sidebar.classList.toggle('collapsed');
-      mainContent.classList.toggle('expanded');
 
-      if (sidebar.classList.contains('collapsed')) {
-        toggleIcon.className = 'bi bi-chevron-right';
-      } else {
-        toggleIcon.className = 'bi bi-chevron-left';
+      // Update toggle button icon if it exists
+      const toggleBtn = document.querySelector('.toggle-btn i');
+      if (toggleBtn) {
+        if (sidebar.classList.contains('collapsed')) {
+          toggleBtn.className = 'bi bi-arrow-right-circle';
+        } else {
+          toggleBtn.className = 'bi bi-arrow-left-circle';
+        }
       }
     }
 
@@ -2256,7 +2258,10 @@
       }
 
       const menuItem = document.getElementById(menuId);
+      if (!menuItem) return;
+
       const submenu = menuItem.querySelector('.submenu');
+      if (!submenu) return;
 
       // Toggle open class
       menuItem.classList.toggle('open');
