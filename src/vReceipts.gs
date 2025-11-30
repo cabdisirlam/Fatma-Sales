@@ -113,9 +113,10 @@ function generateReceiptHTML(transactionId) {
 
         ${sale.Customer_ID !== 'WALK-IN' ?
           `<div style="text-align:center; margin-top:5px; font-size:9px; border-top: 1px dashed #000; padding-top: 4px;">
-             <div><strong>Points Earned This Sale: +${CONFIG.LOYALTY_POINTS_PER_SALE || 10}</strong></div>
-             <div>Total Loyalty Points: ${customerPoints}</div>
-             <div style="font-size:8px; color:#666;">Earn ${CONFIG.LOYALTY_POINTS_PER_SALE || 10} points per purchase!</div>
+             <div>Previous Points: ${Math.max(0, customerPoints - (CONFIG.LOYALTY_POINTS_PER_SALE || 10))}</div>
+             <div><strong>Earned This Sale: +${CONFIG.LOYALTY_POINTS_PER_SALE || 10}</strong></div>
+             <div style="font-weight:bold; font-size:10px;">New Total: ${customerPoints} points</div>
+             <div style="font-size:8px; color:#666; margin-top:2px;">Earn ${CONFIG.LOYALTY_POINTS_PER_SALE || 10} points per purchase!</div>
            </div>`
           : ''}
         
