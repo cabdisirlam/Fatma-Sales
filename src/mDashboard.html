@@ -4435,7 +4435,14 @@
         .map(acc => `<option value="${acc}">${acc}</option>`).join('');
       const customerOptions = (ui.customers || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
       const categoryOptions = (ui.categories || []).map(c => `<option value="${c}">${c}</option>`).join('');
-      const supplierOptions = (ui.suppliers || []).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+      const supplierOptions = (ui.suppliers || [])
+        .filter(s => s && (s.name || s.id))
+        .map(s => {
+          const label = s.name || s.id || 'Supplier';
+          const balance = typeof s.balance === 'number' ? formatCurrency(s.balance) : '';
+          return `<option value="${s.id}">${label}${balance ? ' - Balance: ' + balance : ''}</option>`;
+        })
+        .join('');
 
       let html = `
         <div class="d-flex flex-wrap gap-2 mb-3">
