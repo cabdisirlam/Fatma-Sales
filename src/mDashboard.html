@@ -2939,12 +2939,12 @@
       location.reload();
     }
 
+    // ==================== MOBILE MENU ====================
     function toggleSidebarMobile() {
-      document.getElementById('sidebar').classList.toggle('show');
-    }
-
-    function toggleSidebarMobile() {
-      document.getElementById('sidebar').classList.toggle('show');
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar) {
+        sidebar.classList.toggle('show');
+      }
     }
 
     function closeMobileMenu() {
@@ -5133,39 +5133,6 @@
         sessionStorage.clear();
         location.reload();
       }
-    }
-
-    // Mobile menu functions
-    function toggleMobileMenu() {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('menuOverlay');
-      const hamburger = document.getElementById('hamburgerBtn');
-
-      sidebar.classList.toggle('mobile-open');
-      overlay.classList.toggle('active');
-      document.body.classList.toggle('menu-open'); // Prevent body scrolling when menu is open
-
-      // Change icon
-      const icon = hamburger.querySelector('i');
-      if (sidebar.classList.contains('mobile-open')) {
-        icon.className = 'bi bi-x';
-      } else {
-        icon.className = 'bi bi-list';
-      }
-    }
-
-    function closeMobileMenu() {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('menuOverlay');
-      const hamburger = document.getElementById('hamburgerBtn');
-
-      sidebar.classList.remove('mobile-open');
-      overlay.classList.remove('active');
-      document.body.classList.remove('menu-open'); // Re-enable body scrolling
-
-      // Reset icon
-      const icon = hamburger.querySelector('i');
-      icon.className = 'bi bi-list';
     }
 
     // Section navigation
