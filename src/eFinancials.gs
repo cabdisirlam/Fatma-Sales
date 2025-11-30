@@ -58,6 +58,37 @@ function getFinancialUiData() {
 }
 
 // =====================================================
+// OPENING BALANCES
+// =====================================================
+
+/**
+ * Fetch opening balances from Chart_of_Accounts if the column exists
+ * Returns an object keyed by account name
+ */
+function getOpeningBalanceMap() {
+  const balances = {};
+  try {
+    const sheet = getSheet('Chart_of_Accounts');
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return balances;
+
+    const headers = data[0];
+    const nameCol = headers.indexOf('Account_Name');
+    const openingCol = headers.indexOf('Opening_Balance');
+    if (nameCol === -1 || openingCol === -1) return balances;
+
+    for (let i = 1; i < data.length; i++) {
+      const name = data[i][nameCol];
+      if (!name) continue;
+      balances[name.toString().trim()] = parseFloat(data[i][openingCol]) || 0;
+    }
+  } catch (e) {
+    logError('getOpeningBalanceMap', e);
+  }
+  return balances;
+}
+
+// =====================================================
 // CHART OF ACCOUNTS VALIDATION
 // =====================================================
 
@@ -238,6 +269,8 @@ function handleFinancialTransaction(data) {
 function getFinancialSummary(startDate, endDate) {
   try {
     const financials = sheetToObjects('Financials');
+    const openingBalances = getOpeningBalanceMap();
+    const defaultAccounts = ['Equity Bank', 'M-Pesa', 'Cash'];
     let txns = financials;
     
     if (startDate) txns = txns.filter(t => new Date(t.DateTime) >= new Date(startDate));
@@ -247,14 +280,19 @@ function getFinancialSummary(startDate, endDate) {
     let totalExpenses = 0;
     // Calculate Balance per account
     const accountBalances = {};
+    const accountCredits = {};
+    const accountDebits = {};
+    const accountSet = new Set(defaultAccounts);
 
     txns.forEach(txn => {
       const debit = parseFloat(txn.Debit) || 0;
       const credit = parseFloat(txn.Credit) || 0;
       const acc = txn.Account || 'Unknown';
 
-      if (!accountBalances[acc]) accountBalances[acc] = 0;
-      accountBalances[acc] += (credit - debit); // Credit is In, Debit is Out
+      accountSet.add(acc);
+
+      accountCredits[acc] = (accountCredits[acc] || 0) + credit;
+      accountDebits[acc] = (accountDebits[acc] || 0) + debit;
 
       if (txn.Type === 'Sale_Payment' || txn.Type === 'Customer_Payment') {
         totalRevenue += credit;
@@ -263,30 +301,62 @@ function getFinancialSummary(startDate, endDate) {
       }
     });
 
-    const currentBalance = Object.values(accountBalances).reduce((a, b) => a + b, 0);
+    const accountBreakdown = Array.from(accountSet).map(acc => {
+      const opening = openingBalances[acc] || 0;
+      const inflow = accountCredits[acc] || 0;
+      const outflow = accountDebits[acc] || 0;
+      const balance = opening + inflow - outflow;
+      accountBalances[acc] = balance;
+      return {
+        name: acc,
+        openingBalance: opening,
+        inflow: inflow,
+        outflow: outflow,
+        balance: balance
+      };
+    });
+
+    const currentBalance = accountBreakdown.reduce((a, b) => a + b.balance, 0);
 
     return {
       totalRevenue: totalRevenue,
       totalExpenses: totalExpenses,
       netProfit: totalRevenue - totalExpenses,
       currentBalance: currentBalance,
-      accountBalances: accountBalances
+      accountBalances: accountBalances,
+      accountBreakdown: accountBreakdown
     };
 
   } catch (error) {
     logError('getFinancialSummary', error);
-    return { totalRevenue: 0, totalExpenses: 0, netProfit: 0, currentBalance: 0 };
+    return { totalRevenue: 0, totalExpenses: 0, netProfit: 0, currentBalance: 0, accountBreakdown: [] };
+  }
+}
+
+/**
+ * Convenience wrapper for dashboard (summary + UI dropdown data)
+ */
+function getFinancialDashboardData() {
+  try {
+    return {
+      summary: getFinancialSummary(),
+      ui: getFinancialUiData()
+    };
+  } catch (e) {
+    logError('getFinancialDashboardData', e);
+    throw e;
   }
 }
 
 function getAccountReport(accountName, startDate, endDate) {
   try {
     const financials = sheetToObjects('Financials');
+    const openingBalances = getOpeningBalanceMap();
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    let openingBalance = 0;
+    let openingBalance = openingBalances[accountName] || 0;
     let totalCredits = 0; 
     let totalDebits = 0;
     const transactions = [];

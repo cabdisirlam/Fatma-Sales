@@ -4328,21 +4328,36 @@
       contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading financial data...</p></div>';
 
       google.script.run
-        .withSuccessHandler(function(summary) {
-          displayFinancials(summary);
+        .withSuccessHandler(function(data) {
+          const summary = data && data.summary ? data.summary : {};
+          const ui = data && data.ui ? data.ui : {};
+          displayFinancials(summary, ui);
         })
         .withFailureHandler(function(error) {
           contentDiv.innerHTML = '<div class="alert alert-danger">Error loading financials: ' + error.message + '</div>';
         })
-        .getFinancialSummary();
+        .getFinancialDashboardData();
     }
 
-    function displayFinancials(summary) {
+    function displayFinancials(summary, ui) {
       const container = document.getElementById('section-financials');
       if (!container) return;
 
       const netProfit = (summary.totalRevenue || 0) - (summary.totalExpenses || 0);
       const profitClass = netProfit >= 0 ? 'text-success' : 'text-danger';
+      const keyAccounts = ['Equity Bank', 'M-Pesa', 'Cash'];
+      const breakdown = (summary.accountBreakdown || []).slice().sort((a, b) => {
+        const ia = keyAccounts.indexOf(a.name);
+        const ib = keyAccounts.indexOf(b.name);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+      const accountOptions = (ui.accounts || []).map(acc => `<option value="${acc}">${acc}</option>`).join('');
+      const customerOptions = (ui.customers || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      const categoryOptions = (ui.categories || []).map(c => `<option value="${c}">${c}</option>`).join('');
 
       let html = `
         <div class="d-flex flex-wrap gap-2 mb-3">
@@ -4350,6 +4365,7 @@
             <i class="bi bi-arrow-clockwise"></i> Refresh
           </button>
         </div>
+        <div id="financialAlert" class="alert d-none"></div>
         <div class="row mb-4">
           <div class="col-md-3">
             <div class="stat-card">
@@ -4373,55 +4389,114 @@
             <div class="stat-card">
               <h6>Account Balance</h6>
               <h3>${formatCurrency(summary.currentBalance)}</h3>
+              <div class="small text-muted">Includes opening balances from Chart_of_Accounts</div>
             </div>
           </div>
         </div>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="card mb-4">
-              <div class="card-header"><i class="bi bi-bar-chart"></i> Income Breakdown</div>
-              <div class="card-body">
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Sales Revenue:</span>
-                  <strong class="text-success">${formatCurrency(summary.salesRevenue || 0)}</strong>
+        <div class="row g-3 mb-4">
+          ${breakdown.length === 0 ? '<div class="col-12"><div class="alert alert-light border text-center mb-0">No account data yet.</div></div>' : ''}
+          ${breakdown.map(acc => `
+            <div class="col-md-4">
+              <div class="stat-card h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="mb-1">${acc.name}</h6>
+                    <div class="small text-muted">Opening: ${formatCurrency(acc.openingBalance)}</div>
+                  </div>
+                  <span class="badge bg-light text-dark border">Current</span>
                 </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Customer Payments:</span>
-                  <strong class="text-success">${formatCurrency(summary.customerPayments || 0)}</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Other Income:</span>
-                  <strong class="text-success">${formatCurrency(summary.otherIncome || 0)}</strong>
-                </div>
-                <hr>
-                <div class="d-flex justify-content-between">
-                  <strong>Total Income:</strong>
-                  <strong class="text-success">${formatCurrency(summary.totalRevenue)}</strong>
+                <div class="mt-2">
+                  <div class="d-flex justify-content-between small mb-1">
+                    <span>Inflow</span>
+                    <strong class="text-success">${formatCurrency(acc.inflow)}</strong>
+                  </div>
+                  <div class="d-flex justify-content-between small mb-1">
+                    <span>Outflow</span>
+                    <strong class="text-danger">${formatCurrency(acc.outflow)}</strong>
+                  </div>
+                  <div class="d-flex justify-content-between small">
+                    <span>Balance</span>
+                    <strong>${formatCurrency(acc.balance)}</strong>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card mb-4">
-              <div class="card-header"><i class="bi bi-pie-chart"></i> Expense Breakdown</div>
+          `).join('')}
+        </div>
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card mb-3">
+              <div class="card-header"><i class="bi bi-box-arrow-in-down-left"></i> Receive from Customer</div>
               <div class="card-body">
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Operating Expenses:</span>
-                  <strong class="text-danger">${formatCurrency(summary.operatingExpenses || 0)}</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Supplier Payments:</span>
-                  <strong class="text-danger">${formatCurrency(summary.supplierPayments || 0)}</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span>Other Expenses:</span>
-                  <strong class="text-danger">${formatCurrency(summary.otherExpenses || 0)}</strong>
-                </div>
-                <hr>
-                <div class="d-flex justify-content-between">
-                  <strong>Total Expenses:</strong>
-                  <strong class="text-danger">${formatCurrency(summary.totalExpenses)}</strong>
-                </div>
+                <form id="financialReceiveForm" onsubmit="submitFinancialReceive(event)">
+                  <div class="mb-3">
+                    <label class="form-label">Customer</label>
+                    <select class="form-select" name="customer" required>
+                      <option value="">Select customer</option>
+                      ${customerOptions}
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Deposit To</label>
+                    <select class="form-select" name="account" required>
+                      <option value="">Select account</option>
+                      ${accountOptions}
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Amount (Ksh)</label>
+                    <input type="number" class="form-control" name="amount" min="0" step="0.01" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Reference / Notes</label>
+                    <input type="text" class="form-control" name="reference" placeholder="Receipt no / M-Pesa code">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Extra Notes</label>
+                    <textarea class="form-control" name="notes" rows="2" placeholder="Optional"></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Record Receipt
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card mb-3">
+              <div class="card-header"><i class="bi bi-box-arrow-up-right"></i> Pay Supplier / Expense</div>
+              <div class="card-body">
+                <form id="financialExpenseForm" onsubmit="submitFinancialExpense(event)">
+                  <div class="mb-3">
+                    <label class="form-label">Pay From</label>
+                    <select class="form-select" name="account" required>
+                      <option value="">Select account</option>
+                      ${accountOptions}
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Expense Category</label>
+                    <select class="form-select" name="category" required>
+                      <option value="">Select category</option>
+                      ${categoryOptions}
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Payee / Supplier</label>
+                    <input type="text" class="form-control" name="payee" placeholder="Supplier name" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Amount (Ksh)</label>
+                    <input type="number" class="form-control" name="amount" min="0" step="0.01" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-control" name="notes" rows="2" placeholder="Purpose or reference"></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-wallet2"></i> Pay Supplier
+                  </button>
+                </form>
               </div>
             </div>
           </div>
@@ -4429,6 +4504,107 @@
       `;
 
       container.innerHTML = html;
+    }
+
+    function submitFinancialReceive(event) {
+      event.preventDefault();
+      const form = document.getElementById('financialReceiveForm');
+      const btn = form.querySelector('button[type="submit"]');
+      const amount = parseFloat(form.amount.value);
+      if (!amount || amount <= 0) {
+        showFinancialAlert('Enter a valid amount.', 'warning');
+        return;
+      }
+      toggleFinancialButton(btn, true, 'Recording...');
+      const customerId = form.customer.value;
+      const customerName = form.customer.options[form.customer.selectedIndex]?.text || '';
+
+      const payload = {
+        txnType: 'client_payment',
+        account: form.account.value,
+        amount: amount,
+        customerId: customerId,
+        customerName: customerName,
+        ref: form.reference.value,
+        notes: form.notes.value,
+        method: form.account.value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          toggleFinancialButton(btn, false, 'Record Receipt');
+          if (res && res.success) {
+            form.reset();
+            showFinancialAlert(res.message || 'Payment recorded.', 'success');
+            loadFinancialsSection();
+          } else {
+            showFinancialAlert(res && res.message ? res.message : 'Unable to record payment.', 'danger');
+          }
+        })
+        .withFailureHandler(function(error) {
+          toggleFinancialButton(btn, false, 'Record Receipt');
+          showFinancialAlert(error.message || 'Failed to record payment.', 'danger');
+        })
+        .handleFinancialTransaction(payload);
+    }
+
+    function submitFinancialExpense(event) {
+      event.preventDefault();
+      const form = document.getElementById('financialExpenseForm');
+      const btn = form.querySelector('button[type="submit"]');
+      const amount = parseFloat(form.amount.value);
+      if (!amount || amount <= 0) {
+        showFinancialAlert('Enter a valid amount.', 'warning');
+        return;
+      }
+      toggleFinancialButton(btn, true, 'Saving...');
+
+      const payload = {
+        txnType: 'expense',
+        account: form.account.value,
+        category: form.category.value,
+        payee: form.payee.value,
+        notes: form.notes.value,
+        amount: amount,
+        method: form.account.value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          toggleFinancialButton(btn, false, 'Pay Supplier');
+          if (res && res.success) {
+            form.reset();
+            showFinancialAlert(res.message || 'Expense recorded.', 'success');
+            loadFinancialsSection();
+          } else {
+            showFinancialAlert(res && res.message ? res.message : 'Unable to record expense.', 'danger');
+          }
+        })
+        .withFailureHandler(function(error) {
+          toggleFinancialButton(btn, false, 'Pay Supplier');
+          showFinancialAlert(error.message || 'Failed to record expense.', 'danger');
+        })
+        .handleFinancialTransaction(payload);
+    }
+
+    function showFinancialAlert(message, type) {
+      const alertBox = document.getElementById('financialAlert');
+      if (!alertBox) return;
+      alertBox.className = 'alert alert-' + (type || 'info');
+      alertBox.textContent = message;
+      alertBox.style.display = 'block';
+    }
+
+    function toggleFinancialButton(btn, loading, text) {
+      if (!btn) return;
+      if (loading) {
+        btn.dataset.originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + text;
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = btn.dataset.originalText || text;
+      }
     }
 
     // Reports Section
