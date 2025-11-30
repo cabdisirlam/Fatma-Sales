@@ -714,6 +714,21 @@
     .hidden {
       display: none;
     }
+
+    /* Offline banner */
+    .offline-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff3cd;
+      color: #856404;
+      border-top: 1px solid #ffeeba;
+      padding: 8px 12px;
+      text-align: center;
+      font-size: 0.9rem;
+      z-index: 2000;
+    }
   </style>
 </head>
 <body>
@@ -753,6 +768,10 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div id="offlineBanner" class="offline-banner" style="display:none;">
+    Offline detected. Changes will be saved locally and retried when back online.
   </div>
   <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
@@ -2189,6 +2208,13 @@
     const navHistory = [];
     let isGoingBack = false;
     let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+    const draftStorage = {
+      save(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {} },
+      load(key) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } },
+      clear(key) { try { localStorage.removeItem(key); } catch (e) {} }
+    };
+    let submissionQueue = [];
+    let submissionQueue = [];
     const DATA_CACHE = {};
     let masterDataCache = [];
     let lastAddedMasterItemName = null;
@@ -3181,6 +3207,41 @@
       sessionStorage.clear();
       location.reload();
     }
+
+    // Offline banner handlers
+    function showOfflineBanner() {
+      const banner = document.getElementById('offlineBanner');
+      if (banner) banner.style.display = 'block';
+    }
+    function hideOfflineBanner() {
+      const banner = document.getElementById('offlineBanner');
+      if (banner) banner.style.display = 'none';
+    }
+    window.addEventListener('online', function() {
+      hideOfflineBanner();
+      processQueuedSubmissions();
+    });
+    window.addEventListener('offline', function() {
+      showOfflineBanner();
+    });
+
+    // Offline banner handlers
+    function showOfflineBanner() {
+      const banner = document.getElementById('offlineBanner');
+      if (banner) banner.style.display = 'block';
+    }
+    function hideOfflineBanner() {
+      const banner = document.getElementById('offlineBanner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    window.addEventListener('online', function() {
+      hideOfflineBanner();
+      processQueuedSubmissions();
+    });
+    window.addEventListener('offline', function() {
+      showOfflineBanner();
+    });
 
     // ==================== MOBILE MENU ====================
     function toggleSidebarMobile() {
@@ -4582,6 +4643,7 @@
       `;
 
       container.innerHTML = html;
+      attachFinancialDrafts();
     }
 
     function submitFinancialReceive(event) {
@@ -4593,6 +4655,7 @@
         showFinancialAlert('Enter a valid amount.', 'warning');
         return;
       }
+      draftStorage.save('draft.fin.receive', formToObject(form));
       toggleFinancialButton(btn, true, 'Recording...');
       const customerId = form.customer.value;
       const customerName = form.customer.options[form.customer.selectedIndex]?.text || '';
@@ -4614,6 +4677,7 @@
           if (res && res.success) {
             form.reset();
             showFinancialAlert(res.message || 'Payment recorded.', 'success');
+            draftStorage.clear('draft.fin.receive');
             loadFinancialsSection();
           } else {
             showFinancialAlert(res && res.message ? res.message : 'Unable to record payment.', 'danger');
@@ -4621,7 +4685,12 @@
         })
         .withFailureHandler(function(error) {
           toggleFinancialButton(btn, false, 'Record Receipt');
-          showFinancialAlert(error.message || 'Failed to record payment.', 'danger');
+          if (!navigator.onLine) {
+            queueSubmission(payload, 'draft.fin.receive');
+            showFinancialAlert('Offline: saved locally, will retry when online.', 'warning');
+          } else {
+            showFinancialAlert(error.message || 'Failed to record payment.', 'danger');
+          }
         })
         .handleFinancialTransaction(payload);
     }
@@ -4654,6 +4723,7 @@
         amount: amount,
         method: form.account.value
       };
+      draftStorage.save('draft.fin.expense', formToObject(form));
 
       google.script.run
         .withSuccessHandler(function(res) {
@@ -4661,6 +4731,7 @@
           if (res && res.success) {
             form.reset();
             showFinancialAlert(res.message || 'Expense recorded.', 'success');
+            draftStorage.clear('draft.fin.expense');
             loadFinancialsSection();
           } else {
             showFinancialAlert(res && res.message ? res.message : 'Unable to record expense.', 'danger');
@@ -4668,7 +4739,12 @@
         })
         .withFailureHandler(function(error) {
           toggleFinancialButton(btn, false, 'Pay Supplier');
-          showFinancialAlert(error.message || 'Failed to record expense.', 'danger');
+          if (!navigator.onLine) {
+            queueSubmission(payload, 'draft.fin.expense');
+            showFinancialAlert('Offline: saved locally, will retry when online.', 'warning');
+          } else {
+            showFinancialAlert(error.message || 'Failed to record expense.', 'danger');
+          }
         })
         .handleFinancialTransaction(payload);
     }
@@ -4691,6 +4767,7 @@
         notes: form.notes.value,
         method: form.account.value
       };
+      draftStorage.save('draft.fin.opening', formToObject(form));
 
       google.script.run
         .withSuccessHandler(function(res) {
@@ -4698,6 +4775,7 @@
           if (res && res.success) {
             form.reset();
             showFinancialAlert(res.message || 'Opening/Adjustment recorded.', 'success');
+            draftStorage.clear('draft.fin.opening');
             loadFinancialsSection();
           } else {
             showFinancialAlert(res && res.message ? res.message : 'Unable to record opening.', 'danger');
@@ -4705,7 +4783,12 @@
         })
         .withFailureHandler(function(error) {
           toggleFinancialButton(btn, false, 'Record Inflow');
-          showFinancialAlert(error.message || 'Failed to record opening.', 'danger');
+          if (!navigator.onLine) {
+            queueSubmission(payload, 'draft.fin.opening');
+            showFinancialAlert('Offline: saved locally, will retry when online.', 'warning');
+          } else {
+            showFinancialAlert(error.message || 'Failed to record opening.', 'danger');
+          }
         })
         .handleFinancialTransaction(payload);
     }
@@ -4728,6 +4811,63 @@
         btn.disabled = false;
         btn.innerHTML = btn.dataset.originalText || text;
       }
+    }
+
+    function queueSubmission(payload, draftKey) {
+      const queue = draftStorage.load('queued.submissions') || [];
+      queue.push({ payload: payload, draftKey: draftKey, ts: Date.now() });
+      draftStorage.save('queued.submissions', queue);
+    }
+
+    function processQueuedSubmissions() {
+      const queue = draftStorage.load('queued.submissions') || [];
+      if (queue.length === 0) return;
+      const next = queue.shift();
+      if (!next || !next.payload) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success && next.draftKey) {
+            draftStorage.clear(next.draftKey);
+          }
+          draftStorage.save('queued.submissions', queue);
+          if (queue.length > 0) processQueuedSubmissions();
+        })
+        .withFailureHandler(function() {
+          // push back and stop; will retry on next online event
+          queue.unshift(next);
+          draftStorage.save('queued.submissions', queue);
+        })
+        .handleFinancialTransaction(next.payload);
+    }
+
+    function formToObject(form) {
+      const obj = {};
+      Array.from(form.elements).forEach(el => {
+        if (el.name) obj[el.name] = el.value;
+      });
+      return obj;
+    }
+
+    function restoreForm(form, data) {
+      if (!form || !data) return;
+      Object.keys(data).forEach(k => {
+        if (form[k]) form[k].value = data[k];
+      });
+    }
+
+    function attachFinancialDrafts() {
+      // Restore drafts
+      restoreForm(document.getElementById('financialReceiveForm'), draftStorage.load('draft.fin.receive'));
+      restoreForm(document.getElementById('financialExpenseForm'), draftStorage.load('draft.fin.expense'));
+      restoreForm(document.getElementById('financialOpeningForm'), draftStorage.load('draft.fin.opening'));
+
+      // Auto-save on change
+      const receiveForm = document.getElementById('financialReceiveForm');
+      if (receiveForm) receiveForm.addEventListener('input', () => draftStorage.save('draft.fin.receive', formToObject(receiveForm)));
+      const expenseForm = document.getElementById('financialExpenseForm');
+      if (expenseForm) expenseForm.addEventListener('input', () => draftStorage.save('draft.fin.expense', formToObject(expenseForm)));
+      const openingForm = document.getElementById('financialOpeningForm');
+      if (openingForm) openingForm.addEventListener('input', () => draftStorage.save('draft.fin.opening', formToObject(openingForm)));
     }
 
     function loadFinancialStatement() {
