@@ -692,55 +692,55 @@
 
     <ul class="menu-items">
       <li class="menu-item">
-        <a id="menu-dashboard" href="#" class="active" onclick="showSection('dashboard', event)">
+        <a id="menu-dashboard" href="javascript:void(0)" data-section="dashboard" class="active" onclick="showSection('dashboard', event)">
           <i class="bi bi-grid-fill"></i>
           <span>Dashboard</span>
         </a>
       </li>
       <li class="menu-item">
-        <a id="menu-sales" href="#" onclick="showSection('sales', event)">
+        <a id="menu-sales" href="javascript:void(0)" data-section="sales" onclick="showSection('sales', event)">
           <i class="bi bi-cart-check-fill"></i>
           <span>Sales</span>
         </a>
       </li>
       <li class="menu-item">
-        <a id="menu-inventory" href="#" onclick="showSection('inventory', event)">
+        <a id="menu-inventory" href="javascript:void(0)" data-section="inventory" onclick="showSection('inventory', event)">
           <i class="bi bi-box-seam-fill"></i>
           <span>Inventory</span>
         </a>
       </li>
       <li class="menu-item">
-        <a id="menu-customers" href="#" onclick="showSection('customers', event)">
+        <a id="menu-customers" href="javascript:void(0)" data-section="customers" onclick="showSection('customers', event)">
           <i class="bi bi-people-fill"></i>
           <span>Customers</span>
         </a>
       </li>
       <li class="menu-item">
-        <a id="menu-suppliers" href="#" onclick="showSection('suppliers', event)">
+        <a id="menu-suppliers" href="javascript:void(0)" data-section="suppliers" onclick="showSection('suppliers', event)">
           <i class="bi bi-truck"></i>
           <span>Suppliers</span>
         </a>
       </li>
       <li class="menu-item">
-        <a id="menu-financials" href="#" onclick="showSection('financials', event)">
+        <a id="menu-financials" href="javascript:void(0)" data-section="financials" onclick="showSection('financials', event)">
           <i class="bi bi-cash-coin"></i>
           <span>Financials</span>
         </a>
       </li>
       <li class="menu-item">
-        <a id="menu-reports" href="#" onclick="showSection('reports', event)">
+        <a id="menu-reports" href="javascript:void(0)" data-section="reports" onclick="showSection('reports', event)">
           <i class="bi bi-graph-up"></i>
           <span>Reports</span>
         </a>
       </li>
       <li class="menu-item">
-        <a id="menu-users" href="#" onclick="showSection('users', event)">
+        <a id="menu-users" href="javascript:void(0)" data-section="users" onclick="showSection('users', event)">
           <i class="bi bi-person-badge-fill"></i>
           <span>Users</span>
         </a>
       </li>
       <li class="menu-item">
-        <a id="menu-settings" href="#" onclick="showSection('settings', event)">
+        <a id="menu-settings" href="javascript:void(0)" data-section="settings" onclick="showSection('settings', event)">
           <i class="bi bi-gear-fill"></i>
           <span>Settings</span>
         </a>
@@ -2078,6 +2078,7 @@
     let isGoingBack = false;
     let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
     const DATA_CACHE = {};
+    let masterDataCache = [];
     let dashboardSuppliersData = [];
     let dashboardCustomersData = [];
 
@@ -2089,9 +2090,25 @@
       }).getActiveUserEmail();
     }
 
+    // Load master data (item name/category) for inventory quick-add
+    function loadMasterData() {
+      google.script.run.withSuccessHandler(function(data) {
+        masterDataCache = data || [];
+        updateMasterDataDropdown();
+      }).getMasterItems();
+    }
+
     // ==================== INITIALIZATION ====================
     // ==================== MAIN INITIALIZATION ====================
     document.addEventListener('DOMContentLoaded', function() {
+      // Make sidebar links always call showSection with preventDefault
+      document.querySelectorAll('.menu-item a[data-section]').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          showSection(this.dataset.section, e);
+        });
+      });
+
       // Initialize user info
       loadUserInfo();
       loadDashboardStats();
@@ -3328,6 +3345,11 @@
       const container = document.getElementById('section-inventory');
       if (!container) return;
 
+      // Fetch master data for product names/categories when needed
+      if (masterDataCache.length === 0 || forceRefresh) {
+        loadMasterData();
+      }
+
       // 1. Check Cache: If we have data and aren't forcing a refresh, use it!
       if (!forceRefresh && DATA_CACHE['inventory']) {
         console.log("Loading Inventory from Cache (Fast!)");
@@ -3386,11 +3408,14 @@
             <div class="row g-2">
               <div class="col-md-4">
                 <label class="form-label">Item Name</label>
-                <input type="text" class="form-control" name="itemName" placeholder="e.g., Coffee Beans" required>
+                <input type="text" class="form-control" name="itemName" list="masterDataList" placeholder="Search master list..." autocomplete="off" required onchange="onQuickAddItemSelect(this)">
+                <datalist id="masterDataList">
+                  ${masterDataCache.map(item => `<option value="${item.Item_Name}">`).join('')}
+                </datalist>
               </div>
               <div class="col-md-4">
                 <label class="form-label">Category</label>
-                <input type="text" class="form-control" name="category" placeholder="Beverages">
+                <input type="text" class="form-control" name="category" id="quickAddCategory" placeholder="Auto-filled" readonly style="background-color: #e9ecef;">
               </div>
               <div class="col-md-2">
                 <label class="form-label">Cost</label>
@@ -5145,6 +5170,30 @@
       if (confirm('Are you sure you want to logout?')) {
         sessionStorage.clear();
         location.reload();
+      }
+    }
+
+    // Helper to populate category when an Item Name is selected from master list
+    function onQuickAddItemSelect(inputElement) {
+      const selectedName = inputElement.value;
+      const item = masterDataCache.find(i => i.Item_Name === selectedName);
+      const categoryInput = document.getElementById('quickAddCategory');
+
+      if (item && categoryInput) {
+        categoryInput.value = item.Category;
+
+        // Optional usability: focus cost for faster data entry
+        const form = inputElement.closest('form');
+        const costInput = form ? form.querySelector('input[name=\"cost\"]') : null;
+        if (costInput) costInput.focus();
+      }
+    }
+
+    // Refresh the datalist if master data loads after UI renders
+    function updateMasterDataDropdown() {
+      const dataList = document.getElementById('masterDataList');
+      if (dataList && masterDataCache.length > 0) {
+        dataList.innerHTML = masterDataCache.map(item => `<option value=\"${item.Item_Name}\">`).join('');
       }
     }
 
