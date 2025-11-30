@@ -45,11 +45,13 @@ function getFinancialUiData() {
           const type = typeCol > -1 ? coaData[i][typeCol] : '';
           const cat = catCol > -1 ? coaData[i][catCol] : '';
 
+          const codeNum = parseInt(code, 10);
           const codeStr = code ? code.toString() : '';
           const typeStr = type ? type.toString().toLowerCase() : '';
           const catStr = cat ? cat.toString().toLowerCase() : '';
 
-          const isExpense = (codeStr.startsWith('6000')) || typeStr.includes('expense') || catStr.includes('expense');
+          // Treat expense if 6000-6999 range or labeled expense
+          const isExpense = ((codeNum >= 6000 && codeNum <= 6999) || codeStr.startsWith('6000') || typeStr.includes('expense') || catStr.includes('expense'));
           if (isExpense) {
             const label = name || cat || codeStr;
             if (label) categories.push(label);
@@ -405,17 +407,26 @@ function getAccountReport(accountName, startDate, endDate) {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
+    const target = (accountName || '').toString().trim().toLowerCase();
+
     let openingBalance = openingBalances[accountName] || 0;
     let totalCredits = 0; 
     let totalDebits = 0;
     const transactions = [];
     
-    financials.sort((a, b) => new Date(a.DateTime) - new Date(b.DateTime));
+    // Sort safely even if DateTime missing/invalid
+    financials.sort((a, b) => {
+      const da = new Date(a.DateTime);
+      const db = new Date(b.DateTime);
+      return da - db;
+    });
     
     financials.forEach(txn => {
-      if (txn.Account !== accountName) return;
+      const acc = (txn.Account || '').toString().trim().toLowerCase();
+      if (acc !== target) return;
 
-      const txnDate = new Date(txn.DateTime);
+      const txnDateRaw = txn.DateTime ? new Date(txn.DateTime) : new Date();
+      const txnDate = isNaN(txnDateRaw.getTime()) ? new Date() : txnDateRaw;
       const credit = parseFloat(txn.Credit) || 0;
       const debit = parseFloat(txn.Debit) || 0;
 
