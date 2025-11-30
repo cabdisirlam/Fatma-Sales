@@ -81,7 +81,8 @@ function getSalesHistory(limit, startDate, endDate) {
         Customer_Name: row.Customer_Name,
         Payment_Mode: row.Payment_Mode,
         Grand_Total: parseFloat(row.Grand_Total) || 0,
-        Status: row.Status || 'Completed'
+        Status: row.Status || 'Completed',
+        Type: row.Type
       });
     }
 

@@ -83,15 +83,15 @@ function generateReceiptHTML(transactionId) {
             </tr>
           </thead>
           <tbody>
-            ${sale.items.map(i => `
+            ${(sale.items && Array.isArray(sale.items)) ? sale.items.map(i => `
               <tr>
-                <td colspan="2" class="item-name">${i.Item_Name}</td>
+                <td colspan="2" class="item-name">${i ? i.Item_Name : 'N/A'}</td>
               </tr>
               <tr>
-                <td>  ${i.Qty} x ${formatNumber(i.Unit_Price)}</td>
-                <td class="item-details">${formatNumber(i.Line_Total)}</td>
+                <td>  ${i ? i.Qty : 0} x ${formatNumber(i ? i.Unit_Price : 0)}</td>
+                <td class="item-details">${formatNumber(i ? i.Line_Total : 0)}</td>
               </tr>
-            `).join('')}
+            `).join('') : ''}
           </tbody>
         </table>
 
