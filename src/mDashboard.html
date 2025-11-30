@@ -1104,12 +1104,6 @@
                     <div class="row mb-3">
                       <div class="col-md-6">
                         <label class="form-label fw-bold">Customer</label>
-                        <div class="input-group mb-2">
-                          <input type="text" class="form-control" id="customerSearchInput" placeholder="Type to filter customers..." oninput="filterDashCustomers()" autocomplete="off">
-                          <button class="btn btn-outline-secondary" type="button" onclick="resetToWalkIn()" title="Clear / Walk-in">
-                            <i class="bi bi-x-lg"></i>
-                          </button>
-                        </div>
                         <div class="d-flex gap-2 mb-2">
                           <button class="btn btn-sm btn-outline-secondary" type="button" onclick="refreshQuickSaleCustomers()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
                           <button class="btn btn-sm btn-outline-primary" type="button" onclick="showSection('customers')"><i class="bi bi-plus-circle"></i> Add Customer</button>
@@ -1159,7 +1153,7 @@
                       <div class="col-md-5">
                         <div class="d-flex justify-content-between align-items-center">
                           <label class="form-label fw-bold mb-0">Product</label>
-                          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadNewSaleInDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadNewSaleInDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh Items</button>
                         </div>
                         <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()">
                           <option value="">-- Choose Item --</option>
@@ -2268,6 +2262,15 @@
         return;
       }
 
+      const cached = dashCustomers.find(c => c.Customer_ID === customerId);
+      if (cached) {
+        if (dispPhone) dispPhone.value = cached.Phone || '';
+        if (dispEmail) dispEmail.value = cached.Email || '';
+        if (dispKra) dispKra.value = cached.KRA_PIN || '';
+        if (dispLoc) dispLoc.value = cached.Location || '';
+        if (dispLoyalty) dispLoyalty.value = cached.Loyalty_Points || 0;
+      }
+
       google.script.run.withSuccessHandler(details => {
         if (details) {
           if (dispPhone) dispPhone.value = details.Phone || '';
@@ -3281,18 +3284,6 @@
       // Load Customers
       google.script.run.withSuccessHandler(function(customers) {
         dashCustomers = customers || [];
-        const datalist = document.getElementById('customerDatalist');
-        if (datalist) {
-          datalist.innerHTML = '';
-          if (dashCustomers.length > 0) {
-            dashCustomers.sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
-            dashCustomers.forEach(c => {
-              const opt = document.createElement('option');
-              opt.value = `${c.Customer_Name} | ${c.Phone}`;
-              datalist.appendChild(opt);
-            });
-          }
-        }
         populateCustomerSelect(dashCustomers);
         resetToWalkIn();
       }).getCustomers();
@@ -3312,27 +3303,6 @@
           });
         }
       }).getInventory();
-    }
-
-    // --- Handle customer filtering/search (by Customer_Name only) ---
-    function filterDashCustomers() {
-      const term = (document.getElementById('customerSearchInput').value || '').toLowerCase();
-      const filtered = term
-        ? dashCustomers.filter(c => (c.Customer_Name || '').toLowerCase().includes(term))
-        : dashCustomers;
-      populateCustomerSelect(filtered);
-    }
-
-    function resetToWalkIn() {
-      const searchInput = document.getElementById('customerSearchInput');
-      if (searchInput) searchInput.value = '';
-      const sel = document.getElementById('dashSaleCustomer');
-      if (sel) sel.value = '';
-      document.getElementById('custPhoneVal').value = '';
-      document.getElementById('custEmailVal').value = '';
-      document.getElementById('custKraVal').value = '';
-      document.getElementById('custLocVal').value = '';
-      document.getElementById('custLoyaltyVal').value = '';
     }
 
     function populateCustomerSelect(list) {
