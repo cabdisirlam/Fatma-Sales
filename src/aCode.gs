@@ -28,16 +28,20 @@ function doGet(e) {
     
     const { htmlFile, title } = viewRoutes[viewName] || defaultRoute;
 
-    // ✅ FIXED: Changed from ALLOWALL to SAMEORIGIN to prevent clickjacking
+    // ✅ FIXED: Changed from ALLOWALL to SAME_ORIGIN to prevent clickjacking
     // Only allow embedding from same origin (prevents malicious iframe embedding)
-    const xFrameMode = CONFIG.ALLOW_IFRAME_EMBEDDING
-      ? HtmlService.XFrameOptionsMode.ALLOWALL
-      : HtmlService.XFrameOptionsMode.SAMEORIGIN;
-
-    return HtmlService.createHtmlOutputFromFile(htmlFile)
+    const output = HtmlService.createHtmlOutputFromFile(htmlFile)
       .setTitle(title)
-      .setXFrameOptionsMode(xFrameMode)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+
+    // Set X-Frame-Options based on configuration
+    if (CONFIG.ALLOW_IFRAME_EMBEDDING) {
+      output.setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    } else {
+      output.setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
+    }
+
+    return output;
       
   } catch (error) {
     return HtmlService.createHtmlOutput('<h3>Error loading application: ' + error.message + '</h3>');
