@@ -21,7 +21,8 @@ function getFinancialUiData() {
       const accCol = finData[0].indexOf('Account');
       if (accCol > -1) {
         for (let i = 1; i < finData.length; i++) {
-          if (finData[i][accCol]) accountSet.add(finData[i][accCol]);
+            const acc = canonicalizeAccountName(finData[i][accCol]);
+            if (acc) accountSet.add(acc);
         }
       }
     }
@@ -117,26 +118,9 @@ function getFinancialUiData() {
  * Returns an object keyed by account name
  */
 function getOpeningBalanceMap() {
-  const balances = {};
-  try {
-    const sheet = getSheet('Chart_of_Accounts');
-    const data = sheet.getDataRange().getValues();
-    if (data.length <= 1) return balances;
-
-    const headers = data[0];
-    const nameCol = headers.indexOf('Account_Name');
-    const openingCol = headers.indexOf('Opening_Balance');
-    if (nameCol === -1 || openingCol === -1) return balances;
-
-    for (let i = 1; i < data.length; i++) {
-      const name = data[i][nameCol];
-      if (!name) continue;
-      balances[name.toString().trim()] = parseFloat(data[i][openingCol]) || 0;
-    }
-  } catch (e) {
-    logError('getOpeningBalanceMap', e);
-  }
-  return balances;
+  // Preferred approach: use recorded opening/adjustment transactions instead of Chart_of_Accounts to avoid double counting.
+  // Return empty map (zero) so balances rely on movement + opening inflow entries.
+  return {};
 }
 
 // =====================================================
@@ -246,7 +230,9 @@ function handleFinancialTransaction(data) {
         credit = amount;
         // Also update Customer Balance
         // Payment reduces what customer owes, so subtract from balance
-        updateCustomerBalance(data.customerId, -amount, user);
+        if (data.customerId) {
+          updateCustomerBalance(data.customerId, -amount, user);
+        }
         break;
 
       case 'expense': // Money Out
@@ -290,6 +276,10 @@ function handleFinancialTransaction(data) {
        default:
          throw new Error("Unknown transaction type");
     }
+
+    // 3b. Normalize account name before storage
+    const accountDisplay = canonicalizeAccountName(data.account);
+    data.account = accountDisplay;
 
     // 4. Prepare Row Data (Matching 18 Columns Header Structure)
     // Headers: Transaction_ID, DateTime, Type, Customer_ID, Category, Account, Description, Amount, Debit, Credit, Balance, Payment_Method, Payee, Receipt_No, Reference, Status, Approved_By, User
@@ -339,8 +329,14 @@ function getFinancialSummary(startDate, endDate) {
     const defaultAccounts = ['Equity Bank', 'M-Pesa', 'Cash'];
     let txns = financials;
     
-    if (startDate) txns = txns.filter(t => new Date(t.DateTime) >= new Date(startDate));
-    if (endDate) txns = txns.filter(t => new Date(t.DateTime) <= new Date(endDate));
+    if (startDate) {
+      const start = parseTxnDate(startDate);
+      txns = txns.filter(t => parseTxnDate(t.DateTime) >= start);
+    }
+    if (endDate) {
+      const end = parseTxnDate(endDate);
+      txns = txns.filter(t => parseTxnDate(t.DateTime) <= end);
+    }
 
     let totalRevenue = 0;
     let totalExpenses = 0;
@@ -353,7 +349,7 @@ function getFinancialSummary(startDate, endDate) {
     txns.forEach(txn => {
       const debit = parseFloat(txn.Debit) || 0;
       const credit = parseFloat(txn.Credit) || 0;
-      const acc = txn.Account || 'Unknown';
+      const acc = canonicalizeAccountName(txn.Account || 'Unknown');
 
       accountSet.add(acc);
 
@@ -427,7 +423,7 @@ function getAccountReport(accountName, startDate, endDate) {
     const start = hasStart ? parseTxnDate(startDate) : new Date(0);
     const end = hasEnd ? parseTxnDate(endDate) : new Date('2999-12-31T23:59:59Z');
 
-    const target = (accountName || '').toString().trim().toLowerCase();
+    const target = canonicalizeAccountName(accountName || '').toLowerCase();
 
     let openingBalance = openingBalances[accountName] || 0;
     let totalCredits = 0; 
@@ -442,7 +438,7 @@ function getAccountReport(accountName, startDate, endDate) {
     });
     
     financials.forEach(txn => {
-      const acc = (txn.Account || '').toString().trim().toLowerCase();
+      const acc = canonicalizeAccountName(txn.Account || '').toLowerCase();
       if (acc !== target) return;
 
       const txnDate = parseTxnDate(txn.DateTime);
