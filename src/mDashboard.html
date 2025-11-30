@@ -5319,8 +5319,6 @@
             saveBtn.disabled = false;
             saveBtn.innerHTML = 'Save Item';
           }
-          // Force refresh of inventory section to reflect new master item if needed
-          loadInventorySection(true);
         })
         .withFailureHandler(function(error) {
           setMasterModalAlert('danger', error.message || 'Failed to save item.');

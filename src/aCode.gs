@@ -39,6 +39,20 @@ function doGet(e) {
 }
 
 /**
+ * Simple required-field validator used across modules
+ * Throws an error listing missing fields
+ */
+function validateRequired(data, fields) {
+  if (!data || !Array.isArray(fields)) {
+    throw new Error('Invalid validation input');
+  }
+  const missing = fields.filter(f => data[f] === undefined || data[f] === null || data[f] === '');
+  if (missing.length > 0) {
+    throw new Error('Missing required fields: ' + missing.join(', '));
+  }
+}
+
+/**
  * Returns the published web app URL for client-side navigation
  */
 function getWebAppUrl() {
