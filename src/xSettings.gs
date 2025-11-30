@@ -50,12 +50,12 @@ function getBusinessInfo() {
       Currency_Symbol: getSetting('Currency_Symbol') || 'Ksh',
       Currency_Rounding: rounding === true || rounding === 'true' || rounding === 'TRUE',
       Tax_Rate: getSetting('Tax_Rate') || 0,
-      Receipt_Header: getSetting('Receipt_Header') || 'Beipoa Kenya',
-      Receipt_Footer: getSetting('Receipt_Footer') || 'Pata Kila Kitu Na Bei Poa',
+      Receipt_Header: getSetting('Receipt_Header') || CONFIG.SHOP_NAME,
+      Receipt_Footer: getSetting('Receipt_Footer') || 'Thank you for shopping with us!',
       Include_Shop_Logo: includeLogo === true || includeLogo === 'true' || includeLogo === 'TRUE',
       Date_Format: getSetting('Date_Format') || CONFIG.DATE_FORMAT,
       Timezone: getSetting('Timezone') || 'Africa/Mogadishu',
-      System_Version: getSetting('System_Version') || '2.0.0'
+      System_Version: getSetting('System_Version') || '3.0.0'
     };
   } catch (error) {
     logError('getBusinessInfo', error);
@@ -162,5 +162,57 @@ function getSettingValue(key) {
   } catch (error) {
     Logger.log('Error in getSettingValue: ' + error.message);
     return null;
+  }
+}
+
+/**
+ * ONE-TIME MIGRATION: Update old Beipoa branding to Smatika
+ * Run this once after deployment to update existing settings
+ */
+function migrateToSmatikaKenyaBranding() {
+  try {
+    Logger.log('Starting migration to Smatika Kenya branding...');
+
+    // Update Shop_Name if it's still "Beipoa Kenya"
+    const currentShopName = getSetting('Shop_Name');
+    if (currentShopName === 'Beipoa Kenya' || !currentShopName) {
+      setSettingValue('Shop_Name', 'Smatika Kenya');
+      Logger.log('✓ Updated Shop_Name to Smatika Kenya');
+    }
+
+    // Update Receipt_Header if it's still "Beipoa Kenya"
+    const currentReceiptHeader = getSetting('Receipt_Header');
+    if (currentReceiptHeader === 'Beipoa Kenya' || !currentReceiptHeader) {
+      setSettingValue('Receipt_Header', 'Smatika Kenya');
+      Logger.log('✓ Updated Receipt_Header to Smatika Kenya');
+    }
+
+    // Update Receipt_Footer
+    const currentReceiptFooter = getSetting('Receipt_Footer');
+    if (currentReceiptFooter === 'Pata Kila Kitu Na Bei Poa' || !currentReceiptFooter) {
+      setSettingValue('Receipt_Footer', 'Thank you for shopping with us!');
+      Logger.log('✓ Updated Receipt_Footer');
+    }
+
+    logAudit(
+      'SYSTEM',
+      'Settings',
+      'Migration',
+      'Migrated branding from Beipoa Kenya to Smatika Kenya',
+      '',
+      '',
+      ''
+    );
+
+    Logger.log('Migration complete! Receipts will now show Smatika Kenya');
+
+    return {
+      success: true,
+      message: 'Successfully migrated to Smatika Kenya branding'
+    };
+
+  } catch (error) {
+    logError('migrateToSmatikaKenyaBranding', error);
+    throw new Error('Migration failed: ' + error.message);
   }
 }
