@@ -1198,7 +1198,7 @@
                       <div class="d-flex gap-2 align-items-center flex-wrap">
                         <button type="button" class="btn btn-outline-secondary" onclick="clearDashCart()">Clear</button>
 
-                        <input type="number" class="form-control" id="dashSaleDiscount" style="width: 130px;" placeholder="Enter discount" value="0" min="0" step="1">
+                        <input type="number" class="form-control" id="dashSaleDiscount" style="width: 130px;" placeholder="Enter discount" value="0" min="0" step="1" oninput="renderDashCart()">
 
                         <input type="number" class="form-control" id="dashDeliveryCharge" style="width: 140px;" placeholder="Enter delivery charge" value="0" min="0" step="1" oninput="renderDashCart()">
 

@@ -61,6 +61,37 @@ function formatCurrency(amount) {
 }
 
 /**
+ * Update Chart of Accounts balance (best-effort; skips if sheet/columns missing)
+ * @param {string} accountName
+ * @param {number} amount - positive to increase, negative to decrease
+ * @param {string} user
+ */
+function updateAccountBalance(accountName, amount, user) {
+  try {
+    const sheet = getSheet('Chart_of_Accounts');
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return;
+    const headers = data[0];
+    const nameCol = headers.indexOf('Account_Name');
+    const balCol = headers.indexOf('Balance');
+    if (nameCol === -1 || balCol === -1) return;
+
+    const target = accountName ? accountName.toString().trim().toLowerCase() : '';
+    for (let i = 1; i < data.length; i++) {
+      const rowName = (data[i][nameCol] || '').toString().trim().toLowerCase();
+      if (rowName === target) {
+        const current = parseFloat(data[i][balCol]) || 0;
+        sheet.getRange(i + 1, balCol + 1).setValue(current + (parseFloat(amount) || 0));
+        return;
+      }
+    }
+  } catch (e) {
+    logError('updateAccountBalance', e);
+    // Fail silently to avoid blocking transactions
+  }
+}
+
+/**
  * Returns the published web app URL for client-side navigation
  */
 function getWebAppUrl() {
