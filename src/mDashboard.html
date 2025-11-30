@@ -4359,7 +4359,9 @@
         return (a.name || '').localeCompare(b.name || '');
       });
 
-      const accountOptions = (ui.accounts || []).map(acc => `<option value="${acc}">${acc}</option>`).join('');
+      const depositAccounts = (ui.depositAccounts && ui.depositAccounts.length ? ui.depositAccounts : ui.accounts || []);
+      const accountOptions = (depositAccounts || []).map(acc => `<option value="${acc}">${acc}</option>`).join('');
+      const statementAccountOptions = (ui.accounts || []).map(acc => `<option value="${acc}">${acc}</option>`).join('');
       const customerOptions = (ui.customers || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
       const categoryOptions = (ui.categories || []).map(c => `<option value="${c}">${c}</option>`).join('');
       const supplierOptions = (ui.suppliers || []).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -4429,7 +4431,7 @@
           `).join('')}
         </div>
         <div class="row g-3">
-          <div class="col-lg-6">
+          <div class="col-lg-4">
             <div class="card mb-3">
               <div class="card-header"><i class="bi bi-box-arrow-in-down-left"></i> Receive from Customer</div>
               <div class="card-body">
@@ -4467,7 +4469,7 @@
               </div>
             </div>
           </div>
-          <div class="col-lg-6">
+          <div class="col-lg-4">
             <div class="card mb-3">
               <div class="card-header"><i class="bi bi-box-arrow-up-right"></i> Pay Supplier / Expense</div>
               <div class="card-body">
@@ -4512,14 +4514,41 @@
               </div>
             </div>
           </div>
+          <div class="col-lg-4">
+            <div class="card mb-3">
+              <div class="card-header"><i class="bi bi-piggy-bank"></i> Opening / Other Inflow</div>
+              <div class="card-body">
+                <form id="financialOpeningForm" onsubmit="submitFinancialOpening(event)">
+                  <div class="mb-3">
+                    <label class="form-label">Account</label>
+                    <select class="form-select" name="account" required>
+                      <option value="">Select account</option>
+                      ${accountOptions}
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Amount (Ksh)</label>
+                    <input type="number" class="form-control" name="amount" min="0" step="0.01" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-control" name="notes" rows="2" placeholder="Opening balance, adjustment, or other source"></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Record Inflow
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="card mb-4">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <div><i class="bi bi-file-earmark-text"></i> Account Statement</div>
-            <div class="d-flex gap-2">
-              <select class="form-select form-select-sm" id="finStatementAccount">
-                ${accountOptions}
-              </select>
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <div><i class="bi bi-file-earmark-text"></i> Account Statement</div>
+                <div class="d-flex gap-2">
+                  <select class="form-select form-select-sm" id="finStatementAccount">
+                    ${statementAccountOptions}
+                  </select>
               <input type="date" class="form-control form-control-sm" id="finStatementStart">
               <input type="date" class="form-control form-control-sm" id="finStatementEnd">
               <button class="btn btn-sm btn-primary" onclick="loadFinancialStatement()">
@@ -4536,8 +4565,8 @@
                     <th>Date</th>
                     <th>Type</th>
                     <th>Description</th>
-                    <th class="text-end">Inflow</th>
-                    <th class="text-end">Outflow</th>
+                    <th class="text-end">Credit (In)</th>
+                    <th class="text-end">Debit (Out)</th>
                     <th class="text-end">Balance</th>
                   </tr>
                 </thead>
@@ -4638,6 +4667,43 @@
         .withFailureHandler(function(error) {
           toggleFinancialButton(btn, false, 'Pay Supplier');
           showFinancialAlert(error.message || 'Failed to record expense.', 'danger');
+        })
+        .handleFinancialTransaction(payload);
+    }
+
+    function submitFinancialOpening(event) {
+      event.preventDefault();
+      const form = document.getElementById('financialOpeningForm');
+      const btn = form.querySelector('button[type="submit"]');
+      const amount = parseFloat(form.amount.value);
+      if (!amount || amount <= 0) {
+        showFinancialAlert('Enter a valid amount.', 'warning');
+        return;
+      }
+      toggleFinancialButton(btn, true, 'Saving...');
+
+      const payload = {
+        txnType: 'opening_balance',
+        account: form.account.value,
+        amount: amount,
+        notes: form.notes.value,
+        method: form.account.value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          toggleFinancialButton(btn, false, 'Record Inflow');
+          if (res && res.success) {
+            form.reset();
+            showFinancialAlert(res.message || 'Opening/Adjustment recorded.', 'success');
+            loadFinancialsSection();
+          } else {
+            showFinancialAlert(res && res.message ? res.message : 'Unable to record opening.', 'danger');
+          }
+        })
+        .withFailureHandler(function(error) {
+          toggleFinancialButton(btn, false, 'Record Inflow');
+          showFinancialAlert(error.message || 'Failed to record opening.', 'danger');
         })
         .handleFinancialTransaction(payload);
     }

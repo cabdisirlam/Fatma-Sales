@@ -86,8 +86,17 @@ function getFinancialUiData() {
       balance: s.Current_Balance
     }));
 
+    // 5. Filter bank/cash accounts for deposits (exclude inventory-like accounts)
+    const depositAccounts = Array.from(accountSet).filter(acc => {
+      const a = (acc || '').toString().toLowerCase();
+      if (!a) return false;
+      if (a.includes('inventory')) return false;
+      return a.includes('cash') || a.includes('m-pesa') || a.includes('mpesa') || a.includes('bank');
+    }).sort();
+
     return {
       accounts: Array.from(accountSet).sort(),
+      depositAccounts: depositAccounts,
       categories: categories.sort(),
       customers: customers.sort((a, b) => a.name.localeCompare(b.name)),
       suppliers: suppliers.sort((a, b) => a.name.localeCompare(b.name))
@@ -264,6 +273,12 @@ function handleFinancialTransaction(data) {
         type = 'Withdrawal';
         desc = 'Withdrawal: ' + (data.notes || 'Cash Withdrawal');
         debit = amount;
+        break;
+
+      case 'opening_balance': // Opening/Adjustment In (non-customer, non-supplier)
+        type = 'Opening_Balance';
+        desc = 'Opening/Adjustment: ' + (data.notes || data.account);
+        credit = amount;
         break;
         
       case 'add_account': // Opening Balance (Money In)
