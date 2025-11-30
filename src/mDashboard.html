@@ -1008,9 +1008,16 @@
       <!-- Sales Section -->
       <div class="content-section" id="section-sales">
         <div class="welcome-section" style="margin-bottom: 24px; padding: 32px;">
-          <i class="bi bi-cart-check-fill" style="font-size: 2.5rem; margin-bottom: 12px;"></i>
-          <h2 style="font-size: 1.75rem; margin-bottom: 8px;">Sales Management</h2>
-          <p style="font-size: 1rem;">Create sales, manage transactions, and track revenue</p>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <i class="bi bi-cart-check-fill" style="font-size: 2.5rem; margin-bottom: 12px;"></i>
+              <h2 style="font-size: 1.75rem; margin-bottom: 8px;">Sales Management</h2>
+              <p style="font-size: 1rem;">Create sales, manage transactions, and track revenue</p>
+            </div>
+            <button class="btn btn-outline-primary" onclick="refreshSalesOverview()" title="Refresh">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
         </div>
 
         <div class="stats-overview">
@@ -1234,10 +1241,13 @@
       <!-- Sales History Section -->
       <div class="content-section" id="section-sales-history">
         <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
-          <h3 class="d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-clock-history"></i> Sales History</span>
-            <small class="text-muted">Filter and manage sales</small>
-          </h3>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0"><i class="bi bi-clock-history"></i> Sales History</h3>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadSalesHistory()" title="Refresh">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
+          <p class="text-muted">Filter and manage sales</p>
 
           <!-- Filter Section -->
           <div class="row g-3 mt-3 mb-4">
@@ -1284,10 +1294,13 @@
       <!-- Sales Returns Section -->
       <div class="content-section" id="section-sales-returns">
         <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
-          <h3 class="d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-arrow-return-left"></i> Sales Returns</span>
-            <small class="text-muted">Items marked as returned</small>
-          </h3>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0"><i class="bi bi-arrow-return-left"></i> Sales Returns</h3>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadSalesReturns()" title="Refresh">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
+          <p class="text-muted">Items marked as returned</p>
           <div class="table-responsive mt-3">
             <table class="table table-hover align-middle">
               <thead class="table-light">
@@ -2391,11 +2404,36 @@
 
     // Load dashboard statistics
     function loadDashboardStats() {
-      // These will be replaced with actual data from backend
-      document.getElementById('totalSales').textContent = '0';
-      document.getElementById('totalProducts').textContent = '0';
-      document.getElementById('totalCustomers').textContent = '0';
-      document.getElementById('totalRevenue').textContent = 'Ksh 0';
+      // Load sales overview
+      google.script.run
+        .withSuccessHandler(function(data) {
+          document.getElementById('totalSales').textContent = data.saleCount || 0;
+          document.getElementById('totalRevenue').textContent = formatCurrency(data.totalRevenue || 0);
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading sales stats:', error);
+        })
+        .getSalesOverview();
+
+      // Load inventory count
+      google.script.run
+        .withSuccessHandler(function(inventory) {
+          document.getElementById('totalProducts').textContent = inventory.length || 0;
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading inventory count:', error);
+        })
+        .getInventory({});
+
+      // Load customers count
+      google.script.run
+        .withSuccessHandler(function(customers) {
+          document.getElementById('totalCustomers').textContent = customers.length || 0;
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading customers count:', error);
+        })
+        .getCustomers({});
     }
 
     // Toggle sidebar
@@ -3082,6 +3120,11 @@
           showSalesAlert('Error loading sales overview: ' + error.message, 'danger');
         })
         .getSalesOverview();
+    }
+
+    function refreshSalesOverview() {
+      showSalesAlert('Refreshing sales data...', 'info');
+      loadSalesOverview();
     }
 
     function loadSuppliersOverview() {

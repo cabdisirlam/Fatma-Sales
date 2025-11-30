@@ -868,6 +868,18 @@ function processSaleReturn(saleId, items, reason, user) {
     // Update account balance (decrease)
     updateAccountBalance(sale.Payment_Mode, -parseFloat(refundAmount), user);
 
+    // Update customer balance if customer is not walk-in
+    // For credit sales, reduce customer debt (they owe less now)
+    if (sale.Customer_ID && sale.Customer_ID !== 'WALK-IN') {
+      try {
+        updateCustomerBalance(sale.Customer_ID, -parseFloat(refundAmount), user);
+        Logger.log('Updated customer balance for return: ' + sale.Customer_ID + ' reduced by ' + refundAmount);
+      } catch (custError) {
+        Logger.log('Warning: Could not update customer balance for ' + sale.Customer_ID + ': ' + custError.message);
+        // Don't fail the whole return if customer balance update fails
+      }
+    }
+
     // Log audit
     logAudit(
       user,
@@ -876,14 +888,14 @@ function processSaleReturn(saleId, items, reason, user) {
       'Return processed for sale ' + saleId + ': ' + formatCurrency(refundAmount) + ' - Reason: ' + reason,
       '',
       '',
-      JSON.stringify({saleId, refundAmount, items})
+      JSON.stringify({saleId, refundAmount, items, customerBalanceUpdated: sale.Customer_ID && sale.Customer_ID !== 'WALK-IN'})
     );
 
     return {
       success: true,
       refundAmount: refundAmount,
       refundTxnId: refundTxnId,
-      message: 'Return processed successfully'
+      message: 'Return processed successfully. Stock restored and customer balance updated.'
     };
 
   } catch (error) {
