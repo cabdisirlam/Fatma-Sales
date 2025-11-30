@@ -634,3 +634,20 @@ function getSupplierStatement(supplierId, startDate, endDate) {
     throw new Error('Error generating supplier statement: ' + error.message);
   }
 }
+
+function getSuppliersOverview() {
+  try {
+    const suppliers = getSuppliers();
+    const purchases = sheetToObjects('Purchases');
+    
+    const pendingOrders = purchases.filter(p => p.Payment_Status === 'Pending').length;
+
+    return {
+      totalSuppliers: suppliers.length,
+      pendingOrders: pendingOrders
+    };
+  } catch (error) {
+    logError('getSuppliersOverview', error);
+    throw new Error('Unable to load suppliers overview: ' + error.message);
+  }
+}

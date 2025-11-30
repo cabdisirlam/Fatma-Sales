@@ -832,7 +832,7 @@
         <!-- Module Cards Grid -->
         <div class="dashboard-grid">
           <!-- Sales Module -->
-          <div class="module-card" onclick="loadModule('sales')">
+          <div class="module-card" onclick="showSection('sales')">
             <div class="module-icon">
               <i class="bi bi-cart-check-fill"></i>
             </div>
@@ -848,7 +848,7 @@
           </div>
 
           <!-- Inventory Module -->
-          <div class="module-card" onclick="loadModule('inventory')">
+          <div class="module-card" onclick="showSection('inventory')">
             <div class="module-icon">
               <i class="bi bi-box-seam-fill"></i>
             </div>
@@ -864,7 +864,7 @@
           </div>
 
           <!-- Customers Module -->
-          <div class="module-card" onclick="loadModule('customers')">
+          <div class="module-card" onclick="showSection('customers')">
             <div class="module-icon">
               <i class="bi bi-people-fill"></i>
             </div>
@@ -880,7 +880,7 @@
           </div>
 
           <!-- Suppliers Module -->
-          <div class="module-card" onclick="loadModule('suppliers')">
+          <div class="module-card" onclick="showSection('suppliers')">
             <div class="module-icon">
               <i class="bi bi-truck"></i>
             </div>
@@ -896,7 +896,7 @@
           </div>
 
           <!-- Financials Module -->
-          <div class="module-card" onclick="loadModule('financials')">
+          <div class="module-card" onclick="showSection('financials')">
             <div class="module-icon">
               <i class="bi bi-cash-coin"></i>
             </div>
@@ -912,7 +912,7 @@
           </div>
 
           <!-- Reports Module -->
-          <div class="module-card" onclick="loadModule('reports')">
+          <div class="module-card" onclick="showSection('reports')">
             <div class="module-icon">
               <i class="bi bi-graph-up"></i>
             </div>
@@ -928,7 +928,7 @@
           </div>
 
           <!-- Users Module -->
-          <div class="module-card" onclick="loadModule('users')">
+          <div class="module-card" onclick="showSection('users')">
             <div class="module-icon">
               <i class="bi bi-person-badge-fill"></i>
             </div>
@@ -944,7 +944,7 @@
           </div>
 
           <!-- Settings Module -->
-          <div class="module-card" onclick="loadModule('settings')">
+          <div class="module-card" onclick="showSection('settings')">
             <div class="module-icon">
               <i class="bi bi-gear-fill"></i>
             </div>
@@ -2426,20 +2426,28 @@
       if (sectionName === 'sales-history') loadSalesHistory();
       if (sectionName === 'sales-returns') loadSalesReturns();
       if (sectionName === 'sales-reports') loadSalesReports();
+      if (sectionName === 'sales') loadSalesSection();
     }
     else if (sectionName === 'inventory') loadInventorySection();
     else if (sectionName === 'customers') loadCustomersSection();
       else if (sectionName === 'quotations') loadQuotationsSection();
       else if (sectionName === 'financials') loadFinancialsSection();
       else if (sectionName === 'reports') loadReportsSection();
-      else if (sectionName === 'suppliers-list') loadSuppliersList();
-      else if (sectionName === 'suppliers-add') loadAddSupplier();
-      else if (sectionName === 'suppliers-orders') loadPurchaseOrders();
-      else if (sectionName === 'suppliers-payments') loadSupplierPayments();
-      else if (sectionName === 'users-list') loadUsersList();
-      else if (sectionName === 'users-add') loadCreateUser();
-      else if (sectionName === 'users-roles') loadUserRoles();
-      else if (sectionName === 'users-permissions') loadUserPermissions();
+      else if (sectionName.startsWith('suppliers')) {
+          loadSuppliersOverview();
+          if (sectionName === 'suppliers-list') loadSuppliersList();
+          if (sectionName === 'suppliers-add') loadAddSupplier();
+          if (sectionName === 'suppliers-orders') loadPurchaseOrders();
+          if (sectionName === 'suppliers-payments') loadSupplierPayments();
+          if (sectionName === 'suppliers') loadSuppliersSection();
+        }
+      else if (sectionName.startsWith('users')) {
+          loadUsersOverview();
+          if (sectionName === 'users-list') loadUsersList();
+          if (sectionName === 'users-add') loadCreateUser();
+          if (sectionName === 'users-roles') loadUserRoles();
+          if (sectionName === 'users-permissions') loadUserPermissions();
+        }
       else if (sectionName === 'settings') loadSettingsSection();
     }
 
@@ -2839,6 +2847,41 @@
           showSalesAlert('Error loading sales overview: ' + error.message, 'danger');
         })
         .getSalesOverview();
+    }
+
+    function loadSuppliersOverview() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          document.getElementById('supplierTotalCount').textContent = data.totalSuppliers || 0;
+          document.getElementById('supplierPendingOrders').textContent = data.pendingOrders || 0;
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading suppliers overview:', error);
+        })
+        .getSuppliersOverview();
+    }
+
+    function loadUsersOverview() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          document.getElementById('usersCount').textContent = data.totalUsers || 0;
+        })
+        .withFailureHandler(function(error) {
+          console.error('Error loading users overview:', error);
+        })
+        .getUsersOverview();
+    }
+
+    function loadSalesSection() {
+      // This function is a placeholder.
+      // You can add logic here to load any specific data needed for the main sales section.
+      console.log("Sales section loaded");
+    }
+
+    function loadSuppliersSection() {
+      // This function is a placeholder.
+      // You can add logic here to load any specific data needed for the main suppliers section.
+      console.log("Suppliers section loaded");
     }
 
     function loadSalesHistory() {

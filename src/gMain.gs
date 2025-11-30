@@ -535,3 +535,15 @@ function checkSystemHealth() {
     throw error;
   }
 }
+
+function getUsersOverview() {
+  try {
+    const users = sheetToObjects('Users');
+    return {
+      totalUsers: users.length
+    };
+  } catch (error) {
+    logError('getUsersOverview', error);
+    throw new Error('Unable to load users overview: ' + error.message);
+  }
+}
