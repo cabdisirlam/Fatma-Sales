@@ -1104,38 +1104,37 @@
                     <div class="row mb-3">
                       <div class="col-md-6">
                         <label class="form-label fw-bold">Customer</label>
-                        
-                        <div class="input-group">
-                          <input type="text" class="form-control" id="customerSearchInput" 
-                                 list="customerDatalist" 
-                                 placeholder="Type to search Name or Phone..." 
-                                 onchange="handleCustomerSearch(this)"
-                                 autocomplete="off">
+                        <div class="input-group mb-2">
+                          <input type="text" class="form-control" id="customerSearchInput" placeholder="Type to filter customers..." oninput="filterDashCustomers()" autocomplete="off">
                           <button class="btn btn-outline-secondary" type="button" onclick="resetToWalkIn()" title="Clear / Walk-in">
                             <i class="bi bi-x-lg"></i>
                           </button>
                         </div>
+                        <select class="form-select" id="dashSaleCustomer" onchange="onCustomerSelect(this.value)">
+                          <option value="WALK-IN">Walk-in Customer</option>
+                        </select>
 
-                        <datalist id="customerDatalist"></datalist>
-
-                        <input type="hidden" id="dashSaleCustomer" value="WALK-IN">
-                        
-                        <input type="hidden" id="custNameVal">
-                        <input type="hidden" id="custPhoneVal">
-                        <input type="hidden" id="custEmailVal">
-                        <input type="hidden" id="custKraVal">
-                        <input type="hidden" id="custLocVal">
-                        
-                        <div id="customerDetailsPanel" class="mt-2 p-2 border rounded bg-light" style="display:none; font-size: 0.85rem;">
-                          <div class="d-flex justify-content-between">
-                              <span><strong>Phone:</strong> <span id="dispPhone">-</span></span>
-                              <span><strong>Loyalty:</strong> <span id="dispLoyalty" class="badge bg-info text-dark">0</span></span>
+                        <div class="row g-2 mt-2">
+                          <div class="col-md-6">
+                            <label class="form-label small mb-0">Phone</label>
+                            <input type="text" class="form-control form-control-sm" id="custPhoneVal" readonly>
                           </div>
-                          <div class="d-flex justify-content-between mt-1">
-                              <span><strong>KRA:</strong> <span id="dispKra">-</span></span>
-                              <span><strong>Loc:</strong> <span id="dispLoc">-</span></span>
+                          <div class="col-md-6">
+                            <label class="form-label small mb-0">Email</label>
+                            <input type="text" class="form-control form-control-sm" id="custEmailVal" readonly>
                           </div>
-                          <div class="mt-1 text-muted small"><span id="dispEmail">-</span></div>
+                          <div class="col-md-6">
+                            <label class="form-label small mb-0">KRA PIN</label>
+                            <input type="text" class="form-control form-control-sm" id="custKraVal" readonly>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label small mb-0">Location</label>
+                            <input type="text" class="form-control form-control-sm" id="custLocVal" readonly>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label small mb-0">Loyalty</label>
+                            <input type="text" class="form-control form-control-sm" id="custLoyaltyVal" readonly>
+                          </div>
                         </div>
                       </div>
                       <div class="col-md-6">
@@ -2237,43 +2236,38 @@
 
     // ==================== RESTORED FUNCTIONS START HERE ====================
     function onCustomerSelect(customerId) {
-      const panel = document.getElementById('customerDetailsPanel');
-      const dispPhone = document.getElementById('dispPhone');
-      const dispLoyalty = document.getElementById('dispLoyalty');
-      const dispKra = document.getElementById('dispKra');
-      const dispLoc = document.getElementById('dispLoc');
-      const dispEmail = document.getElementById('dispEmail');
+      const dispPhone = document.getElementById('custPhoneVal');
+      const dispEmail = document.getElementById('custEmailVal');
+      const dispKra = document.getElementById('custKraVal');
+      const dispLoc = document.getElementById('custLocVal');
+      const dispLoyalty = document.getElementById('custLoyaltyVal');
 
       if (!customerId || customerId === 'WALK-IN') {
-        if (panel) panel.style.display = 'none';
-        document.getElementById('custNameVal').value = 'Walk-in Customer';
-        document.getElementById('custPhoneVal').value = '';
-        document.getElementById('custEmailVal').value = '';
-        document.getElementById('custKraVal').value = '';
-        document.getElementById('custLocVal').value = '';
+        if (dispPhone) dispPhone.value = '';
+        if (dispEmail) dispEmail.value = '';
+        if (dispKra) dispKra.value = '';
+        if (dispLoc) dispLoc.value = '';
+        if (dispLoyalty) dispLoyalty.value = '';
         return;
       }
 
       google.script.run.withSuccessHandler(details => {
         if (details) {
-          document.getElementById('custNameVal').value = details.Customer_Name || '';
-          document.getElementById('custPhoneVal').value = details.Phone || '';
-          document.getElementById('custEmailVal').value = details.Email || '';
-          document.getElementById('custKraVal').value = details.KRA_PIN || '';
-          document.getElementById('custLocVal').value = details.Location || '';
+          if (dispPhone) dispPhone.value = details.Phone || '';
+          if (dispEmail) dispEmail.value = details.Email || '';
+          if (dispKra) dispKra.value = details.KRA_PIN || '';
+          if (dispLoc) dispLoc.value = details.Location || '';
+          if (dispLoyalty) dispLoyalty.value = details.Loyalty_Points || 0;
 
-          if (dispPhone) dispPhone.textContent = details.Phone || '-';
-          if (dispLoyalty) dispLoyalty.textContent = details.Loyalty_Points || 0;
-          if (dispKra) dispKra.textContent = details.KRA_PIN || '-';
-          if (dispLoc) dispLoc.textContent = details.Location || '-';
-          if (dispEmail) dispEmail.textContent = details.Email || '-';
-          if (panel) panel.style.display = 'block';
-        } else if (panel) {
-          panel.style.display = 'none';
+        } else {
+          if (dispPhone) dispPhone.value = '';
+          if (dispEmail) dispEmail.value = '';
+          if (dispKra) dispKra.value = '';
+          if (dispLoc) dispLoc.value = '';
+          if (dispLoyalty) dispLoyalty.value = '';
         }
       }).withFailureHandler(err => {
-        if (dispEmail) dispEmail.textContent = 'Error: ' + err.message;
-        if (panel) panel.style.display = 'block';
+        if (dispEmail) dispEmail.value = 'Error';
       }).getCustomerDetails(customerId);
     }
 
@@ -3300,29 +3294,33 @@
       }).getInventory();
     }
 
-    // --- Handle customer selection via searchable datalist ---
-    function handleCustomerSearch(inputElement) {
-      const val = inputElement.value;
-      const customer = dashCustomers.find(c => `${c.Customer_Name} | ${c.Phone}` === val);
-      if (customer) {
-        document.getElementById('dashSaleCustomer').value = customer.Customer_ID;
-        onCustomerSelect(customer.Customer_ID);
-      } else {
-        if (val === '') resetToWalkIn();
-      }
+    // --- Handle customer filtering/search (by Customer_Name only) ---
+    function filterDashCustomers() {
+      const term = (document.getElementById('customerSearchInput').value || '').toLowerCase();
+      const sel = document.getElementById('dashSaleCustomer');
+      if (!sel) return;
+      sel.innerHTML = '<option value="WALK-IN">Walk-in Customer</option>';
+      const filtered = term
+        ? dashCustomers.filter(c =>
+            (c.Customer_Name || '').toLowerCase().includes(term))
+        : dashCustomers;
+
+      filtered.sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
+      filtered.forEach(c => {
+        sel.add(new Option(`${c.Customer_Name} (${c.Phone || '-'})`, c.Customer_ID));
+      });
     }
 
     function resetToWalkIn() {
       const searchInput = document.getElementById('customerSearchInput');
       if (searchInput) searchInput.value = '';
-      document.getElementById('dashSaleCustomer').value = 'WALK-IN';
-      document.getElementById('custNameVal').value = 'Walk-in Customer';
+      const sel = document.getElementById('dashSaleCustomer');
+      if (sel) sel.value = 'WALK-IN';
       document.getElementById('custPhoneVal').value = '';
       document.getElementById('custEmailVal').value = '';
       document.getElementById('custKraVal').value = '';
       document.getElementById('custLocVal').value = '';
-      const panel = document.getElementById('customerDetailsPanel');
-      if (panel) panel.style.display = 'none';
+      document.getElementById('custLoyaltyVal').value = '';
     }
 
     // --- UPDATE PRODUCT DETAILS ON SELECTION ---
@@ -3373,10 +3371,11 @@
       }
 
       const customerId = document.getElementById('dashSaleCustomer').value || 'WALK-IN';
+      const customerSelect = document.getElementById('dashSaleCustomer');
       const customerName =
         customerId === 'WALK-IN'
           ? 'Walk-in Customer'
-          : (document.getElementById('custNameVal').value || document.getElementById('customerSearchInput').value.split('|')[0] || 'Customer');
+          : (customerSelect && customerSelect.selectedOptions.length ? customerSelect.selectedOptions[0].text : 'Customer');
 
       const transactionData = {
         Customer_ID: customerId,
