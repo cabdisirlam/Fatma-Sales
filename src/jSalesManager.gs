@@ -193,3 +193,10 @@ function getRecentTransactionsMixed() {
     return [];
   }
 }
+
+/**
+ * Wrapper for frontend compatibility - getRecentSales
+ */
+function getRecentSales(limit) {
+  return getSalesHistory(limit || 25);
+}
