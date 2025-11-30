@@ -487,3 +487,45 @@ function logAudit(user, module, action, details, sessionId = '', beforeValue = '
     logError('logAudit', error);
   }
 }
+
+/**
+ * Converts sheet data to an array of objects
+ * @param {string} sheetName - Name of the sheet to read
+ * @param {object|null} filters - Optional filters to apply (not currently used)
+ * @returns {Array<Object>} Array of objects where each object represents a row
+ */
+function sheetToObjects(sheetName, filters) {
+  try {
+    const sheet = getSheet(sheetName);
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length <= 1) {
+      return []; // No data rows, only headers or empty sheet
+    }
+
+    const headers = data[0];
+    const objects = [];
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const obj = {};
+
+      headers.forEach((header, index) => {
+        let value = row[index];
+        // Convert Date objects to ISO strings for consistency
+        if (value instanceof Date) {
+          obj[header] = value.toISOString();
+        } else {
+          obj[header] = value;
+        }
+      });
+
+      objects.push(obj);
+    }
+
+    return objects;
+  } catch (error) {
+    logError('sheetToObjects', error);
+    throw new Error(`Failed to convert sheet "${sheetName}" to objects: ${error.message}`);
+  }
+}

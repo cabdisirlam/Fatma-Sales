@@ -54,9 +54,14 @@ function getSalesOverview() {
 }
 
 /**
- * Get recent sales transactions (unique by Transaction_ID)
+ * Get recent sales transactions (unique by Transaction_ID) with enhanced filtering
+ * @param {number} limit - Maximum number of records to return
+ * @param {string} startDate - Start date filter (optional)
+ * @param {string} endDate - End date filter (optional)
+ * @param {string} customerName - Customer name filter (optional, partial match)
+ * @returns {Array} Filtered sales transactions
  */
-function getSalesHistory(limit, startDate, endDate) {
+function getSalesHistory(limit, startDate, endDate, customerName) {
   try {
     const sales = sheetToObjects('Sales', null);
     const seenIds = new Set();
@@ -66,28 +71,44 @@ function getSalesHistory(limit, startDate, endDate) {
     const end = endDate ? new Date(endDate) : null;
     if (end) end.setHours(23, 59, 59, 999);
 
+    // Prepare customer name filter (case-insensitive)
+    const customerFilter = customerName ? customerName.toLowerCase().trim() : null;
+
     for (const row of sales) {
       if (row.Type !== 'Sale') continue;
       if (seenIds.has(row.Transaction_ID)) continue;
 
+      // Date filtering
       const saleDate = new Date(row.DateTime);
       if (start && saleDate < start) continue;
       if (end && saleDate > end) continue;
+
+      // Customer name filtering (partial match)
+      if (customerFilter) {
+        const rowCustomerName = (row.Customer_Name || '').toLowerCase();
+        if (!rowCustomerName.includes(customerFilter)) continue;
+      }
 
       seenIds.add(row.Transaction_ID);
       filtered.push({
         Transaction_ID: row.Transaction_ID,
         DateTime: row.DateTime,
+        Customer_ID: row.Customer_ID,
         Customer_Name: row.Customer_Name,
         Payment_Mode: row.Payment_Mode,
         Grand_Total: parseFloat(row.Grand_Total) || 0,
         Status: row.Status || 'Completed',
-        Type: row.Type
+        Type: row.Type,
+        Location: row.Location,
+        KRA_PIN: row.KRA_PIN
       });
     }
 
+    // Sort by date descending (most recent first)
     filtered.sort((a, b) => new Date(b.DateTime) - new Date(a.DateTime));
-    return filtered.slice(0, limit || 25);
+
+    // Apply limit
+    return filtered.slice(0, limit || 50);
   } catch (error) {
     logError('getSalesHistory', error);
     throw new Error('Unable to load sales history: ' + error.message);
@@ -197,7 +218,11 @@ function getRecentTransactionsMixed() {
 
 /**
  * Wrapper for frontend compatibility - getRecentSales
+ * @param {number} limit - Maximum number of records
+ * @param {string} startDate - Start date filter (optional)
+ * @param {string} endDate - End date filter (optional)
+ * @param {string} customerName - Customer name filter (optional)
  */
-function getRecentSales(limit) {
-  return getSalesHistory(limit || 25);
+function getRecentSales(limit, startDate, endDate, customerName) {
+  return getSalesHistory(limit || 50, startDate, endDate, customerName);
 }

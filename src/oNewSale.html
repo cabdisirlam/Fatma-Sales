@@ -115,13 +115,14 @@
           <p id="successMessage"></p>
           <hr>
           <div class="d-flex justify-content-center gap-2">
-            <button class="btn btn-dark" onclick="printDocument()">
-              <i class="bi bi-printer"></i> Print Receipt
-            </button>
-            <button class="btn btn-outline-secondary" onclick="resetForm()">
+            <button class="btn btn-primary" onclick="resetForm()">
               <i class="bi bi-arrow-repeat"></i> New Transaction
             </button>
+            <button class="btn btn-outline-secondary" onclick="google.script.host.close()">
+              <i class="bi bi-x-circle"></i> Close
+            </button>
           </div>
+          <p class="mt-2 text-muted small">Tip: You can print receipts from Sales History</p>
         </div>
       </div>
       
@@ -292,34 +293,6 @@
           showError(error.message);
         })[backendFunc](saleData);
     });
-
-    // Client-side Print Logic
-    function printDocument() {
-      if (!lastTransactionId) return alert("No transaction ID found.");
-      
-      const type = document.getElementById('txnType').value;
-      const func = 'generateReceiptHTML';
-
-      // Open a new window immediately to avoid popup blockers
-      const printWindow = window.open('', '_blank', 'width=800,height=600');
-      printWindow.document.write('<p>Loading document...</p>');
-
-      google.script.run
-        .withSuccessHandler(function(htmlContent) {
-          printWindow.document.open();
-          printWindow.document.write(htmlContent);
-          printWindow.document.close();
-          // Wait for images/styles to load then print
-          setTimeout(function() {
-            printWindow.focus();
-            printWindow.print();
-          }, 500);
-        })
-        .withFailureHandler(function(e) {
-          printWindow.close();
-          alert("Error generating document: " + e.message);
-        })[func](lastTransactionId);
-    }
 
     function resetForm() {
       document.getElementById('saleForm').reset();

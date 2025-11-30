@@ -1236,19 +1236,41 @@
         <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
           <h3 class="d-flex justify-content-between align-items-center">
             <span><i class="bi bi-clock-history"></i> Sales History</span>
-            <small class="text-muted">Most recent transactions</small>
+            <small class="text-muted">Filter and manage sales</small>
           </h3>
-          <div class="table-responsive mt-3">
-            <table class="table table-striped align-middle">
+
+          <!-- Filter Section -->
+          <div class="row g-3 mt-3 mb-4">
+            <div class="col-md-3">
+              <label for="filterStartDate" class="form-label fw-bold">Start Date</label>
+              <input type="date" class="form-control" id="filterStartDate">
+            </div>
+            <div class="col-md-3">
+              <label for="filterEndDate" class="form-label fw-bold">End Date</label>
+              <input type="date" class="form-control" id="filterEndDate">
+            </div>
+            <div class="col-md-4">
+              <label for="filterCustomerName" class="form-label fw-bold">Customer Name</label>
+              <input type="text" class="form-control" id="filterCustomerName" placeholder="Search by customer name...">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-primary w-100" onclick="loadSalesHistory()">
+                <i class="bi bi-search"></i> Filter
+              </button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
               <thead class="table-light">
                 <tr>
-                  <th>Transaction</th>
+                  <th>Transaction ID</th>
                   <th>Date</th>
                   <th>Customer</th>
-                  <th>Payment</th>
+                  <th>Payment Mode</th>
                   <th class="text-end">Total</th>
-                  <th>Type</th>
-                  <th>Action</th>
+                  <th>Status</th>
+                  <th class="text-center">Actions</th>
                 </tr>
               </thead>
               <tbody id="salesHistoryBody">
@@ -2293,32 +2315,54 @@
 
     function loadSalesHistory() {
         const tableBody = document.getElementById('salesHistoryBody');
-        tableBody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading...</td></tr>';
+
+        // Get filter values
+        const startDate = document.getElementById('filterStartDate')?.value || null;
+        const endDate = document.getElementById('filterEndDate')?.value || null;
+        const customerName = document.getElementById('filterCustomerName')?.value || null;
 
         google.script.run.withSuccessHandler(sales => {
             if (!sales || sales.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No sales found.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-inbox" style="font-size: 2rem;"></i><br>No sales found</td></tr>';
                 return;
             }
 
             let rowsHtml = '';
             sales.forEach(sale => {
+                const statusBadge = sale.Status === 'Returned'
+                    ? '<span class="badge bg-danger">Returned</span>'
+                    : '<span class="badge bg-success">Completed</span>';
+
                 rowsHtml += `
                     <tr>
-                        <td data-label="Ref">${sale.Transaction_ID}</td>
-                        <td data-label="Date">${new Date(sale.DateTime).toLocaleDateString()}</td>
-                        <td data-label="Customer">${sale.Customer_Name}</td>
-                        <td data-label="Amount">${formatCurrency(sale.Grand_Total)}</td>
-                        <td data-label="Action" class="actions-cell">
-                            <button class="btn-icon" onclick="printDocument('${sale.Transaction_ID}', 'Sale')" title="Print Receipt"><i class="bi bi-printer"></i></button>
-                            ${sale.Status !== 'Returned' ? `<button class="btn-icon" onclick="initiateReturn('${sale.Transaction_ID}')" title="Return Sale"><i class="bi bi-arrow-return-left"></i></button>` : ''}
+                        <td>${sale.Transaction_ID}</td>
+                        <td>${new Date(sale.DateTime).toLocaleDateString()} ${new Date(sale.DateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                        <td>${sale.Customer_Name || 'Walk-in'}</td>
+                        <td><span class="badge bg-secondary">${sale.Payment_Mode}</span></td>
+                        <td class="text-end fw-bold">${formatCurrency(sale.Grand_Total)}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary" onclick="printSaleReceipt('${sale.Transaction_ID}')" title="Print Receipt">
+                                    <i class="bi bi-printer"></i>
+                                </button>
+                                ${sale.Status !== 'Returned' ? `
+                                <button class="btn btn-outline-warning" onclick="editSale('${sale.Transaction_ID}')" title="Edit Sale">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="returnSale('${sale.Transaction_ID}')" title="Return Sale">
+                                    <i class="bi bi-arrow-return-left"></i>
+                                </button>
+                                ` : ''}
+                            </div>
                         </td>
                     </tr>`;
             });
             tableBody.innerHTML = rowsHtml;
         }).withFailureHandler(err => {
-            tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error: ${err.message}</td></tr>`;
-        }).getRecentSales(50); // Fetch more sales
+            tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error: ${err.message}</td></tr>`;
+        }).getRecentSales(100, startDate, endDate, customerName);
     }
 
     // Initialize dashboard
@@ -3165,6 +3209,46 @@
         .getRecentSales(20); 
     }
 
+    // Print sale receipt
+    function printSaleReceipt(transactionId) {
+      if (!transactionId) {
+        alert('No transaction ID provided');
+        return;
+      }
+
+      // Open a new window for printing
+      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      printWindow.document.write('<p>Loading receipt...</p>');
+
+      google.script.run
+        .withSuccessHandler(function(htmlContent) {
+          printWindow.document.open();
+          printWindow.document.write(htmlContent);
+          printWindow.document.close();
+          // Wait for content to load, then print
+          setTimeout(function() {
+            printWindow.focus();
+            printWindow.print();
+          }, 500);
+        })
+        .withFailureHandler(function(error) {
+          printWindow.close();
+          alert('Error generating receipt: ' + error.message);
+        })
+        .generateReceiptHTML(transactionId);
+    }
+
+    // Edit sale (placeholder - can be expanded)
+    function editSale(transactionId) {
+      alert('Edit functionality coming soon for: ' + transactionId);
+      // Future implementation: Load sale data and show edit modal
+    }
+
+    // Return sale - alias for initiateReturn
+    function returnSale(transactionId) {
+      initiateReturn(transactionId);
+    }
+
     function initiateReturn(saleId) {
       google.script.run.withSuccessHandler(function(sale) {
           document.getElementById('returnSaleId').value = sale.Transaction_ID;
@@ -3177,8 +3261,8 @@
                 <td>${item.Item_Name}</td>
                 <td>${item.Qty}</td>
                 <td>
-                  <input type="number" class="form-control form-control-sm return-qty" 
-                         data-id="${item.Item_ID}" 
+                  <input type="number" class="form-control form-control-sm return-qty"
+                         data-id="${item.Item_ID}"
                          max="${item.Qty}" min="0" value="0">
                 </td>
               </tr>`;
@@ -3222,12 +3306,19 @@
     function loadSalesReturns() {
       const tbody = document.getElementById('salesReturnsBody');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Loading return data...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm" role="status"></div> Loading return data...</td></tr>';
 
       google.script.run
         .withSuccessHandler(function(rows) {
           if (!rows || rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No returns found</td></tr>';
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="6" class="text-center text-muted py-5">
+                  <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+                  <p class="mt-2 mb-0" style="font-size: 1.1rem;">No sales returns found</p>
+                  <small class="text-muted">All sales are completed successfully</small>
+                </td>
+              </tr>`;
             return;
           }
 
@@ -3246,7 +3337,7 @@
         })
         .withFailureHandler(function(error) {
           console.error(error);
-          tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-4">' + error.message + '</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-4"><i class="bi bi-exclamation-triangle"></i> ' + error.message + '</td></tr>';
         })
         .getSalesReturns();
     }
