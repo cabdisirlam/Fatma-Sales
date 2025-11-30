@@ -2229,7 +2229,7 @@
       document.getElementById('totalSales').textContent = '0';
       document.getElementById('totalProducts').textContent = '0';
       document.getElementById('totalCustomers').textContent = '0';
-      document.getElementById('totalRevenue').textContent = '$0';
+      document.getElementById('totalRevenue').textContent = 'Ksh 0';
     }
 
     // Toggle sidebar
@@ -2707,10 +2707,7 @@
 
     // Sales helpers
     function formatCurrency(value) {
-      return 'Ksh ' + (parseFloat(value) || 0).toLocaleString('en-KE', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
+      return 'Ksh ' + Math.round(parseFloat(value) || 0).toLocaleString('en-KE');
     }
 
     function showSalesAlert(message, type) {
@@ -3807,7 +3804,7 @@
       document.getElementById('recvCustomerName').innerText = c.Customer_Name || c.Name;
       document.getElementById('recvCustomerBal').innerText = formatCurrency(balance);
       // If negative (debt), suggest positive amount
-      document.getElementById('recvAmount').value = balance < 0 ? Math.abs(balance).toFixed(2) : '';
+      document.getElementById('recvAmount').value = balance < 0 ? Math.round(Math.abs(balance)) : '';
 
       new bootstrap.Modal(document.getElementById('dashboardCustomerPayModal')).show();
     }
@@ -4583,7 +4580,7 @@
       document.getElementById('paymentSupplierId').value = supplierId;
       document.getElementById('paymentSupplierName').textContent = getSupplierName(supplier);
       document.getElementById('paymentCurrentBalance').textContent = formatCurrency(balance);
-      document.getElementById('paymentAmount').value = balance > 0 ? balance.toFixed(2) : '';
+      document.getElementById('paymentAmount').value = balance > 0 ? Math.round(balance) : '';
       document.getElementById('paymentMethod').value = 'Cash';
       document.getElementById('paymentReference').value = '';
       document.getElementById('paymentNotes').value = '';
@@ -4676,10 +4673,10 @@
       document.getElementById('statementPhone').textContent = supplier.Phone || '-';
 
       const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
-      document.getElementById('statementBalance').textContent = 'Ksh ' + balance.toFixed(2);
-      document.getElementById('statementOpening').textContent = 'Ksh ' + (statement.openingBalance || 0).toFixed(2);
-      document.getElementById('statementDebits').textContent = 'Ksh ' + (statement.totalDebits || 0).toFixed(2);
-      document.getElementById('statementCredits').textContent = 'Ksh ' + (statement.totalCredits || 0).toFixed(2);
+      document.getElementById('statementBalance').textContent = 'Ksh ' + Math.round(balance).toLocaleString();
+      document.getElementById('statementOpening').textContent = 'Ksh ' + Math.round(statement.openingBalance || 0).toLocaleString();
+      document.getElementById('statementDebits').textContent = 'Ksh ' + Math.round(statement.totalDebits || 0).toLocaleString();
+      document.getElementById('statementCredits').textContent = 'Ksh ' + Math.round(statement.totalCredits || 0).toLocaleString();
 
       const tbody = document.getElementById('statementTransactions');
       tbody.innerHTML = '';
@@ -4705,9 +4702,9 @@
           <td><span class="badge ${txn.type === 'Purchase' ? 'bg-danger' : (txn.type === 'Payment' ? 'bg-success' : 'bg-secondary')}">${txn.type}</span></td>
           <td>${txn.description || '-'}</td>
           <td>${txn.reference || '-'}</td>
-          <td class="text-end">${debit > 0 ? 'Ksh ' + debit.toFixed(2) : '-'}</td>
-          <td class="text-end">${credit > 0 ? 'Ksh ' + credit.toFixed(2) : '-'}</td>
-          <td class="text-end ${balanceClass}"><strong>Ksh ${txnBalance.toFixed(2)}</strong></td>
+          <td class="text-end">${debit > 0 ? 'Ksh ' + Math.round(debit).toLocaleString() : '-'}</td>
+          <td class="text-end">${credit > 0 ? 'Ksh ' + Math.round(credit).toLocaleString() : '-'}</td>
+          <td class="text-end ${balanceClass}"><strong>Ksh ${Math.round(txnBalance).toLocaleString()}</strong></td>
         `;
         tbody.appendChild(row);
       });
@@ -5071,11 +5068,8 @@
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Currency</label>
-                    <select class="form-select">
-                      <option>USD - US Dollar</option>
-                      <option>EUR - Euro</option>
-                      <option>GBP - British Pound</option>
-                    </select>
+                    <input type="text" class="form-control" value="Ksh - Kenyan Shilling" readonly disabled>
+                    <div class="form-text">System currency is fixed to Kenyan Shillings</div>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Tax Rate (%)</label>
