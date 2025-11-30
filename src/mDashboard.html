@@ -1138,7 +1138,7 @@
                           </div>
                           <div class="col-md-6">
                             <label class="form-label small mb-0">Loyalty (edit to add)</label>
-                            <input type="number" class="form-control form-control-sm" id="custLoyaltyVal" name="customerLoyalty" value="0">
+                            <input type="number" class="form-control form-control-sm" id="custLoyaltyVal" name="customerLoyalty" value="1" step="1" min="0">
                           </div>
                         </div>
                       </div>
@@ -1206,6 +1206,8 @@
                         <button type="button" class="btn btn-outline-secondary" onclick="clearDashCart()">Clear</button>
 
                         <input type="number" class="form-control" id="dashSaleDiscount" style="width: 130px;" placeholder="Discount" value="0" min="0" step="0.01">
+
+                        <input type="number" class="form-control" id="dashDeliveryCharge" style="width: 140px;" placeholder="Delivery" value="0" min="0" step="1" oninput="renderDashCart()">
 
                         <select class="form-select" id="dashSalePayment" style="width: auto;">
                           <option value="Cash">Cash</option>
@@ -3340,7 +3342,7 @@
       sel.innerHTML = '<option value="">-- Select Customer --</option><option value="WALK-IN">Walk-in Customer</option>';
       const sorted = (list || []).slice().sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
       sorted.forEach(c => {
-        sel.add(new Option(`${c.Customer_Name} (${c.Phone || '-'})`, c.Customer_ID));
+        sel.add(new Option(`${c.Customer_Name}`, c.Customer_ID));
       });
     }
 
@@ -3410,7 +3412,7 @@
         items: dashCart,
         User: sessionStorage.getItem('userName') || 'SYSTEM',
         Sold_By: document.getElementById('dashSoldBy').value || (sessionStorage.getItem('userName') || 'SYSTEM'),
-        Delivery_Charge: 0,
+        Delivery_Charge: parseFloat(document.getElementById('dashDeliveryCharge').value) || 0,
         Discount: parseFloat(document.getElementById('dashSaleDiscount').value) || 0,
         Loyalty_Points: parseInt(document.getElementById('custLoyaltyVal').value || '0', 10) || 0,
         Valid_Until: validUntilStr, // Send String
@@ -3484,7 +3486,8 @@
 
       if(!id || qty <=0 || price < 0) return alert("Invalid item details");
 
-      dashCart.push({ Item_ID: id, Item_Name: product.Item_Name, Qty: qty, Unit_Price: price, Total: qty*price });
+      const lineTotal = Math.round(qty * price);
+      dashCart.push({ Item_ID: id, Item_Name: product.Item_Name, Qty: qty, Unit_Price: price, Total: lineTotal });
       renderDashCart();
     }
 
@@ -3497,7 +3500,10 @@
         total += item.Total;
         tbody.innerHTML += `<tr><td>${item.Item_Name}</td><td>${item.Qty}</td><td>${item.Unit_Price}</td><td>${item.Total}</td><td><button class="btn btn-sm btn-danger" onclick="dashCart.splice(${i},1);renderDashCart()">X</button></td></tr>`;
       });
-      document.getElementById('dashCartTotal').innerText = "Ksh " + total.toLocaleString();
+      const delivery = parseFloat(document.getElementById('dashDeliveryCharge').value) || 0;
+      const discount = parseFloat(document.getElementById('dashSaleDiscount').value) || 0;
+      const grand = Math.round(total + delivery - discount);
+      document.getElementById('dashCartTotal').innerText = "Ksh " + grand.toLocaleString('en-KE');
       if (dashCart.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>';
     }
 
