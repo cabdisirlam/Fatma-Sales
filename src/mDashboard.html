@@ -565,6 +565,44 @@
       z-index: 1;
     }
 
+    /* Print styles for Statements / PDF */
+    @media print {
+      body * {
+        visibility: hidden; /* Hide everything by default */
+      }
+      
+      /* Only show the open modal */
+      .modal.show, .modal.show * {
+        visibility: visible;
+      }
+
+      .modal.show {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Hide modal interface elements */
+      .modal-header,
+      .modal-footer,
+      .btn-close {
+        display: none !important;
+      }
+
+      .modal-body {
+        padding: 0;
+      }
+
+      /* Reset card styling for print */
+      .card {
+        border: none !important;
+        box-shadow: none !important;
+      }
+    }
+
     /* ==================== RESPONSIVE ==================== */
     @media (max-width: 1024px) {
       .dashboard-grid {
@@ -2010,7 +2048,7 @@
             <i class="bi bi-x-circle"></i> Close
           </button>
           <button type="button" class="btn btn-primary" onclick="window.print()">
-            <i class="bi bi-printer"></i> Print
+            <i class="bi bi-file-pdf"></i> Download PDF / Print
           </button>
         </div>
       </div>
@@ -2195,6 +2233,73 @@
         <div class="modal-footer">
           <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button class="btn btn-success" id="btnSubmitCustPay" onclick="dashboardSubmitCustomerPay()">Confirm Payment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="customerStatementModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title"><i class="bi bi-file-text"></i> Customer Statement</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="custStmtLoading" class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2">Loading Statement...</p>
+          </div>
+          
+          <div id="custStmtContent" style="display:none;">
+            <div class="row mb-4 border-bottom pb-3">
+              <div class="col-6">
+                <h4 id="stmtCustName" class="mb-1">Customer Name</h4>
+                <p class="mb-0 text-muted"><i class="bi bi-telephone"></i> <span id="stmtCustPhone"></span></p>
+              </div>
+              <div class="col-6 text-end">
+                <small class="text-uppercase text-muted fw-bold">Current Balance</small>
+                <div id="stmtCustBalance" class="fs-4 fw-bold">Ksh 0.00</div>
+              </div>
+            </div>
+
+            <div class="row mb-3 g-2">
+              <div class="col-6">
+                <div class="p-3 bg-light rounded border">
+                  <small class="text-muted d-block">Total Invoiced (Debits)</small>
+                  <div class="fw-bold text-dark fs-5" id="stmtCustTotalSpent">Ksh 0.00</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-3 bg-light rounded border">
+                  <small class="text-muted d-block">Total Paid (Credits)</small>
+                  <div class="fw-bold text-success fs-5" id="stmtCustTotalPaid">Ksh 0.00</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th class="text-end">Debit</th>
+                    <th class="text-end">Credit</th>
+                    <th class="text-end">Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="custStmtTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button class="btn btn-primary" onclick="window.print()">
+            <i class="bi bi-file-pdf"></i> Download PDF / Print
+          </button>
         </div>
       </div>
     </div>
@@ -4193,10 +4298,10 @@
       
       // Populate Modal
       document.getElementById('editCustomerId').value = id;
-      document.getElementById('editCustomerName').value = c.Customer_Name || c.Name;
-      document.getElementById('editCustomerPhone').value = c.Phone;
-      document.getElementById('editCustomerEmail').value = c.Email || '';
-      document.getElementById('editCustomerLocation').value = c.Location || '';
+      document.getElementById('customerEditCustomerName').value = c.Customer_Name || c.Name;
+      document.getElementById('customerEditCustomerPhone').value = c.Phone;
+      document.getElementById('customerEditCustomerEmail').value = c.Email || '';
+      document.getElementById('customerEditCustomerLocation').value = c.Location || '';
       
       new bootstrap.Modal(document.getElementById('dashboardCustomerEditModal')).show();
     }
@@ -4219,10 +4324,10 @@
     function dashboardSubmitCustomerEdit() {
         const id = document.getElementById('editCustomerId').value;
         const data = {
-            Customer_Name: document.getElementById('editCustomerName').value,
-            Phone: document.getElementById('editCustomerPhone').value,
-            Email: document.getElementById('editCustomerEmail').value,
-            Location: document.getElementById('editCustomerLocation').value,
+            Customer_Name: document.getElementById('customerEditCustomerName').value,
+            Phone: document.getElementById('customerEditCustomerPhone').value,
+            Email: document.getElementById('customerEditCustomerEmail').value,
+            Location: document.getElementById('customerEditCustomerLocation').value,
             User: sessionStorage.getItem('userName')
         };
         
@@ -5418,8 +5523,8 @@
       document.getElementById('editSupplierId').value = supplierId;
       document.getElementById('editSupplierName').value = getSupplierName(supplier);
       document.getElementById('editContactPerson').value = supplier.Contact_Person || '';
-      document.getElementById('editPhone').value = supplier.Phone || '';
-      document.getElementById('editEmail').value = supplier.Email || '';
+      document.getElementById('supplierEditPhone').value = supplier.Phone || ''; // Was 'editPhone'
+      document.getElementById('supplierEditEmail').value = supplier.Email || ''; // Was 'editEmail'
       document.getElementById('editAddress').value = supplier.Address || '';
       document.getElementById('editPaymentTerms').value = supplier.Payment_Terms || '';
       document.getElementById('editStatus').value = supplier.Status || 'Active';
@@ -5436,8 +5541,8 @@
       const supplierId = document.getElementById('editSupplierId').value;
       const supplierName = document.getElementById('editSupplierName').value.trim();
       const contactPerson = document.getElementById('editContactPerson').value.trim();
-      const phone = document.getElementById('editPhone').value.trim();
-      const email = document.getElementById('editEmail').value.trim();
+      const phone = document.getElementById('supplierEditPhone').value.trim();
+      const email = document.getElementById('supplierEditEmail').value.trim();
       const address = document.getElementById('editAddress').value.trim();
       const paymentTerms = document.getElementById('editPaymentTerms').value.trim();
       const status = document.getElementById('editStatus').value;
@@ -6242,6 +6347,72 @@
       if (nextBtn) {
         nextBtn.disabled = currentIndex === sectionOrder.length - 1;
       }
+    }
+
+    // --- CUSTOMER STATEMENT LOGIC ---
+    function executeCustomerStatement() {
+      const customerId = document.getElementById('stmtCustomerSelect').value;
+      if (!customerId) {
+        alert('Please select a customer first');
+        return;
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('customerStatementModal'));
+      modal.show();
+
+      document.getElementById('custStmtLoading').style.display = 'block';
+      document.getElementById('custStmtContent').style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(displayCustomerStatement)
+        .withFailureHandler(error => {
+          document.getElementById('custStmtLoading').innerHTML = 
+            '<div class="alert alert-danger">Error: ' + error.message + '</div>';
+        })
+        .getCustomerStatement(customerId, null, null);
+    }
+
+    function displayCustomerStatement(data) {
+      document.getElementById('custStmtLoading').style.display = 'none';
+      document.getElementById('custStmtContent').style.display = 'block';
+
+      const c = data.customer;
+      document.getElementById('stmtCustName').innerText = c.Customer_Name;
+      document.getElementById('stmtCustPhone').innerText = c.Phone || '-';
+      
+      const balance = data.closingBalance;
+      const balEl = document.getElementById('stmtCustBalance');
+      balEl.innerText = formatCurrency(balance);
+      balEl.className = balance < 0 ? 'fs-4 fw-bold text-danger' : 'fs-4 fw-bold text-success'; // Negative = Debt
+
+      document.getElementById('stmtCustTotalSpent').innerText = formatCurrency(data.totalDebits);
+      document.getElementById('stmtCustTotalPaid').innerText = formatCurrency(data.totalCredits);
+
+      const tbody = document.getElementById('custStmtTableBody');
+      tbody.innerHTML = '';
+
+      if(!data.transactions || data.transactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No transactions found.</td></tr>';
+        return;
+      }
+
+      data.transactions.forEach(t => {
+        const date = new Date(t.date).toLocaleDateString();
+        const debit = t.debit || 0;
+        const credit = t.credit || 0;
+        const bal = t.balance || 0;
+        
+        tbody.innerHTML += `
+          <tr>
+            <td>${date}</td>
+            <td><span class="badge bg-secondary">${t.type}</span></td>
+            <td>${t.description}</td>
+            <td class="text-end text-danger">${debit > 0 ? formatCurrency(debit) : '-'}</td>
+            <td class="text-end text-success">${credit > 0 ? formatCurrency(credit) : '-'}</td>
+            <td class="text-end fw-bold">${formatCurrency(bal)}</td>
+          </tr>
+        `;
+      });
     }
 
     // Handle Browser Back Button
