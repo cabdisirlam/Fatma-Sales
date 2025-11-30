@@ -603,6 +603,36 @@
         max-width: 100%;
       }
 
+      .mobile-stack-table thead {
+        display: none;
+      }
+      .mobile-stack-table tr {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 12px;
+        background: white;
+      }
+      .mobile-stack-table td {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border: none !important;
+      }
+      .mobile-stack-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-light);
+        margin-right: 8px;
+      }
+      .mobile-stack-table td:last-child {
+        padding-bottom: 0;
+      }
+      .mobile-stack-table td:first-child {
+        padding-top: 0;
+      }
+
       .dashboard-grid {
         grid-template-columns: 1fr;
         gap: 16px;
@@ -1275,7 +1305,7 @@
           </div>
 
           <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle mobile-stack-table">
               <thead class="table-light">
                 <tr>
                   <th>Transaction ID</th>
@@ -3233,13 +3263,13 @@
 
             return `
               <tr>
-                <td><strong>${row.Transaction_ID}</strong></td>
-                <td>${new Date(row.DateTime).toLocaleDateString()}</td>
-                <td>${row.Customer_Name || 'Walk-in'}</td>
-                <td>${row.Payment_Mode || '-'}</td>
-                <td class="text-end">${formatCurrency(row.Grand_Total)}</td>
-                <td>${statusBadge}</td>
-                <td>
+                <td data-label="Transaction"><strong>${row.Transaction_ID}</strong></td>
+                <td data-label="Date">${new Date(row.DateTime).toLocaleDateString()}</td>
+                <td data-label="Customer">${row.Customer_Name || 'Walk-in'}</td>
+                <td data-label="Payment">${row.Payment_Mode || '-'}</td>
+                <td data-label="Total" class="text-end">${formatCurrency(row.Grand_Total)}</td>
+                <td data-label="Status">${statusBadge}</td>
+                <td data-label="Actions">
                   <div class="d-flex justify-content-start">
                     ${printBtn}
                     ${returnBtn}
