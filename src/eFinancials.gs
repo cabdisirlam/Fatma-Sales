@@ -450,7 +450,7 @@ function getAccountReport(accountName, startDate, endDate) {
         totalCredits += credit;
         totalDebits += debit;
         transactions.push({
-          date: txnDate,
+          date: txnDate.toISOString(), // return as string for safe client parsing
           type: txn.Type,
           description: txn.Description,
           in: credit,
