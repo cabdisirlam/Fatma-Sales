@@ -3596,6 +3596,7 @@
       };
 
       const backendFunc = type === 'Quotation' ? 'createQuotation' : 'createSale';
+      draftStorage.save('draft.sale', { ...transactionData, dashCart });
 
       google.script.run
         .withSuccessHandler(function(res) {
@@ -3617,13 +3618,19 @@
              clearDashCart();
              loadNewSaleInDashboard(); 
              loadSalesHistory();       
+             draftStorage.clear('draft.sale');
            } else {
              alert("Error: " + res.message);
            }
         })
         .withFailureHandler(function(e) {
            if(clickedBtn) { clickedBtn.disabled = false; clickedBtn.innerText = btnText; }
-           alert("System Error: " + e.message);
+           if (!navigator.onLine) {
+             queueSubmission({ payload: transactionData, func: backendFunc }, 'draft.sale');
+             alert('Offline: sale saved locally, will retry when online.');
+           } else {
+             alert("System Error: " + e.message);
+           }
         })
         [backendFunc](transactionData);
     }
@@ -4824,7 +4831,8 @@
       if (queue.length === 0) return;
       const next = queue.shift();
       if (!next || !next.payload) return;
-      google.script.run
+      const execFn = next.func ? google.script.run[next.func].bind(google.script.run) : google.script.run.handleFinancialTransaction;
+      execFn
         .withSuccessHandler(function(res) {
           if (res && res.success && next.draftKey) {
             draftStorage.clear(next.draftKey);
@@ -4833,11 +4841,10 @@
           if (queue.length > 0) processQueuedSubmissions();
         })
         .withFailureHandler(function() {
-          // push back and stop; will retry on next online event
           queue.unshift(next);
           draftStorage.save('queued.submissions', queue);
         })
-        .handleFinancialTransaction(next.payload);
+        (next.payload);
     }
 
     function formToObject(form) {
