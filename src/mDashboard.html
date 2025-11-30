@@ -4437,7 +4437,7 @@
                     </select>
                   </div>
                   <div class="mb-3">
-                    <label class="form-label">Deposit To</label>
+                    <label class="form-label">Deposit To (Cash / M-Pesa / Bank)</label>
                     <select class="form-select" name="account" required>
                       <option value="">Select account</option>
                       ${accountOptions}
@@ -4498,6 +4498,41 @@
                   </button>
                 </form>
               </div>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div><i class="bi bi-file-earmark-text"></i> Account Statement</div>
+            <div class="d-flex gap-2">
+              <select class="form-select form-select-sm" id="finStatementAccount">
+                ${accountOptions}
+              </select>
+              <input type="date" class="form-control form-control-sm" id="finStatementStart">
+              <input type="date" class="form-control form-control-sm" id="finStatementEnd">
+              <button class="btn btn-sm btn-primary" onclick="loadFinancialStatement()">
+                <i class="bi bi-search"></i> Load
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="finStatementSummary" class="row gy-2 mb-3"></div>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th class="text-end">Inflow</th>
+                    <th class="text-end">Outflow</th>
+                    <th class="text-end">Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="finStatementBody">
+                  <tr><td colspan="6" class="text-center text-muted py-3">Select account and dates to view statement.</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -4605,6 +4640,71 @@
         btn.disabled = false;
         btn.innerHTML = btn.dataset.originalText || text;
       }
+    }
+
+    function loadFinancialStatement() {
+      const account = document.getElementById('finStatementAccount').value;
+      const start = document.getElementById('finStatementStart').value;
+      const end = document.getElementById('finStatementEnd').value;
+      const tbody = document.getElementById('finStatementBody');
+      const summaryDiv = document.getElementById('finStatementSummary');
+
+      if (!account) {
+        showFinancialAlert('Select an account to view statement.', 'warning');
+        return;
+      }
+
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3"><div class="spinner-border spinner-border-sm text-primary"></div> Loading...</td></tr>';
+      summaryDiv.innerHTML = '';
+
+      google.script.run
+        .withSuccessHandler(function(report) {
+          if (!report || !report.transactions || report.transactions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No transactions for this period.</td></tr>';
+          } else {
+            tbody.innerHTML = report.transactions.map(t => `
+              <tr>
+                <td>${new Date(t.date).toLocaleDateString()}</td>
+                <td>${t.type}</td>
+                <td>${t.description || ''}</td>
+                <td class="text-end text-success">${t.in > 0 ? formatCurrency(t.in) : '-'}</td>
+                <td class="text-end text-danger">${t.out > 0 ? formatCurrency(t.out) : '-'}</td>
+                <td class="text-end">${formatCurrency(t.balance)}</td>
+              </tr>
+            `).join('');
+          }
+
+          summaryDiv.innerHTML = `
+            <div class="col-6 col-md-3">
+              <div class="p-2 border rounded bg-light h-100">
+                <div class="small text-muted">Opening</div>
+                <div class="fw-bold">${formatCurrency(report.openingBalance)}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="p-2 border rounded bg-light h-100">
+                <div class="small text-muted">Inflow</div>
+                <div class="fw-bold text-success">${formatCurrency(report.totalAdditions)}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="p-2 border rounded bg-light h-100">
+                <div class="small text-muted">Outflow</div>
+                <div class="fw-bold text-danger">${formatCurrency(report.totalPayments)}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="p-2 border rounded bg-light h-100">
+                <div class="small text-muted">Closing</div>
+                <div class="fw-bold">${formatCurrency(report.closingBalance)}</div>
+              </div>
+            </div>
+          `;
+        })
+        .withFailureHandler(function(error) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Error loading statement: ' + error.message + '</td></tr>';
+        })
+        .getAccountReport(account, start || '1970-01-01', end || new Date().toISOString().slice(0, 10));
     }
 
     // Reports Section
