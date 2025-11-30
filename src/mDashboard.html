@@ -2472,6 +2472,7 @@
         loadSupplierPayments();
       } else if (sectionName === 'users') {
         loadUsersOverview();
+        loadUsersSection();
       } else if (sectionName === 'users-list') {
         loadUsersList();
       } else if (sectionName === 'users-add') {
@@ -2895,16 +2896,7 @@
         .getSuppliersOverview();
     }
 
-    function loadUsersOverview() {
-      google.script.run
-        .withSuccessHandler(function(data) {
-          document.getElementById('usersCount').textContent = data.totalUsers || 0;
-        })
-        .withFailureHandler(function(error) {
-          console.error('Error loading users overview:', error);
-        })
-        .getUsersOverview();
-    }
+
 
     function loadSalesSection() {
       // This function is a placeholder.
@@ -2916,6 +2908,12 @@
       // This function is a placeholder.
       // You can add logic here to load any specific data needed for the main suppliers section.
       console.log("Suppliers section loaded");
+    }
+
+    function loadUsersSection() {
+      // This function is a placeholder.
+      // You can add logic here to load any specific data needed for the main users section.
+      console.log("Users section loaded");
     }
 
     function logout() {
