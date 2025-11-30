@@ -4903,7 +4903,7 @@
                 <td>${t.description || ''}</td>
                 <td class="text-end text-success">${t.in > 0 ? formatCurrency(t.in) : '-'}</td>
                 <td class="text-end text-danger">${t.out > 0 ? formatCurrency(t.out) : '-'}</td>
-                <td class="text-end">${formatCurrency(t.balance)}</td>
+                <td class="text-end">${formatCurrency(t.runningBalance || t.balance)}</td>
               </tr>
             `).join('');
           }

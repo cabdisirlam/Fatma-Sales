@@ -410,7 +410,11 @@ function getFinancialDashboardData() {
   }
 }
 
-function getAccountReport(accountName, startDate, endDate) {
+/**
+ * Get detailed account statement with running balance
+ * Handles date filters and normalizes account naming
+ */
+function getAccountStatement(accountName, startDate, endDate) {
   try {
     if (!accountName) {
       throw new Error('Account name is required');
@@ -426,53 +430,80 @@ function getAccountReport(accountName, startDate, endDate) {
     const target = canonicalizeAccountName(accountName || '').toLowerCase();
 
     let openingBalance = openingBalances[accountName] || 0;
-    let totalCredits = 0; 
+    let runningBalance = openingBalance;
+    let totalCredits = 0;
     let totalDebits = 0;
     const transactions = [];
-    
-    // Sort safely even if DateTime missing/invalid
-    financials.sort((a, b) => {
-      const da = parseTxnDate(a.DateTime);
-      const db = parseTxnDate(b.DateTime);
-      return da - db;
-    });
-    
-    financials.forEach(txn => {
-      const acc = canonicalizeAccountName(txn.Account || '').toLowerCase();
-      if (acc !== target) return;
 
-      const txnDate = parseTxnDate(txn.DateTime);
-      const credit = parseFloat(txn.Credit) || 0;
-      const debit = parseFloat(txn.Debit) || 0;
+    const sorted = financials
+      .map(txn => ({
+        raw: txn,
+        acc: canonicalizeAccountName(txn.Account || '').toLowerCase(),
+        date: parseTxnDate(txn.DateTime),
+        credit: parseFloat(txn.Credit) || 0,
+        debit: parseFloat(txn.Debit) || 0
+      }))
+      .filter(t => t.acc === target)
+      .sort((a, b) => a.date - b.date);
 
-      if (txnDate < start) {
-        openingBalance += (credit - debit);
+    sorted.forEach(t => {
+      if (t.date < start) {
+        runningBalance += (t.credit - t.debit);
         return;
       }
 
-      if (txnDate > end) {
+      if (t.date > end) {
         return;
       }
 
-      totalCredits += credit;
-      totalDebits += debit;
+      if (transactions.length === 0) {
+        // Effective balance at the start of the requested window
+        openingBalance = runningBalance;
+      }
+
+      runningBalance += (t.credit - t.debit);
+      totalCredits += t.credit;
+      totalDebits += t.debit;
       transactions.push({
-        date: txnDate.toISOString(), // return as string for safe client parsing
-        type: txn.Type,
-        description: txn.Description,
-        in: credit,
-        out: debit,
-        balance: openingBalance + totalCredits - totalDebits
+        date: t.date.toISOString(),
+        type: t.raw.Type,
+        description: t.raw.Description,
+        in: t.credit,
+        out: t.debit,
+        runningBalance: runningBalance
       });
     });
+
+    if (transactions.length === 0) {
+      openingBalance = runningBalance;
+    }
 
     return {
       account: accountName,
       openingBalance: openingBalance,
       totalAdditions: totalCredits,
       totalPayments: totalDebits,
-      closingBalance: openingBalance + totalCredits - totalDebits,
+      closingBalance: runningBalance,
       transactions: transactions
+    };
+  } catch (error) {
+    logError('getAccountStatement', error);
+    throw error;
+  }
+}
+
+/**
+ * Wrapper to preserve legacy API while using the detailed statement logic
+ */
+function getAccountReport(accountName, startDate, endDate) {
+  try {
+    const statement = getAccountStatement(accountName, startDate, endDate);
+    return {
+      ...statement,
+      transactions: statement.transactions.map(t => ({
+        ...t,
+        balance: t.runningBalance // compatibility for existing UI expectations
+      }))
     };
   } catch (error) {
     logError('getAccountReport', error);
