@@ -510,9 +510,10 @@ function recordCustomerPayment(paymentData) {
     // ✅ FIX: Update account balance (customer payment increases account balance)
     updateAccountBalance(canonicalAccount, paymentAmount, paymentData.User);
 
-    // Update customer balance (positive balance means customer owes)
+    // Update customer balance: move toward zero regardless of sign convention
     const currentBalance = parseFloat(customer.Current_Balance) || 0;
-    const newCustomerBalance = currentBalance - paymentAmount;
+    const balanceDelta = currentBalance <= 0 ? paymentAmount : -paymentAmount;
+    const newCustomerBalance = currentBalance + balanceDelta;
     const newTotalPaid = (parseFloat(customer.Total_Paid) || 0) + paymentAmount;
     updateRowById('Customers', 'Customer_ID', customerId, { Current_Balance: newCustomerBalance, Total_Paid: newTotalPaid });
 
