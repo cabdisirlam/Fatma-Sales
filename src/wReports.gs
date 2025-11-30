@@ -169,6 +169,47 @@ function generateUserPerformanceReport(startDate, endDate) {
   }
 }
 
+/**
+ * Lightweight reports overview for dashboard
+ */
+function getReportsOverview() {
+  try {
+    const sales = sheetToObjects('Sales').filter(s => s.Type === 'Sale');
+    const customers = sheetToObjects('Customers');
+    const suppliers = sheetToObjects('Suppliers');
+
+    let totalSales = 0;
+    sales.forEach(s => {
+      totalSales += parseFloat(s.Grand_Total) || 0;
+    });
+
+    let inventoryItems = 0;
+    try {
+      const inventory = getInventory();
+      if (inventory && Array.isArray(inventory)) inventoryItems = inventory.length;
+    } catch (e) {
+      // ignore inventory errors
+    }
+
+    return {
+      totalSalesAmount: totalSales,
+      totalSalesCount: sales.length,
+      totalCustomers: customers.length,
+      totalSuppliers: suppliers.length,
+      totalInventoryItems: inventoryItems
+    };
+  } catch (error) {
+    logError('getReportsOverview', error);
+    return {
+      totalSalesAmount: 0,
+      totalSalesCount: 0,
+      totalCustomers: 0,
+      totalSuppliers: 0,
+      totalInventoryItems: 0
+    };
+  }
+}
+
 // =====================================================
 // V3.0 FINANCIAL STATEMENTS WITH RUNNING BALANCE
 // =====================================================
