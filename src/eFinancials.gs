@@ -416,11 +416,16 @@ function getFinancialDashboardData() {
 
 function getAccountReport(accountName, startDate, endDate) {
   try {
+    if (!accountName) {
+      throw new Error('Account name is required');
+    }
+
     const financials = sheetToObjects('Financials');
     const openingBalances = getOpeningBalanceMap();
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    const hasStart = !!startDate;
+    const hasEnd = !!endDate;
+    const start = hasStart ? parseTxnDate(startDate) : new Date(0);
+    const end = hasEnd ? parseTxnDate(endDate) : new Date('2999-12-31T23:59:59Z');
 
     const target = (accountName || '').toString().trim().toLowerCase();
 
@@ -446,18 +451,23 @@ function getAccountReport(accountName, startDate, endDate) {
 
       if (txnDate < start) {
         openingBalance += (credit - debit);
-      } else if (txnDate <= end) {
-        totalCredits += credit;
-        totalDebits += debit;
-        transactions.push({
-          date: txnDate.toISOString(), // return as string for safe client parsing
-          type: txn.Type,
-          description: txn.Description,
-          in: credit,
-          out: debit,
-          balance: openingBalance + totalCredits - totalDebits
-        });
+        return;
       }
+
+      if (txnDate > end) {
+        return;
+      }
+
+      totalCredits += credit;
+      totalDebits += debit;
+      transactions.push({
+        date: txnDate.toISOString(), // return as string for safe client parsing
+        type: txn.Type,
+        description: txn.Description,
+        in: credit,
+        out: debit,
+        balance: openingBalance + totalCredits - totalDebits
+      });
     });
 
     return {
