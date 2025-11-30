@@ -133,11 +133,8 @@ function addCustomer(customerData) {
     const sheet = getSheet('Customers');
     const customerId = generateId('Customers', 'Customer_ID', 'CUST');
 
-    // Handle opening balance (Debt is stored as negative)
+    // Handle opening balance (positive means customer owes)
     let openingBalance = parseFloat(customerData.Opening_Balance || customerData.Current_Balance) || 0;
-    if (openingBalance > 0) {
-      openingBalance = -Math.abs(openingBalance); // Convert to negative (Debt)
-    }
 
     const createdBy = customerData.User || 'SYSTEM';
 
@@ -154,12 +151,14 @@ function addCustomer(customerData) {
       customerData.Customer_Type || 'Walk-in',         // 7. Customer_Type
       parseFloat(customerData.Credit_Limit) || 0,      // 8. Credit_Limit
       openingBalance,                                  // 9. Current_Balance
-      0,                                               // 10. Total_Purchases
-      '',                                              // 11. Last_Purchase_Date
-      initialPoints,                                   // 12. Loyalty_Points
-      'Active',                                        // 13. Status
-      new Date(),                                      // 14. Created_Date
-      createdBy                                        // 15. Created_By
+      openingBalance,                                  // 10. Opening_Balance
+      0,                                               // 11. Total_Paid
+      0,                                               // 12. Total_Purchases
+      '',                                              // 13. Last_Purchase_Date
+      initialPoints,                                   // 14. Loyalty_Points
+      'Active',                                        // 15. Status
+      new Date(),                                      // 16. Created_Date
+      createdBy                                        // 17. Created_By
     ];
 
     sheet.appendRow(newCustomer);
@@ -443,10 +442,11 @@ function recordCustomerPayment(paymentData) {
     
     sheet.appendRow(txnRow);
 
-    // Update customer balance
+    // Update customer balance (positive balance means customer owes)
     const currentBalance = parseFloat(customer.Current_Balance) || 0;
-    const newCustomerBalance = currentBalance + paymentAmount; 
-    updateRowById('Customers', 'Customer_ID', customerId, { Current_Balance: newCustomerBalance });
+    const newCustomerBalance = currentBalance - paymentAmount; 
+    const newTotalPaid = (parseFloat(customer.Total_Paid) || 0) + paymentAmount;
+    updateRowById('Customers', 'Customer_ID', customerId, { Current_Balance: newCustomerBalance, Total_Paid: newTotalPaid });
 
     return { success: true, message: 'Payment recorded successfully' };
   } catch (error) {
