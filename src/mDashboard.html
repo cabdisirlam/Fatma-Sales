@@ -1745,12 +1745,12 @@
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label for="editPhone" class="form-label">Phone *</label>
-              <input type="tel" class="form-control" id="editPhone" required>
+              <label for="supplierEditPhone" class="form-label">Phone *</label>
+              <input type="tel" class="form-control" id="supplierEditPhone" required>
             </div>
             <div class="col-md-6 mb-3">
-              <label for="editEmail" class="form-label">Email</label>
-              <input type="email" class="form-control" id="editEmail">
+              <label for="supplierEditEmail" class="form-label">Email</label>
+              <input type="email" class="form-control" id="supplierEditEmail">
             </div>
           </div>
 
@@ -1960,11 +1960,11 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Email *</label>
-                <input type="email" class="form-control" id="editEmail" required>
+                <input type="email" class="form-control" id="userEditEmail" required>
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label">Phone</label>
-                <input type="text" class="form-control" id="editPhone">
+                <input type="text" class="form-control" id="userEditPhone">
               </div>
             </div>
             <div class="row">
@@ -2937,6 +2937,10 @@
     function logout() {
       sessionStorage.clear();
       location.reload();
+    }
+
+    function toggleSidebarMobile() {
+      document.getElementById('sidebar').classList.toggle('show');
     }
 
     function toggleSidebarMobile() {
