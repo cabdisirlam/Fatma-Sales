@@ -151,3 +151,86 @@ function formatHeader(sheet, headerRange) {
         Logger.log(`Could not format header for sheet: ${sheet.getName()}. Error: ${e.message}`);
     }
 }
+
+/**
+ * Migration: Add Batch_ID column in correct position for Sales and Quotations
+ * IMPORTANT: Run this ONCE after upgrading to batch tracking system
+ * This function inserts Batch_ID column at position 8 (after Item_Name)
+ */
+function migrateBatchIDColumn() {
+  try {
+    const ss = getSpreadsheet();
+    const sheetsToMigrate = ['Sales', 'Quotations'];
+    const batchIDPosition = 8; // Column H (0-indexed: 7, but insertColumns uses 1-indexed: 8)
+    const batchIDIndex = 7; // For checking existing data (0-indexed)
+
+    Logger.log('=== Starting Batch_ID Column Migration ===');
+
+    sheetsToMigrate.forEach(sheetName => {
+      const sheet = ss.getSheetByName(sheetName);
+      if (!sheet) {
+        Logger.log(`Sheet "${sheetName}" not found. Skipping.`);
+        return;
+      }
+
+      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      const batchIDCol = headers.indexOf('Batch_ID');
+
+      if (batchIDCol === batchIDIndex) {
+        Logger.log(`✓ "${sheetName}": Batch_ID already in correct position (column ${batchIDPosition}).`);
+        return;
+      }
+
+      if (batchIDCol > batchIDIndex) {
+        // Batch_ID exists but in wrong position (probably at end)
+        Logger.log(`"${sheetName}": Batch_ID found at wrong position (column ${batchIDCol + 1}). Fixing...`);
+
+        // Delete the misplaced column
+        sheet.deleteColumn(batchIDCol + 1);
+
+        // Insert new column at correct position
+        sheet.insertColumnBefore(batchIDPosition);
+        sheet.getRange(1, batchIDPosition).setValue('Batch_ID');
+
+        // Set default value for existing rows
+        const lastRow = sheet.getLastRow();
+        if (lastRow > 1) {
+          const defaultValues = Array(lastRow - 1).fill(['UNKNOWN']);
+          sheet.getRange(2, batchIDPosition, lastRow - 1, 1).setValues(defaultValues);
+        }
+
+        Logger.log(`✓ "${sheetName}": Moved Batch_ID to correct position.`);
+      } else if (batchIDCol === -1) {
+        // Batch_ID doesn't exist, insert it
+        Logger.log(`"${sheetName}": Batch_ID missing. Adding at position ${batchIDPosition}...`);
+
+        sheet.insertColumnBefore(batchIDPosition);
+        sheet.getRange(1, batchIDPosition).setValue('Batch_ID');
+
+        // Set default value for existing rows
+        const lastRow = sheet.getLastRow();
+        if (lastRow > 1) {
+          const defaultValues = Array(lastRow - 1).fill(['UNKNOWN']);
+          sheet.getRange(2, batchIDPosition, lastRow - 1, 1).setValues(defaultValues);
+        }
+
+        Logger.log(`✓ "${sheetName}": Added Batch_ID column.`);
+      }
+
+      // Reformat header
+      const headerRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
+      formatHeader(sheet, headerRange);
+    });
+
+    Logger.log('=== Batch_ID Migration Complete ===');
+
+    return {
+      success: true,
+      message: 'Batch_ID column migration completed successfully. Please refresh your browser.'
+    };
+
+  } catch (error) {
+    logError('migrateBatchIDColumn', error);
+    throw new Error('Migration failed: ' + error.message);
+  }
+}
