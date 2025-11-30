@@ -216,6 +216,20 @@ function createSale(saleData) {
       if (creditAmount > 0) {
         updateCustomerBalance(saleData.Customer_ID, creditAmount, saleData.User);
       }
+
+      // Add loyalty points manually entered from frontend (default 1 per purchase)
+      try {
+        const cust = getCustomerById(saleData.Customer_ID);
+        const currentPoints = parseFloat(cust.Loyalty_Points) || 0;
+        const addPoints = parseFloat(saleData.Loyalty_Points) || 0;
+        if (addPoints > 0) {
+          updateRowById('Customers', 'Customer_ID', saleData.Customer_ID, {
+            Loyalty_Points: currentPoints + addPoints
+          });
+        }
+      } catch (e) {
+        logError('createSale_loyaltyUpdate', e);
+      }
     }
 
     logAudit(saleData.User, 'Sales', 'Create Sale', 'Sale ' + transactionId + ' created. Revenue: ' + grandTotal + ', COGS: ' + totalCOGS + ', Gross Profit: ' + (grandTotal - totalCOGS), '', '', '');

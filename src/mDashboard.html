@@ -1117,23 +1117,23 @@
                         <div class="row g-2 mt-2">
                           <div class="col-md-6">
                             <label class="form-label small mb-0">Phone</label>
-                            <input type="text" class="form-control form-control-sm" id="custPhoneVal" readonly>
+                            <input type="text" class="form-control form-control-sm" id="custPhoneVal" name="customerPhone" readonly>
                           </div>
                           <div class="col-md-6">
                             <label class="form-label small mb-0">Email</label>
-                            <input type="text" class="form-control form-control-sm" id="custEmailVal" readonly>
+                            <input type="text" class="form-control form-control-sm" id="custEmailVal" name="customerEmail" readonly>
                           </div>
                           <div class="col-md-6">
                             <label class="form-label small mb-0">KRA PIN</label>
-                            <input type="text" class="form-control form-control-sm" id="custKraVal" readonly>
+                            <input type="text" class="form-control form-control-sm" id="custKraVal" name="customerKra" readonly>
                           </div>
                           <div class="col-md-6">
                             <label class="form-label small mb-0">Location</label>
-                            <input type="text" class="form-control form-control-sm" id="custLocVal" readonly>
+                            <input type="text" class="form-control form-control-sm" id="custLocVal" name="customerLocation" readonly>
                           </div>
                           <div class="col-md-6">
-                            <label class="form-label small mb-0">Loyalty</label>
-                            <input type="text" class="form-control form-control-sm" id="custLoyaltyVal" readonly>
+                            <label class="form-label small mb-0">Loyalty (edit to add)</label>
+                            <input type="number" class="form-control form-control-sm" id="custLoyaltyVal" name="customerLoyalty" value="0">
                           </div>
                         </div>
                       </div>
@@ -1142,12 +1142,21 @@
                         <input type="date" class="form-control" id="dashSaleDate">
                       </div>
                     </div>
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Sold By</label>
+                        <input type="text" class="form-control" id="dashSoldBy" readonly>
+                      </div>
+                    </div>
 
                     <hr>
 
                     <div class="row align-items-end mb-3">
                       <div class="col-md-5">
-                        <label class="form-label fw-bold">Product</label>
+                        <div class="d-flex justify-content-between align-items-center">
+                          <label class="form-label fw-bold mb-0">Product</label>
+                          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadNewSaleInDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                        </div>
                         <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()">
                           <option value="">-- Choose Item --</option>
                         </select>
@@ -1188,8 +1197,10 @@
                       <div>
                         <h4 class="mb-0 text-success">Total: <span id="dashCartTotal">Ksh 0.00</span></h4>
                       </div>
-                      <div class="d-flex gap-2 align-items-center">
+                      <div class="d-flex gap-2 align-items-center flex-wrap">
                         <button type="button" class="btn btn-outline-secondary" onclick="clearDashCart()">Clear</button>
+
+                        <input type="number" class="form-control" id="dashSaleDiscount" style="width: 130px;" placeholder="Discount" value="0" min="0" step="0.01">
 
                         <select class="form-select" id="dashSalePayment" style="width: auto;">
                           <option value="Cash">Cash</option>
@@ -3258,6 +3269,8 @@
       // Set Date to Today automatically
       const dateField = document.getElementById('dashSaleDate');
       if(dateField) dateField.valueAsDate = new Date();
+      const soldByField = document.getElementById('dashSoldBy');
+      if (soldByField) soldByField.value = sessionStorage.getItem('userName') || 'SYSTEM';
 
       // Load Customers
       google.script.run.withSuccessHandler(function(customers) {
@@ -3384,8 +3397,10 @@
         Payment_Mode: document.getElementById('dashSalePayment').value,
         items: dashCart,
         User: sessionStorage.getItem('userName') || 'SYSTEM',
+        Sold_By: document.getElementById('dashSoldBy').value || (sessionStorage.getItem('userName') || 'SYSTEM'),
         Delivery_Charge: 0,
-        Discount: 0,
+        Discount: parseFloat(document.getElementById('dashSaleDiscount').value) || 0,
+        Loyalty_Points: parseInt(document.getElementById('custLoyaltyVal').value || '0', 10) || 0,
         Valid_Until: validUntilStr, // Send String
         KRA_PIN: document.getElementById('custKraVal').value || '',
         Location: document.getElementById('custLocVal').value || ''
