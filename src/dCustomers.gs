@@ -304,9 +304,10 @@ function updateCustomerPurchaseStats(customerId, amount, user) {
     const customer = getCustomerById(customerId);
     const totalPurchases = (parseFloat(customer.Total_Purchases) || 0) + parseFloat(amount);
 
-    // Automatic loyalty points: 10 points per sale (configurable)
-    const pointsEarned = CONFIG.LOYALTY_POINTS_PER_SALE || 10;
-    const totalPoints = (parseFloat(customer.Loyalty_Points) || 0) + pointsEarned;
+    // Automatic loyalty points: +10 for sales, -10 for returns
+    const isReturn = parseFloat(amount) < 0;
+    const pointsChange = isReturn ? -(CONFIG.LOYALTY_POINTS_PER_SALE || 10) : (CONFIG.LOYALTY_POINTS_PER_SALE || 10);
+    const totalPoints = Math.max(0, (parseFloat(customer.Loyalty_Points) || 0) + pointsChange);
 
     updateRowById('Customers', 'Customer_ID', customerId, {
       Total_Purchases: totalPurchases,
@@ -314,12 +315,12 @@ function updateCustomerPurchaseStats(customerId, amount, user) {
       Loyalty_Points: totalPoints
     });
 
-    Logger.log('Loyalty Points: Customer ' + customer.Customer_Name + ' earned ' + pointsEarned + ' points. Total: ' + totalPoints);
+    Logger.log('Loyalty Points: Customer ' + customer.Customer_Name + ' ' + (isReturn ? 'lost' : 'earned') + ' ' + Math.abs(pointsChange) + ' points. Total: ' + totalPoints);
 
     return {
       success: true,
       totalPurchases: totalPurchases,
-      pointsEarned: pointsEarned,
+      pointsEarned: pointsChange,
       totalPoints: totalPoints
     };
 

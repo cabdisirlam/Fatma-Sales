@@ -250,26 +250,12 @@ function createSale(saleData) {
 
     // Update Customer Stats & Debt
     if (saleData.Customer_ID && saleData.Customer_ID !== 'WALK-IN') {
-      // Add to total purchases stats
+      // Add to total purchases stats and automatic loyalty points (+10 per sale)
       updateCustomerPurchaseStats(saleData.Customer_ID, grandTotal, saleData.User);
 
       // If there is an outstanding balance, add to customer debt
       if (creditAmount > 0) {
         updateCustomerBalance(saleData.Customer_ID, creditAmount, saleData.User);
-      }
-
-      // Add loyalty points manually entered from frontend (default 1 per purchase)
-      try {
-        const cust = getCustomerById(saleData.Customer_ID);
-        const currentPoints = parseFloat(cust.Loyalty_Points) || 0;
-        const addPoints = parseFloat(saleData.Loyalty_Points) || 0;
-        if (addPoints > 0) {
-          updateRowById('Customers', 'Customer_ID', saleData.Customer_ID, {
-            Loyalty_Points: currentPoints + addPoints
-          });
-        }
-      } catch (e) {
-        logError('createSale_loyaltyUpdate', e);
       }
     }
 
