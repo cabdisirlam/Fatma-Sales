@@ -908,7 +908,11 @@ function getMasterItems() {
       return [];
     }
 
-    const headers = data[0];
+    const rawHeaders = data[0];
+    const expectedHeaders = ['Master_ID', 'Item_Name', 'Category', 'Description', 'Status'];
+    const headers = Array.isArray(rawHeaders) && rawHeaders.length >= expectedHeaders.length
+      ? rawHeaders
+      : expectedHeaders;
     const masterItems = [];
 
     for (let i = 1; i < data.length; i++) {
@@ -919,11 +923,15 @@ function getMasterItems() {
         item[header] = row[index];
       });
 
-      // Only return active items with Item_Name
-      if (item.Status === 'Active' && item.Item_Name) {
+      const itemName = item.Item_Name || row[1];
+      const category = item.Category || row[2] || '';
+      const status = (item.Status || row[4] || 'Active').toString().toLowerCase();
+
+      // Only return active items with Item_Name (treat blank status as active)
+      if (itemName && (status === 'active' || status === '')) {
         masterItems.push({
-          Item_Name: item.Item_Name,
-          Category: item.Category || ''
+          Item_Name: itemName,
+          Category: category
         });
       }
     }
