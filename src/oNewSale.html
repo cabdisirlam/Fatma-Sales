@@ -44,44 +44,63 @@
 
         <hr>
 
-        <div class="row mb-3">
-          <div class="col-md-6">
-            <label class="form-label">Customer</label>
-            <select class="form-select" name="customerId" id="customerSelect" onchange="fillCustomerDetails()">
-              <option value="">Walk-in Customer</option>
-            </select>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">KRA PIN</label>
-            <input type="text" class="form-control" name="kraPin" id="kraPin" placeholder="A00..." >
-          </div>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Customer</label>
+          <select class="form-select" name="customerId" id="customerSelect" onchange="fillCustomerDetails()">
+            <option value="">Walk-in Customer</option>
+          </select>
         </div>
+        <div class="col-md-6">
+          <label class="form-label">KRA PIN</label>
+          <input type="text" class="form-control" name="kraPin" id="kraPin" placeholder="A00..." >
+        </div>
+      </div>
 
-        <div class="row mb-3">
-          <div class="col-md-5">
-            <label class="form-label">Item/Product *</label>
-            <select class="form-select" name="itemId" id="itemSelect" required>
-              <option value="">Select Item</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Qty *</label>
-            <input type="number" class="form-control" name="quantity" id="qtyInput" min="1" value="1" required>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Unit Price</label>
-            <input type="number" class="form-control" name="unitPrice" id="unitPrice" step="0.01">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Payment Mode</label>
-            <select class="form-select" name="paymentMode" id="paymentMode" required>
-              <option value="Cash">Cash</option>
-              <option value="M-Pesa">M-Pesa</option>
-              <option value="Equity Bank">Bank</option>
-              <option value="Credit">Credit/Debt</option>
-            </select>
-          </div>
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label class="form-label">Location</label>
+          <input type="text" class="form-control" name="location" id="customerLocation" placeholder="e.g. Nairobi">
         </div>
+        <div class="col-md-4">
+          <label class="form-label">Loyalty Points</label>
+          <input type="number" class="form-control" id="loyaltyPoints" placeholder="0" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Paybill / Ref</label>
+          <input type="text" class="form-control" name="paybillNumber" id="paybillNumber" placeholder="Enter paybill/ref">
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-5">
+          <label class="form-label">Item/Product *</label>
+          <select class="form-select" name="itemId" id="itemSelect" required>
+            <option value="">Select Item</option>
+            </select>
+          </div>
+        <div class="col-md-2">
+          <label class="form-label">Qty *</label>
+          <input type="number" class="form-control" name="quantity" id="qtyInput" min="1" value="1" required>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Unit Price</label>
+          <input type="number" class="form-control" name="unitPrice" id="unitPrice" step="0.01">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Payment Mode</label>
+          <select class="form-select" name="paymentMode" id="paymentMode" required>
+            <option value="Cash">Cash</option>
+            <option value="M-Pesa">M-Pesa</option>
+            <option value="Equity Bank">Bank</option>
+            <option value="Credit">Credit/Debt</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Delivery Charge</label>
+          <input type="number" class="form-control" name="deliveryCharge" id="deliveryCharge" step="0.01" value="0">
+        </div>
+      </div>
 
         <div class="d-grid gap-2">
           <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
@@ -144,6 +163,7 @@
     function loadInventory() {
       google.script.run.withSuccessHandler(function(data) {
         const select = document.getElementById('itemSelect');
+        select.innerHTML = '<option value="">Select Item</option>';
         data.forEach(i => {
           const stockQty = (i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty) || 0;
           const o = document.createElement('option');
@@ -155,10 +175,10 @@
         });
         
         // Auto-fill price on change
-        select.addEventListener('change', function() {
+        select.onchange = function() {
            const price = this.options[this.selectedIndex].dataset.price;
            if(price) document.getElementById('unitPrice').value = price;
-        });
+        };
       }).getInventory({});
     }
 
@@ -166,14 +186,20 @@
     function fillCustomerDetails() {
       const custId = document.getElementById('customerSelect').value;
       const kraInput = document.getElementById('kraPin');
+      const locationInput = document.getElementById('customerLocation');
+      const pointsInput = document.getElementById('loyaltyPoints');
       
       if (custId) {
         const customer = globalCustomers.find(c => c.Customer_ID === custId);
         if (customer) {
           kraInput.value = customer.KRA_PIN || '';
+          locationInput.value = customer.Location || '';
+          pointsInput.value = customer.Loyalty_Points || 0;
         }
       } else {
         kraInput.value = '';
+        locationInput.value = '';
+        pointsInput.value = '';
       }
     }
 
@@ -221,10 +247,16 @@
         User: currentUser,
         // New Fields
         KRA_PIN: formData.kraPin,
+        Location: formData.location,
+        Loyalty_Points: document.getElementById('loyaltyPoints').value,
         DateTime: formData.saleDate, // Backend will parse this
-        Delivery_Charge: 0,
+        Delivery_Charge: parseFloat(formData.deliveryCharge) || 0,
         Discount: 0
       };
+
+      if (formData.paybillNumber) {
+        saleData.Paybill_Number = formData.paybillNumber.trim();
+      }
 
       // Determine backend function
       let backendFunc = 'createSale';
@@ -295,6 +327,8 @@
       document.getElementById('saleForm').style.pointerEvents = 'auto';
       document.getElementById('resultArea').style.display = 'none';
       document.getElementById('saleDate').valueAsDate = new Date();
+      loadCustomers();
+      loadInventory();
       lastTransactionId = null;
     }
 

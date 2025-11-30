@@ -65,6 +65,7 @@ function generateReceiptHTML(transactionId) {
         <div>Receipt #: ${sale.Transaction_ID}</div>
         <div>Date: ${dateStr}</div>
         <div>Served By: ${sale.Sold_By}</div>
+        ${sale.Paybill_Number ? `<div>Paybill/Ref: ${sale.Paybill_Number}</div>` : ''}
 
         <div class="customer-info">
           <div>Customer: ${sale.Customer_Name}</div>
@@ -99,6 +100,7 @@ function generateReceiptHTML(transactionId) {
         <table class="totals-table">
           <tbody>
             <tr><td>Subtotal:</td><td style="text-align:right;">${formatNumber(sale.Subtotal)}</td></tr>
+            ${sale.Delivery_Charge && parseFloat(sale.Delivery_Charge) !== 0 ? `<tr><td>Delivery:</td><td style="text-align:right;">${formatNumber(sale.Delivery_Charge)}</td></tr>` : ''}
             ${sale.Discount > 0 ? `<tr><td>Discount:</td><td style="text-align:right;">-${formatNumber(sale.Discount)}</td></tr>` : ''}
             <tr style="font-size: 14px;"><td>TOTAL:</td><td style="text-align:right;">${settings.Currency_Symbol || 'Ksh'} ${formatNumber(sale.Grand_Total)}</td></tr>
           </tbody>

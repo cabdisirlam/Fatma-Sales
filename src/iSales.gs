@@ -114,7 +114,7 @@ function createSale(saleData) {
     if (saleData.Payment_Mode === 'Split' && saleData.Split_Payments) {
       for (const payment of saleData.Split_Payments) {
         if (payment.amount > 0) {
-          recordSalePayment(transactionId, payment.method, payment.amount, saleData.Customer_ID, saleData.User);
+          recordSalePayment(transactionId, payment.method, payment.amount, saleData.Customer_ID, saleData.User, saleData.Paybill_Number || payment.reference);
           totalPaid += parseFloat(payment.amount);
         }
       }
@@ -131,7 +131,7 @@ function createSale(saleData) {
                           : grandTotal;
 
       if (amountToPay > 0) {
-        recordSalePayment(transactionId, saleData.Payment_Mode, amountToPay, saleData.Customer_ID, saleData.User);
+        recordSalePayment(transactionId, saleData.Payment_Mode, amountToPay, saleData.Customer_ID, saleData.User, saleData.Paybill_Number);
         totalPaid += amountToPay;
       }
     }
@@ -161,8 +161,8 @@ function createSale(saleData) {
         saleData.Location || '',
         saleData.KRA_PIN || '',
         deliveryStatus, // Status column now tracks Delivery/Pickup status
-        '',
-        ''
+        saleData.Paybill_Number || '', // Paybill/Reference
+        '' // spare/notes
       ];
       sheet.appendRow(saleRow);
     });
@@ -605,7 +605,7 @@ function updateQuotationStatus(quotationId, status, convertedSaleId, user) {
  * Record sale payment in Financials
  * V3.0: Validates payment method against Chart of Accounts
  */
-function recordSalePayment(transactionId, paymentMethod, amount, customerId, user) {
+function recordSalePayment(transactionId, paymentMethod, amount, customerId, user, reference) {
   try {
     // V3.0: Validate payment method exists in Chart of Accounts
     validateAccount(paymentMethod);
@@ -628,7 +628,7 @@ function recordSalePayment(transactionId, paymentMethod, amount, customerId, use
       paymentMethod,
       '', // Payee
       transactionId, // Receipt_No
-      transactionId, // Reference
+      reference || transactionId, // Reference (e.g., Paybill/Ref)
       'Approved',
       user,
       user
@@ -685,6 +685,7 @@ function getSaleById(transactionId) {
       Sold_By: first.Sold_By,
       Location: first.Location,
       KRA_PIN: first.KRA_PIN,
+      Paybill_Number: first.Paybill_Number || first.Reference || first[''] || '',
       Status: first.Status,
       Valid_Until: first.Valid_Until,
       Converted_Sale_ID: first.Converted_Sale_ID,
