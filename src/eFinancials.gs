@@ -487,9 +487,30 @@ function parseTxnDate(value) {
     const ms = (value - 25569) * 86400000; // convert to ms from Unix epoch
     return new Date(ms);
   }
-  const parsed = new Date(value);
-  if (isNaN(parsed.getTime())) {
-    return new Date(0); // fallback epoch
+  if (typeof value === 'string') {
+    const str = value.trim();
+    // ISO or RFC-like
+    let parsed = new Date(str);
+    if (!isNaN(parsed.getTime())) return parsed;
+
+    // Try YYYY-MM-DD or YYYY-MM-DD HH:MM:SS
+    const isoLike = str.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (isoLike) {
+      const [, y, m, d, hh = '0', mm = '0', ss = '0'] = isoLike;
+      parsed = new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm), Number(ss));
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
+
+    // Try MM/DD/YYYY or MM/DD/YYYY HH:MM:SS
+    const usLike = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (usLike) {
+      const [, m, d, y, hh = '0', mm = '0', ss = '0'] = usLike;
+      parsed = new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm), Number(ss));
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
   }
-  return parsed;
+
+  const fallback = new Date(value);
+  if (!isNaN(fallback.getTime())) return fallback;
+  return new Date(0); // ultimate fallback
 }
