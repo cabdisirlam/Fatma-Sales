@@ -2074,6 +2074,20 @@
     // ==================== GLOBAL STATE ====================
     let currentSection = 'dashboard';
     let sectionHistory = [];
+    const navHistory = [];
+    let isGoingBack = false;
+    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+    const DATA_CACHE = {};
+    let dashboardSuppliersData = [];
+    let dashboardCustomersData = [];
+
+    // Track the active user for audit logging and attribution
+    if (!sessionStorage.getItem('userName') && typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(function(email) {
+        currentUser = email || 'SYSTEM';
+        sessionStorage.setItem('userName', currentUser);
+      }).getActiveUserEmail();
+    }
 
     // ==================== INITIALIZATION ====================
     // ==================== MAIN INITIALIZATION ====================
@@ -2181,22 +2195,6 @@
         }).withFailureHandler(err => {
             tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error: ${err.message}</td></tr>`;
         }).getRecentSales(50); // Fetch more sales
-    }
-
-    // Global cache object to prevent redundant server calls
-    const DATA_CACHE = {};
-    const navHistory = [];
-    let isGoingBack = false;
-    let dashboardSuppliersData = [];
-    let dashboardCustomersData = [];
-
-    // Track the active user for audit logging and attribution
-    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
-    if (!sessionStorage.getItem('userName') && typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run.withSuccessHandler(function(email) {
-        currentUser = email || 'SYSTEM';
-        sessionStorage.setItem('userName', currentUser);
-      }).getActiveUserEmail();
     }
 
     // Initialize dashboard
@@ -2359,6 +2357,8 @@
       history.pushState({section: sectionName}, '', '#' + sectionName);
 
       loadSectionInternal(sectionName);
+      closeMobileMenu();
+      updateNavigationButtons();
       updateBackButton();
     }
 
@@ -5215,14 +5215,6 @@
         nextBtn.disabled = currentIndex === sectionOrder.length - 1;
       }
     }
-
-    // Override showSection to close mobile menu and update navigation
-    const originalShowSection = showSection;
-    showSection = function(sectionName, event) {
-      originalShowSection.call(this, sectionName, event);
-      closeMobileMenu();
-      updateNavigationButtons();
-    };
 
     // Handle Browser Back Button
     window.onpopstate = function(event) {
