@@ -676,6 +676,10 @@
       background: rgba(239, 68, 68, 0.1);
       color: var(--danger-color);
     }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -830,7 +834,7 @@
         </div>
 
         <!-- Module Cards Grid -->
-        <div class="dashboard-grid">
+        <div class="dashboard-grid hidden">
           <!-- Sales Module -->
           <div class="module-card" onclick="showSection('sales')">
             <div class="module-icon">
@@ -2072,6 +2076,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       loadUserInfo();
       loadDashboardStats();
+      document.querySelector('.dashboard-grid').classList.add('hidden');
     });
 
     // ==================== USER INFO ====================
@@ -2323,6 +2328,12 @@
 
       loadSectionInternal(sectionName);
       updateBackButton();
+
+      if (sectionName === 'dashboard') {
+        document.querySelector('.dashboard-grid').classList.remove('hidden');
+      } else {
+        document.querySelector('.dashboard-grid').classList.add('hidden');
+      }
     }
 
     function goBack() {
