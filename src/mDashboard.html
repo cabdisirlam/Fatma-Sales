@@ -4430,7 +4430,9 @@
 
       const depositAccounts = (ui.depositAccounts && ui.depositAccounts.length ? ui.depositAccounts : ui.accounts || []);
       const accountOptions = (depositAccounts || []).map(acc => `<option value="${acc}">${acc}</option>`).join('');
-      const statementAccountOptions = (ui.accounts || []).map(acc => `<option value="${acc}">${acc}</option>`).join('');
+      const statementAccountOptions = (ui.accounts || [])
+        .filter(acc => !acc || !acc.toString().toLowerCase().includes('inventory'))
+        .map(acc => `<option value="${acc}">${acc}</option>`).join('');
       const customerOptions = (ui.customers || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
       const categoryOptions = (ui.categories || []).map(c => `<option value="${c}">${c}</option>`).join('');
       const supplierOptions = (ui.suppliers || []).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
