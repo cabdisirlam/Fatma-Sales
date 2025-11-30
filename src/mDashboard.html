@@ -1110,7 +1110,12 @@
                             <i class="bi bi-x-lg"></i>
                           </button>
                         </div>
+                        <div class="d-flex gap-2 mb-2">
+                          <button class="btn btn-sm btn-outline-secondary" type="button" onclick="refreshQuickSaleCustomers()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                          <button class="btn btn-sm btn-outline-primary" type="button" onclick="showSection('customers')"><i class="bi bi-plus-circle"></i> Add Customer</button>
+                        </div>
                         <select class="form-select" id="dashSaleCustomer" onchange="onCustomerSelect(this.value)">
+                          <option value="">-- Select Customer --</option>
                           <option value="WALK-IN">Walk-in Customer</option>
                         </select>
 
@@ -3287,6 +3292,7 @@
             });
           }
         }
+        populateCustomerSelect(dashCustomers);
         resetToWalkIn();
       }).getCustomers();
 
@@ -3310,18 +3316,10 @@
     // --- Handle customer filtering/search (by Customer_Name only) ---
     function filterDashCustomers() {
       const term = (document.getElementById('customerSearchInput').value || '').toLowerCase();
-      const sel = document.getElementById('dashSaleCustomer');
-      if (!sel) return;
-      sel.innerHTML = '<option value="WALK-IN">Walk-in Customer</option>';
       const filtered = term
-        ? dashCustomers.filter(c =>
-            (c.Customer_Name || '').toLowerCase().includes(term))
+        ? dashCustomers.filter(c => (c.Customer_Name || '').toLowerCase().includes(term))
         : dashCustomers;
-
-      filtered.sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
-      filtered.forEach(c => {
-        sel.add(new Option(`${c.Customer_Name} (${c.Phone || '-'})`, c.Customer_ID));
-      });
+      populateCustomerSelect(filtered);
     }
 
     function resetToWalkIn() {
@@ -3334,6 +3332,20 @@
       document.getElementById('custKraVal').value = '';
       document.getElementById('custLocVal').value = '';
       document.getElementById('custLoyaltyVal').value = '';
+    }
+
+    function populateCustomerSelect(list) {
+      const sel = document.getElementById('dashSaleCustomer');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Select Customer --</option><option value="WALK-IN">Walk-in Customer</option>';
+      const sorted = (list || []).slice().sort((a, b) => (a.Customer_Name || '').localeCompare(b.Customer_Name || ''));
+      sorted.forEach(c => {
+        sel.add(new Option(`${c.Customer_Name} (${c.Phone || '-'})`, c.Customer_ID));
+      });
+    }
+
+    function refreshQuickSaleCustomers() {
+      loadCustomers();
     }
 
     // --- UPDATE PRODUCT DETAILS ON SELECTION ---
