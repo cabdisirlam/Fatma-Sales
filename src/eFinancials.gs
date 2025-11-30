@@ -45,10 +45,19 @@ function getFinancialUiData() {
       balance: c.Current_Balance
     }));
 
+    // 4. Suppliers for expense payments (optional)
+    const supplierData = sheetToObjects('Suppliers');
+    const suppliers = supplierData.map(s => ({
+      id: s.Supplier_ID,
+      name: s.Supplier_Name,
+      balance: s.Current_Balance
+    }));
+
     return {
       accounts: Array.from(accountSet).sort(),
       categories: categories.sort(),
-      customers: customers.sort((a, b) => a.name.localeCompare(b.name))
+      customers: customers.sort((a, b) => a.name.localeCompare(b.name)),
+      suppliers: suppliers.sort((a, b) => a.name.localeCompare(b.name))
     };
 
   } catch (e) {
@@ -194,13 +203,22 @@ function handleFinancialTransaction(data) {
         desc = 'Payment from ' + data.customerName + (data.notes ? ': ' + data.notes : '');
         credit = amount;
         // Also update Customer Balance
-        updateCustomerBalance(data.customerId, amount, user);
+        // Payment reduces what customer owes, so subtract from balance
+        updateCustomerBalance(data.customerId, -amount, user);
         break;
 
       case 'expense': // Money Out
         type = 'Expense';
         desc = data.category + ': ' + (data.notes || '');
         debit = amount; 
+        if (data.supplierId) {
+          try {
+            updateSupplierPayment(data.supplierId, amount, user);
+          } catch (e) {
+            // If supplier update fails, log but continue recording expense
+            logError('handleFinancialTransaction.updateSupplierPayment', e);
+          }
+        }
         break;
 
       case 'bank_deposit': // Money In

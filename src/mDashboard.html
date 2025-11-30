@@ -4358,6 +4358,7 @@
       const accountOptions = (ui.accounts || []).map(acc => `<option value="${acc}">${acc}</option>`).join('');
       const customerOptions = (ui.customers || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
       const categoryOptions = (ui.categories || []).map(c => `<option value="${c}">${c}</option>`).join('');
+      const supplierOptions = (ui.suppliers || []).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
       let html = `
         <div class="d-flex flex-wrap gap-2 mb-3">
@@ -4482,6 +4483,13 @@
                     </select>
                   </div>
                   <div class="mb-3">
+                    <label class="form-label">Supplier (optional)</label>
+                    <select class="form-select" name="supplierId">
+                      <option value="">No supplier</option>
+                      ${supplierOptions}
+                    </select>
+                  </div>
+                  <div class="mb-3">
                     <label class="form-label">Payee / Supplier</label>
                     <input type="text" class="form-control" name="payee" placeholder="Supplier name" required>
                   </div>
@@ -4594,11 +4602,19 @@
       }
       toggleFinancialButton(btn, true, 'Saving...');
 
+      const supplierSelect = form.supplierId;
+      const supplierId = supplierSelect ? supplierSelect.value : '';
+      const supplierName = supplierSelect && supplierSelect.selectedIndex > -1 ? supplierSelect.options[supplierSelect.selectedIndex].text : '';
+      if (!form.payee.value && supplierName) {
+        form.payee.value = supplierName;
+      }
+
       const payload = {
         txnType: 'expense',
         account: form.account.value,
         category: form.category.value,
         payee: form.payee.value,
+        supplierId: supplierId || undefined,
         notes: form.notes.value,
         amount: amount,
         method: form.account.value
