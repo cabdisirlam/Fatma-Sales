@@ -1,15 +1,15 @@
 /**
- * Beipoa Kenya - Sales Management System
+ * Smatika Kenya - Sales Management System
  * Configuration File
  */
 
 const CONFIG = {
   // Shop Information
-  SHOP_NAME: 'Beipoa Kenya',
+  SHOP_NAME: 'Smatika Kenya',
   ADMIN_EMAIL: 'cabdisirlam@gmail.com',
 
   // Workbook Configuration
-  WORKBOOK_NAME: 'Beipoa System',
+  WORKBOOK_NAME: 'Smatika System',
 
   // Sheet Names - Reorganized to 9 sheets for simplified management
   SHEETS: {
@@ -43,6 +43,9 @@ const CONFIG = {
   // Currency
   CURRENCY: 'KES',
   CURRENCY_SYMBOL: 'Ksh',
+
+  // Loyalty Points
+  LOYALTY_POINTS_PER_SALE: 10, // 10 points per sale
 
   // Authentication
   PIN_LENGTH: 4,

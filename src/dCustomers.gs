@@ -297,14 +297,15 @@ function updateCustomerBalance(customerId, amountChange, user) {
 
 /**
  * Update customer purchase stats (after sale)
+ * V4.0: Automatic loyalty points - 10 points per sale
  */
 function updateCustomerPurchaseStats(customerId, amount, user) {
   try {
     const customer = getCustomerById(customerId);
     const totalPurchases = (parseFloat(customer.Total_Purchases) || 0) + parseFloat(amount);
 
-    // Calculate loyalty points (1 point per 100 KES spent)
-    const pointsEarned = Math.floor(parseFloat(amount) / 100);
+    // Automatic loyalty points: 10 points per sale (configurable)
+    const pointsEarned = CONFIG.LOYALTY_POINTS_PER_SALE || 10;
     const totalPoints = (parseFloat(customer.Loyalty_Points) || 0) + pointsEarned;
 
     updateRowById('Customers', 'Customer_ID', customerId, {
@@ -312,6 +313,8 @@ function updateCustomerPurchaseStats(customerId, amount, user) {
       Last_Purchase_Date: new Date(),
       Loyalty_Points: totalPoints
     });
+
+    Logger.log('Loyalty Points: Customer ' + customer.Customer_Name + ' earned ' + pointsEarned + ' points. Total: ' + totalPoints);
 
     return {
       success: true,
