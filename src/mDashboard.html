@@ -776,6 +776,9 @@
           <span class="user-role" id="userRole">...</span>
         </div>
         <div class="user-avatar" id="userAvatar">?</div>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" href="#" onclick="logout()">Logout</a>
+        </div>
       </div>
     </div>
 
@@ -2423,9 +2426,13 @@
     }
 
     function updateBackButton() {
-      const backBtn = document.getElementById('globalBackBtn');
+      const backBtn = document.getElementById('backBtn');
       if (backBtn) {
-        backBtn.disabled = navHistory.length === 0;
+        if (navHistory.length > 0) {
+          backBtn.style.display = 'inline-flex';
+        } else {
+          backBtn.style.display = 'none';
+        }
       }
     }
 
@@ -2909,6 +2916,19 @@
       // This function is a placeholder.
       // You can add logic here to load any specific data needed for the main suppliers section.
       console.log("Suppliers section loaded");
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      location.reload();
+    }
+
+    function toggleSidebarMobile() {
+      document.getElementById('sidebar').classList.toggle('show');
+    }
+
+    function closeMobileMenu() {
+      document.getElementById('sidebar').classList.remove('show');
     }
 
     function loadSalesHistory() {
