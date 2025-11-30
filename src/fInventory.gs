@@ -716,11 +716,76 @@ function decreaseStock(itemId, qty, user) {
       qtyDeducted: parseFloat(qty),
       totalCOGS: totalCOGS,
       batchesUsed: batchUpdates.length,
+      batchDetails: batchUpdates.map(u => ({
+        batchId: u.batchId,
+        qtyDeducted: u.qtyDeducted
+      })),
       message: 'FIFO deduction completed'
     };
 
   } catch (error) {
     logError('decreaseStock', error);
+    throw error;
+  }
+}
+
+/**
+ * Increase stock for a specific batch (for returns)
+ * V3.0: Returns items to their ORIGINAL batch instead of creating a new one
+ * Used when processing sales returns to maintain batch integrity
+ */
+function increaseStockSpecificBatch(itemId, batchId, qty, user) {
+  try {
+    const sheet = getSheet('Inventory');
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length <= 1) {
+      // If no inventory exists, we can't return to a batch that doesn't exist
+      // Fall back to creating a new batch
+      Logger.log('WARNING: No inventory found for ' + itemId + ', creating new batch for return');
+      return increaseStock(itemId, qty, user);
+    }
+
+    const headers = data[0];
+    const itemIdIndex = headers.indexOf('Item_ID');
+    const batchIdIndex = headers.indexOf('Batch_ID');
+    const qtyIndex = headers.indexOf('Current_Qty');
+
+    // Find the specific batch row
+    let foundBatchRow = null;
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (row[itemIdIndex] === itemId && row[batchIdIndex] === batchId) {
+        foundBatchRow = {
+          rowIndex: i + 1, // Google Sheets is 1-indexed
+          currentQty: parseFloat(row[qtyIndex]) || 0
+        };
+        break;
+      }
+    }
+
+    if (foundBatchRow) {
+      // Batch exists - increase its quantity
+      const newQty = foundBatchRow.currentQty + parseFloat(qty);
+      sheet.getRange(foundBatchRow.rowIndex, qtyIndex + 1).setValue(newQty);
+      Logger.log('Returned ' + qty + ' units to existing batch ' + batchId + ', new qty: ' + newQty);
+    } else {
+      // Batch doesn't exist (maybe it was fully consumed) - create new batch
+      Logger.log('WARNING: Batch ' + batchId + ' not found, creating new batch for return');
+      return increaseStock(itemId, qty, user);
+    }
+
+    clearInventoryCache();
+
+    return {
+      success: true,
+      qtyAdded: parseFloat(qty),
+      batchId: batchId,
+      message: 'Stock returned to batch ' + batchId
+    };
+
+  } catch (error) {
+    logError('increaseStockSpecificBatch', error);
     throw error;
   }
 }

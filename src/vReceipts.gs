@@ -11,12 +11,16 @@ function generateReceiptHTML(transactionId) {
     const sale = getSaleById(transactionId);
     if (!sale) throw new Error('Sale not found');
 
-    // Fetch customer loyalty points if not walk-in
+    // Fetch customer details if not walk-in
     let customerPoints = 0;
+    let customerPhone = '';
     if (sale.Customer_ID && sale.Customer_ID !== 'WALK-IN') {
       try {
         const customer = getCustomerById(sale.Customer_ID);
-        customerPoints = customer && customer.Loyalty_Points ? customer.Loyalty_Points : 0;
+        if (customer) {
+          customerPoints = customer.Loyalty_Points || 0;
+          customerPhone = customer.Phone || '';
+        }
       } catch (e) {
         // ignore
       }
@@ -69,6 +73,7 @@ function generateReceiptHTML(transactionId) {
 
         <div class="customer-info">
           <div>Customer: ${sale.Customer_Name}</div>
+          ${customerPhone ? `<div>Phone: ${customerPhone}</div>` : ''}
           ${sale.KRA_PIN ? `<div>KRA PIN: ${sale.KRA_PIN}</div>` : ''}
           ${sale.Location ? `<div>Loc: ${sale.Location}</div>` : ''}
         </div>
@@ -135,6 +140,19 @@ function generateQuotationHTML(transactionId) {
       throw new Error('Quotation not found');
     }
 
+    // Fetch customer phone if available
+    let customerPhone = '';
+    if (quotation.Customer_ID && quotation.Customer_ID !== 'WALK-IN') {
+      try {
+        const customer = getCustomerById(quotation.Customer_ID);
+        if (customer) {
+          customerPhone = customer.Phone || '';
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
     const settings = getAllSettings();
     const shopName = settings.Shop_Name || CONFIG.SHOP_NAME;
     const currency = settings.Currency_Symbol || CONFIG.CURRENCY_SYMBOL;
@@ -183,6 +201,7 @@ function generateQuotationHTML(transactionId) {
     <div class="info-box">
       <h3>Customer Details</h3>
       <p><strong>Name:</strong> ${quotation.Customer_Name}</p>
+      ${customerPhone ? '<p><strong>Phone:</strong> ' + customerPhone + '</p>' : ''}
       ${quotation.Location ? '<p><strong>Location:</strong> ' + quotation.Location + '</p>' : ''}
       ${quotation.KRA_PIN ? '<p><strong>KRA PIN:</strong> ' + quotation.KRA_PIN + '</p>' : ''}
     </div>

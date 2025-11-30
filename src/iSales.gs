@@ -139,42 +139,83 @@ function createSale(saleData) {
     // Determine Delivery Status (for "Store until pickup")
     const deliveryStatus = saleData.Delivery_Status || 'Completed';
 
-    // Add each line item to Sales sheet
-    items.forEach(item => {
-      const saleRow = [
-        transactionId,
-        dateTime,
-        'Sale',
-        saleData.Customer_ID,
-        saleData.Customer_Name || '',
-        item.Item_ID,
-        item.Item_Name,
-        item.Qty,
-        item.Unit_Price,
-        item.Line_Total,
-        subtotal,
-        deliveryCharge,
-        discount,
-        grandTotal,
-        saleData.Payment_Mode,
-        saleData.User,
-        saleData.Location || '',
-        saleData.KRA_PIN || '',
-        deliveryStatus, // Status column now tracks Delivery/Pickup status
-        saleData.Paybill_Number || '', // Paybill/Reference
-        '' // spare/notes
-      ];
-      sheet.appendRow(saleRow);
-    });
-
-    // Decrease Stock & Calculate COGS (V3.0 FIFO)
+    // Decrease Stock first & Capture batch details (V3.0 FIFO)
     let totalCOGS = 0;
+    const itemBatchMap = {}; // Map Item_ID to batch details
+
     for (const item of items) {
       const stockResult = decreaseStock(item.Item_ID, item.Qty, saleData.User);
-      if (stockResult && stockResult.totalCOGS !== undefined) {
-        totalCOGS += stockResult.totalCOGS;
+      if (stockResult) {
+        if (stockResult.totalCOGS !== undefined) {
+          totalCOGS += stockResult.totalCOGS;
+        }
+        // Store batch details for this item
+        itemBatchMap[item.Item_ID] = stockResult.batchDetails || [];
       }
     }
+
+    // Add each line item to Sales sheet WITH batch information
+    items.forEach(item => {
+      const batchInfo = itemBatchMap[item.Item_ID] || [];
+
+      // If multiple batches were used, create a row for each batch
+      if (batchInfo.length > 0) {
+        batchInfo.forEach(batch => {
+          const saleRow = [
+            transactionId,
+            dateTime,
+            'Sale',
+            saleData.Customer_ID,
+            saleData.Customer_Name || '',
+            item.Item_ID,
+            item.Item_Name,
+            batch.batchId, // NEW: Batch_ID column
+            batch.qtyDeducted, // Qty from this specific batch
+            item.Unit_Price,
+            batch.qtyDeducted * item.Unit_Price, // Line total for this batch
+            subtotal,
+            deliveryCharge,
+            discount,
+            grandTotal,
+            saleData.Payment_Mode,
+            saleData.User,
+            saleData.Location || '',
+            saleData.KRA_PIN || '',
+            deliveryStatus,
+            '', // Valid_Until (for quotations)
+            '' // Converted_Sale_ID (for quotations)
+          ];
+          sheet.appendRow(saleRow);
+        });
+      } else {
+        // Fallback if no batch info (shouldn't happen normally)
+        const saleRow = [
+          transactionId,
+          dateTime,
+          'Sale',
+          saleData.Customer_ID,
+          saleData.Customer_Name || '',
+          item.Item_ID,
+          item.Item_Name,
+          'UNKNOWN', // Batch_ID
+          item.Qty,
+          item.Unit_Price,
+          item.Line_Total,
+          subtotal,
+          deliveryCharge,
+          discount,
+          grandTotal,
+          saleData.Payment_Mode,
+          saleData.User,
+          saleData.Location || '',
+          saleData.KRA_PIN || '',
+          deliveryStatus,
+          '',
+          ''
+        ];
+        sheet.appendRow(saleRow);
+      }
+    });
 
     // Record COGS Transaction in Financials (V3.0)
     if (totalCOGS > 0) {
@@ -834,8 +875,15 @@ function processSaleReturn(saleId, items, reason, user) {
       const itemRefund = returnQty * saleItem.Unit_Price;
       refundAmount += itemRefund;
 
-      // Return stock to inventory
-      increaseStock(returnItem.Item_ID, returnQty, user);
+      // Return stock to inventory - use ORIGINAL batch if available
+      if (saleItem.Batch_ID && saleItem.Batch_ID !== 'UNKNOWN') {
+        increaseStockSpecificBatch(returnItem.Item_ID, saleItem.Batch_ID, returnQty, user);
+        Logger.log('Returned ' + returnQty + ' units of ' + saleItem.Item_Name + ' to batch ' + saleItem.Batch_ID);
+      } else {
+        // Fallback: create new batch if original batch info not available
+        increaseStock(returnItem.Item_ID, returnQty, user);
+        Logger.log('Returned ' + returnQty + ' units of ' + saleItem.Item_Name + ' (new batch created)');
+      }
     }
 
     // Record refund in Financials
