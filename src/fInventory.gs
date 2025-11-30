@@ -332,11 +332,13 @@ function addProduct(productData) {
   try {
     const stockSource = (productData.Stock_Source || 'opening').toLowerCase();
     const isPurchase = stockSource === 'purchase';
+    const supplierId = productData.Supplier_ID || productData.Supplier || '';
+    const supplierName = productData.Supplier_Name || '';
 
     // 1. Validation (Matches your form inputs)
     const requiredFields = ['Item_Name', 'Cost_Price', 'Current_Qty'];
     if (isPurchase) {
-      requiredFields.push('Supplier');
+      requiredFields.push('Supplier_ID');
     }
 
     validateRequired(productData, requiredFields);
@@ -368,7 +370,7 @@ function addProduct(productData) {
         sellingPrice,                            // 5. Selling_Price
         purchaseQty,                             // 6. Current_Qty (opening stock)
         parseFloat(productData.Reorder_Level)||10,// 7. Reorder_Level
-        productData.Supplier || '',              // 8. Supplier
+        supplierName,                            // 8. Supplier
         new Date(),                              // 9. Last_Updated
         productData.User || 'SYSTEM',            // 10. Updated_By
         batchId,                                 // 11. Batch_ID (V3.0)
@@ -398,7 +400,7 @@ function addProduct(productData) {
         sellingPrice,                            // 5. Selling_Price
         0,                                       // 6. Current_Qty (0 - will be added by createPurchase)
         parseFloat(productData.Reorder_Level)||10,// 7. Reorder_Level
-        productData.Supplier || '',              // 8. Supplier
+        supplierName,                            // 8. Supplier
         new Date(),                              // 9. Last_Updated
         productData.User || 'SYSTEM',            // 10. Updated_By
         batchId,                                 // 11. Batch_ID (V3.0)
@@ -419,15 +421,15 @@ function addProduct(productData) {
     }
 
     // If this is a purchase, create a purchase record to update supplier balances and payments
-    if (isPurchase && productData.Supplier) {
-      const supplier = getSupplierById(productData.Supplier);
+    if (isPurchase && supplierId) {
+      const supplier = getSupplierById(supplierId);
       const paidAmount = parseFloat(productData.Paid_Amount) || 0;
 
       createPurchase({
-        Supplier_ID: productData.Supplier,
-        Supplier_Name: supplier.Supplier_Name,
+        Supplier_ID: supplierId,
+        Supplier_Name: supplierName || (supplier && supplier.Supplier_Name),
         items: [{ Item_ID: itemId, Qty: purchaseQty, Cost_Price: costPrice }],
-        Payment_Method: productData.Payment_Method || 'Cash',
+        Payment_Method: productData.Payment_Method || 'Credit',
         Paid_Amount: paidAmount,
         User: productData.User || 'SYSTEM'
       });

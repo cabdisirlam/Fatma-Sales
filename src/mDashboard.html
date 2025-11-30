@@ -2828,7 +2828,9 @@
           Selling_Price: parseFloat(form.price.value) || 0,
           Current_Qty: parseFloat(form.qty.value) || 0,
           Reorder_Level: parseFloat(form.reorderLevel.value) || 10,
-          Supplier: form.supplier.value.trim(),
+          Supplier_ID: form.supplier.value.trim(),
+          Supplier_Name: form.supplier.options && form.supplier.selectedIndex >= 0 ? form.supplier.options[form.supplier.selectedIndex].text : '',
+          Stock_Source: 'purchase',
           User: currentUser || 'SYSTEM'
         };
 
@@ -2839,7 +2841,7 @@
           return;
         }
 
-        if (!productData.Supplier) {
+        if (!productData.Supplier_ID) {
           showQuickAddAlert(alertBox, 'danger', 'Supplier is required');
           resetSubmitButton(submitBtn, 'product');
           return;
@@ -3626,7 +3628,7 @@
 
           suppliers.forEach(function(supplier) {
             const option = document.createElement('option');
-            option.value = supplier.Supplier_Name;
+            option.value = supplier.Supplier_ID || supplier.Supplier_Name;
             option.textContent = supplier.Supplier_Name;
             dropdown.appendChild(option);
           });
