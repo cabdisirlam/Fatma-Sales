@@ -665,9 +665,15 @@ function recordSalePayment(transactionId, paymentMethod, amount, customerId, use
 function getSaleById(transactionId) {
   try {
     const sales = sheetToObjects('Sales');
+    const tid = (transactionId || '').toString().trim();
 
-    // Find all rows for this transaction
-    const saleRows = sales.filter(s => s.Transaction_ID === transactionId);
+    // Find all rows for this transaction (trimmed match)
+    let saleRows = sales.filter(s => (s.Transaction_ID || '').toString().trim() === tid);
+
+    // Fallback: loose match ignoring case
+    if (saleRows.length === 0) {
+      saleRows = sales.filter(s => (s.Transaction_ID || '').toString().trim().toUpperCase() === tid.toUpperCase());
+    }
 
     if (saleRows.length === 0) {
       return null;

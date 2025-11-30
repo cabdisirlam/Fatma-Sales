@@ -3316,7 +3316,11 @@
     }
 
     function refreshQuickSaleCustomers() {
-      loadCustomers();
+      google.script.run.withSuccessHandler(function(customers) {
+        dashCustomers = customers || [];
+        populateCustomerSelect(dashCustomers);
+        resetToWalkIn();
+      }).getCustomers({status: 'Active'});
     }
 
     // --- UPDATE PRODUCT DETAILS ON SELECTION ---
