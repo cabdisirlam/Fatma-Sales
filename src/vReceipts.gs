@@ -32,6 +32,8 @@ function generateReceiptHTML(transactionId) {
     const vatRate = 0.16;
     const grossTotal = Math.abs(parseFloat(sale.Grand_Total) || 0);
     const vatAmount = grossTotal - (grossTotal / (1 + vatRate));
+    const qrPayload = `${sale.Transaction_ID} | ${formatNumber(grossTotal)} | ${dateStr}`;
+    const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
     
     // THERMAL PRINTER OPTIMIZED LAYOUT
     const html = `
@@ -42,9 +44,9 @@ function generateReceiptHTML(transactionId) {
           body { 
             font-family: 'monospace', 'Courier New', Courier, mono; 
             margin: 0; 
-            padding: 5px; 
-            width: 100%;
-            max-width: 300px; /* For 80mm paper */
+            padding: 4px 2px; 
+            width: calc(100% - 4px);
+            max-width: 292px; /* For 80mm paper with 2px allowance */
             font-size: 12px;
             line-height: 1.45;
             font-weight: 600;
@@ -61,6 +63,8 @@ function generateReceiptHTML(transactionId) {
           .totals-table td { padding: 1px 0; }
           .footer { margin-top: 12px; text-align: center; font-size: 11px; font-weight: 700; }
           .customer-info { margin: 8px 0; font-size: 11px; font-weight: 700; border-bottom: 1px dashed #000; padding-bottom: 4px; }
+          .qr { text-align: center; margin-top: 10px; }
+          .qr img { width: 120px; height: 120px; }
         </style>
       </head>
       <body>
@@ -126,6 +130,10 @@ function generateReceiptHTML(transactionId) {
            </div>`
           : ''}
         
+        <div class="qr">
+          <img src="${qrUrl}" alt="QR code" />
+        </div>
+
         <div class="footer">
           <p>${settings.Receipt_Footer || 'Thank you!'}</p>
           <p style="font-size:10px; margin-top:2px;">All prices include 16% VAT.</p>
@@ -186,6 +194,8 @@ function generateQuotationHTML(transactionId) {
     const vatRate = 0.16;
     const grossTotal = Math.abs(parseFloat(quotation.Grand_Total) || 0);
     const vatAmount = grossTotal - (grossTotal / (1 + vatRate));
+    const qrPayload = `${quotation.Transaction_ID} | ${formatNumber(grossTotal)} | ${dateStr}`;
+    const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
 
     // THERMAL PRINTER OPTIMIZED LAYOUT (SAME AS RECEIPT)
     const html = `
@@ -196,9 +206,9 @@ function generateQuotationHTML(transactionId) {
           body {
             font-family: 'monospace', 'Courier New', Courier, mono;
             margin: 0;
-            padding: 5px;
-            width: 100%;
-            max-width: 300px; /* For 80mm paper */
+            padding: 4px 2px;
+            width: calc(100% - 4px);
+            max-width: 292px; /* For 80mm paper with 2px allowance */
             font-size: 12px;
             line-height: 1.45;
             font-weight: 600;
@@ -215,6 +225,8 @@ function generateQuotationHTML(transactionId) {
           .totals-table td { padding: 1px 0; }
           .footer { margin-top: 12px; text-align: center; font-size: 11px; font-weight: 700; }
           .customer-info { margin: 8px 0; font-size: 11px; font-weight: 700; border-bottom: 1px dashed #000; padding-bottom: 4px; }
+          .qr { text-align: center; margin-top: 10px; }
+          .qr img { width: 120px; height: 120px; }
         </style>
       </head>
       <body>
@@ -273,6 +285,10 @@ function generateQuotationHTML(transactionId) {
           <div><strong>Valid Until: ${validUntilStr}</strong></div>
           <div style="font-size:10px; color:#666; margin-top:2px;">Prices subject to change after this date</div>
         </div>` : ''}
+
+        <div class="qr">
+          <img src="${qrUrl}" alt="QR code" />
+        </div>
 
         <div class="footer">
           <p>${settings.Receipt_Footer || 'Thank you!'}</p>
