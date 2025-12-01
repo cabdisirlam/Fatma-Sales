@@ -46,7 +46,7 @@ function generateReceiptHTML(transactionId) {
     }
     if (!qrDataUrl) {
       // fallback to external generator if Charts service fails or unavailable
-      const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
+      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&color=000000&bgcolor=ffffff&data=' + encodeURIComponent(qrPayload);
       qrDataUrl = qrUrl;
     }
     
@@ -146,7 +146,7 @@ function generateReceiptHTML(transactionId) {
           : ''}
         
         <div class="qr">
-          ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR code" />` : `<div style="font-size:10px;">${qrPayload}</div>`}
+          ${qrDataUrl ? `<img src="${qrDataUrl}" alt="${qrPayload}" title="${qrPayload}" style="display:block;margin:0 auto;" />` : `<div style="font-size:10px;">${qrPayload}</div>`}
         </div>
 
         <div class="footer">
@@ -223,7 +223,7 @@ function generateQuotationHTML(transactionId) {
     }
     if (!qrDataUrl) {
       // fallback to external generator if Charts service fails or unavailable
-      const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
+      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&color=000000&bgcolor=ffffff&data=' + encodeURIComponent(qrPayload);
       qrDataUrl = qrUrl;
     }
 
@@ -317,7 +317,7 @@ function generateQuotationHTML(transactionId) {
         </div>` : ''}
 
         <div class="qr">
-          ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR code" />` : `<div style="font-size:10px;">${qrPayload}</div>`}
+          ${qrDataUrl ? `<img src="${qrDataUrl}" alt="${qrPayload}" title="${qrPayload}" style="display:block;margin:0 auto;" />` : `<div style="font-size:10px;">${qrPayload}</div>`}
         </div>
 
         <div class="footer">
