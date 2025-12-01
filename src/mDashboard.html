@@ -3756,6 +3756,22 @@
         .generateQuotationHTML(id);
     }
 
+    // Delete quotation
+    function deleteQuotation(id) {
+      if (!id) return;
+      if (!confirm('Delete quotation ' + id + '? This cannot be undone.')) return;
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          alert(res.message || 'Quotation deleted');
+          loadQuotationsSection(true);
+        })
+        .withFailureHandler(function(error) {
+          alert('Error deleting quotation: ' + error.message);
+        })
+        .deleteQuotationV3(id);
+    }
+
     // 4. NEW: Client-Side Print Function (Add this if missing)
     function printDocument(id, type) {
       const func = type === 'Quotation' ? 'generateQuotationHTML' : 'generateReceiptHTML';
@@ -4494,11 +4510,11 @@
                   <tr>
                     <th>Quotation ID</th>
                     <th>Date</th>
-                    <th>Customer</th>
-                    <th>Amount</th>
-                    <th>Valid Until</th>
-                    <th>Status</th>
-                    <th class="text-end">Actions</th>
+                  <th>Customer</th>
+                  <th>Amount</th>
+                  <th>Valid Until</th>
+                  <th>Status</th>
+                  <th class="text-end">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -4533,6 +4549,9 @@
                   </button>
                   <button class="btn btn-outline-secondary" title="Print" onclick="printDocument('${quotation.Transaction_ID}', 'Quotation')">
                     <i class="bi bi-printer"></i>
+                  </button>
+                  <button class="btn btn-outline-danger" title="Delete" onclick="deleteQuotation('${quotation.Transaction_ID}')">
+                    <i class="bi bi-trash"></i>
                   </button>
                 </div>
               </td>

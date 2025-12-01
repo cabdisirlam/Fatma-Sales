@@ -592,9 +592,12 @@ function getQuotationById(quotationId) {
     };
 
     // Find all rows for this quotation
-    const quotRows = quotations.filter(q =>
-      (q.Quotation_ID || q['Quotation ID']) === quotationId
-    );
+    const tid = (quotationId || '').toString().trim().toUpperCase();
+    const quotRows = quotations.filter(q => {
+      const qid = (q.Quotation_ID || q['Quotation ID'] || '').toString().trim().toUpperCase();
+      const tidAlt = (q.Transaction_ID || q['Transaction ID'] || '').toString().trim().toUpperCase();
+      return qid === tid || tidAlt === tid;
+    });
 
     if (quotRows.length === 0) {
       return null;
@@ -703,6 +706,43 @@ function convertQuotationToSale(quotationId, paymentMode, user) {
   } catch (error) {
     logError('convertQuotationToSale', error);
     throw new Error('Error converting quotation: ' + error.message);
+  }
+}
+
+/**
+ * Delete quotation from 'Quotations' sheet (only if not converted)
+ */
+function deleteQuotationV3(quotationId, user) {
+  try {
+    if (!quotationId) throw new Error('Quotation ID is required');
+
+    const quotation = getQuotationById(quotationId);
+    if (!quotation) throw new Error('Quotation not found: ' + quotationId);
+    if (quotation.Status === 'Converted') throw new Error('Cannot delete a converted quotation');
+
+    const sheet = getSheet('Quotations');
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const idCol = headers.indexOf('Quotation_ID');
+    if (idCol === -1) throw new Error('Quotations sheet missing Quotation_ID column');
+
+    let deleted = false;
+    for (let i = data.length - 1; i >= 1; i--) {
+      const rowId = (data[i][idCol] || '').toString().trim();
+      if (rowId === quotationId.toString().trim()) {
+        sheet.deleteRow(i + 1);
+        deleted = true;
+      }
+    }
+
+    if (!deleted) throw new Error('Quotation not found: ' + quotationId);
+
+    logAudit(user || 'SYSTEM', 'Quotations', 'Delete', 'Deleted quotation: ' + quotationId, '', JSON.stringify(quotation), '');
+
+    return { success: true, message: 'Quotation deleted successfully' };
+  } catch (error) {
+    logError('deleteQuotationV3', error);
+    throw new Error('Error deleting quotation: ' + error.message);
   }
 }
 
