@@ -757,6 +757,143 @@ function updateQuotationStatus(quotationId, status, convertedSaleId, user) {
 }
 
 /**
+ * Update/Edit an existing quotation
+ * V3.0: Allows editing quotations that haven't been converted yet
+ */
+function updateQuotation(quotationId, quotationData) {
+  try {
+    // Validate quotation exists and can be edited
+    const existingQuot = getQuotationById(quotationId);
+    if (!existingQuot) {
+      throw new Error('Quotation not found: ' + quotationId);
+    }
+
+    if (existingQuot.Status === 'Converted') {
+      throw new Error('Cannot edit converted quotations');
+    }
+
+    validateRequired(quotationData, ['items', 'Customer_ID', 'User']);
+    if (!quotationData.items || quotationData.items.length === 0) {
+      throw new Error('Quotation must have at least one item');
+    }
+
+    const sheet = getSheet('Quotations');
+
+    // Delete existing quotation rows
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const quotIdCol = headers.indexOf('Quotation_ID');
+
+    if (quotIdCol === -1) {
+      throw new Error('Quotation_ID column not found');
+    }
+
+    // Delete all rows for this quotation (in reverse to avoid index shifting)
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (data[i][quotIdCol] === quotationId) {
+        sheet.deleteRow(i + 1);
+      }
+    }
+
+    // Handle Date
+    let dateTime = new Date();
+    if (quotationData.DateTime) {
+       dateTime = new Date(quotationData.DateTime);
+       const now = new Date();
+       dateTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+    }
+
+    // Handle Valid_Until
+    let validUntil = new Date();
+    if (quotationData.Valid_Until) {
+        validUntil = new Date(quotationData.Valid_Until);
+    } else {
+        validUntil.setDate(validUntil.getDate() + 30);
+    }
+
+    let subtotal = 0;
+    const items = [];
+    for (const item of quotationData.items) {
+      let product = null;
+
+      // Allow service/manual items without throwing "Product not found"
+      try {
+        product = item.Item_ID ? getInventoryItemById(item.Item_ID) : null;
+      } catch (e) {
+        product = null;
+      }
+
+      const isManual = item.Is_Manual === true || !product || item.Type === 'Service' || (product && product.Type === 'Service');
+      const qty = parseFloat(item.Qty) || 1;
+      const unitPrice = parseFloat(item.Unit_Price || item.Price || (product ? product.Selling_Price : 0));
+      const lineTotal = qty * unitPrice;
+
+      const manualId = 'MANUAL-' + (item.Item_ID || 'SERVICE-' + new Date().getTime() + '-' + items.length);
+      const itemId = isManual
+        ? (item.Item_ID && item.Item_ID.toString().startsWith('MANUAL') ? item.Item_ID : manualId)
+        : item.Item_ID;
+      const itemName = item.Item_Name || item.Name || (product ? product.Item_Name : 'Service Item');
+
+      items.push({
+        Item_ID: itemId,
+        Item_Name: itemName,
+        Qty: qty,
+        Unit_Price: unitPrice,
+        Line_Total: lineTotal,
+        Is_Manual: isManual
+      });
+      subtotal += lineTotal;
+    }
+
+    const deliveryCharge = parseFloat(quotationData.Delivery_Charge) || 0;
+    const discount = parseFloat(quotationData.Discount) || 0;
+    const grandTotal = subtotal + deliveryCharge - discount;
+
+    // Preserve existing status or use provided one
+    const status = quotationData.Status || existingQuot.Status || 'Pending';
+
+    // Append updated line items to Quotations sheet
+    items.forEach(item => {
+      const quotRow = [
+        quotationId,                        // 1. Quotation_ID (keep same ID)
+        dateTime,                           // 2. DateTime
+        quotationData.Customer_ID,          // 3. Customer_ID
+        quotationData.Customer_Name || '',  // 4. Customer_Name
+        item.Item_ID,                       // 5. Item_ID
+        item.Item_Name,                     // 6. Item_Name
+        'QUOT',                             // 7. Batch_ID (N/A for quotations)
+        item.Qty,                           // 8. Qty
+        item.Unit_Price,                    // 9. Unit_Price
+        item.Line_Total,                    // 10. Line_Total
+        subtotal,                           // 11. Subtotal
+        deliveryCharge,                     // 12. Delivery_Charge
+        discount,                           // 13. Discount
+        grandTotal,                         // 14. Grand_Total
+        quotationData.User,                 // 15. Created_By
+        quotationData.Location || '',       // 16. Location
+        quotationData.KRA_PIN || '',        // 17. KRA_PIN
+        status,                             // 18. Status
+        validUntil,                         // 19. Valid_Until
+        existingQuot.Converted_Sale_ID || '' // 20. Converted_Sale_ID (preserve if exists)
+      ];
+      sheet.appendRow(quotRow);
+    });
+
+    logAudit(quotationData.User, 'Quotations', 'Update', 'Updated quotation: ' + quotationId, '', '', '');
+
+    return {
+      success: true,
+      quotationId: quotationId,
+      message: 'Quotation updated successfully'
+    };
+
+  } catch (error) {
+    logError('updateQuotation', error);
+    throw new Error('Error updating quotation: ' + error.message);
+  }
+}
+
+/**
  * Record sale payment in Financials
  * V3.0: Validates payment method against Chart of Accounts
  */

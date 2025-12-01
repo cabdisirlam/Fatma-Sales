@@ -107,71 +107,16 @@ function addQuotation(quotationData) {
 
 /**
  * Update existing quotation
+ * Delegates to updateQuotation() in iSales.gs for full quotation editing
+ * NOTE: This is a wrapper function - the actual implementation is in iSales.gs
  */
-function updateQuotation(quotationId, updates) {
+function editQuotation(quotationId, quotationData) {
   try {
-    if (!quotationId) {
-      throw new Error('Quotation ID is required');
-    }
-
-    // Get current quotation
-    const quotation = getQuotationById(quotationId);
-
-    // Can only update if status is Pending or Draft
-    if (quotation.Status !== 'Pending' && quotation.Status !== 'Draft') {
-      throw new Error('Cannot update quotation with status: ' + quotation.Status);
-    }
-
-    const sheet = getSheet('Sales');
-    const data = sheet.getDataRange().getValues();
-    const headers = data[0];
-
-    const transIdCol = headers.indexOf('Transaction_ID');
-
-    // Update all rows with this quotation ID
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][transIdCol] === quotationId) {
-        // Update allowed fields
-        if (updates.Customer_Name !== undefined) {
-          const col = headers.indexOf('Customer_Name');
-          sheet.getRange(i + 1, col + 1).setValue(updates.Customer_Name);
-        }
-        if (updates.Location !== undefined) {
-          const col = headers.indexOf('Location');
-          sheet.getRange(i + 1, col + 1).setValue(updates.Location);
-        }
-        if (updates.KRA_PIN !== undefined) {
-          const col = headers.indexOf('KRA_PIN');
-          sheet.getRange(i + 1, col + 1).setValue(updates.KRA_PIN);
-        }
-        if (updates.Valid_Until !== undefined) {
-          const col = headers.indexOf('Valid_Until');
-          sheet.getRange(i + 1, col + 1).setValue(new Date(updates.Valid_Until));
-        }
-        if (updates.Status !== undefined) {
-          const col = headers.indexOf('Status');
-          sheet.getRange(i + 1, col + 1).setValue(updates.Status);
-        }
-      }
-    }
-
-    logAudit(
-      updates.User || 'SYSTEM',
-      'Sales',
-      'Update Quotation',
-      'Quotation updated: ' + quotationId,
-      '',
-      '',
-      JSON.stringify(updates)
-    );
-
-    return {
-      success: true,
-      message: 'Quotation updated successfully'
-    };
-
+    // This delegates to the comprehensive updateQuotation function in iSales.gs
+    // which handles deleting old quotation rows and creating new ones with updated data
+    return updateQuotation(quotationId, quotationData);
   } catch (error) {
-    logError('updateQuotation', error);
+    logError('editQuotation', error);
     throw new Error('Error updating quotation: ' + error.message);
   }
 }

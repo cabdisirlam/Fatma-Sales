@@ -212,10 +212,9 @@ function generateQuotationHTML(transactionId) {
     .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #333; padding-bottom: 15px; }
     .header h1 { font-size: 32px; margin-bottom: 5px; color: #333; }
     .header p { font-size: 14px; color: #666; }
-    .quotation-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
-    .info-box { background: #f5f5f5; padding: 15px; border-radius: 5px; }
-    .info-box h3 { font-size: 14px; margin-bottom: 10px; color: #666; text-transform: uppercase; }
-    .info-box p { margin: 5px 0; }
+    .quotation-info { margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 5px; }
+    .quotation-info > div { margin: 5px 0; }
+    .customer-info { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #999; }
     .items table { width: 100%; border-collapse: collapse; margin: 20px 0; }
     .items th { background: #333; color: white; text-align: left; padding: 12px; }
     .items td { padding: 12px; border-bottom: 1px solid #ddd; }
@@ -235,19 +234,16 @@ function generateQuotationHTML(transactionId) {
   </div>
 
   <div class="quotation-info">
-    <div class="info-box">
-      <h3>Quotation Details</h3>
-      <p><strong>Quotation #:</strong> ${quotation.Transaction_ID}</p>
-      <p><strong>Date:</strong> ${Utilities.formatDate(dateVal, 'GMT+3', 'dd MMM yyyy')}</p>
-      <p><strong>Valid Until:</strong> ${Utilities.formatDate(validUntilDate, 'GMT+3', 'dd MMM yyyy')}</p>
-      <p><strong>Prepared By:</strong> ${preparedBy}</p>
-    </div>
-    <div class="info-box">
-      <h3>Customer Details</h3>
-      <p><strong>Name:</strong> ${quotation.Customer_Name}</p>
-      ${customerPhone ? '<p><strong>Phone:</strong> ' + customerPhone + '</p>' : ''}
-      ${customerLocation ? '<p><strong>Location:</strong> ' + customerLocation + '</p>' : ''}
-      ${kraPin ? '<p><strong>KRA PIN:</strong> ' + kraPin + '</p>' : ''}
+    <div><strong>Quotation #:</strong> ${quotation.Transaction_ID}</div>
+    <div><strong>Date:</strong> ${Utilities.formatDate(dateVal, 'GMT+3', 'dd MMM yyyy')}</div>
+    <div><strong>Valid Until:</strong> ${Utilities.formatDate(validUntilDate, 'GMT+3', 'dd MMM yyyy')}</div>
+    <div><strong>Prepared By:</strong> ${preparedBy}</div>
+
+    <div class="customer-info">
+      <div><strong>Customer:</strong> ${quotation.Customer_Name}</div>
+      ${customerPhone ? '<div><strong>Phone:</strong> ' + customerPhone + '</div>' : ''}
+      ${customerLocation ? '<div><strong>Location:</strong> ' + customerLocation + '</div>' : ''}
+      ${kraPin ? '<div><strong>KRA PIN:</strong> ' + kraPin + '</div>' : ''}
     </div>
   </div>
 

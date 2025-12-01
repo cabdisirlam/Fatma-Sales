@@ -681,7 +681,7 @@ function generateId(sheetName, columnName, prefix) {
         if (!id) continue;
         const idStr = id.toString();
 
-        if (prefix === 'SALE') {
+        if (prefix === 'SALE' || prefix === 'QUOT') {
           const match = idStr.match(/(\d+)/);
           if (match) {
             const number = parseInt(match[1], 10);
@@ -706,6 +706,12 @@ function generateId(sheetName, columnName, prefix) {
       // Generate new ID
       if (prefix === 'SALE') {
         const baseStart = 110000; // receipts start from 110001
+        const newNumber = Math.max(maxNumber, baseStart) + 1;
+        return String(newNumber);
+      }
+
+      if (prefix === 'QUOT') {
+        const baseStart = 120000; // quotations start from 120001
         const newNumber = Math.max(maxNumber, baseStart) + 1;
         return String(newNumber);
       }
