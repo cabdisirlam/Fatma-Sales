@@ -577,7 +577,7 @@ function getSupplierStatement(supplierId, startDate, endDate) {
     const purchases = getSupplierPurchaseHistory(supplierId);
     const payments = getSupplierPaymentHistory(supplierId);
 
-    // Combine and sort by date
+    // Combine and sort by date (debit = purchases, credit = payments)
     const transactions = [];
 
     purchases.forEach(purchase => {
@@ -607,6 +607,9 @@ function getSupplierStatement(supplierId, startDate, endDate) {
 
     const start = startDate ? new Date(startDate) : null;
     const end = endDate ? new Date(endDate) : null;
+    if (end) {
+      end.setHours(23, 59, 59, 999);
+    }
 
     // Determine base opening balance using recorded opening or deriving from current balance
     const movementAll = transactions.reduce((sum, t) => sum + (toNumber(t.debit) - toNumber(t.credit)), 0);
@@ -620,37 +623,36 @@ function getSupplierStatement(supplierId, startDate, endDate) {
           .reduce((sum, t) => sum + (toNumber(t.debit) - toNumber(t.credit)), 0)
       : 0;
 
-    let openingBalance = baseOpening + movementBeforeStart;
+    const openingBalance = baseOpening + movementBeforeStart;
 
     // Filter by date range if provided
-    let filteredTransactions = transactions.filter(t => {
+    const filteredTransactions = transactions.filter(t => {
       if (start && t.date < start) return false;
       if (end && t.date > end) return false;
       return true;
     });
 
     // Calculate running balance
-    let balance = openingBalance;
-    filteredTransactions.forEach(txn => {
-      balance += (toNumber(txn.debit) - toNumber(txn.credit));
-      txn.balance = balance;
-    });
-
-    const totalDebits = filteredTransactions.reduce((sum, t) => sum + toNumber(t.debit), 0);
-    const totalCredits = filteredTransactions.reduce((sum, t) => sum + toNumber(t.credit), 0);
-    const closingBalance = balance;
-
-    // Add explicit opening entry for the statement view
-    const openingEntryDate = start || (transactions.length ? transactions[0].date : new Date());
+    let running = openingBalance;
     const transactionsForDisplay = [{
-      date: openingEntryDate,
+      date: start || (transactions.length ? transactions[0].date : new Date()),
       type: 'Opening Balance',
       description: 'Balance brought forward',
       debit: openingBalance > 0 ? openingBalance : 0,
       credit: openingBalance < 0 ? Math.abs(openingBalance) : 0,
       reference: 'OPENING',
-      balance: openingBalance
-    }, ...filteredTransactions];
+      runningBalance: openingBalance
+    }];
+
+    filteredTransactions.forEach(txn => {
+      running += (toNumber(txn.debit) - toNumber(txn.credit));
+      txn.runningBalance = running;
+      transactionsForDisplay.push(txn);
+    });
+
+    const totalDebits = filteredTransactions.reduce((sum, t) => sum + toNumber(t.debit), 0);
+    const totalCredits = filteredTransactions.reduce((sum, t) => sum + toNumber(t.credit), 0);
+    const closingBalance = running;
 
     return {
       supplier: supplier,

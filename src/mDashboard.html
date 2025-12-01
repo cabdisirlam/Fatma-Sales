@@ -4,7 +4,7 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fatma Sales Dashboard</title>
+  <title>Smatika Kenya Dashboard</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -828,7 +828,7 @@
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <i class="bi bi-shop"></i>
-      <h3>Fatma Sales</h3>
+      <h3>Smatika Kenya</h3>
     </div>
 
     <ul class="menu-items">
@@ -909,6 +909,7 @@
           <span>Back</span>
         </button>
         <h1 class="page-title" id="pageTitle">Dashboard</h1>
+        <span class="brand-name ms-3 fw-bold text-primary" id="topBarBrand">Smatika Kenya</span>
       </div>
 
       <div class="user-profile">
@@ -1199,6 +1200,11 @@
         <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
           <h3><i class="bi bi-cart-plus"></i> Quick Sale</h3>
           <p class="text-muted">Process a sale quickly or handle a return</p>
+          <div class="mb-3">
+            <button class="btn btn-outline-primary btn-sm" type="button" onclick="showSection('quotations')">
+              <i class="bi bi-journal-text"></i> Go to Quotations
+            </button>
+          </div>
 
           <div class="row">
             <div class="col-md-8">
@@ -1275,6 +1281,34 @@
                         <button type="button" class="btn btn-primary w-100" onclick="addDashCartItem()">
                           <i class="bi bi-plus-lg"></i> Add
                         </button>
+                      </div>
+                    </div>
+
+                    <div class="card border mb-3">
+                      <div class="card-header py-2">
+                        <strong><i class="bi bi-pencil-square"></i> Manual Item</strong>
+                      </div>
+                      <div class="card-body">
+                        <div class="row g-2 align-items-end">
+                          <div class="col-md-5">
+                            <label class="form-label small mb-1">Item Name</label>
+                            <input type="text" class="form-control form-control-sm" id="dashManualName" placeholder="Custom item or service">
+                          </div>
+                          <div class="col-md-2">
+                            <label class="form-label small mb-1">Qty</label>
+                            <input type="number" class="form-control form-control-sm" id="dashManualQty" min="0" step="0.01" placeholder="1">
+                          </div>
+                          <div class="col-md-2">
+                            <label class="form-label small mb-1">Price</label>
+                            <input type="number" class="form-control form-control-sm" id="dashManualPrice" min="0" step="0.01" placeholder="0.00">
+                          </div>
+                          <div class="col-md-2 d-grid">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addManualDashItem()">
+                              <i class="bi bi-plus-circle"></i> Add Manual
+                            </button>
+                          </div>
+                        </div>
+                        <small class="text-muted">Use manual items for services or products not yet in inventory.</small>
                       </div>
                     </div>
 
@@ -3806,14 +3840,42 @@
       renderDashCart();
     }
 
+    function addManualDashItem() {
+      const name = (document.getElementById('dashManualName').value || '').trim();
+      const qty = parseFloat(document.getElementById('dashManualQty').value) || 0;
+      const price = parseFloat(document.getElementById('dashManualPrice').value) || 0;
+
+      if (!name) return alert('Enter manual item name');
+      if (qty <= 0) return alert('Enter a quantity');
+      if (price < 0) return alert('Enter a valid price');
+
+      const itemId = 'MANUAL-' + Date.now();
+      const lineTotal = Math.round(qty * price);
+      dashCart.push({
+        Item_ID: itemId,
+        Item_Name: name,
+        Qty: qty,
+        Unit_Price: price,
+        Total: lineTotal,
+        Is_Manual: true
+      });
+
+      document.getElementById('dashManualName').value = '';
+      document.getElementById('dashManualQty').value = '';
+      document.getElementById('dashManualPrice').value = '';
+      renderDashCart();
+    }
+
     function renderDashCart() {
       const tbody = document.getElementById('dashCartBody');
       if (!tbody) return;
       tbody.innerHTML = '';
       let total = 0;
       dashCart.forEach((item, i) => {
-        total += item.Total;
-        tbody.innerHTML += `<tr><td>${item.Item_Name}</td><td>${item.Qty}</td><td>${item.Unit_Price}</td><td>${item.Total}</td><td><button class="btn btn-sm btn-danger" onclick="dashCart.splice(${i},1);renderDashCart()">X</button></td></tr>`;
+        const lineTotal = Math.round((parseFloat(item.Unit_Price) || 0) * (parseFloat(item.Qty) || 0));
+        total += lineTotal;
+        const label = item.Is_Manual ? '<span class="badge bg-secondary">Manual</span> ' : '';
+        tbody.innerHTML += `<tr><td>${label}${item.Item_Name}</td><td>${item.Qty}</td><td>${item.Unit_Price}</td><td>${lineTotal}</td><td><button class="btn btn-sm btn-danger" onclick="dashCart.splice(${i},1);renderDashCart()">X</button></td></tr>`;
       });
       const delivery = parseFloat(document.getElementById('dashDeliveryCharge').value) || 0;
       const discount = parseFloat(document.getElementById('dashSaleDiscount').value) || 0;
@@ -5739,7 +5801,7 @@
 
         const debit = txn.debit || 0;
         const credit = txn.credit || 0;
-        const txnBalance = txn.balance || 0;
+        const txnBalance = (txn.runningBalance !== undefined ? txn.runningBalance : txn.balance) || 0;
 
         const balanceClass = txnBalance > 0 ? 'text-danger' : txnBalance < 0 ? 'text-success' : '';
 
@@ -6434,7 +6496,7 @@
         const date = new Date(t.date).toLocaleDateString();
         const debit = t.debit || 0;
         const credit = t.credit || 0;
-        const bal = t.balance || 0;
+        const bal = t.runningBalance !== undefined ? t.runningBalance : (t.balance || 0);
         
         tbody.innerHTML += `
           <tr>

@@ -49,6 +49,27 @@ function createSale(saleData) {
     const items = [];
 
     for (const item of saleData.items) {
+      const isManual = item.Is_Manual === true || (item.Item_ID && item.Item_ID.toString().startsWith('MANUAL'));
+
+      if (isManual) {
+        const manualId = item.Item_ID || ('MANUAL-' + new Date().getTime());
+        const qty = parseFloat(item.Qty) || 0;
+        const unitPrice = parseFloat(item.Unit_Price || item.Price || 0);
+        if (qty <= 0) throw new Error('Invalid quantity for manual item');
+
+        const lineTotal = qty * unitPrice;
+        items.push({
+          Item_ID: manualId,
+          Item_Name: item.Item_Name || item.Name || 'Manual Item',
+          Qty: qty,
+          Unit_Price: unitPrice,
+          Line_Total: lineTotal,
+          Is_Manual: true
+        });
+        subtotal += lineTotal;
+        continue;
+      }
+
       const stockCheck = checkStock(item.Item_ID, item.Qty);
       if (!stockCheck.sufficient) {
         throw new Error('Insufficient stock for ' + item.Item_ID + '. Available: ' + stockCheck.available);
@@ -145,6 +166,10 @@ function createSale(saleData) {
     const itemBatchMap = {}; // Map Item_ID to batch details
 
     for (const item of items) {
+      if (item.Is_Manual) {
+        continue; // No stock movement for manual items/services
+      }
+
       const stockResult = decreaseStock(item.Item_ID, item.Qty, saleData.User);
 
       // Critical validation: Stock deduction must succeed
@@ -176,7 +201,7 @@ function createSale(saleData) {
       const batchInfo = itemBatchMap[item.Item_ID] || [];
 
       // If multiple batches were used, create a row for each batch
-      if (batchInfo.length > 0) {
+      if (!item.Is_Manual && batchInfo.length > 0) {
         batchInfo.forEach(batch => {
           const saleRow = [
             transactionId,
@@ -214,7 +239,7 @@ function createSale(saleData) {
           saleData.Customer_Name || '',
           item.Item_ID,
           item.Item_Name,
-          'UNKNOWN', // Batch_ID
+          item.Is_Manual ? 'MANUAL' : 'UNKNOWN', // Batch_ID
           item.Qty,
           item.Unit_Price,
           item.Line_Total,
