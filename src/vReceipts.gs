@@ -32,7 +32,17 @@ function generateReceiptHTML(transactionId) {
     const vatRate = 0.16;
     const grossTotal = Math.abs(parseFloat(sale.Grand_Total) || 0);
     const vatAmount = grossTotal - (grossTotal / (1 + vatRate));
-    const qrPayload = `${sale.Transaction_ID} | ${formatNumber(grossTotal)} | ${dateStr}`;
+    const itemsSummary = (sale.items && Array.isArray(sale.items))
+      ? sale.items.slice(0, 4).map(i => `${i ? i.Item_Name : 'Item'} x${i ? i.Qty : 0}`).join('; ')
+      : '';
+    const extraCount = (sale.items && Array.isArray(sale.items) && sale.items.length > 4) ? sale.items.length - 4 : 0;
+    const qrPayload = [
+      `Receipt: ${sale.Transaction_ID}`,
+      `Total: ${currencySymbol} ${formatNumber(grossTotal)}`,
+      `Date: ${dateStr}`,
+      `Customer: ${sale.Customer_Name || 'N/A'}`,
+      itemsSummary ? `Items: ${itemsSummary}${extraCount ? '; +' + extraCount + ' more' : ''}` : ''
+    ].filter(Boolean).join('\n');
     let qrDataUrl = '';
     try {
       // Force inclusion even if minified/optimized
@@ -209,7 +219,18 @@ function generateQuotationHTML(transactionId) {
     const vatRate = 0.16;
     const grossTotal = Math.abs(parseFloat(quotation.Grand_Total) || 0);
     const vatAmount = grossTotal - (grossTotal / (1 + vatRate));
-    const qrPayload = `${quotation.Transaction_ID} | ${formatNumber(grossTotal)} | ${dateStr}`;
+    const itemsSummary = (quotation.items && Array.isArray(quotation.items))
+      ? quotation.items.slice(0, 4).map(i => `${i ? i.Item_Name : 'Item'} x${i ? i.Qty : 0}`).join('; ')
+      : '';
+    const extraCount = (quotation.items && Array.isArray(quotation.items) && quotation.items.length > 4) ? quotation.items.length - 4 : 0;
+    const qrPayload = [
+      `Quotation: ${quotation.Transaction_ID}`,
+      `Total: ${currencySymbol} ${formatNumber(grossTotal)}`,
+      `Date: ${dateStr}`,
+      validUntilStr ? `Valid Until: ${validUntilStr}` : '',
+      `Customer: ${quotation.Customer_Name || 'N/A'}`,
+      itemsSummary ? `Items: ${itemsSummary}${extraCount ? '; +' + extraCount + ' more' : ''}` : ''
+    ].filter(Boolean).join('\n');
     let qrDataUrl = '';
     try {
       // Force inclusion even if minified/optimized
