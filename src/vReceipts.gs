@@ -149,15 +149,24 @@ function generateQuotationHTML(transactionId) {
       throw new Error('Quotation not found');
     }
 
+    const parseNumber = (val) => {
+      if (val === undefined || val === null || val === '') return 0;
+      if (typeof val === 'number') return val;
+      const cleaned = val.toString().replace(/[^0-9.\-]/g, '');
+      const num = parseFloat(cleaned);
+      return isFinite(num) ? num : 0;
+    };
+
     // Normalize numbers with fallbacks
     const items = Array.isArray(quotation.items) ? quotation.items : [];
-    const derivedSubtotal = items.reduce((s, it) => s + (parseFloat(it.Line_Total) || 0), 0);
-    const subtotal = isFinite(parseFloat(quotation.Subtotal)) && parseFloat(quotation.Subtotal) !== 0
-      ? parseFloat(quotation.Subtotal)
+    const derivedSubtotal = items.reduce((s, it) => s + (parseNumber(it.Line_Total)), 0);
+    const rawSubtotal = parseNumber(quotation.Subtotal);
+    const subtotal = isFinite(rawSubtotal) && rawSubtotal !== 0
+      ? rawSubtotal
       : derivedSubtotal;
-    const deliveryCharge = isFinite(parseFloat(quotation.Delivery_Charge)) ? parseFloat(quotation.Delivery_Charge) : 0;
-    const discount = isFinite(parseFloat(quotation.Discount)) ? Math.abs(parseFloat(quotation.Discount)) : 0;
-    const rawGrand = parseFloat(quotation.Grand_Total);
+    const deliveryCharge = parseNumber(quotation.Delivery_Charge);
+    const discount = Math.abs(parseNumber(quotation.Discount));
+    const rawGrand = parseNumber(quotation.Grand_Total);
     const grandTotal = isFinite(rawGrand) && rawGrand !== 0
       ? rawGrand
       : (subtotal + deliveryCharge - discount);
@@ -189,7 +198,6 @@ function generateQuotationHTML(transactionId) {
     const shopName = settings.Shop_Name || CONFIG.SHOP_NAME;
     const currency = settings.Currency_Symbol || CONFIG.CURRENCY_SYMBOL;
     const kraPin = quotation.KRA_PIN || '';
-    const location = quotation.Location || '';
     const preparedBy = quotation.Sold_By || quotation.Created_By || quotation.User || quotation.Prepared_By || 'SYSTEM';
     const customerLocation = quotation.Customer_Location || quotation.Location || '';
 

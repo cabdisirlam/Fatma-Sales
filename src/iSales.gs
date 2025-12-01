@@ -582,6 +582,14 @@ function getQuotationById(quotationId) {
       return '';
     };
 
+    const parseNumber = (val) => {
+      if (val === undefined || val === null || val === '') return 0;
+      if (typeof val === 'number') return val;
+      const cleaned = val.toString().replace(/[^0-9.\-]/g, '');
+      const num = parseFloat(cleaned);
+      return isFinite(num) ? num : 0;
+    };
+
     // Find all rows for this quotation
     const quotRows = quotations.filter(q =>
       (q.Quotation_ID || q['Quotation ID']) === quotationId
@@ -598,17 +606,17 @@ function getQuotationById(quotationId) {
     const items = quotRows.map(row => ({
       Item_ID: pick(row, ['Item_ID', 'Item ID', 'Item']),
       Item_Name: pick(row, ['Item_Name', 'Item Name', 'Item']),
-      Qty: parseFloat(pick(row, ['Qty', 'Quantity'])) || 0,
-      Unit_Price: parseFloat(pick(row, ['Unit_Price', 'Unit Price', 'Price'])) || 0,
-      Line_Total: parseFloat(pick(row, ['Line_Total', 'Line Total', 'Amount', 'Total'])) || 0
+      Qty: parseNumber(pick(row, ['Qty', 'Quantity'])),
+      Unit_Price: parseNumber(pick(row, ['Unit_Price', 'Unit Price', 'Price'])),
+      Line_Total: parseNumber(pick(row, ['Line_Total', 'Line Total', 'Amount', 'Total']))
     }));
 
     const subtotalFallback = items.reduce((s, it) => s + (parseFloat(it.Line_Total) || 0), 0);
-    const rawSubtotal = parseFloat(pick(first, ['Subtotal']));
+    const rawSubtotal = parseNumber(pick(first, ['Subtotal']));
     const subtotal = isFinite(rawSubtotal) && rawSubtotal !== 0 ? rawSubtotal : subtotalFallback;
-    const deliveryCharge = parseFloat(pick(first, ['Delivery_Charge', 'Delivery Charge'])) || 0;
-    const discount = parseFloat(pick(first, ['Discount'])) || 0;
-    const rawGrandTotal = parseFloat(pick(first, ['Grand_Total', 'Total_Amount', 'Total Amount']));
+    const deliveryCharge = parseNumber(pick(first, ['Delivery_Charge', 'Delivery Charge']));
+    const discount = parseNumber(pick(first, ['Discount']));
+    const rawGrandTotal = parseNumber(pick(first, ['Grand_Total', 'Total_Amount', 'Total Amount']));
     const grandTotal = isFinite(rawGrandTotal) && rawGrandTotal !== 0
       ? rawGrandTotal
       : (subtotal + deliveryCharge - discount);
@@ -625,9 +633,9 @@ function getQuotationById(quotationId) {
       Delivery_Charge: deliveryCharge,
       Discount: discount,
       Grand_Total: grandTotal,
-      Created_By: pick(first, ['Created_By', 'Sold_By', 'User', 'Prepared_By']),
-      Location: pick(first, ['Customer_Location', 'Location', 'Address']),
-      KRA_PIN: pick(first, ['Customer_KRA_PIN', 'KRA_PIN', 'KRA PIN']),
+      Created_By: pick(first, ['Created_By', 'Created By', 'Sold_By', 'Sold By', 'User', 'Prepared_By', 'Prepared By']),
+      Location: pick(first, ['Customer_Location', 'Customer Location', 'Location', 'Address']),
+      KRA_PIN: pick(first, ['Customer_KRA_PIN', 'Customer KRA PIN', 'KRA_PIN', 'KRA PIN', 'KRA']),
       Status: pick(first, ['Status']),
       Valid_Until: validUntilRaw,
       Converted_Sale_ID: pick(first, ['Converted_Sale_ID', 'Converted Sale ID']),
