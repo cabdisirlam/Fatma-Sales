@@ -1185,12 +1185,12 @@
             <p class="module-description">Manage product returns</p>
           </div>
 
-          <div class="module-card" onclick="showSection('sales-reports')">
+          <div class="module-card" onclick="showSection('quotations')">
             <div class="module-icon">
-              <i class="bi bi-file-earmark-bar-graph"></i>
+              <i class="bi bi-journal-text"></i>
             </div>
-            <h3 class="module-title">Reports</h3>
-            <p class="module-description">Generate sales reports</p>
+            <h3 class="module-title">Quotations</h3>
+            <p class="module-description">Refresh, view, and print quotations</p>
           </div>
         </div>
       </div>
@@ -1457,50 +1457,28 @@
         </div>
       </div>
 
-      <!-- Sales Reports Section -->
-      <div class="content-section" id="section-sales-reports">
+      <!-- Quotations Section (replaces Sales Reports) -->
+      <div class="content-section" id="section-quotations">
         <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
-          <h3><i class="bi bi-file-earmark-bar-graph"></i> Sales Reports</h3>
-          <p class="text-muted">High level metrics to understand your performance.</p>
-          <div class="row g-3">
-            <div class="col-md-3">
-              <div class="card shadow-sm">
-                <div class="card-body">
-                  <p class="text-muted mb-1">Total Revenue</p>
-                  <h4 id="reportTotalRevenue">--</h4>
-                </div>
-              </div>
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <div>
+              <h3 class="mb-1"><i class="bi bi-journal-text"></i> Quotations</h3>
+              <p class="text-muted mb-0">Refresh, browse, and print quotations just like sales history.</p>
             </div>
-            <div class="col-md-3">
-              <div class="card shadow-sm">
-                <div class="card-body">
-                  <p class="text-muted mb-1">Total Sales</p>
-                  <h4 id="reportTotalSales">--</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card shadow-sm">
-                <div class="card-body">
-                  <p class="text-muted mb-1">Credit Sales</p>
-                  <h4 id="reportCreditSales">--</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card shadow-sm">
-                <div class="card-body">
-                  <p class="text-muted mb-1">Avg Order Value</p>
-                  <h4 id="reportAverageOrder">--</h4>
-                </div>
-              </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-secondary" type="button" onclick="loadQuotationsSection(true)">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+              </button>
+              <button class="btn btn-outline-primary" type="button" onclick="showSection('sales-history')">
+                <i class="bi bi-clock-history"></i> Sales History
+              </button>
             </div>
           </div>
-          <div class="card shadow-sm mt-3">
-            <div class="card-body">
-              <h5 class="card-title mb-3">Last 30 Days Revenue</h5>
-              <p class="display-6" id="report30DayRevenue">--</p>
-              <p class="text-muted mb-0">Shows the total revenue generated in the last 30 days.</p>
+
+          <div class="placeholder-content">
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-3">Loading quotations...</p>
             </div>
           </div>
         </div>
@@ -2651,7 +2629,6 @@
       'sales-new': { linkId: 'menu-sales' },
       'sales-history': { linkId: 'menu-sales' },
       'sales-returns': { linkId: 'menu-sales' },
-      'sales-reports': { linkId: 'menu-sales' },
       'inventory': { linkId: 'menu-inventory' },
       'customers': { linkId: 'menu-customers' },
       'suppliers': { linkId: 'menu-suppliers' },
@@ -2785,7 +2762,6 @@
         'sales-new': 'New Sale',
         'sales-history': 'Sales History',
         'sales-returns': 'Sales Returns',
-        'sales-reports': 'Sales Reports',
         'inventory': 'Inventory Management',
         'customers': 'Customer Management',
         'quotations': 'Quotations',
@@ -2830,8 +2806,6 @@
         loadSalesHistory();
       } else if (sectionName === 'sales-returns') {
         loadSalesReturns();
-      } else if (sectionName === 'sales-reports') {
-        loadSalesReports();
       } else if (sectionName === 'inventory') {
         loadInventorySection();
       } else if (sectionName === 'customers') {
@@ -3762,6 +3736,26 @@
 
     // --- UPDATED FUNCTIONS FOR SALES & QUOTATIONS ---
 
+    // Open quotation in a new tab without auto-printing
+    function previewQuotation(id) {
+      const previewWindow = window.open('', '_blank', 'width=900,height=700');
+      if (!previewWindow) { return alert("Allow popups to preview the quotation."); }
+
+      previewWindow.document.write('<div style="text-align:center;padding:50px;"><h3>Loading quotation...</h3></div>');
+
+      google.script.run
+        .withSuccessHandler(function(html) {
+          previewWindow.document.open();
+          previewWindow.document.write(html);
+          previewWindow.document.close();
+        })
+        .withFailureHandler(function(error) {
+          previewWindow.close();
+          alert('Error opening quotation: ' + error.message);
+        })
+        .generateQuotationHTML(id);
+    }
+
     // 4. NEW: Client-Side Print Function (Add this if missing)
     function printDocument(id, type) {
       const func = type === 'Quotation' ? 'generateQuotationHTML' : 'generateReceiptHTML';
@@ -4504,6 +4498,7 @@
                     <th>Amount</th>
                     <th>Valid Until</th>
                     <th>Status</th>
+                    <th class="text-end">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -4531,6 +4526,16 @@
               <td>${formatCurrency(quotation.Total_Amount)}</td>
               <td>${quotation.Valid_Until ? new Date(quotation.Valid_Until).toLocaleDateString() : '-'}</td>
               <td>${statusBadge}</td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm" role="group">
+                  <button class="btn btn-outline-primary" title="Open" onclick="previewQuotation('${quotation.Transaction_ID}')">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button class="btn btn-outline-secondary" title="Print" onclick="printDocument('${quotation.Transaction_ID}', 'Quotation')">
+                    <i class="bi bi-printer"></i>
+                  </button>
+                </div>
+              </td>
             </tr>
           `;
         });
@@ -6336,7 +6341,7 @@
       'sales-new',
       'sales-history',
       'sales-returns',
-      'sales-reports',
+      'quotations',
       'inventory',
       'customers',
       'suppliers-list',
