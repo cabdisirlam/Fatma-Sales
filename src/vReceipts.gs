@@ -45,12 +45,13 @@ function generateReceiptHTML(transactionId) {
             padding: 5px; 
             width: 100%;
             max-width: 300px; /* For 80mm paper */
-            font-size: 10px;
-            line-height: 1.3;
+            font-size: 12px;
+            line-height: 1.45;
+            font-weight: 600;
             color: #000;
           }
-          .header { text-align: center; margin-bottom: 8px; }
-          .shop-name { font-size: 14px; font-weight: bold; }
+          .header { text-align: center; margin-bottom: 8px; font-size: 13px; }
+          .shop-name { font-size: 16px; font-weight: 800; }
           .divider { border-top: 1px dashed #000; margin: 4px 0; }
           .item-table { width: 100%; border-collapse: collapse; }
           .item-table th, .item-table td { padding: 2px 0; }
@@ -58,8 +59,8 @@ function generateReceiptHTML(transactionId) {
           .item-table .item-details { text-align: right; }
           .totals-table { width: 100%; margin-top: 8px; font-weight: bold; }
           .totals-table td { padding: 1px 0; }
-          .footer { margin-top: 12px; text-align: center; font-size: 9px; }
-          .customer-info { margin: 8px 0; font-size: 9px; border-bottom: 1px dashed #000; padding-bottom: 4px; }
+          .footer { margin-top: 12px; text-align: center; font-size: 11px; font-weight: 700; }
+          .customer-info { margin: 8px 0; font-size: 11px; font-weight: 700; border-bottom: 1px dashed #000; padding-bottom: 4px; }
         </style>
       </head>
       <body>
@@ -112,22 +113,22 @@ function generateReceiptHTML(transactionId) {
             ${(sale.Delivery_Charge && Math.abs(parseFloat(sale.Delivery_Charge)) > 0) ? `<tr><td>Delivery Charge:</td><td style="text-align:right;">+${formatNumber(Math.abs(parseFloat(sale.Delivery_Charge)))}</td></tr>` : ''}
             ${(sale.Discount && Math.abs(parseFloat(sale.Discount)) > 0) ? `<tr><td>Discount:</td><td style="text-align:right;">-${formatNumber(Math.abs(parseFloat(sale.Discount)))}</td></tr>` : ''}
             <tr><td>VAT (16% incl.):</td><td style="text-align:right;">${formatNumber(vatAmount)}</td></tr>
-            <tr style="font-size: 14px;"><td><strong>TOTAL:</strong></td><td style="text-align:right;"><strong>${currencySymbol} ${formatNumber(grossTotal)}</strong></td></tr>
+            <tr style="font-size: 16px;"><td><strong>TOTAL:</strong></td><td style="text-align:right;"><strong>${currencySymbol} ${formatNumber(grossTotal)}</strong></td></tr>
           </tbody>
         </table>
 
         ${sale.Customer_ID !== 'WALK-IN' ?
-          `<div style="text-align:center; margin-top:5px; font-size:9px; border-top: 1px dashed #000; padding-top: 4px;">
+          `<div style="text-align:center; margin-top:5px; font-size:11px; border-top: 1px dashed #000; padding-top: 4px; font-weight:700;">
              <div>Previous Points: ${Math.max(0, customerPoints - (CONFIG.LOYALTY_POINTS_PER_SALE || 10))}</div>
              <div><strong>Earned This Sale: +${CONFIG.LOYALTY_POINTS_PER_SALE || 10}</strong></div>
-             <div style="font-weight:bold; font-size:10px;">New Total: ${customerPoints} points</div>
-             <div style="font-size:8px; color:#666; margin-top:2px;">Earn ${CONFIG.LOYALTY_POINTS_PER_SALE || 10} points per purchase!</div>
+             <div style="font-weight:bold; font-size:12px;">New Total: ${customerPoints} points</div>
+             <div style="font-size:10px; color:#666; margin-top:2px;">Earn ${CONFIG.LOYALTY_POINTS_PER_SALE || 10} points per purchase!</div>
            </div>`
           : ''}
         
         <div class="footer">
           <p>${settings.Receipt_Footer || 'Thank you!'}</p>
-          <p style="font-size:8px; margin-top:2px;">All prices include 16% VAT.</p>
+          <p style="font-size:10px; margin-top:2px;">All prices include 16% VAT.</p>
         </div>
       </body>
       </html>
@@ -198,12 +199,13 @@ function generateQuotationHTML(transactionId) {
             padding: 5px;
             width: 100%;
             max-width: 300px; /* For 80mm paper */
-            font-size: 10px;
-            line-height: 1.3;
+            font-size: 12px;
+            line-height: 1.45;
+            font-weight: 600;
             color: #000;
           }
-          .header { text-align: center; margin-bottom: 8px; }
-          .shop-name { font-size: 14px; font-weight: bold; }
+          .header { text-align: center; margin-bottom: 8px; font-size: 13px; }
+          .shop-name { font-size: 16px; font-weight: 800; }
           .divider { border-top: 1px dashed #000; margin: 4px 0; }
           .item-table { width: 100%; border-collapse: collapse; }
           .item-table th, .item-table td { padding: 2px 0; }
@@ -211,8 +213,8 @@ function generateQuotationHTML(transactionId) {
           .item-table .item-details { text-align: right; }
           .totals-table { width: 100%; margin-top: 8px; font-weight: bold; }
           .totals-table td { padding: 1px 0; }
-          .footer { margin-top: 12px; text-align: center; font-size: 9px; }
-          .customer-info { margin: 8px 0; font-size: 9px; border-bottom: 1px dashed #000; padding-bottom: 4px; }
+          .footer { margin-top: 12px; text-align: center; font-size: 11px; font-weight: 700; }
+          .customer-info { margin: 8px 0; font-size: 11px; font-weight: 700; border-bottom: 1px dashed #000; padding-bottom: 4px; }
         </style>
       </head>
       <body>
@@ -263,18 +265,18 @@ function generateQuotationHTML(transactionId) {
           <tbody>
             <tr><td>Subtotal:</td><td style="text-align:right;">${currencySymbol} ${formatNumber(Math.abs(parseFloat(quotation.Subtotal) || 0))}</td></tr>
             <tr><td>VAT (16% incl.):</td><td style="text-align:right;">${currencySymbol} ${formatNumber(vatAmount)}</td></tr>
-            <tr style="font-size: 14px;"><td><strong>TOTAL:</strong></td><td style="text-align:right;"><strong>${currencySymbol} ${formatNumber(grossTotal)}</strong></td></tr>
+            <tr style="font-size: 16px;"><td><strong>TOTAL:</strong></td><td style="text-align:right;"><strong>${currencySymbol} ${formatNumber(grossTotal)}</strong></td></tr>
           </tbody>
         </table>
 
-        ${validUntilStr ? `<div style="text-align:center; margin-top:8px; font-size:9px; border-top: 1px dashed #000; padding-top: 4px;">
+        ${validUntilStr ? `<div style="text-align:center; margin-top:8px; font-size:11px; font-weight:700; border-top: 1px dashed #000; padding-top: 4px;">
           <div><strong>Valid Until: ${validUntilStr}</strong></div>
-          <div style="font-size:8px; color:#666; margin-top:2px;">Prices subject to change after this date</div>
+          <div style="font-size:10px; color:#666; margin-top:2px;">Prices subject to change after this date</div>
         </div>` : ''}
 
         <div class="footer">
           <p>${settings.Receipt_Footer || 'Thank you!'}</p>
-          <p style="font-size:8px; margin-top:2px;">All prices include 16% VAT.</p>
+          <p style="font-size:10px; margin-top:2px;">All prices include 16% VAT.</p>
         </div>
       </body>
       </html>
