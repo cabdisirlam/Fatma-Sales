@@ -484,7 +484,7 @@ function createQuotation(quotationData) {
     if (quotationData.Valid_Until) {
         validUntil = new Date(quotationData.Valid_Until);
     } else {
-        validUntil.setDate(validUntil.getDate() + 14); // Default: 14 days validity
+        validUntil.setDate(validUntil.getDate() + 30); // Default: 30 days validity
     }
 
     let subtotal = 0;
@@ -574,8 +574,18 @@ function getQuotationById(quotationId) {
   try {
     const quotations = sheetToObjects('Quotations');
 
+    // Helper to read compatible column names (with/without underscores)
+    const pick = (row, keys) => {
+      for (let k of keys) {
+        if (row[k] !== undefined && row[k] !== '') return row[k];
+      }
+      return '';
+    };
+
     // Find all rows for this quotation
-    const quotRows = quotations.filter(q => q.Quotation_ID === quotationId);
+    const quotRows = quotations.filter(q =>
+      (q.Quotation_ID || q['Quotation ID']) === quotationId
+    );
 
     if (quotRows.length === 0) {
       return null;
@@ -586,28 +596,39 @@ function getQuotationById(quotationId) {
 
     // Collect items
     const items = quotRows.map(row => ({
-      Item_ID: row.Item_ID,
-      Item_Name: row.Item_Name,
-      Qty: row.Qty,
-      Unit_Price: row.Unit_Price,
-      Line_Total: row.Line_Total
+      Item_ID: pick(row, ['Item_ID', 'Item ID', 'Item']),
+      Item_Name: pick(row, ['Item_Name', 'Item Name', 'Item']),
+      Qty: parseFloat(pick(row, ['Qty', 'Quantity'])) || 0,
+      Unit_Price: parseFloat(pick(row, ['Unit_Price', 'Unit Price', 'Price'])) || 0,
+      Line_Total: parseFloat(pick(row, ['Line_Total', 'Line Total', 'Amount', 'Total'])) || 0
     }));
 
+    const subtotalFallback = items.reduce((s, it) => s + (parseFloat(it.Line_Total) || 0), 0);
+    const subtotal = parseFloat(pick(first, ['Subtotal'])) || subtotalFallback;
+    const deliveryCharge = parseFloat(pick(first, ['Delivery_Charge', 'Delivery Charge'])) || 0;
+    const discount = parseFloat(pick(first, ['Discount'])) || 0;
+    const grandTotal = parseFloat(pick(first, ['Grand_Total', 'Total_Amount', 'Total Amount'])) || (subtotal + deliveryCharge - discount);
+
+    const validUntilRaw = pick(first, ['Valid_Until', 'Valid Until']);
+    const dateTimeRaw = pick(first, ['DateTime', 'Date', 'Date_Time']);
+
     return {
-      Quotation_ID: first.Quotation_ID,
-      DateTime: first.DateTime,
-      Customer_ID: first.Customer_ID,
-      Customer_Name: first.Customer_Name,
-      Subtotal: first.Subtotal,
-      Delivery_Charge: first.Delivery_Charge,
-      Discount: first.Discount,
-      Grand_Total: first.Grand_Total,
-      Created_By: first.Created_By,
-      Location: first.Location,
-      KRA_PIN: first.KRA_PIN,
-      Status: first.Status,
-      Valid_Until: first.Valid_Until,
-      Converted_Sale_ID: first.Converted_Sale_ID,
+      Quotation_ID: pick(first, ['Quotation_ID', 'Quotation ID', 'Transaction_ID', 'Transaction ID']),
+      DateTime: dateTimeRaw,
+      Customer_ID: pick(first, ['Customer_ID', 'Customer ID']),
+      Customer_Name: pick(first, ['Customer_Name', 'Customer Name']),
+      Subtotal: subtotal,
+      Delivery_Charge: deliveryCharge,
+      Discount: discount,
+      Grand_Total: grandTotal,
+      Created_By: pick(first, ['Created_By', 'Sold_By', 'User']),
+      Location: pick(first, ['Location', 'Address']),
+      KRA_PIN: pick(first, ['KRA_PIN', 'KRA PIN']),
+      Status: pick(first, ['Status']),
+      Valid_Until: validUntilRaw,
+      Converted_Sale_ID: pick(first, ['Converted_Sale_ID', 'Converted Sale ID']),
+      Payment_Mode: pick(first, ['Payment_Mode', 'Payment Mode', 'Payment']),
+      Type: 'Quotation',
       items: items
     };
 
@@ -904,6 +925,13 @@ function getQuotations(filters) {
   try {
     const quotations = sheetToObjects('Quotations');
 
+    const pick = (row, keys) => {
+      for (let k of keys) {
+        if (row[k] !== undefined && row[k] !== '') return row[k];
+      }
+      return '';
+    };
+
     // Apply filters if provided
     let filteredQuots = quotations;
     if (filters) {
@@ -915,24 +943,27 @@ function getQuotations(filters) {
     // Group by Quotation_ID and map to UI-friendly field names
     const groupedQuots = {};
     filteredQuots.forEach(quot => {
-      if (!groupedQuots[quot.Quotation_ID]) {
-        groupedQuots[quot.Quotation_ID] = {
-          Quotation_ID: quot.Quotation_ID,
-          Transaction_ID: quot.Quotation_ID, // Alias for dashboard
-          Date: quot.DateTime,
-          DateTime: quot.DateTime,
-          Customer_ID: quot.Customer_ID,
-          Customer_Name: quot.Customer_Name,
-          Grand_Total: quot.Grand_Total,
-          Total_Amount: quot.Grand_Total, // Alias for dashboard totals
-          Created_By: quot.Created_By,
-          Status: quot.Status,
-          Valid_Until: quot.Valid_Until,
-          Converted_Sale_ID: quot.Converted_Sale_ID,
+      const qId = pick(quot, ['Quotation_ID', 'Quotation ID', 'Transaction_ID', 'Transaction ID']);
+      if (!groupedQuots[qId]) {
+        const dateVal = pick(quot, ['DateTime', 'Date', 'Date_Time']);
+        const grandTotal = parseFloat(pick(quot, ['Grand_Total', 'Total_Amount', 'Total Amount'])) || 0;
+        groupedQuots[qId] = {
+          Quotation_ID: qId,
+          Transaction_ID: qId, // Alias for dashboard
+          Date: dateVal,
+          DateTime: dateVal,
+          Customer_ID: pick(quot, ['Customer_ID', 'Customer ID']),
+          Customer_Name: pick(quot, ['Customer_Name', 'Customer Name']),
+          Grand_Total: grandTotal,
+          Total_Amount: grandTotal, // Alias for dashboard totals
+          Created_By: pick(quot, ['Created_By', 'Sold_By', 'User']),
+          Status: pick(quot, ['Status']),
+          Valid_Until: pick(quot, ['Valid_Until', 'Valid Until']),
+          Converted_Sale_ID: pick(quot, ['Converted_Sale_ID', 'Converted Sale ID']),
           itemCount: 0
         };
       }
-      groupedQuots[quot.Quotation_ID].itemCount++;
+      groupedQuots[qId].itemCount++;
     });
 
     return Object.values(groupedQuots);

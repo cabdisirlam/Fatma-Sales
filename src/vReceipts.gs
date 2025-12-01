@@ -149,6 +149,24 @@ function generateQuotationHTML(transactionId) {
       throw new Error('Quotation not found');
     }
 
+    // Normalize numbers with fallbacks
+    const items = Array.isArray(quotation.items) ? quotation.items : [];
+    const derivedSubtotal = items.reduce((s, it) => s + (parseFloat(it.Line_Total) || 0), 0);
+    const subtotal = parseFloat(quotation.Subtotal) || derivedSubtotal;
+    const deliveryCharge = parseFloat(quotation.Delivery_Charge) || 0;
+    const discount = Math.abs(parseFloat(quotation.Discount)) || 0;
+    const grandTotal = parseFloat(quotation.Grand_Total) || (subtotal + deliveryCharge - discount);
+    const vatRate = 0.16;
+    const vatAmount = grandTotal - (grandTotal / (1 + vatRate));
+
+    // Validate/adjust dates
+    const dateVal = quotation.DateTime ? new Date(quotation.DateTime) : new Date();
+    let validUntilDate = quotation.Valid_Until ? new Date(quotation.Valid_Until) : null;
+    if (!validUntilDate || isNaN(validUntilDate.getTime())) {
+      validUntilDate = new Date(dateVal);
+      validUntilDate.setDate(validUntilDate.getDate() + 30);
+    }
+
     // Fetch customer phone if available
     let customerPhone = '';
     if (quotation.Customer_ID && quotation.Customer_ID !== 'WALK-IN') {
@@ -165,6 +183,8 @@ function generateQuotationHTML(transactionId) {
     const settings = getAllSettings();
     const shopName = settings.Shop_Name || CONFIG.SHOP_NAME;
     const currency = settings.Currency_Symbol || CONFIG.CURRENCY_SYMBOL;
+    const kraPin = quotation.KRA_PIN || '';
+    const location = quotation.Location || '';
 
     const html = `
 <!DOCTYPE html>
@@ -203,21 +223,21 @@ function generateQuotationHTML(transactionId) {
     <div class="info-box">
       <h3>Quotation Details</h3>
       <p><strong>Quotation #:</strong> ${quotation.Transaction_ID}</p>
-      <p><strong>Date:</strong> ${Utilities.formatDate(new Date(quotation.DateTime), 'GMT+3', 'dd MMM yyyy')}</p>
-      <p><strong>Valid Until:</strong> ${Utilities.formatDate(new Date(quotation.Valid_Until), 'GMT+3', 'dd MMM yyyy')}</p>
+      <p><strong>Date:</strong> ${Utilities.formatDate(dateVal, 'GMT+3', 'dd MMM yyyy')}</p>
+      <p><strong>Valid Until:</strong> ${Utilities.formatDate(validUntilDate, 'GMT+3', 'dd MMM yyyy')}</p>
       <p><strong>Prepared By:</strong> ${quotation.Sold_By}</p>
     </div>
     <div class="info-box">
       <h3>Customer Details</h3>
       <p><strong>Name:</strong> ${quotation.Customer_Name}</p>
       ${customerPhone ? '<p><strong>Phone:</strong> ' + customerPhone + '</p>' : ''}
-      ${quotation.Location ? '<p><strong>Location:</strong> ' + quotation.Location + '</p>' : ''}
-      ${quotation.KRA_PIN ? '<p><strong>KRA PIN:</strong> ' + quotation.KRA_PIN + '</p>' : ''}
+      ${location ? '<p><strong>Location:</strong> ' + location + '</p>' : ''}
+      ${kraPin ? '<p><strong>KRA PIN:</strong> ' + kraPin + '</p>' : ''}
     </div>
   </div>
 
   <div class="valid-until">
-    <strong>Note:</strong> This quotation is valid until ${Utilities.formatDate(new Date(quotation.Valid_Until), 'GMT+3', 'dd MMM yyyy')}. Prices are subject to change after this date.
+    <strong>Note:</strong> This quotation is valid until ${Utilities.formatDate(validUntilDate, 'GMT+3', 'dd MMM yyyy')}. Prices are subject to change after this date.
   </div>
 
   <div class="items">
@@ -232,13 +252,13 @@ function generateQuotationHTML(transactionId) {
         </tr>
       </thead>
       <tbody>
-        ${quotation.items.map((item, index) => `
+        ${items.map((item, index) => `
           <tr>
             <td>${index + 1}</td>
-            <td>${item.Item_Name}</td>
-            <td style="text-align:center">${item.Qty}</td>
-            <td style="text-align:right">${currency} ${formatNumber(item.Unit_Price)}</td>
-            <td style="text-align:right">${currency} ${formatNumber(item.Line_Total)}</td>
+            <td>${item.Item_Name || 'Item'}</td>
+            <td style="text-align:center">${item.Qty || 0}</td>
+            <td style="text-align:right">${currency} ${formatNumber(item.Unit_Price || 0)}</td>
+            <td style="text-align:right">${currency} ${formatNumber(item.Line_Total || 0)}</td>
           </tr>
         `).join('')}
       </tbody>
@@ -246,15 +266,16 @@ function generateQuotationHTML(transactionId) {
   </div>
 
   <div class="totals">
-    <div class="row"><span>Subtotal:</span> <span>${currency} ${formatNumber(Math.abs(parseFloat(quotation.Subtotal) || 0))}</span></div>
-    ${(quotation.Delivery_Charge && Math.abs(parseFloat(quotation.Delivery_Charge)) > 0) ? '<div class="row"><span>Delivery Charge:</span> <span>+' + currency + ' ' + formatNumber(Math.abs(parseFloat(quotation.Delivery_Charge))) + '</span></div>' : ''}
-    ${(quotation.Discount && Math.abs(parseFloat(quotation.Discount)) > 0) ? '<div class="row"><span>Discount:</span> <span>-' + currency + ' ' + formatNumber(Math.abs(parseFloat(quotation.Discount))) + '</span></div>' : ''}
-    <div class="row grand-total"><span>GRAND TOTAL:</span> <span>${currency} ${formatNumber(Math.abs(parseFloat(quotation.Grand_Total) || 0))}</span></div>
+    <div class="row"><span>Subtotal:</span> <span>${currency} ${formatNumber(Math.abs(subtotal))}</span></div>
+    ${(deliveryCharge && Math.abs(deliveryCharge) > 0) ? '<div class="row"><span>Delivery Charge:</span> <span>+' + currency + ' ' + formatNumber(Math.abs(deliveryCharge)) + '</span></div>' : ''}
+    ${(discount && Math.abs(discount) > 0) ? '<div class="row"><span>Discount:</span> <span>-' + currency + ' ' + formatNumber(Math.abs(discount)) + '</span></div>' : ''}
+    <div class="row"><span>VAT (16% incl.):</span> <span>${currency} ${formatNumber(Math.abs(vatAmount))}</span></div>
+    <div class="row grand-total"><span>GRAND TOTAL (incl. VAT):</span> <span>${currency} ${formatNumber(Math.abs(grandTotal))}</span></div>
   </div>
 
   <div class="footer">
     <p>Thank you for considering our quotation.</p>
-    <p>Terms & Conditions: Prices are subject to change. Payment terms as agreed.</p>
+    <p>Terms & Conditions: Prices are subject to change. Payment terms as agreed. All amounts include 16% VAT.</p>
   </div>
 
   <div class="no-print" style="margin-top: 20px; text-align: center;">
