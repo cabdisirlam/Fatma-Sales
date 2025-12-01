@@ -1662,7 +1662,10 @@
     }
 
     function printStatement() {
+      const originalTitle = document.title;
+      document.title = 'Supplier Statement - Smatika Kenya';
       window.print();
+      setTimeout(() => { document.title = originalTitle; }, 100);
     }
 
     // Edit supplier
