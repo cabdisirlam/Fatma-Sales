@@ -68,18 +68,81 @@ function getQuotations(filters) {
  */
 function getQuotationById(quotationId) {
   try {
-    // Use the existing getSaleById function from iSales.gs
-    const quotation = getSaleById(quotationId);
+    const quotations = sheetToObjects('Quotations');
 
-    if (!quotation || quotation.Type !== 'Quotation') {
-      throw new Error('Quotation not found: ' + quotationId);
+    // Helper to read compatible column names (with/without underscores)
+    const pick = (row, keys) => {
+      for (let k of keys) {
+        if (row[k] !== undefined && row[k] !== '') return row[k];
+      }
+      return '';
+    };
+
+    const parseNumber = (val) => {
+      if (val === undefined || val === null || val === '') return 0;
+      if (typeof val === 'number') return val;
+      const cleaned = val.toString().replace(/[^0-9.\-]/g, '');
+      const num = parseFloat(cleaned);
+      return isFinite(num) ? num : 0;
+    };
+
+    // Find all rows for this quotation
+    const quotRows = quotations.filter(q =>
+      (q.Quotation_ID || q['Quotation ID']) === quotationId
+    );
+
+    if (quotRows.length === 0) {
+      return null;
     }
 
-    return quotation;
+    // Use first row for header info
+    const first = quotRows[0];
+
+    // Collect items
+    const items = quotRows.map(row => ({
+      Item_ID: pick(row, ['Item_ID', 'Item ID', 'Item']),
+      Item_Name: pick(row, ['Item_Name', 'Item Name', 'Item']),
+      Qty: parseNumber(pick(row, ['Qty', 'Quantity'])),
+      Unit_Price: parseNumber(pick(row, ['Unit_Price', 'Unit Price', 'Price'])),
+      Line_Total: parseNumber(pick(row, ['Line_Total', 'Line Total', 'Amount', 'Total']))
+    }));
+
+    const subtotalFallback = items.reduce((s, it) => s + (parseFloat(it.Line_Total) || 0), 0);
+    const rawSubtotal = parseNumber(pick(first, ['Subtotal']));
+    const subtotal = isFinite(rawSubtotal) && rawSubtotal !== 0 ? rawSubtotal : subtotalFallback;
+    const deliveryCharge = parseNumber(pick(first, ['Delivery_Charge', 'Delivery Charge']));
+    const discount = parseNumber(pick(first, ['Discount']));
+    const rawGrandTotal = parseNumber(pick(first, ['Grand_Total', 'Total_Amount', 'Total Amount']));
+    const grandTotal = isFinite(rawGrandTotal) && rawGrandTotal !== 0
+      ? rawGrandTotal
+      : (subtotal + deliveryCharge - discount);
+
+    const validUntilRaw = pick(first, ['Valid_Until', 'Valid Until']);
+    const dateTimeRaw = pick(first, ['DateTime', 'Date', 'Date_Time']);
+
+    return {
+      Quotation_ID: pick(first, ['Quotation_ID', 'Quotation ID', 'Transaction_ID', 'Transaction ID']),
+      DateTime: dateTimeRaw,
+      Customer_ID: pick(first, ['Customer_ID', 'Customer ID']),
+      Customer_Name: pick(first, ['Customer_Name', 'Customer Name']),
+      Subtotal: subtotal,
+      Delivery_Charge: deliveryCharge,
+      Discount: discount,
+      Grand_Total: grandTotal,
+      Created_By: pick(first, ['Created_By', 'Created By', 'Sold_By', 'Sold By', 'User', 'Prepared_By', 'Prepared By']),
+      Location: pick(first, ['Customer_Location', 'Customer Location', 'Location', 'Address']),
+      KRA_PIN: pick(first, ['Customer_KRA_PIN', 'Customer KRA PIN', 'KRA_PIN', 'KRA PIN', 'KRA']),
+      Status: pick(first, ['Status']),
+      Valid_Until: validUntilRaw,
+      Converted_Sale_ID: pick(first, ['Converted_Sale_ID', 'Converted Sale ID']),
+      Payment_Mode: pick(first, ['Payment_Mode', 'Payment Mode', 'Payment']),
+      Type: 'Quotation',
+      items: items
+    };
 
   } catch (error) {
     logError('getQuotationById', error);
-    throw new Error('Error loading quotation: ' + error.message);
+    return null;
   }
 }
 
@@ -138,11 +201,11 @@ function deleteQuotation(quotationId, user) {
       throw new Error('Cannot delete converted quotation. Converted to sale: ' + quotation.Converted_Sale_ID);
     }
 
-    const sheet = getSheet('Sales');
+    const sheet = getSheet('Quotations');
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
 
-    const transIdCol = headers.indexOf('Transaction_ID');
+    const transIdCol = headers.indexOf('Quotation_ID');
 
     // Delete all rows with this quotation ID (line items)
     // Loop backwards to avoid index issues

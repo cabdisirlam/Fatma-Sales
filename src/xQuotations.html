@@ -343,25 +343,12 @@
             statusBadge = '<span class="badge bg-secondary">' + (quotation.Status || 'Unknown') + '</span>';
         }
 
-        const canConvert = quotation.Status === 'Pending' || quotation.Status === 'Accepted';
-        const canEdit = quotation.Status === 'Pending' || quotation.Status === 'Draft';
-        const canDelete = quotation.Status !== 'Converted';
 
-        const convertButton = canConvert ?
-          `<button class="btn btn-success btn-sm" onclick="convertToSale('${quotation.Transaction_ID}')">
-            <i class="bi bi-arrow-right-circle"></i> Convert
-          </button>` : '';
 
-        const editButton = canEdit ?
-          `<button class="btn btn-warning btn-sm" onclick="editQuotation('${quotation.Transaction_ID}')">
-            <i class="bi bi-pencil"></i> Edit
-          </button>` : '';
 
-        const deleteButton = canDelete ?
-          `<button class="btn btn-danger btn-sm" onclick="deleteQuotation('${quotation.Transaction_ID}')">
-            <i class="bi bi-trash"></i> Delete
-          </button>` : '';
 
+
+			
         row.innerHTML = `
           <td><strong>${quotation.Transaction_ID || ''}</strong></td>
           <td>${formatDate(quotation.Date)}</td>
@@ -375,9 +362,9 @@
               <button class="btn btn-info btn-sm" onclick="printQuotation('${quotation.Transaction_ID}')">
                 <i class="bi bi-printer"></i> Print
               </button>
-              ${editButton}
-              ${deleteButton}
-              ${convertButton}
+              <button class="btn btn-danger btn-sm" onclick="deleteQuotation('${quotation.Transaction_ID}')">
+                <i class="bi bi-trash"></i> Delete
+              </button>
             </div>
           </td>
         `;
