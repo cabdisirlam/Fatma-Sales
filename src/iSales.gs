@@ -604,10 +604,14 @@ function getQuotationById(quotationId) {
     }));
 
     const subtotalFallback = items.reduce((s, it) => s + (parseFloat(it.Line_Total) || 0), 0);
-    const subtotal = parseFloat(pick(first, ['Subtotal'])) || subtotalFallback;
+    const rawSubtotal = parseFloat(pick(first, ['Subtotal']));
+    const subtotal = isFinite(rawSubtotal) && rawSubtotal !== 0 ? rawSubtotal : subtotalFallback;
     const deliveryCharge = parseFloat(pick(first, ['Delivery_Charge', 'Delivery Charge'])) || 0;
     const discount = parseFloat(pick(first, ['Discount'])) || 0;
-    const grandTotal = parseFloat(pick(first, ['Grand_Total', 'Total_Amount', 'Total Amount'])) || (subtotal + deliveryCharge - discount);
+    const rawGrandTotal = parseFloat(pick(first, ['Grand_Total', 'Total_Amount', 'Total Amount']));
+    const grandTotal = isFinite(rawGrandTotal) && rawGrandTotal !== 0
+      ? rawGrandTotal
+      : (subtotal + deliveryCharge - discount);
 
     const validUntilRaw = pick(first, ['Valid_Until', 'Valid Until']);
     const dateTimeRaw = pick(first, ['DateTime', 'Date', 'Date_Time']);
@@ -621,9 +625,9 @@ function getQuotationById(quotationId) {
       Delivery_Charge: deliveryCharge,
       Discount: discount,
       Grand_Total: grandTotal,
-      Created_By: pick(first, ['Created_By', 'Sold_By', 'User']),
-      Location: pick(first, ['Location', 'Address']),
-      KRA_PIN: pick(first, ['KRA_PIN', 'KRA PIN']),
+      Created_By: pick(first, ['Created_By', 'Sold_By', 'User', 'Prepared_By']),
+      Location: pick(first, ['Customer_Location', 'Location', 'Address']),
+      KRA_PIN: pick(first, ['Customer_KRA_PIN', 'KRA_PIN', 'KRA PIN']),
       Status: pick(first, ['Status']),
       Valid_Until: validUntilRaw,
       Converted_Sale_ID: pick(first, ['Converted_Sale_ID', 'Converted Sale ID']),
@@ -824,7 +828,7 @@ function getSaleById(transactionId) {
         Discount: quotation.Discount,
         Grand_Total: quotation.Grand_Total,
         Payment_Mode: quotation.Payment_Mode || '',
-        Sold_By: quotation.Created_By,
+        Sold_By: quotation.Created_By || quotation.Sold_By || quotation.User || '',
         Location: quotation.Location,
         KRA_PIN: quotation.KRA_PIN,
         Paybill_Number: '',
@@ -956,7 +960,7 @@ function getQuotations(filters) {
           Customer_Name: pick(quot, ['Customer_Name', 'Customer Name']),
           Grand_Total: grandTotal,
           Total_Amount: grandTotal, // Alias for dashboard totals
-          Created_By: pick(quot, ['Created_By', 'Sold_By', 'User']),
+          Created_By: pick(quot, ['Created_By', 'Sold_By', 'User', 'Prepared_By']),
           Status: pick(quot, ['Status']),
           Valid_Until: pick(quot, ['Valid_Until', 'Valid Until']),
           Converted_Sale_ID: pick(quot, ['Converted_Sale_ID', 'Converted Sale ID']),

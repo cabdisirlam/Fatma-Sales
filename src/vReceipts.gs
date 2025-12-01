@@ -152,10 +152,15 @@ function generateQuotationHTML(transactionId) {
     // Normalize numbers with fallbacks
     const items = Array.isArray(quotation.items) ? quotation.items : [];
     const derivedSubtotal = items.reduce((s, it) => s + (parseFloat(it.Line_Total) || 0), 0);
-    const subtotal = parseFloat(quotation.Subtotal) || derivedSubtotal;
-    const deliveryCharge = parseFloat(quotation.Delivery_Charge) || 0;
-    const discount = Math.abs(parseFloat(quotation.Discount)) || 0;
-    const grandTotal = parseFloat(quotation.Grand_Total) || (subtotal + deliveryCharge - discount);
+    const subtotal = isFinite(parseFloat(quotation.Subtotal)) && parseFloat(quotation.Subtotal) !== 0
+      ? parseFloat(quotation.Subtotal)
+      : derivedSubtotal;
+    const deliveryCharge = isFinite(parseFloat(quotation.Delivery_Charge)) ? parseFloat(quotation.Delivery_Charge) : 0;
+    const discount = isFinite(parseFloat(quotation.Discount)) ? Math.abs(parseFloat(quotation.Discount)) : 0;
+    const rawGrand = parseFloat(quotation.Grand_Total);
+    const grandTotal = isFinite(rawGrand) && rawGrand !== 0
+      ? rawGrand
+      : (subtotal + deliveryCharge - discount);
     const vatRate = 0.16;
     const vatAmount = grandTotal - (grandTotal / (1 + vatRate));
 
@@ -185,6 +190,8 @@ function generateQuotationHTML(transactionId) {
     const currency = settings.Currency_Symbol || CONFIG.CURRENCY_SYMBOL;
     const kraPin = quotation.KRA_PIN || '';
     const location = quotation.Location || '';
+    const preparedBy = quotation.Sold_By || quotation.Created_By || quotation.User || quotation.Prepared_By || 'SYSTEM';
+    const customerLocation = quotation.Customer_Location || quotation.Location || '';
 
     const html = `
 <!DOCTYPE html>
@@ -225,13 +232,13 @@ function generateQuotationHTML(transactionId) {
       <p><strong>Quotation #:</strong> ${quotation.Transaction_ID}</p>
       <p><strong>Date:</strong> ${Utilities.formatDate(dateVal, 'GMT+3', 'dd MMM yyyy')}</p>
       <p><strong>Valid Until:</strong> ${Utilities.formatDate(validUntilDate, 'GMT+3', 'dd MMM yyyy')}</p>
-      <p><strong>Prepared By:</strong> ${quotation.Sold_By}</p>
+      <p><strong>Prepared By:</strong> ${preparedBy}</p>
     </div>
     <div class="info-box">
       <h3>Customer Details</h3>
       <p><strong>Name:</strong> ${quotation.Customer_Name}</p>
       ${customerPhone ? '<p><strong>Phone:</strong> ' + customerPhone + '</p>' : ''}
-      ${location ? '<p><strong>Location:</strong> ' + location + '</p>' : ''}
+      ${customerLocation ? '<p><strong>Location:</strong> ' + customerLocation + '</p>' : ''}
       ${kraPin ? '<p><strong>KRA PIN:</strong> ' + kraPin + '</p>' : ''}
     </div>
   </div>
