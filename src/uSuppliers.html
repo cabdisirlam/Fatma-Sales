@@ -1458,12 +1458,6 @@
       const supplier = suppliersData.find(s => s.Supplier_ID === supplierId);
       const balance = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Balance']);
 
-      if (amount > balance) {
-        if (!confirm('Payment amount (' + amount.toFixed(2) + ') exceeds balance (' + balance.toFixed(2) + '). Continue?')) {
-          return;
-        }
-      }
-
       // Disable submit button to prevent double submission
       const submitBtn = document.getElementById('submitPaymentBtn');
       submitBtn.disabled = true;

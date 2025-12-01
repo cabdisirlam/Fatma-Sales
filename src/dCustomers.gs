@@ -530,7 +530,9 @@ function recordCustomerPayment(paymentData) {
 function getCustomerStatement(customerId, startDate, endDate) {
   try {
     const toNumber = (val) => {
-      const num = parseFloat(val);
+      if (val === null || val === undefined) return 0;
+      const cleaned = val.toString().replace(/[^0-9.\-]/g, '');
+      const num = parseFloat(cleaned);
       return isNaN(num) ? 0 : num;
     };
 
@@ -567,15 +569,15 @@ function getCustomerStatement(customerId, startDate, endDate) {
     const start = startDate ? new Date(startDate) : null;
     const end = endDate ? new Date(endDate) : null;
 
-    const movementAll = transactions.reduce((sum, t) => sum + (toNumber(t.credit) - toNumber(t.debit)), 0);
+    const movementAll = transactions.reduce((sum, t) => sum + (toNumber(t.debit) - toNumber(t.credit)), 0);
     const hasOpening = customer.Opening_Balance !== undefined && customer.Opening_Balance !== '' && !isNaN(parseFloat(customer.Opening_Balance));
-    const openingFromCustomer = hasOpening ? parseFloat(customer.Opening_Balance) : 0;
+    const openingFromCustomer = hasOpening ? toNumber(customer.Opening_Balance) : 0;
     const baseOpening = hasOpening ? openingFromCustomer : (toNumber(customer.Current_Balance) - movementAll);
 
     const movementBeforeStart = start
       ? transactions
           .filter(t => t.date < start)
-          .reduce((sum, t) => sum + (toNumber(t.credit) - toNumber(t.debit)), 0)
+          .reduce((sum, t) => sum + (toNumber(t.debit) - toNumber(t.credit)), 0)
       : 0;
 
     let openingBalance = baseOpening + movementBeforeStart;
@@ -590,8 +592,8 @@ function getCustomerStatement(customerId, startDate, endDate) {
     // Calculate running balance starting from opening
     let balance = openingBalance;
     filteredTransactions.forEach(txn => {
-      // In statement: Debit (Sale) increases debt (negative balance), Credit (Payment) reduces debt
-      balance += (toNumber(txn.credit) - toNumber(txn.debit));
+      // In statement: Debit (Sale) increases debt, Credit (Payment) reduces debt
+      balance += (toNumber(txn.debit) - toNumber(txn.credit));
       txn.balance = balance;
     });
 

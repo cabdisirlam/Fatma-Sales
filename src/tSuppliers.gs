@@ -567,7 +567,9 @@ function recordSupplierPayment(supplierId, amount, paymentMethod, reference, not
 function getSupplierStatement(supplierId, startDate, endDate) {
   try {
     const toNumber = (val) => {
-      const num = parseFloat(val);
+      if (val === null || val === undefined) return 0;
+      const cleaned = val.toString().replace(/[^0-9.\-]/g, '');
+      const num = parseFloat(cleaned);
       return isNaN(num) ? 0 : num;
     };
 
@@ -609,7 +611,7 @@ function getSupplierStatement(supplierId, startDate, endDate) {
     // Determine base opening balance using recorded opening or deriving from current balance
     const movementAll = transactions.reduce((sum, t) => sum + (toNumber(t.debit) - toNumber(t.credit)), 0);
     const hasOpening = supplier.Opening_Balance !== undefined && supplier.Opening_Balance !== '' && !isNaN(parseFloat(supplier.Opening_Balance));
-    const openingFromSupplier = hasOpening ? parseFloat(supplier.Opening_Balance) : 0;
+    const openingFromSupplier = hasOpening ? toNumber(supplier.Opening_Balance) : 0;
     const baseOpening = hasOpening ? openingFromSupplier : (toNumber(supplier.Current_Balance) - movementAll);
 
     const movementBeforeStart = start

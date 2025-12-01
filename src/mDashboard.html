@@ -5647,12 +5647,6 @@
       const supplier = dashboardSuppliersData.find(s => s.Supplier_ID === supplierId);
       const balance = getSupplierBalance(supplier);
 
-      if (amount > balance) {
-        if (!confirm('Payment amount (' + formatCurrency(amount) + ') exceeds balance (' + formatCurrency(balance) + '). Continue?')) {
-          return;
-        }
-      }
-
       const submitBtn = document.getElementById('submitPaymentBtn');
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
