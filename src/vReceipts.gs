@@ -261,10 +261,8 @@ function generateQuotationHTML(transactionId) {
 
         <table class="totals-table">
           <tbody>
-            <tr><td>Subtotal:</td><td style="text-align:right;">${formatNumber(Math.abs(parseFloat(quotation.Subtotal) || 0))}</td></tr>
-            ${(quotation.Delivery_Charge && Math.abs(parseFloat(quotation.Delivery_Charge)) > 0) ? `<tr><td>Delivery Charge:</td><td style="text-align:right;">+${formatNumber(Math.abs(parseFloat(quotation.Delivery_Charge)))}</td></tr>` : ''}
-            ${(quotation.Discount && Math.abs(parseFloat(quotation.Discount)) > 0) ? `<tr><td>Discount:</td><td style="text-align:right;">-${formatNumber(Math.abs(parseFloat(quotation.Discount)))}</td></tr>` : ''}
-            <tr><td>VAT (16% incl.):</td><td style="text-align:right;">${formatNumber(vatAmount)}</td></tr>
+            <tr><td>Subtotal:</td><td style="text-align:right;">${currencySymbol} ${formatNumber(Math.abs(parseFloat(quotation.Subtotal) || 0))}</td></tr>
+            <tr><td>VAT (16% incl.):</td><td style="text-align:right;">${currencySymbol} ${formatNumber(vatAmount)}</td></tr>
             <tr style="font-size: 14px;"><td><strong>TOTAL:</strong></td><td style="text-align:right;"><strong>${currencySymbol} ${formatNumber(grossTotal)}</strong></td></tr>
           </tbody>
         </table>
