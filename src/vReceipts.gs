@@ -33,13 +33,14 @@ function generateReceiptHTML(transactionId) {
     const grossTotal = Math.abs(parseFloat(sale.Grand_Total) || 0);
     const vatAmount = grossTotal - (grossTotal / (1 + vatRate));
     const qrPayload = `${sale.Transaction_ID} | ${formatNumber(grossTotal)} | ${dateStr}`;
-    const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
-    let qrDataUrl = qrUrl;
+    let qrDataUrl = '';
     try {
-      const qrBlob = UrlFetchApp.fetch(qrUrl).getBlob();
-      qrDataUrl = 'data:' + qrBlob.getContentType() + ';base64,' + Utilities.base64Encode(qrBlob.getBytes());
+      const qrBlob = Charts.newQrCode(qrPayload).setSize(140, 140).build().getAs('image/png');
+      qrDataUrl = 'data:image/png;base64,' + Utilities.base64Encode(qrBlob.getBytes());
     } catch (e) {
-      // fallback to URL if fetch fails
+      // fallback to external generator if Charts service fails
+      const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
+      qrDataUrl = qrUrl;
     }
     
     // THERMAL PRINTER OPTIMIZED LAYOUT
@@ -138,7 +139,7 @@ function generateReceiptHTML(transactionId) {
           : ''}
         
         <div class="qr">
-          <img src="${qrDataUrl}" alt="QR code" />
+          ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR code" />` : `<div style="font-size:10px;">${qrPayload}</div>`}
         </div>
 
         <div class="footer">
@@ -202,13 +203,14 @@ function generateQuotationHTML(transactionId) {
     const grossTotal = Math.abs(parseFloat(quotation.Grand_Total) || 0);
     const vatAmount = grossTotal - (grossTotal / (1 + vatRate));
     const qrPayload = `${quotation.Transaction_ID} | ${formatNumber(grossTotal)} | ${dateStr}`;
-    const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
-    let qrDataUrl = qrUrl;
+    let qrDataUrl = '';
     try {
-      const qrBlob = UrlFetchApp.fetch(qrUrl).getBlob();
-      qrDataUrl = 'data:' + qrBlob.getContentType() + ';base64,' + Utilities.base64Encode(qrBlob.getBytes());
+      const qrBlob = Charts.newQrCode(qrPayload).setSize(140, 140).build().getAs('image/png');
+      qrDataUrl = 'data:image/png;base64,' + Utilities.base64Encode(qrBlob.getBytes());
     } catch (e) {
-      // fallback to URL if fetch fails
+      // fallback to external generator if Charts service fails
+      const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
+      qrDataUrl = qrUrl;
     }
 
     // THERMAL PRINTER OPTIMIZED LAYOUT (SAME AS RECEIPT)
@@ -301,7 +303,7 @@ function generateQuotationHTML(transactionId) {
         </div>` : ''}
 
         <div class="qr">
-          <img src="${qrDataUrl}" alt="QR code" />
+          ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR code" />` : `<div style="font-size:10px;">${qrPayload}</div>`}
         </div>
 
         <div class="footer">
