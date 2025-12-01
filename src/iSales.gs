@@ -490,15 +490,34 @@ function createQuotation(quotationData) {
     let subtotal = 0;
     const items = [];
     for (const item of quotationData.items) {
-      const product = getInventoryItemById(item.Item_ID);
-      const unitPrice = item.Unit_Price || product.Selling_Price;
-      const lineTotal = parseFloat(item.Qty) * parseFloat(unitPrice);
+      let product = null;
+
+      // Allow service/manual items without throwing "Product not found"
+      try {
+        product = item.Item_ID ? getInventoryItemById(item.Item_ID) : null;
+      } catch (e) {
+        product = null;
+      }
+
+      const isManual = item.Is_Manual === true || !product || item.Type === 'Service' || (product && product.Type === 'Service');
+      const qty = parseFloat(item.Qty) || 1;
+      const unitPrice = parseFloat(item.Unit_Price || item.Price || (product ? product.Selling_Price : 0));
+      const lineTotal = qty * unitPrice;
+
+      // Generate a safe ID/name for service/manual items (use MANUAL-* so sales converter treats it as non-stock)
+      const manualId = 'MANUAL-' + (item.Item_ID || 'SERVICE-' + new Date().getTime() + '-' + items.length);
+      const itemId = isManual
+        ? (item.Item_ID && item.Item_ID.toString().startsWith('MANUAL') ? item.Item_ID : manualId)
+        : item.Item_ID;
+      const itemName = item.Item_Name || item.Name || (product ? product.Item_Name : 'Service Item');
+
       items.push({
-        Item_ID: item.Item_ID,
-        Item_Name: product.Item_Name,
-        Qty: parseFloat(item.Qty),
-        Unit_Price: parseFloat(unitPrice),
-        Line_Total: lineTotal
+        Item_ID: itemId,
+        Item_Name: itemName,
+        Qty: qty,
+        Unit_Price: unitPrice,
+        Line_Total: lineTotal,
+        Is_Manual: isManual
       });
       subtotal += lineTotal;
     }
@@ -535,7 +554,12 @@ function createQuotation(quotationData) {
 
     logAudit(quotationData.User, 'Quotations', 'Create', 'Created quotation: ' + quotationId, '', '', '');
 
-    return { success: true, quotationId: quotationId, message: 'Quotation created successfully' };
+    return {
+      success: true,
+      quotationId: quotationId,
+      transactionId: quotationId, // Alias for UI callers expecting transactionId
+      message: 'Quotation created successfully'
+    };
   } catch (error) {
     logError('createQuotation', error);
     throw new Error('Error creating quotation: ' + error.message);
@@ -762,7 +786,32 @@ function getSaleById(transactionId) {
     }
 
     if (saleRows.length === 0) {
-      return null;
+      // Fallback: try quotations table so print/history works for quotations
+      const quotation = getQuotationById(tid);
+      if (!quotation) {
+        return null;
+      }
+
+      return {
+        Transaction_ID: quotation.Quotation_ID,
+        DateTime: quotation.DateTime,
+        Type: 'Quotation',
+        Customer_ID: quotation.Customer_ID,
+        Customer_Name: quotation.Customer_Name,
+        Subtotal: quotation.Subtotal,
+        Delivery_Charge: quotation.Delivery_Charge,
+        Discount: quotation.Discount,
+        Grand_Total: quotation.Grand_Total,
+        Payment_Mode: quotation.Payment_Mode || '',
+        Sold_By: quotation.Created_By,
+        Location: quotation.Location,
+        KRA_PIN: quotation.KRA_PIN,
+        Paybill_Number: '',
+        Status: quotation.Status,
+        Valid_Until: quotation.Valid_Until,
+        Converted_Sale_ID: quotation.Converted_Sale_ID,
+        items: quotation.items || []
+      };
     }
 
     // Use first row for header info
@@ -863,15 +912,19 @@ function getQuotations(filters) {
       }
     }
 
-    // Group by Quotation_ID
+    // Group by Quotation_ID and map to UI-friendly field names
     const groupedQuots = {};
     filteredQuots.forEach(quot => {
       if (!groupedQuots[quot.Quotation_ID]) {
         groupedQuots[quot.Quotation_ID] = {
           Quotation_ID: quot.Quotation_ID,
+          Transaction_ID: quot.Quotation_ID, // Alias for dashboard
+          Date: quot.DateTime,
           DateTime: quot.DateTime,
+          Customer_ID: quot.Customer_ID,
           Customer_Name: quot.Customer_Name,
           Grand_Total: quot.Grand_Total,
+          Total_Amount: quot.Grand_Total, // Alias for dashboard totals
           Created_By: quot.Created_By,
           Status: quot.Status,
           Valid_Until: quot.Valid_Until,

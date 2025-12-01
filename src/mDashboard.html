@@ -3728,7 +3728,7 @@
            }
            
            if(res.success) {
-             const txnId = res.transactionId || res.saleId || res.id;
+             const txnId = res.quotationId || res.transactionId || res.saleId || res.id;
              alert((type === 'Quotation' ? "Quotation Saved: " : "Sale Complete: ") + (txnId || ''));
              
              // Trigger Client-Side Print after a short delay
@@ -3739,7 +3739,10 @@
              // Refresh Inventory & History
              clearDashCart();
              loadNewSaleInDashboard(); 
-             loadSalesHistory();       
+             loadSalesHistory();
+             if (type === 'Quotation') {
+               loadQuotationsSection(true);
+             }
              draftStorage.clear('draft.sale');
            } else {
              alert("Error: " + res.message);
