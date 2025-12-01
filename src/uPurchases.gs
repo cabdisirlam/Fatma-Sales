@@ -4,6 +4,62 @@
  */
 
 /**
+ * Ensure an inventory item exists for a purchase line.
+ * If not found, auto-create a placeholder item so the purchase can proceed.
+ */
+function ensurePurchaseItem(item, user) {
+  try {
+    return getInventoryItemById(item.Item_ID);
+  } catch (e) {
+    const sheet = getSheet('Inventory');
+    const now = new Date();
+    const itemId = (item.Item_ID && item.Item_ID.toString().trim() !== '') ? item.Item_ID : generateId('Inventory', 'Item_ID', 'ITEM');
+    const batchId = 'BATCH-' + itemId + '-' + now.getTime();
+    const cost = parseFloat(item.Cost_Price) || 0;
+    const selling = (item.Selling_Price !== undefined && item.Selling_Price !== null && item.Selling_Price !== '')
+      ? (parseFloat(item.Selling_Price) || cost)
+      : cost;
+
+    const newRow = [
+      itemId,
+      item.Item_Name || 'Manual Item',
+      item.Category || 'Manual',
+      cost,
+      selling,
+      0,                // Current_Qty (will be increased by purchase)
+      10,               // Reorder_Level default
+      item.Supplier || '',
+      now,
+      user || 'SYSTEM',
+      batchId,
+      now
+    ];
+
+    sheet.appendRow(newRow);
+    try { clearInventoryCache(); } catch (cacheErr) { Logger.log(cacheErr); }
+
+    logAudit(
+      user || 'SYSTEM',
+      'Inventory',
+      'Create',
+      'Auto-created item for purchase: ' + (item.Item_Name || itemId),
+      '',
+      '',
+      JSON.stringify({ itemId, source: 'purchase', manual: true })
+    );
+
+    return {
+      Item_ID: itemId,
+      Item_Name: item.Item_Name || 'Manual Item',
+      Cost_Price: cost,
+      Selling_Price: selling,
+      Current_Qty: 0,
+      Stock_Qty: 0
+    };
+  }
+}
+
+/**
  * Create a new purchase order
  */
 function createPurchase(purchaseData) {
@@ -19,7 +75,7 @@ function createPurchase(purchaseData) {
     const items = [];
 
     for (const item of purchaseData.items) {
-      const product = getInventoryItemById(item.Item_ID);
+      const product = ensurePurchaseItem(item, purchaseData.User);
       const costPrice = item.Cost_Price || product.Cost_Price;
       const lineTotal = parseFloat(item.Qty) * parseFloat(costPrice);
 

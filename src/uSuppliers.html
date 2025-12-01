@@ -581,6 +581,35 @@
             </div>
           </div>
 
+          <!-- Manual Item Entry -->
+          <div class="card mb-3">
+            <div class="card-header">
+              <i class="bi bi-pencil-square"></i> Add Manual Item
+            </div>
+            <div class="card-body">
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <input type="text" class="form-control" id="manualItemName" placeholder="Item name">
+                </div>
+                <div class="col-md-2">
+                  <input type="number" class="form-control" id="manualItemQty" placeholder="Qty" min="0" step="0.01">
+                </div>
+                <div class="col-md-2">
+                  <input type="number" class="form-control" id="manualItemCost" placeholder="Cost Price" min="0" step="0.01">
+                </div>
+                <div class="col-md-2">
+                  <input type="number" class="form-control" id="manualItemSelling" placeholder="Selling Price" min="0" step="0.01">
+                </div>
+                <div class="col-md-2 d-grid">
+                  <button class="btn btn-outline-secondary" onclick="addManualItemToPurchase()">
+                    <i class="bi bi-plus-circle"></i> Add
+                  </button>
+                </div>
+              </div>
+              <small class="text-muted d-block mt-2">Use this to capture items not yet in inventory; they will be created automatically.</small>
+            </div>
+          </div>
+
           <!-- Selected Items -->
           <div class="card mb-3">
             <div class="card-header">
@@ -1267,6 +1296,39 @@
       html += '</div>';
 
       resultsDiv.innerHTML = html;
+    }
+
+    function addManualItemToPurchase() {
+      const name = document.getElementById('manualItemName').value.trim();
+      const qty = parseFloat(document.getElementById('manualItemQty').value) || 0;
+      const cost = parseFloat(document.getElementById('manualItemCost').value) || 0;
+      const sellingRaw = document.getElementById('manualItemSelling').value;
+      const selling = sellingRaw === '' ? cost : (parseFloat(sellingRaw) || cost);
+
+      if (!name) return alert('Enter item name');
+      if (qty <= 0) return alert('Enter quantity');
+      if (cost < 0) return alert('Enter valid cost price');
+
+      const itemId = 'MANUAL-' + Date.now();
+      purchaseItems.push({
+        Item_ID: itemId,
+        Item_Name: name,
+        Qty: qty,
+        Cost_Price: cost,
+        Selling_Price: selling,
+        Is_Manual: true,
+        Category: 'Manual'
+      });
+
+      updatePurchaseDisplay();
+      clearManualItemForm();
+    }
+
+    function clearManualItemForm() {
+      document.getElementById('manualItemName').value = '';
+      document.getElementById('manualItemQty').value = '';
+      document.getElementById('manualItemCost').value = '';
+      document.getElementById('manualItemSelling').value = '';
     }
 
     function addItemToPurchase(itemId) {

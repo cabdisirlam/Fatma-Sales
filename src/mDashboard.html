@@ -1313,9 +1313,14 @@
                           <option value="Equity Bank">Equity Bank</option>
                         </select>
 
-                        <button type="button" class="btn btn-success px-4" onclick="submitDashTransaction('Sale')">
-                          <i class="bi bi-check-circle"></i> Sale
-                        </button>
+                        <div class="d-flex gap-2">
+                          <button type="button" class="btn btn-outline-primary px-3" onclick="submitDashTransaction('Quotation')">
+                            <i class="bi bi-file-text"></i> Quotation
+                          </button>
+                          <button type="button" class="btn btn-success px-4" onclick="submitDashTransaction('Sale')">
+                            <i class="bi bi-check-circle"></i> Sale
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </form>
