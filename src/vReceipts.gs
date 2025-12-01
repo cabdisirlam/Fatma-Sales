@@ -196,7 +196,7 @@ function generateQuotationHTML(transactionId) {
 
     const settings = getAllSettings();
     const shopName = settings.Shop_Name || CONFIG.SHOP_NAME;
-    const currency = settings.Currency_Symbol || CONFIG.CURRENCY_SYMBOL;
+    const currencySymbol = settings.Currency_Symbol || 'Ksh';
     const kraPin = quotation.KRA_PIN || '';
     const preparedBy = quotation.Sold_By || quotation.Created_By || quotation.User || quotation.Prepared_By || 'SYSTEM';
     const customerLocation = quotation.Customer_Location || quotation.Location || '';
@@ -272,8 +272,8 @@ function generateQuotationHTML(transactionId) {
             <td>${index + 1}</td>
             <td>${item.Item_Name || 'Item'}</td>
             <td style="text-align:center">${item.Qty || 0}</td>
-            <td style="text-align:right">${currency} ${formatNumber(item.Unit_Price || 0)}</td>
-            <td style="text-align:right">${currency} ${formatNumber(item.Line_Total || 0)}</td>
+            <td style="text-align:right">${currencySymbol} ${formatNumber(item.Unit_Price || 0)}</td>
+            <td style="text-align:right">${currencySymbol} ${formatNumber(item.Line_Total || 0)}</td>
           </tr>
         `).join('')}
       </tbody>
@@ -281,11 +281,11 @@ function generateQuotationHTML(transactionId) {
   </div>
 
   <div class="totals">
-    <div class="row"><span>Subtotal:</span> <span>${currency} ${formatNumber(Math.abs(subtotal))}</span></div>
-    ${(deliveryCharge && Math.abs(deliveryCharge) > 0) ? '<div class="row"><span>Delivery Charge:</span> <span>+' + currency + ' ' + formatNumber(Math.abs(deliveryCharge)) + '</span></div>' : ''}
-    ${(discount && Math.abs(discount) > 0) ? '<div class="row"><span>Discount:</span> <span>-' + currency + ' ' + formatNumber(Math.abs(discount)) + '</span></div>' : ''}
-    <div class="row"><span>VAT (16% incl.):</span> <span>${currency} ${formatNumber(Math.abs(vatAmount))}</span></div>
-    <div class="row grand-total"><span>GRAND TOTAL (incl. VAT):</span> <span>${currency} ${formatNumber(Math.abs(grandTotal))}</span></div>
+    <div class="row"><span>Subtotal:</span> <span>${currencySymbol} ${formatNumber(Math.abs(subtotal))}</span></div>
+    ${(deliveryCharge && Math.abs(deliveryCharge) > 0) ? '<div class="row"><span>Delivery Charge:</span> <span>+' + currencySymbol + ' ' + formatNumber(Math.abs(deliveryCharge)) + '</span></div>' : ''}
+    ${(discount && Math.abs(discount) > 0) ? '<div class="row"><span>Discount:</span> <span>-' + currencySymbol + ' ' + formatNumber(Math.abs(discount)) + '</span></div>' : ''}
+    <div class="row"><span>VAT (16% incl.):</span> <span>${currencySymbol} ${formatNumber(Math.abs(vatAmount))}</span></div>
+    <div class="row grand-total"><span>GRAND TOTAL (incl. VAT):</span> <span>${currencySymbol} ${formatNumber(Math.abs(grandTotal))}</span></div>
   </div>
 
   <div class="footer">
