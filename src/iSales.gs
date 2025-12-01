@@ -459,7 +459,7 @@ function markAsPickedUp(transactionId, user) {
 /**
  * Create a quotation
  * V3.0: Writes to separate 'Quotations' sheet instead of 'Sales' sheet
- * Headers: Quotation_ID, DateTime, Customer_ID, Customer_Name, Item_ID, Item_Name, Batch_ID, Qty, Unit_Price, Line_Total, Subtotal, Delivery_Charge, Discount, Grand_Total, Created_By, Location, KRA_PIN, Status, Valid_Until, Converted_Sale_ID
+ * Headers: Quotation_ID, DateTime, Customer_ID, Customer_Name, Item_ID, Item_Name, Qty, Batch_ID, Unit_Price, Line_Total, Subtotal, Delivery_Charge, Discount, Grand_Total, Created_By, Location, KRA_PIN, Status, Valid_Until, Converted_Sale_ID
  */
 function createQuotation(quotationData) {
   try {
@@ -535,8 +535,8 @@ function createQuotation(quotationData) {
         quotationData.Customer_Name || '',  // 4. Customer_Name
         item.Item_ID,                       // 5. Item_ID
         item.Item_Name,                     // 6. Item_Name
-        'QUOT',                             // 7. Batch_ID (N/A for quotations)
-        item.Qty,                           // 8. Qty
+        item.Qty,                           // 7. Qty
+        'QUOT',                             // 8. Batch_ID (N/A for quotations)
         item.Unit_Price,                    // 9. Unit_Price
         item.Line_Total,                    // 10. Line_Total
         subtotal,                           // 11. Subtotal
@@ -861,8 +861,8 @@ function updateQuotation(quotationId, quotationData) {
         quotationData.Customer_Name || '',  // 4. Customer_Name
         item.Item_ID,                       // 5. Item_ID
         item.Item_Name,                     // 6. Item_Name
-        'QUOT',                             // 7. Batch_ID (N/A for quotations)
-        item.Qty,                           // 8. Qty
+        item.Qty,                           // 7. Qty
+        'QUOT',                             // 8. Batch_ID (N/A for quotations)
         item.Unit_Price,                    // 9. Unit_Price
         item.Line_Total,                    // 10. Line_Total
         subtotal,                           // 11. Subtotal

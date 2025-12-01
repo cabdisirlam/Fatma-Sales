@@ -140,7 +140,7 @@ function generateReceiptHTML(transactionId) {
 }
 
 /**
- * Generate quotation HTML
+ * Generate quotation HTML (matches receipt format exactly)
  */
 function generateQuotationHTML(transactionId) {
   try {
@@ -149,45 +149,18 @@ function generateQuotationHTML(transactionId) {
       throw new Error('Quotation not found');
     }
 
-    const parseNumber = (val) => {
-      if (val === undefined || val === null || val === '') return 0;
-      if (typeof val === 'number') return val;
-      const cleaned = val.toString().replace(/[^0-9.\-]/g, '');
-      const num = parseFloat(cleaned);
-      return isFinite(num) ? num : 0;
-    };
-
-    // Normalize numbers with fallbacks
-    const items = Array.isArray(quotation.items) ? quotation.items : [];
-    const derivedSubtotal = items.reduce((s, it) => s + (parseNumber(it.Line_Total)), 0);
-    const rawSubtotal = parseNumber(quotation.Subtotal);
-    const subtotal = isFinite(rawSubtotal) && rawSubtotal !== 0
-      ? rawSubtotal
-      : derivedSubtotal;
-    const deliveryCharge = parseNumber(quotation.Delivery_Charge);
-    const discount = Math.abs(parseNumber(quotation.Discount));
-    const rawGrand = parseNumber(quotation.Grand_Total);
-    const grandTotal = isFinite(rawGrand) && rawGrand !== 0
-      ? rawGrand
-      : (subtotal + deliveryCharge - discount);
-    const vatRate = 0.16;
-    const vatAmount = grandTotal - (grandTotal / (1 + vatRate));
-
-    // Validate/adjust dates
-    const dateVal = quotation.DateTime ? new Date(quotation.DateTime) : new Date();
-    let validUntilDate = quotation.Valid_Until ? new Date(quotation.Valid_Until) : null;
-    if (!validUntilDate || isNaN(validUntilDate.getTime())) {
-      validUntilDate = new Date(dateVal);
-      validUntilDate.setDate(validUntilDate.getDate() + 30);
-    }
-
-    // Fetch customer phone if available
+    // Fetch customer details if not walk-in
     let customerPhone = '';
+    let customerLocation = '';
+    let customerKraPin = '';
+
     if (quotation.Customer_ID && quotation.Customer_ID !== 'WALK-IN') {
       try {
         const customer = getCustomerById(quotation.Customer_ID);
         if (customer) {
           customerPhone = customer.Phone || '';
+          customerLocation = customer.Location || '';
+          customerKraPin = customer.KRA_PIN || '';
         }
       } catch (e) {
         // ignore
@@ -195,112 +168,123 @@ function generateQuotationHTML(transactionId) {
     }
 
     const settings = getAllSettings();
-    const shopName = settings.Shop_Name || CONFIG.SHOP_NAME;
+    const dateStr = Utilities.formatDate(new Date(quotation.DateTime), 'GMT+3', 'dd/MM/yyyy HH:mm');
+
+    // Parse Valid_Until date
+    let validUntilStr = '';
+    try {
+      const validUntilDate = quotation.Valid_Until ? new Date(quotation.Valid_Until) : null;
+      if (validUntilDate && !isNaN(validUntilDate.getTime())) {
+        validUntilStr = Utilities.formatDate(validUntilDate, 'GMT+3', 'dd/MM/yyyy');
+      }
+    } catch (e) {
+      // ignore
+    }
+
     const currencySymbol = settings.Currency_Symbol || 'Ksh';
-    const kraPin = quotation.KRA_PIN || '';
-    const preparedBy = quotation.Sold_By || quotation.Created_By || quotation.User || quotation.Prepared_By || 'SYSTEM';
-    const customerLocation = quotation.Customer_Location || quotation.Location || '';
+    const vatRate = 0.16;
+    const grossTotal = Math.abs(parseFloat(quotation.Grand_Total) || 0);
+    const vatAmount = grossTotal - (grossTotal / (1 + vatRate));
 
+    // THERMAL PRINTER OPTIMIZED LAYOUT (SAME AS RECEIPT)
     const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-    .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #333; padding-bottom: 15px; }
-    .header h1 { font-size: 32px; margin-bottom: 5px; color: #333; }
-    .header p { font-size: 14px; color: #666; }
-    .quotation-info { margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 5px; }
-    .quotation-info > div { margin: 5px 0; }
-    .customer-info { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #999; }
-    .items table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    .items th { background: #333; color: white; text-align: left; padding: 12px; }
-    .items td { padding: 12px; border-bottom: 1px solid #ddd; }
-    .items tr:hover { background: #f9f9f9; }
-    .totals { margin-top: 20px; text-align: right; }
-    .totals .row { padding: 8px 0; font-size: 16px; }
-    .grand-total { font-size: 24px; font-weight: bold; color: #333; border-top: 2px solid #333; padding-top: 15px; }
-    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666; }
-    .valid-until { background: #fffbcc; padding: 10px; border-left: 4px solid #f0ad4e; margin: 20px 0; }
-    @media print { .no-print { display: none; } }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>${shopName}</h1>
-    <p>QUOTATION</p>
-  </div>
+      <html>
+      <head>
+        <style>
+          @page { margin: 0; size: auto; }
+          body {
+            font-family: 'monospace', 'Courier New', Courier, mono;
+            margin: 0;
+            padding: 5px;
+            width: 100%;
+            max-width: 300px; /* For 80mm paper */
+            font-size: 10px;
+            line-height: 1.3;
+            color: #000;
+          }
+          .header { text-align: center; margin-bottom: 8px; }
+          .shop-name { font-size: 14px; font-weight: bold; }
+          .divider { border-top: 1px dashed #000; margin: 4px 0; }
+          .item-table { width: 100%; border-collapse: collapse; }
+          .item-table th, .item-table td { padding: 2px 0; }
+          .item-table .item-name { font-weight: bold; }
+          .item-table .item-details { text-align: right; }
+          .totals-table { width: 100%; margin-top: 8px; font-weight: bold; }
+          .totals-table td { padding: 1px 0; }
+          .footer { margin-top: 12px; text-align: center; font-size: 9px; }
+          .customer-info { margin: 8px 0; font-size: 9px; border-bottom: 1px dashed #000; padding-bottom: 4px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="shop-name">${settings.Shop_Name || CONFIG.SHOP_NAME}</div>
+          <div>${settings.Receipt_Header || ''}</div>
+        </div>
 
-  <div class="quotation-info">
-    <div><strong>Quotation #:</strong> ${quotation.Transaction_ID}</div>
-    <div><strong>Date:</strong> ${Utilities.formatDate(dateVal, 'GMT+3', 'dd MMM yyyy')}</div>
-    <div><strong>Valid Until:</strong> ${Utilities.formatDate(validUntilDate, 'GMT+3', 'dd MMM yyyy')}</div>
-    <div><strong>Prepared By:</strong> ${preparedBy}</div>
+        <div class="divider"></div>
 
-    <div class="customer-info">
-      <div><strong>Customer:</strong> ${quotation.Customer_Name}</div>
-      ${customerPhone ? '<div><strong>Phone:</strong> ' + customerPhone + '</div>' : ''}
-      ${customerLocation ? '<div><strong>Location:</strong> ' + customerLocation + '</div>' : ''}
-      ${kraPin ? '<div><strong>KRA PIN:</strong> ' + kraPin + '</div>' : ''}
-    </div>
-  </div>
+        <div>Quotation #: ${quotation.Transaction_ID}</div>
+        <div>Date: ${dateStr}</div>
+        ${validUntilStr ? `<div>Valid Until: ${validUntilStr}</div>` : ''}
+        <div>Prepared By: ${quotation.Created_By || quotation.Sold_By || 'SYSTEM'}</div>
 
-  <div class="valid-until">
-    <strong>Note:</strong> This quotation is valid until ${Utilities.formatDate(validUntilDate, 'GMT+3', 'dd MMM yyyy')}. Prices are subject to change after this date.
-  </div>
+        <div class="customer-info">
+          <div>Customer: ${quotation.Customer_Name}</div>
+          ${customerPhone ? `<div>Phone: ${customerPhone}</div>` : ''}
+          ${customerKraPin ? `<div>KRA PIN: ${customerKraPin}</div>` : ''}
+          ${customerLocation ? `<div>Loc: ${customerLocation}</div>` : ''}
+        </div>
 
-  <div class="items">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Item Description</th>
-          <th style="text-align:center">Quantity</th>
-          <th style="text-align:right">Unit Price</th>
-          <th style="text-align:right">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${items.map((item, index) => `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${item.Item_Name || 'Item'}</td>
-            <td style="text-align:center">${item.Qty || 0}</td>
-            <td style="text-align:right">${currencySymbol} ${formatNumber(item.Unit_Price || 0)}</td>
-            <td style="text-align:right">${currencySymbol} ${formatNumber(item.Line_Total || 0)}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  </div>
+        <div class="divider"></div>
 
-  <div class="totals">
-    <div class="row"><span>Subtotal:</span> <span>${currencySymbol} ${formatNumber(Math.abs(subtotal))}</span></div>
-    ${(deliveryCharge && Math.abs(deliveryCharge) > 0) ? '<div class="row"><span>Delivery Charge:</span> <span>+' + currencySymbol + ' ' + formatNumber(Math.abs(deliveryCharge)) + '</span></div>' : ''}
-    ${(discount && Math.abs(discount) > 0) ? '<div class="row"><span>Discount:</span> <span>-' + currencySymbol + ' ' + formatNumber(Math.abs(discount)) + '</span></div>' : ''}
-    <div class="row"><span>VAT (16% incl.):</span> <span>${currencySymbol} ${formatNumber(Math.abs(vatAmount))}</span></div>
-    <div class="row grand-total"><span>GRAND TOTAL (incl. VAT):</span> <span>${currencySymbol} ${formatNumber(Math.abs(grandTotal))}</span></div>
-  </div>
+        <table class="item-table">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Item</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(quotation.items && Array.isArray(quotation.items)) ? quotation.items.map(i => `
+              <tr>
+                <td colspan="2" class="item-name">${i ? i.Item_Name : 'N/A'}</td>
+              </tr>
+              <tr>
+                <td>  ${i ? i.Qty : 0} x ${formatNumber(i ? i.Unit_Price : 0)}</td>
+                <td class="item-details">${formatNumber(i ? i.Line_Total : 0)}</td>
+              </tr>
+            `).join('') : ''}
+          </tbody>
+        </table>
 
-  <div class="footer">
-    <p>Thank you for considering our quotation.</p>
-    <p>Terms & Conditions: Prices are subject to change. Payment terms as agreed. All amounts include 16% VAT.</p>
-  </div>
+        <div class="divider"></div>
 
-  <div class="no-print" style="margin-top: 20px; text-align: center;">
-    <button onclick="window.print()">Print Quotation</button>
-  </div>
-</body>
-</html>
+        <table class="totals-table">
+          <tbody>
+            <tr><td>Subtotal:</td><td style="text-align:right;">${formatNumber(Math.abs(parseFloat(quotation.Subtotal) || 0))}</td></tr>
+            ${(quotation.Delivery_Charge && Math.abs(parseFloat(quotation.Delivery_Charge)) > 0) ? `<tr><td>Delivery Charge:</td><td style="text-align:right;">+${formatNumber(Math.abs(parseFloat(quotation.Delivery_Charge)))}</td></tr>` : ''}
+            ${(quotation.Discount && Math.abs(parseFloat(quotation.Discount)) > 0) ? `<tr><td>Discount:</td><td style="text-align:right;">-${formatNumber(Math.abs(parseFloat(quotation.Discount)))}</td></tr>` : ''}
+            <tr><td>VAT (16% incl.):</td><td style="text-align:right;">${formatNumber(vatAmount)}</td></tr>
+            <tr style="font-size: 14px;"><td><strong>TOTAL:</strong></td><td style="text-align:right;"><strong>${currencySymbol} ${formatNumber(grossTotal)}</strong></td></tr>
+          </tbody>
+        </table>
+
+        ${validUntilStr ? `<div style="text-align:center; margin-top:8px; font-size:9px; border-top: 1px dashed #000; padding-top: 4px;">
+          <div><strong>Valid Until: ${validUntilStr}</strong></div>
+          <div style="font-size:8px; color:#666; margin-top:2px;">Prices subject to change after this date</div>
+        </div>` : ''}
+
+        <div class="footer">
+          <p>${settings.Receipt_Footer || 'Thank you!'}</p>
+          <p style="font-size:8px; margin-top:2px;">All prices include 16% VAT.</p>
+        </div>
+      </body>
+      </html>
     `;
-
     return html;
-
   } catch (error) {
     logError('generateQuotationHTML', error);
-    throw new Error('Error generating quotation: ' + error.message);
+    return 'Error: ' + error.message;
   }
 }
 
