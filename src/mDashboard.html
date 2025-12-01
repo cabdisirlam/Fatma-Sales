@@ -1307,10 +1307,10 @@
                         <input type="number" class="form-control" id="dashDeliveryCharge" style="width: 140px;" placeholder="Enter delivery charge" value="0" min="0" step="1" oninput="renderDashCart()">
 
                         <select class="form-select" id="dashSalePayment" style="width: auto;">
+                          <option value="Credit" selected>Credit (Debt)</option>
                           <option value="Cash">Cash</option>
                           <option value="M-Pesa">M-Pesa</option>
                           <option value="Equity Bank">Equity Bank</option>
-                          <option value="Credit">Credit (Debt)</option>
                         </select>
 
                         <button type="button" class="btn btn-success px-4" onclick="submitDashTransaction('Sale')">
@@ -4336,8 +4336,9 @@
       document.getElementById('recvCustomerId').value = id;
       document.getElementById('recvCustomerName').innerText = c.Customer_Name || c.Name;
       document.getElementById('recvCustomerBal').innerText = formatCurrency(balance);
-      // If negative (debt), suggest positive amount
-      document.getElementById('recvAmount').value = balance < 0 ? Math.round(Math.abs(balance)) : '';
+      const amountInput = document.getElementById('recvAmount');
+      amountInput.value = '';
+      amountInput.placeholder = balance ? 'Suggested: ' + formatCurrency(Math.abs(balance)) : 'Enter amount';
 
       new bootstrap.Modal(document.getElementById('dashboardCustomerPayModal')).show();
     }
@@ -4368,11 +4369,11 @@
 
     function dashboardSubmitCustomerPay() {
         const id = document.getElementById('recvCustomerId').value;
-        const amt = document.getElementById('recvAmount').value;
+        const amt = parseFloat(document.getElementById('recvAmount').value);
         const acc = document.getElementById('recvAccount').value;
         const ref = document.getElementById('recvRef').value;
         
-        if(!amt) return alert("Enter amount");
+        if(!amt || amt <= 0) return alert("Enter amount");
 
         const btn = document.getElementById('btnSubmitCustPay');
         btn.disabled = true; btn.innerText = 'Processing...';
@@ -5618,7 +5619,10 @@
       document.getElementById('paymentSupplierId').value = supplierId;
       document.getElementById('paymentSupplierName').textContent = getSupplierName(supplier);
       document.getElementById('paymentCurrentBalance').textContent = formatCurrency(balance);
-      document.getElementById('paymentAmount').value = balance > 0 ? Math.round(balance) : '';
+      const amountInput = document.getElementById('paymentAmount');
+      amountInput.value = '';
+      amountInput.placeholder = balance ? 'Balance: ' + formatCurrency(balance) : 'Enter amount';
+      amountInput.removeAttribute('max');
       document.getElementById('paymentMethod').value = 'Cash';
       document.getElementById('paymentReference').value = '';
       document.getElementById('paymentNotes').value = '';
@@ -5712,10 +5716,13 @@
 
       const closingBalance = parseFloat(statement.closingBalance || 0) || 0;
       const openingBalance = parseFloat(statement.openingBalance || 0) || 0;
+      const totalDebits = parseFloat(statement.totalDebits || 0) || 0;
+      const totalCredits = parseFloat(statement.totalCredits || 0) || 0;
+
       document.getElementById('statementBalance').textContent = 'Ksh ' + Math.round(closingBalance).toLocaleString();
       document.getElementById('statementOpening').textContent = 'Ksh ' + Math.round(openingBalance).toLocaleString();
-      document.getElementById('statementDebits').textContent = 'Ksh ' + Math.round(statement.totalDebits || 0).toLocaleString();
-      document.getElementById('statementCredits').textContent = 'Ksh ' + Math.round(statement.totalCredits || 0).toLocaleString();
+      document.getElementById('statementDebits').textContent = 'Ksh ' + Math.round(totalDebits).toLocaleString();
+      document.getElementById('statementCredits').textContent = 'Ksh ' + Math.round(totalCredits).toLocaleString();
       document.getElementById('statementClosing').textContent = 'Ksh ' + Math.round(closingBalance).toLocaleString();
 
       const tbody = document.getElementById('statementTransactions');
@@ -6403,16 +6410,18 @@
       document.getElementById('stmtCustName').innerText = c.Customer_Name;
       document.getElementById('stmtCustPhone').innerText = c.Phone || '-';
       
-      const balance = data.closingBalance;
+      const balance = parseFloat(data.closingBalance || 0) || 0;
+      const opening = parseFloat(data.openingBalance || 0) || 0;
+      const totalDebits = parseFloat(data.totalDebits || 0) || 0;
+      const totalCredits = parseFloat(data.totalCredits || 0) || 0;
       const balEl = document.getElementById('stmtCustBalance');
       balEl.innerText = formatCurrency(balance);
       balEl.className = balance < 0 ? 'fs-4 fw-bold text-danger' : 'fs-4 fw-bold text-success'; // Negative = Debt
-      const opening = balance - ((data.totalCredits || 0) - (data.totalDebits || 0));
       document.getElementById('stmtCustOpening').innerText = formatCurrency(opening);
       document.getElementById('stmtCustClosing').innerText = formatCurrency(balance);
 
-      document.getElementById('stmtCustTotalSpent').innerText = formatCurrency(data.totalDebits);
-      document.getElementById('stmtCustTotalPaid').innerText = formatCurrency(data.totalCredits);
+      document.getElementById('stmtCustTotalSpent').innerText = formatCurrency(totalDebits);
+      document.getElementById('stmtCustTotalPaid').innerText = formatCurrency(totalCredits);
 
       const tbody = document.getElementById('custStmtTableBody');
       tbody.innerHTML = '';

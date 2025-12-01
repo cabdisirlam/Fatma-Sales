@@ -566,31 +566,24 @@ function recordSupplierPayment(supplierId, amount, paymentMethod, reference, not
  */
 function getSupplierStatement(supplierId, startDate, endDate) {
   try {
+    const toNumber = (val) => {
+      const num = parseFloat(val);
+      return isNaN(num) ? 0 : num;
+    };
+
     const supplier = getSupplierById(supplierId);
     const purchases = getSupplierPurchaseHistory(supplierId);
     const payments = getSupplierPaymentHistory(supplierId);
-    const openingBalance = parseFloat(supplier.Opening_Balance) || 0;
 
     // Combine and sort by date
     const transactions = [];
-
-    if (openingBalance > 0) {
-      transactions.push({
-        date: supplier.Created_At ? new Date(supplier.Created_At) : new Date(),
-        type: 'Opening Balance',
-        description: 'Opening balance carried forward',
-        debit: openingBalance,
-        credit: 0,
-        reference: 'OPENING'
-      });
-    }
 
     purchases.forEach(purchase => {
       transactions.push({
         date: new Date(purchase.Date),
         type: 'Purchase',
         description: 'Purchase #' + purchase.Purchase_ID,
-        debit: purchase.Total_Amount,
+        debit: toNumber(purchase.Total_Amount),
         credit: 0,
         reference: purchase.Purchase_ID
       });
@@ -602,39 +595,68 @@ function getSupplierStatement(supplierId, startDate, endDate) {
         type: 'Payment',
         description: payment.Description || 'Payment',
         debit: 0,
-        credit: payment.Amount,
+        credit: toNumber(payment.Amount),
         reference: payment.Transaction_ID
       });
     });
 
-    // Filter by date range if provided
-    let filteredTransactions = transactions;
-    if (startDate) {
-      const start = new Date(startDate);
-      filteredTransactions = filteredTransactions.filter(t => t.date >= start);
-    }
-    if (endDate) {
-      const end = new Date(endDate);
-      filteredTransactions = filteredTransactions.filter(t => t.date <= end);
-    }
-
     // Sort by date ascending
-    filteredTransactions.sort((a, b) => a.date - b.date);
+    transactions.sort((a, b) => a.date - b.date);
+
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+
+    // Determine base opening balance using recorded opening or deriving from current balance
+    const movementAll = transactions.reduce((sum, t) => sum + (toNumber(t.debit) - toNumber(t.credit)), 0);
+    const hasOpening = supplier.Opening_Balance !== undefined && supplier.Opening_Balance !== '' && !isNaN(parseFloat(supplier.Opening_Balance));
+    const openingFromSupplier = hasOpening ? parseFloat(supplier.Opening_Balance) : 0;
+    const baseOpening = hasOpening ? openingFromSupplier : (toNumber(supplier.Current_Balance) - movementAll);
+
+    const movementBeforeStart = start
+      ? transactions
+          .filter(t => t.date < start)
+          .reduce((sum, t) => sum + (toNumber(t.debit) - toNumber(t.credit)), 0)
+      : 0;
+
+    let openingBalance = baseOpening + movementBeforeStart;
+
+    // Filter by date range if provided
+    let filteredTransactions = transactions.filter(t => {
+      if (start && t.date < start) return false;
+      if (end && t.date > end) return false;
+      return true;
+    });
 
     // Calculate running balance
     let balance = openingBalance;
     filteredTransactions.forEach(txn => {
-      balance += (txn.debit - txn.credit);
+      balance += (toNumber(txn.debit) - toNumber(txn.credit));
       txn.balance = balance;
     });
 
+    const totalDebits = filteredTransactions.reduce((sum, t) => sum + toNumber(t.debit), 0);
+    const totalCredits = filteredTransactions.reduce((sum, t) => sum + toNumber(t.credit), 0);
+    const closingBalance = balance;
+
+    // Add explicit opening entry for the statement view
+    const openingEntryDate = start || (transactions.length ? transactions[0].date : new Date());
+    const transactionsForDisplay = [{
+      date: openingEntryDate,
+      type: 'Opening Balance',
+      description: 'Balance brought forward',
+      debit: openingBalance > 0 ? openingBalance : 0,
+      credit: openingBalance < 0 ? Math.abs(openingBalance) : 0,
+      reference: 'OPENING',
+      balance: openingBalance
+    }, ...filteredTransactions];
+
     return {
       supplier: supplier,
-      transactions: filteredTransactions,
+      transactions: transactionsForDisplay,
       openingBalance: openingBalance,
-      closingBalance: balance,
-      totalDebits: filteredTransactions.reduce((sum, t) => sum + t.debit, 0),
-      totalCredits: filteredTransactions.reduce((sum, t) => sum + t.credit, 0)
+      closingBalance: closingBalance,
+      totalDebits: totalDebits,
+      totalCredits: totalCredits
     };
 
   } catch (error) {

@@ -529,6 +529,11 @@ function recordCustomerPayment(paymentData) {
  */
 function getCustomerStatement(customerId, startDate, endDate) {
   try {
+    const toNumber = (val) => {
+      const num = parseFloat(val);
+      return isNaN(num) ? 0 : num;
+    };
+
     const customer = getCustomerById(customerId);
     const purchases = getCustomerPurchaseHistory(customerId);
     const payments = getCustomerPaymentHistory(customerId);
@@ -540,7 +545,7 @@ function getCustomerStatement(customerId, startDate, endDate) {
         date: new Date(purchase.DateTime),
         type: 'Sale',
         description: 'Sale #' + purchase.Transaction_ID,
-        debit: purchase.Grand_Total, // Debit increases what they owe (makes balance more negative if we track debt as pos, but here we track money movement)
+        debit: toNumber(purchase.Grand_Total), // Debit increases what they owe (makes balance more negative if we track debt as pos, but here we track money movement)
         credit: 0,
         reference: purchase.Transaction_ID
       });
@@ -551,45 +556,68 @@ function getCustomerStatement(customerId, startDate, endDate) {
         type: 'Payment',
         description: payment.Description || 'Payment',
         debit: 0,
-        credit: payment.Amount, // Credit reduces what they owe
+        credit: toNumber(payment.Amount), // Credit reduces what they owe
         reference: payment.Transaction_ID
       });
     });
 
-    // Filter by date range if provided
-    let filteredTransactions = transactions;
-    if (startDate) {
-      const start = new Date(startDate);
-      filteredTransactions = filteredTransactions.filter(t => t.date >= start);
-    }
-    if (endDate) {
-      const end = new Date(endDate);
-      filteredTransactions = filteredTransactions.filter(t => t.date <= end);
-    }
-
     // Sort by date ascending
-    filteredTransactions.sort((a, b) => a.date - b.date);
+    transactions.sort((a, b) => a.date - b.date);
 
-    // Calculate running balance
-    // Start from 0 for the statement view
-    let balance = 0;
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+
+    const movementAll = transactions.reduce((sum, t) => sum + (toNumber(t.credit) - toNumber(t.debit)), 0);
+    const hasOpening = customer.Opening_Balance !== undefined && customer.Opening_Balance !== '' && !isNaN(parseFloat(customer.Opening_Balance));
+    const openingFromCustomer = hasOpening ? parseFloat(customer.Opening_Balance) : 0;
+    const baseOpening = hasOpening ? openingFromCustomer : (toNumber(customer.Current_Balance) - movementAll);
+
+    const movementBeforeStart = start
+      ? transactions
+          .filter(t => t.date < start)
+          .reduce((sum, t) => sum + (toNumber(t.credit) - toNumber(t.debit)), 0)
+      : 0;
+
+    let openingBalance = baseOpening + movementBeforeStart;
+
+    // Filter by date range if provided
+    let filteredTransactions = transactions.filter(t => {
+      if (start && t.date < start) return false;
+      if (end && t.date > end) return false;
+      return true;
+    });
+
+    // Calculate running balance starting from opening
+    let balance = openingBalance;
     filteredTransactions.forEach(txn => {
       // In statement: Debit (Sale) increases debt (negative balance), Credit (Payment) reduces debt
-      // Balance = Credit - Debit (if we stick to Negative = Debt)
-      // Or Balance = Debit - Credit (if we show Debt as positive on statement)
-      // Let's stick to system logic: Balance is typically Credit - Debit.
-      // Sale (Debit 1000) -> Balance -1000. Payment (Credit 1000) -> Balance 0.
-      balance += (txn.credit - txn.debit);
+      balance += (toNumber(txn.credit) - toNumber(txn.debit));
       txn.balance = balance;
     });
 
+    const totalDebits = filteredTransactions.reduce((sum, t) => sum + toNumber(t.debit), 0);
+    const totalCredits = filteredTransactions.reduce((sum, t) => sum + toNumber(t.credit), 0);
+    const closingBalance = balance;
+
+    // Add an explicit opening entry for clarity in the statement view
+    const openingEntryDate = start || (transactions.length ? transactions[0].date : new Date());
+    const transactionsForDisplay = [{
+      date: openingEntryDate,
+      type: 'Opening Balance',
+      description: 'Balance brought forward',
+      debit: openingBalance > 0 ? openingBalance : 0,
+      credit: openingBalance < 0 ? Math.abs(openingBalance) : 0,
+      reference: 'OPENING',
+      balance: openingBalance
+    }, ...filteredTransactions];
+
     return {
       customer: customer,
-      transactions: filteredTransactions,
-      openingBalance: 0,
-      closingBalance: balance,
-      totalDebits: filteredTransactions.reduce((sum, t) => sum + t.debit, 0),
-      totalCredits: filteredTransactions.reduce((sum, t) => sum + t.credit, 0)
+      transactions: transactionsForDisplay,
+      openingBalance: openingBalance,
+      closingBalance: closingBalance,
+      totalDebits: totalDebits,
+      totalCredits: totalCredits
     };
 
   } catch (error) {

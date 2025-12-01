@@ -1430,8 +1430,10 @@
       document.getElementById('paymentSupplierId').value = supplierId;
       document.getElementById('paymentSupplierName').textContent = supplier.Supplier_Name || supplier.Name || '';
       document.getElementById('paymentCurrentBalance').textContent = 'Ksh ' + balance.toFixed(2);
-      document.getElementById('paymentAmount').value = balance.toFixed(2);
-      document.getElementById('paymentAmount').max = balance;
+      const amountInput = document.getElementById('paymentAmount');
+      amountInput.value = '';
+      amountInput.placeholder = 'Balance: Ksh ' + balance.toFixed(2);
+      amountInput.removeAttribute('max');
       document.getElementById('paymentMethod').value = 'Cash';
       document.getElementById('paymentReference').value = '';
       document.getElementById('paymentNotes').value = '';
@@ -1559,11 +1561,15 @@
       document.getElementById('statementPhone').textContent = supplier.Phone || '-';
 
       // Populate summary
-      const balance = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Balance']);
-      document.getElementById('statementBalance').textContent = 'Ksh ' + balance.toFixed(2);
-      document.getElementById('statementOpening').textContent = 'Ksh ' + (statement.openingBalance || 0).toFixed(2);
-      document.getElementById('statementDebits').textContent = 'Ksh ' + (statement.totalDebits || 0).toFixed(2);
-      document.getElementById('statementCredits').textContent = 'Ksh ' + (statement.totalCredits || 0).toFixed(2);
+      const closingBalance = parseFloat(statement.closingBalance || 0) || 0;
+      const openingBalance = parseFloat(statement.openingBalance || 0) || 0;
+      const totalDebits = parseFloat(statement.totalDebits || 0) || 0;
+      const totalCredits = parseFloat(statement.totalCredits || 0) || 0;
+
+      document.getElementById('statementBalance').textContent = 'Ksh ' + closingBalance.toFixed(2);
+      document.getElementById('statementOpening').textContent = 'Ksh ' + openingBalance.toFixed(2);
+      document.getElementById('statementDebits').textContent = 'Ksh ' + totalDebits.toFixed(2);
+      document.getElementById('statementCredits').textContent = 'Ksh ' + totalCredits.toFixed(2);
 
       // Populate transactions table
       const tbody = document.getElementById('statementTransactions');
