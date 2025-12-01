@@ -354,3 +354,22 @@ function showQuotation(transactionId) {
     SpreadsheetApp.getUi().alert('Error showing quotation: ' + error.message);
   }
 }
+
+/**
+ * Get quotation HTML for printing (returns HTML string)
+ */
+function getQuotationHTML(transactionId) {
+  try {
+    const html = generateQuotationHTML(transactionId);
+    return {
+      success: true,
+      html: html
+    };
+  } catch (error) {
+    logError('getQuotationHTML', error);
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+}
