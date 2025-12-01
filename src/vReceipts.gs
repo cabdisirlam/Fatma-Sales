@@ -34,6 +34,13 @@ function generateReceiptHTML(transactionId) {
     const vatAmount = grossTotal - (grossTotal / (1 + vatRate));
     const qrPayload = `${sale.Transaction_ID} | ${formatNumber(grossTotal)} | ${dateStr}`;
     const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
+    let qrDataUrl = qrUrl;
+    try {
+      const qrBlob = UrlFetchApp.fetch(qrUrl).getBlob();
+      qrDataUrl = 'data:' + qrBlob.getContentType() + ';base64,' + Utilities.base64Encode(qrBlob.getBytes());
+    } catch (e) {
+      // fallback to URL if fetch fails
+    }
     
     // THERMAL PRINTER OPTIMIZED LAYOUT
     const html = `
@@ -131,7 +138,7 @@ function generateReceiptHTML(transactionId) {
           : ''}
         
         <div class="qr">
-          <img src="${qrUrl}" alt="QR code" />
+          <img src="${qrDataUrl}" alt="QR code" />
         </div>
 
         <div class="footer">
@@ -196,6 +203,13 @@ function generateQuotationHTML(transactionId) {
     const vatAmount = grossTotal - (grossTotal / (1 + vatRate));
     const qrPayload = `${quotation.Transaction_ID} | ${formatNumber(grossTotal)} | ${dateStr}`;
     const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
+    let qrDataUrl = qrUrl;
+    try {
+      const qrBlob = UrlFetchApp.fetch(qrUrl).getBlob();
+      qrDataUrl = 'data:' + qrBlob.getContentType() + ';base64,' + Utilities.base64Encode(qrBlob.getBytes());
+    } catch (e) {
+      // fallback to URL if fetch fails
+    }
 
     // THERMAL PRINTER OPTIMIZED LAYOUT (SAME AS RECEIPT)
     const html = `
@@ -287,7 +301,7 @@ function generateQuotationHTML(transactionId) {
         </div>` : ''}
 
         <div class="qr">
-          <img src="${qrUrl}" alt="QR code" />
+          <img src="${qrDataUrl}" alt="QR code" />
         </div>
 
         <div class="footer">
