@@ -35,10 +35,17 @@ function generateReceiptHTML(transactionId) {
     const qrPayload = `${sale.Transaction_ID} | ${formatNumber(grossTotal)} | ${dateStr}`;
     let qrDataUrl = '';
     try {
-      const qrBlob = Charts.newQrCode(qrPayload).setSize(140, 140).build().getAs('image/png');
-      qrDataUrl = 'data:image/png;base64,' + Utilities.base64Encode(qrBlob.getBytes());
+      // Force inclusion even if minified/optimized
+      const charts = (typeof Charts !== 'undefined') ? Charts : null;
+      if (charts) {
+        const qrBlob = charts.newQrCode(qrPayload).setSize(140, 140).build().getAs('image/png');
+        qrDataUrl = 'data:image/png;base64,' + Utilities.base64Encode(qrBlob.getBytes());
+      }
     } catch (e) {
-      // fallback to external generator if Charts service fails
+      // ignore and fall through
+    }
+    if (!qrDataUrl) {
+      // fallback to external generator if Charts service fails or unavailable
       const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
       qrDataUrl = qrUrl;
     }
@@ -205,10 +212,17 @@ function generateQuotationHTML(transactionId) {
     const qrPayload = `${quotation.Transaction_ID} | ${formatNumber(grossTotal)} | ${dateStr}`;
     let qrDataUrl = '';
     try {
-      const qrBlob = Charts.newQrCode(qrPayload).setSize(140, 140).build().getAs('image/png');
-      qrDataUrl = 'data:image/png;base64,' + Utilities.base64Encode(qrBlob.getBytes());
+      // Force inclusion even if minified/optimized
+      const charts = (typeof Charts !== 'undefined') ? Charts : null;
+      if (charts) {
+        const qrBlob = charts.newQrCode(qrPayload).setSize(140, 140).build().getAs('image/png');
+        qrDataUrl = 'data:image/png;base64,' + Utilities.base64Encode(qrBlob.getBytes());
+      }
     } catch (e) {
-      // fallback to external generator if Charts service fails
+      // ignore and fall through
+    }
+    if (!qrDataUrl) {
+      // fallback to external generator if Charts service fails or unavailable
       const qrUrl = 'https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=' + encodeURIComponent(qrPayload);
       qrDataUrl = qrUrl;
     }
