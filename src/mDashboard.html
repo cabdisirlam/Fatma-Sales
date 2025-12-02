@@ -3379,10 +3379,6 @@
             if (row.Status === 'Cancelled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
 
             // Fulfillment chips
-            const pendingBtn = `<button class="btn btn-sm btn-outline-secondary me-1" title="Pending Release" onclick="setFulfillment('${row.Transaction_ID}','Pending Release')"><i class="bi bi-hourglass-split"></i></button>`;
-            const readyBtn = `<button class="btn btn-sm btn-outline-primary me-1" title="Ready for Pickup" onclick="setFulfillment('${row.Transaction_ID}','Ready for Pickup')"><i class="bi bi-box-seam"></i></button>`;
-            const deliveredBtn = `<button class="btn btn-sm btn-outline-success me-1" title="Delivered" onclick="setFulfillment('${row.Transaction_ID}','Delivered')"><i class="bi bi-truck"></i></button>`;
-
             // 2. Print Button (Thermal Printer Ready)
             const printBtn = `
               <button class="btn btn-sm btn-outline-dark me-1" onclick="printDocument('${row.Transaction_ID}', 'Sale')" title="Print Receipt">
@@ -3406,9 +3402,6 @@
                 <td>${statusBadge}<br><small class="text-muted">${fulfillStatus || ''}</small></td>
                 <td>
                   <div class="d-flex justify-content-start flex-wrap gap-1">
-                    ${pendingBtn}
-                    ${readyBtn}
-                    ${deliveredBtn}
                     ${printBtn}
                     ${returnBtn}
                   </div>
@@ -3424,7 +3417,7 @@
         .getRecentSales(20); 
     }
 
-    // Fulfillment status updater for sales history actions
+    // Fulfillment status updater for sales history actions (currently removed buttons)
     function setFulfillment(transactionId, status) {
       if (!transactionId) return;
       google.script.run
