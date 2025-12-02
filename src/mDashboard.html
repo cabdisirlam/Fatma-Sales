@@ -3465,14 +3465,26 @@
     }
 
     function startCustomerEdit(customerId) {
-      // Prefill and open settings/customer edit modal if available
-      showSection('customers');
-      alert('Open customer edit form for ' + customerId);
+      const c = dashboardCustomersData.find(x => x.Customer_ID === customerId);
+      if (!c) return alert('Customer not found');
+      document.getElementById('editCustomerId').value = customerId;
+      document.getElementById('customerEditCustomerName').value = c.Customer_Name || c.Name || '';
+      document.getElementById('customerEditCustomerPhone').value = c.Phone || '';
+      document.getElementById('customerEditCustomerEmail').value = c.Email || '';
+      document.getElementById('customerEditCustomerLocation').value = c.Location || '';
+      new bootstrap.Modal(document.getElementById('dashboardCustomerEditModal')).show();
     }
 
     function startCustomerReceive(customerId, customerName) {
-      alert('Receive payment for ' + (customerName || customerId));
-      // Hook into existing receive payment flow if present
+      const c = dashboardCustomersData.find(x => x.Customer_ID === customerId);
+      const balance = c ? parseFloat(c.Current_Balance || c.Balance || 0) : 0;
+      document.getElementById('recvCustomerId').value = customerId;
+      document.getElementById('recvCustomerName').innerText = customerName || (c ? c.Customer_Name : customerId);
+      document.getElementById('recvCustomerBal').innerText = formatCurrency(balance);
+      const amountInput = document.getElementById('recvAmount');
+      amountInput.value = '';
+      amountInput.placeholder = balance ? 'Suggested: ' + formatCurrency(Math.abs(balance)) : 'Enter amount';
+      new bootstrap.Modal(document.getElementById('dashboardCustomerPayModal')).show();
     }
 
     function initiateReturn(saleId) {
@@ -4388,32 +4400,14 @@
     function executeEditCustomer() {
       const id = document.getElementById('editCustomerSelect').value;
       if(!id) return;
-      const c = dashboardCustomersData.find(x => x.Customer_ID === id);
-      
-      // Populate Modal
-      document.getElementById('editCustomerId').value = id;
-      document.getElementById('customerEditCustomerName').value = c.Customer_Name || c.Name;
-      document.getElementById('customerEditCustomerPhone').value = c.Phone;
-      document.getElementById('customerEditCustomerEmail').value = c.Email || '';
-      document.getElementById('customerEditCustomerLocation').value = c.Location || '';
-      
-      new bootstrap.Modal(document.getElementById('dashboardCustomerEditModal')).show();
+      startCustomerEdit(id);
     }
 
     function executeReceiveCustomer() {
       const id = document.getElementById('payCustomerSelect').value;
       if(!id) return;
       const c = dashboardCustomersData.find(x => x.Customer_ID === id);
-      const balance = parseFloat(c.Current_Balance || c.Balance || 0);
-
-      document.getElementById('recvCustomerId').value = id;
-      document.getElementById('recvCustomerName').innerText = c.Customer_Name || c.Name;
-      document.getElementById('recvCustomerBal').innerText = formatCurrency(balance);
-      const amountInput = document.getElementById('recvAmount');
-      amountInput.value = '';
-      amountInput.placeholder = balance ? 'Suggested: ' + formatCurrency(Math.abs(balance)) : 'Enter amount';
-
-      new bootstrap.Modal(document.getElementById('dashboardCustomerPayModal')).show();
+      startCustomerReceive(id, c ? c.Customer_Name : '');
     }
 
     function dashboardSubmitCustomerEdit() {
@@ -6398,6 +6392,14 @@
     // --- CUSTOMER STATEMENT LOGIC ---
     function executeCustomerStatement() {
       const customerId = document.getElementById('stmtCustomerSelect').value;
+      if (!customerId) {
+        alert('Please select a customer first');
+        return;
+      }
+      openCustomerStatement(customerId);
+    }
+
+    function openCustomerStatement(customerId) {
       if (!customerId) {
         alert('Please select a customer first');
         return;
