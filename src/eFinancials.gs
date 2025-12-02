@@ -227,7 +227,7 @@ function handleFinancialTransaction(data) {
       case 'client_payment': // Money In
         type = 'Customer_Payment';
         desc = 'Payment from ' + data.customerName + (data.notes ? ': ' + data.notes : '');
-        credit = amount;
+        debit = amount;
         // Also update Customer Balance
         // Payment reduces what customer owes, so subtract from balance
         if (data.customerId) {
@@ -238,7 +238,7 @@ function handleFinancialTransaction(data) {
       case 'expense': // Money Out (generic expense)
         type = 'Expense';
         desc = data.category + ': ' + (data.notes || '');
-        debit = amount; 
+        credit = amount; 
         if (data.supplierId) {
           try {
             updateSupplierPayment(data.supplierId, amount, user);
@@ -255,7 +255,7 @@ function handleFinancialTransaction(data) {
         if (data.supplierId) {
           desc += ' (Supplier: ' + data.supplierId + ')';
         }
-        debit = amount;
+        credit = amount;
         if (data.supplierId) {
           try {
             updateSupplierPayment(data.supplierId, amount, user);
@@ -268,25 +268,25 @@ function handleFinancialTransaction(data) {
       case 'bank_deposit': // Money In
         type = 'Deposit';
         desc = 'Deposit: ' + (data.notes || 'Cash Deposit');
-        credit = amount;
+        debit = amount;
         break;
 
       case 'bank_withdrawal': // Money Out
         type = 'Withdrawal';
         desc = 'Withdrawal: ' + (data.notes || 'Cash Withdrawal');
-        debit = amount;
+        credit = amount;
         break;
 
       case 'opening_balance': // Opening/Adjustment In (non-customer, non-supplier)
         type = 'Opening_Balance';
         desc = 'Opening/Adjustment: ' + (data.notes || data.account);
-        credit = amount;
+        debit = amount;
         break;
         
       case 'add_account': // Opening Balance (Money In)
          type = 'Opening_Balance';
          desc = 'Initial Balance for ' + data.account;
-         credit = parseFloat(data.openingBal) || 0;
+         debit = parseFloat(data.openingBal) || 0;
          break;
          
        default:
@@ -365,6 +365,7 @@ function getFinancialSummary(startDate, endDate) {
     txns.forEach(txn => {
       const debit = parseFloat(txn.Debit) || 0;
       const credit = parseFloat(txn.Credit) || 0;
+      const amount = parseFloat(txn.Amount) || Math.max(debit, credit, 0);
       const acc = canonicalizeAccountName(txn.Account || 'Unknown');
 
       accountSet.add(acc);
@@ -373,16 +374,16 @@ function getFinancialSummary(startDate, endDate) {
       accountDebits[acc] = (accountDebits[acc] || 0) + debit;
 
       if (txn.Type === 'Sale_Payment' || txn.Type === 'Customer_Payment') {
-        totalRevenue += credit;
+        totalRevenue += amount;
       } else if (txn.Type === 'Expense') {
-        totalExpenses += debit;
+        totalExpenses += amount;
       }
     });
 
     const accountBreakdown = Array.from(accountSet).map(acc => {
       const opening = openingBalances[acc] || 0;
-      const inflow = accountCredits[acc] || 0;
-      const outflow = accountDebits[acc] || 0;
+      const inflow = accountDebits[acc] || 0;  // Assets: DR increases
+      const outflow = accountCredits[acc] || 0; // Assets: CR decreases
       const balance = opening + inflow - outflow;
       accountBalances[acc] = balance;
       return {
@@ -464,7 +465,7 @@ function getAccountStatement(accountName, startDate, endDate) {
 
     sorted.forEach(t => {
       if (t.date < start) {
-        runningBalance += (t.credit - t.debit);
+        runningBalance += (t.debit - t.credit);
         return;
       }
 
@@ -477,15 +478,15 @@ function getAccountStatement(accountName, startDate, endDate) {
         openingBalance = runningBalance;
       }
 
-      runningBalance += (t.credit - t.debit);
-      totalCredits += t.credit;
-      totalDebits += t.debit;
+      runningBalance += (t.debit - t.credit);
+      totalCredits += t.credit; // CR = outflow for assets
+      totalDebits += t.debit;   // DR = inflow for assets
       transactions.push({
         date: t.date.toISOString(),
         type: t.raw.Type,
         description: t.raw.Description,
-        in: t.credit,
-        out: t.debit,
+        in: t.debit,
+        out: t.credit,
         runningBalance: runningBalance
       });
     });
@@ -497,8 +498,8 @@ function getAccountStatement(accountName, startDate, endDate) {
     return {
       account: accountName,
       openingBalance: openingBalance,
-      totalAdditions: totalCredits,
-      totalPayments: totalDebits,
+      totalAdditions: totalDebits,  // DR = additions for assets
+      totalPayments: totalCredits,  // CR = reductions for assets
       closingBalance: runningBalance,
       transactions: transactions
     };

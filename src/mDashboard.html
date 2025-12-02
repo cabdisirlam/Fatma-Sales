@@ -4671,11 +4671,11 @@
                 </div>
                 <div class="mt-2">
                   <div class="d-flex justify-content-between small mb-1">
-                    <span>Inflow</span>
+                    <span>Debit (DR)</span>
                     <strong class="text-success">${formatCurrency(acc.inflow)}</strong>
                   </div>
                   <div class="d-flex justify-content-between small mb-1">
-                    <span>Outflow</span>
+                    <span>Credit (CR)</span>
                     <strong class="text-danger">${formatCurrency(acc.outflow)}</strong>
                   </div>
                   <div class="d-flex justify-content-between small">
@@ -4822,8 +4822,8 @@
                     <th>Date</th>
                     <th>Type</th>
                     <th>Description</th>
-                    <th class="text-end">Credit (In)</th>
-                    <th class="text-end">Debit (Out)</th>
+                    <th class="text-end">Debit (DR)</th>
+                    <th class="text-end">Credit (CR)</th>
                     <th class="text-end">Balance</th>
                   </tr>
                 </thead>
@@ -5105,13 +5105,13 @@
             </div>
             <div class="col-6 col-md-3">
               <div class="p-2 border rounded bg-light h-100">
-                <div class="small text-muted">Inflow</div>
+                <div class="small text-muted">Debit (DR)</div>
                 <div class="fw-bold text-success">${formatCurrency(report.totalAdditions)}</div>
               </div>
             </div>
             <div class="col-6 col-md-3">
               <div class="p-2 border rounded bg-light h-100">
-                <div class="small text-muted">Outflow</div>
+                <div class="small text-muted">Credit (CR)</div>
                 <div class="fw-bold text-danger">${formatCurrency(report.totalPayments)}</div>
               </div>
             </div>
