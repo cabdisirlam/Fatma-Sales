@@ -4185,12 +4185,12 @@
       if (!container) return;
 
       const activeCustomers = data.filter(c => c.Status === 'Active').length;
-      const customersWithDebt = data.filter(c => parseFloat(c.Current_Balance || c.Balance || 0) < 0).length;
+      const customersWithDebt = data.filter(c => parseFloat(c.Current_Balance || c.Balance || 0) > 0).length;
       
-      // Calculate totals
+      // Calculate totals (DR = amount owed)
       const totalDebt = data.reduce((sum, c) => {
-        const balance = parseFloat(c.Current_Balance || c.Balance || 0);
-        return sum + (balance < 0 ? Math.abs(balance) : 0);
+        const balance = Math.max(0, parseFloat(c.Current_Balance || c.Balance || 0));
+        return sum + balance;
       }, 0);
 
       // Build HTML
