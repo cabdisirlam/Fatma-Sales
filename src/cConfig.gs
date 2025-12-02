@@ -50,7 +50,7 @@ const CONFIG = {
   CURRENCY_SYMBOL: 'Ksh',
 
   // Loyalty Points
-  LOYALTY_POINTS_PER_SALE: 10, // 10 points per sale
+  LOYALTY_POINTS_PER_SALE: 50, // 50 points per sale
 
   // Authentication
   PIN_LENGTH: 4,
