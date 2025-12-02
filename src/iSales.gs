@@ -1084,6 +1084,54 @@ function updateSalePaymentProgress(transactionId, user) {
 }
 
 /**
+ * Manually set fulfillment/delivery status for a sale
+ */
+function setSaleFulfillmentStatus(transactionId, status, user) {
+  try {
+    const allowed = ['Pending Release', 'Ready for Pickup', 'Delivered'];
+    if (!transactionId) return { success: false, message: 'Transaction ID is required' };
+    if (!allowed.includes(status)) return { success: false, message: 'Invalid status' };
+
+    const sheet = getSheet('Sales');
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const idCol = headers.indexOf('Transaction_ID');
+    const statusCol = headers.indexOf('Delivery_Status');
+
+    if (idCol === -1 || statusCol === -1) {
+      return { success: false, message: 'Sales sheet missing Transaction_ID or Delivery_Status column' };
+    }
+
+    let updated = 0;
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][idCol] === transactionId) {
+        sheet.getRange(i + 1, statusCol + 1).setValue(status);
+        updated++;
+      }
+    }
+
+    if (updated === 0) {
+      return { success: false, message: 'Sale not found: ' + transactionId };
+    }
+
+    logAudit(
+      user || 'SYSTEM',
+      'Sales',
+      'Fulfillment',
+      'Set delivery status for ' + transactionId + ' to ' + status,
+      '',
+      '',
+      status
+    );
+
+    return { success: true, updated: updated, status: status };
+  } catch (error) {
+    logError('setSaleFulfillmentStatus', error);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
  * Get sale/quotation by ID
  */
 function getSaleById(transactionId) {

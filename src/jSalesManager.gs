@@ -64,6 +64,7 @@ function getSalesOverview() {
 function getSalesHistory(limit, startDate, endDate, customerName) {
   try {
     const sales = sheetToObjects('Sales', null);
+    const financials = sheetToObjects('Financials', null);
     const seenIds = new Set();
     const filtered = [];
 
@@ -73,6 +74,17 @@ function getSalesHistory(limit, startDate, endDate, customerName) {
 
     // Prepare customer name filter (case-insensitive)
     const customerFilter = customerName ? customerName.toLowerCase().trim() : null;
+
+    // Build payment map per Transaction_ID
+    const paymentMap = {};
+    financials.forEach(txn => {
+      const type = txn.Type;
+      if (type !== 'Sale_Payment' && type !== 'Customer_Payment') return;
+      const ref = (txn.Reference || txn.Receipt_No || '').toString();
+      if (!ref) return;
+      const amt = parseFloat(txn.Amount) || parseFloat(txn.Credit) || 0;
+      paymentMap[ref] = (paymentMap[ref] || 0) + amt;
+    });
 
     for (const row of sales) {
       if (row.Type !== 'Sale') continue;
@@ -90,14 +102,20 @@ function getSalesHistory(limit, startDate, endDate, customerName) {
       }
 
       seenIds.add(row.Transaction_ID);
+      const grandTotal = parseFloat(row.Grand_Total) || 0;
+      const totalPaid = paymentMap[row.Transaction_ID] || 0;
+      const balance = Math.max(0, grandTotal - totalPaid);
       filtered.push({
         Transaction_ID: row.Transaction_ID,
         DateTime: row.DateTime,
         Customer_ID: row.Customer_ID,
         Customer_Name: row.Customer_Name,
         Payment_Mode: row.Payment_Mode,
-        Grand_Total: parseFloat(row.Grand_Total) || 0,
+        Grand_Total: grandTotal,
+        Total_Paid: totalPaid,
+        Balance: balance,
         Status: row.Status || 'Completed',
+        Delivery_Status: row.Delivery_Status || '',
         Type: row.Type,
         Location: row.Location,
         KRA_PIN: row.KRA_PIN

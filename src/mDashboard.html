@@ -3366,13 +3366,22 @@
             return;
           }
 
-          tbody.innerHTML = rows.map(function(row) {
-            const isReturned = row.Status === 'Returned' || row.Status === 'Cancelled';
+      tbody.innerHTML = rows.map(function(row, idx) {
+          const isReturned = row.Status === 'Returned' || row.Status === 'Cancelled';
+          const balance = Math.max(0, parseFloat(row.Balance || (row.Grand_Total - (row.Total_Paid || 0)) || 0));
+          const paid = parseFloat(row.Total_Paid) || 0;
+          const grand = parseFloat(row.Grand_Total) || 0;
+          const fulfillStatus = row.Delivery_Status || 'Pending Release';
             
             // 1. Status Badge
             let statusBadge = '<span class="badge bg-success">Completed</span>';
             if (row.Status === 'Returned') statusBadge = '<span class="badge bg-warning text-dark">Returned</span>';
             if (row.Status === 'Cancelled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
+
+            // Fulfillment chips
+            const pendingBtn = `<button class="btn btn-sm btn-outline-secondary me-1" title="Pending Release" onclick="setFulfillment('${row.Transaction_ID}','Pending Release')"><i class="bi bi-hourglass-split"></i></button>`;
+            const readyBtn = `<button class="btn btn-sm btn-outline-primary me-1" title="Ready for Pickup" onclick="setFulfillment('${row.Transaction_ID}','Ready for Pickup')"><i class="bi bi-box-seam"></i></button>`;
+            const deliveredBtn = `<button class="btn btn-sm btn-outline-success me-1" title="Delivered" onclick="setFulfillment('${row.Transaction_ID}','Delivered')"><i class="bi bi-truck"></i></button>`;
 
             // 2. Print Button (Thermal Printer Ready)
             const printBtn = `
@@ -3389,14 +3398,17 @@
 
             return `
               <tr>
-                <td data-label="Transaction"><strong>${row.Transaction_ID}</strong></td>
-                <td data-label="Date">${new Date(row.DateTime).toLocaleDateString()}</td>
-                <td data-label="Customer">${row.Customer_Name || 'Walk-in'}</td>
-                <td data-label="Payment">${row.Payment_Mode || '-'}</td>
-                <td data-label="Total" class="text-end">${formatCurrency(row.Grand_Total)}</td>
-                <td data-label="Status">${statusBadge}</td>
-                <td data-label="Actions">
-                  <div class="d-flex justify-content-start">
+                <td>${idx + 1}</td>
+                <td><strong>${row.Customer_Name || 'Walk-in'}</strong><br><small class="text-muted">${row.Transaction_ID}</small></td>
+                <td class="text-end">${formatCurrency(grand)}</td>
+                <td class="text-end">${formatCurrency(paid)}</td>
+                <td class="text-end ${balance > 0 ? 'text-danger' : ''}">${formatCurrency(balance)}</td>
+                <td>${statusBadge}<br><small class="text-muted">${fulfillStatus || ''}</small></td>
+                <td>
+                  <div class="d-flex justify-content-start flex-wrap gap-1">
+                    ${pendingBtn}
+                    ${readyBtn}
+                    ${deliveredBtn}
                     ${printBtn}
                     ${returnBtn}
                   </div>
@@ -4317,19 +4329,19 @@
           </div>
         </div>
 
-        <div class="card">
+          <div class="card">
           <div class="card-header"><i class="bi bi-people"></i> Customers List</div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-hover">
+              <table class="table table-hover align-middle">
                 <thead>
                   <tr>
-                    <th>Customer ID</th>
+                    <th>#</th>
                     <th>Name</th>
-                    <th>Phone</th>
-                    <th>Email</th>
-                    <th>Balance</th>
-                    <th>Status</th>
+                    <th class="text-end">Total Purchase</th>
+                    <th class="text-end">Total Paid</th>
+                    <th class="text-end">Balance</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -4338,22 +4350,21 @@
       if (!data || data.length === 0) {
         html += '<tr><td colspan="6" class="text-center text-muted py-4">No customers found</td></tr>';
       } else {
-        data.slice(0, 50).forEach(function(customer) {
+        data.slice(0, 50).forEach(function(customer, idx) {
           const balance = Math.max(0, parseFloat(customer.Current_Balance || customer.Balance || 0));
+          const totalPurchase = parseFloat(customer.Total_Purchases) || 0;
+          const totalPaid = parseFloat(customer.Total_Paid) || 0;
           const balanceClass = balance > 0 ? 'text-danger' : '';
-          const balanceText = balance > 0 ? 'Owes: ' + formatCurrency(balance) : formatCurrency(0);
-          const statusBadge = customer.Status === 'Active' ?
-            '<span class="badge bg-success">Active</span>' :
-            '<span class="badge bg-secondary">Inactive</span>';
+          const statementBtn = `<button class="btn btn-sm btn-outline-primary" title="View Statement" onclick="openCustomerStatement('${customer.Customer_ID || ''}')"><i class="bi bi-journal-text"></i></button>`;
 
           html += `
             <tr>
-              <td>${customer.Customer_ID || ''}</td>
-              <td><strong>${customer.Customer_Name || customer.Name || ''}</strong></td>
-              <td>${customer.Phone || '-'}</td>
-              <td>${customer.Email || '-'}</td>
-              <td class="${balanceClass}">${balanceText}</td>
-              <td>${statusBadge}</td>
+              <td>${idx + 1}</td>
+              <td><strong>${customer.Customer_Name || customer.Name || ''}</strong><br><small class="text-muted">${customer.Customer_ID || ''}</small></td>
+              <td class="text-end">${formatCurrency(totalPurchase)}</td>
+              <td class="text-end">${formatCurrency(totalPaid)}</td>
+              <td class="text-end ${balanceClass}">${formatCurrency(balance)}</td>
+              <td>${statementBtn}</td>
             </tr>
           `;
         });
