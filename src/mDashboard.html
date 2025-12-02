@@ -1215,7 +1215,7 @@
                       <div class="col-md-6">
                         <label class="form-label fw-bold">Customer</label>
                         <div class="d-flex gap-2 mb-2">
-                          <button class="btn btn-sm btn-outline-secondary" type="button" onclick="refreshQuickSaleCustomers()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                          <button class="btn btn-sm btn-outline-secondary" type="button" onclick="refreshQuickSaleData()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
                           <button class="btn btn-sm btn-outline-primary" type="button" onclick="showSection('customers')"><i class="bi bi-plus-circle"></i> Add Customer</button>
                         </div>
                         <select class="form-select" id="dashSaleCustomer" onchange="onCustomerSelect(this.value)" required>
@@ -1261,10 +1261,7 @@
 
                     <div class="row align-items-end mb-3">
                       <div class="col-md-5">
-                        <div class="d-flex justify-content-between align-items-center">
-                          <label class="form-label fw-bold mb-0">Product</label>
-                          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadNewSaleInDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh Items</button>
-                        </div>
+                        <label class="form-label fw-bold mb-0">Product</label>
                         <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()">
                           <option value="">-- Choose Item --</option>
                         </select>
@@ -3612,12 +3609,45 @@
       });
     }
 
+    // Refresh both customers and inventory lists from one control
     function refreshQuickSaleCustomers() {
+      refreshQuickSaleData();
+    }
+
+    function refreshQuickSaleData() {
+      const currentCustomer = document.getElementById('dashSaleCustomer') ? document.getElementById('dashSaleCustomer').value : '';
+      const currentProduct = document.getElementById('dashSaleProduct') ? document.getElementById('dashSaleProduct').value : '';
+
+      // Refresh customers
       google.script.run.withSuccessHandler(function(customers) {
         dashCustomers = customers || [];
         populateCustomerSelect(dashCustomers);
-        resetToWalkIn();
+        const hasCurrent = dashCustomers.find(c => c.Customer_ID === currentCustomer);
+        if (hasCurrent && document.getElementById('dashSaleCustomer')) {
+          document.getElementById('dashSaleCustomer').value = currentCustomer;
+          onCustomerSelect(currentCustomer);
+        } else if (typeof resetToWalkIn === 'function') {
+          resetToWalkIn();
+        }
       }).getCustomers({status: 'Active'});
+
+      // Refresh products
+      google.script.run.withSuccessHandler(function(items) {
+        dashProducts = items || [];
+        const sel = document.getElementById('dashSaleProduct');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">-- Choose Item --</option>';
+        dashProducts.forEach(i => {
+          const stock = i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty;
+          if (stock > 0 || i.Type === 'Service') {
+            sel.add(new Option(`${i.Item_Name} (Stock: ${stock})`, i.Item_ID));
+          }
+        });
+        if (currentProduct && dashProducts.find(p => p.Item_ID === currentProduct)) {
+          sel.value = currentProduct;
+          updateDashProductDetails();
+        }
+      }).getInventory();
     }
 
     // --- UPDATE PRODUCT DETAILS ON SELECTION ---

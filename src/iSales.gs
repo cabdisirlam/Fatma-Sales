@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Sales Management Module
  * Handles: Sales, Quotations, Returns, Receipt generation
  */
@@ -158,10 +158,11 @@ function createSale(saleData) {
     }
 
     // Determine Delivery Status (for "Store until pickup")
-    const deliveryStatus = saleData.Delivery_Status || 'Completed';
+    const deliveryStatus = saleData.Delivery_Status ||
+      (creditAmount > 0 ? 'Pending Release' : 'Ready for Pickup');
 
     // Decrease Stock first & Capture batch details (V3.0 FIFO)
-    // ✅ FIXED: Added strict error handling for COGS calculation
+    // âœ… FIXED: Added strict error handling for COGS calculation
     let totalCOGS = 0;
     const itemBatchMap = {}; // Map Item_ID to batch details
 
@@ -193,7 +194,7 @@ function createSale(saleData) {
       itemBatchMap[item.Item_ID] = stockResult.batchDetails || [];
     }
 
-    // ✅ IMPROVED: Batch write operations for better performance
+    // âœ… IMPROVED: Batch write operations for better performance
     // Collect all sale rows first, then write in a single operation
     const saleRows = [];
 
@@ -259,7 +260,7 @@ function createSale(saleData) {
       }
     });
 
-    // ✅ BATCH WRITE: Write all rows at once (much faster than individual appendRow calls)
+    // âœ… BATCH WRITE: Write all rows at once (much faster than individual appendRow calls)
     if (saleRows.length > 0) {
       const lastRow = sheet.getLastRow();
       const startRow = lastRow + 1;
@@ -314,6 +315,9 @@ function createSale(saleData) {
 
     logAudit(saleData.User, 'Sales', 'Create Sale', 'Sale ' + transactionId + ' created. Revenue: ' + grandTotal + ', COGS: ' + totalCOGS + ', Gross Profit: ' + (grandTotal - totalCOGS), '', '', '');
 
+    // Sync delivery/payment status for fulfillment queue
+    updateSalePaymentProgress(transactionId, saleData.User);
+
     return {
       success: true,
       transactionId: transactionId,
@@ -355,7 +359,7 @@ function cancelSale(transactionId, reason, user) {
       const amount = parseFloat(payment.Amount);
       totalPaid += amount;
 
-      // ✅ FIX: Canonicalize account name for consistency with financial statements
+      // âœ… FIX: Canonicalize account name for consistency with financial statements
       const canonicalAccount = canonicalizeAccountName(payment.Account);
 
       // Record refund transaction
@@ -363,13 +367,13 @@ function cancelSale(transactionId, reason, user) {
       const refundId = generateId('Financials', 'Transaction_ID', 'REF');
       sheet.appendRow([
         refundId, new Date(), 'Sale_Cancellation', sale.Customer_ID, 'Sales',
-        canonicalAccount, 'Refund for cancelled sale ' + transactionId, // ✅ FIX: Use canonical account
+        canonicalAccount, 'Refund for cancelled sale ' + transactionId, // âœ… FIX: Use canonical account
         amount, amount, 0, 0, // Debit the account (money out)
-        canonicalAccount, sale.Customer_Name, transactionId, transactionId, 'Approved', user, user // ✅ FIX: Payment method canonicalized
+        canonicalAccount, sale.Customer_Name, transactionId, transactionId, 'Approved', user, user // âœ… FIX: Payment method canonicalized
       ]);
 
       // Update account balance
-      updateAccountBalance(canonicalAccount, -amount, user); // ✅ FIX: Use canonical account
+      updateAccountBalance(canonicalAccount, -amount, user); // âœ… FIX: Use canonical account
     });
 
     // 3. Reverse Customer Debt (if any)
@@ -939,7 +943,7 @@ function updateQuotation(quotationId, quotationData) {
  */
 function recordSalePayment(transactionId, paymentMethod, amount, customerId, user, reference) {
   try {
-    // ✅ FIX: Canonicalize account name for consistency
+    // バ. FIX: Canonicalize account name for consistency
     const canonicalAccount = canonicalizeAccountName(paymentMethod);
 
     // V3.0: Validate payment method exists in Chart of Accounts
@@ -954,13 +958,13 @@ function recordSalePayment(transactionId, paymentMethod, amount, customerId, use
       'Sale_Payment',
       customerId || '',
       'Sales',
-      canonicalAccount, // ✅ FIX: Use canonical account name (Cash/M-Pesa/Equity Bank)
+      canonicalAccount, // バ. FIX: Use canonical account name (Cash/M-Pesa/Equity Bank)
       'Payment for sale ' + transactionId,
       parseFloat(amount),
       0, // Debit
       parseFloat(amount), // Credit (money in)
       0, // Balance (calculated separately)
-      canonicalAccount, // ✅ FIX: Payment method also canonicalized
+      canonicalAccount, // バ. FIX: Payment method also canonicalized
       '', // Payee
       transactionId, // Receipt_No
       reference || transactionId, // Reference (e.g., Paybill/Ref)
@@ -971,12 +975,95 @@ function recordSalePayment(transactionId, paymentMethod, amount, customerId, use
 
     sheet.appendRow(txnRow);
 
-    // ✅ FIX: Update account balance with canonical name
+    // バ. FIX: Update account balance with canonical name
     updateAccountBalance(canonicalAccount, parseFloat(amount), user);
+
+    // Update fulfillment/payment status based on latest payment
+    updateSalePaymentProgress(transactionId, user);
 
   } catch (error) {
     logError('recordSalePayment', error);
     throw error;
+  }
+}
+
+/**
+ * Update delivery/payment status for a sale based on payments recorded in Financials.
+ * Delivery_Status will be set to:
+ *  - Pending Release (balance due) if payments are incomplete
+ *  - Ready for Pickup if fully paid
+ */
+function updateSalePaymentProgress(transactionId, user) {
+  try {
+    if (!transactionId) {
+      return { success: false, message: 'Transaction ID is required' };
+    }
+
+    const salesSheet = getSheet('Sales');
+    const salesData = salesSheet.getDataRange().getValues();
+    if (!salesData || salesData.length <= 1) {
+      return { success: false, message: 'Sales sheet is empty' };
+    }
+
+    const headers = salesData[0];
+    const idCol = headers.indexOf('Transaction_ID');
+    const grandCol = headers.indexOf('Grand_Total');
+    const statusCol = headers.indexOf('Delivery_Status');
+
+    if (idCol === -1 || grandCol === -1 || statusCol === -1) {
+      return { success: false, message: 'Sales sheet missing Transaction_ID, Grand_Total, or Delivery_Status columns' };
+    }
+
+    let grandTotal = 0;
+    const matchingRows = [];
+
+    for (let i = 1; i < salesData.length; i++) {
+      const row = salesData[i];
+      if (row[idCol] === transactionId) {
+        matchingRows.push(i);
+        if (!grandTotal) {
+          grandTotal = parseFloat(row[grandCol]) || 0;
+        }
+      }
+    }
+
+    if (matchingRows.length === 0) {
+      return { success: false, message: 'Sale not found: ' + transactionId };
+    }
+
+    // Sum payments tied to this sale (by reference/receipt/description)
+    const financials = sheetToObjects('Financials');
+    const totalPaid = financials
+      .filter(txn => {
+        const ref = (txn.Reference || '').toString();
+        const receipt = (txn.Receipt_No || '').toString();
+        const desc = (txn.Description || '').toString();
+        const isPaymentType = (txn.Type === 'Sale_Payment' || txn.Type === 'Customer_Payment');
+        return isPaymentType && (ref === transactionId || receipt === transactionId || desc.indexOf(transactionId) !== -1);
+      })
+      .reduce((sum, txn) => sum + (parseFloat(txn.Amount) || parseFloat(txn.Credit) || 0), 0);
+
+    const remaining = Math.max(0, grandTotal - totalPaid);
+    const statusLabel = remaining <= 0 ? 'Ready for Pickup' : ('Pending Release (' + formatCurrency(remaining) + ' due)');
+
+    matchingRows.forEach(rowIdx => {
+      salesSheet.getRange(rowIdx + 1, statusCol + 1).setValue(statusLabel);
+    });
+
+    logAudit(
+      user || 'SYSTEM',
+      'Sales',
+      'Payment Status',
+      'Sale ' + transactionId + ' status updated: ' + statusLabel,
+      '',
+      '',
+      JSON.stringify({ totalPaid: totalPaid, remaining: remaining })
+    );
+
+    return { success: true, totalPaid: totalPaid, remaining: remaining, status: statusLabel };
+  } catch (error) {
+    logError('updateSalePaymentProgress', error);
+    return { success: false, message: error.message };
   }
 }
 
@@ -1209,7 +1296,7 @@ function processSaleReturn(saleId, items, reason, user) {
     const refundTxnId = generateId('Financials', 'Transaction_ID', 'REF');
     const financialSheet = getSheet('Financials');
 
-    // ✅ FIX: Canonicalize account name for consistency with financial statements
+    // âœ… FIX: Canonicalize account name for consistency with financial statements
     const canonicalAccount = canonicalizeAccountName(sale.Payment_Mode);
 
     const refundRow = [
@@ -1218,13 +1305,13 @@ function processSaleReturn(saleId, items, reason, user) {
       'Sale_Refund',
       sale.Customer_ID || '',
       'Sales',
-      canonicalAccount, // ✅ FIX: Use canonical account name
+      canonicalAccount, // âœ… FIX: Use canonical account name
       'Refund for sale ' + saleId + ': ' + reason,
       parseFloat(refundAmount),
       parseFloat(refundAmount), // Debit (money out)
       0, // Credit
       0, // Balance
-      canonicalAccount, // ✅ FIX: Payment mode also canonicalized
+      canonicalAccount, // âœ… FIX: Payment mode also canonicalized
       sale.Customer_Name,
       saleId, // Receipt_No
       saleId, // Reference
@@ -1236,7 +1323,7 @@ function processSaleReturn(saleId, items, reason, user) {
     financialSheet.appendRow(refundRow);
 
     // Update account balance (decrease)
-    updateAccountBalance(canonicalAccount, -parseFloat(refundAmount), user); // ✅ FIX: Use canonical account
+    updateAccountBalance(canonicalAccount, -parseFloat(refundAmount), user); // âœ… FIX: Use canonical account
 
     // Update customer balance if customer is not walk-in
     // For credit sales, reduce customer debt (they owe less now)
@@ -1330,3 +1417,4 @@ function getSalesReport(startDate, endDate) {
     };
   }
 }
+

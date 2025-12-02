@@ -324,8 +324,14 @@ function deleteCustomer(customerId, user) {
 function updateCustomerBalance(customerId, amountChange, user) {
   try {
     const customer = getCustomerById(customerId);
-    const currentBalance = parseFloat(customer.Current_Balance) || 0;
-    const newBalance = currentBalance + parseFloat(amountChange);
+    const startingBalance = Math.max(0, parseFloat(customer.Current_Balance) || 0);
+    const delta = parseFloat(amountChange) || 0;
+    let newBalance = startingBalance + delta;
+
+    // Do not allow negative balances; overpayments cap at zero
+    if (newBalance < 0) {
+      newBalance = 0;
+    }
 
     updateRowById('Customers', 'Customer_ID', customerId, {
       Current_Balance: newBalance
@@ -335,15 +341,15 @@ function updateCustomerBalance(customerId, amountChange, user) {
       user || 'SYSTEM',
       'Customers',
       'Balance Update',
-      'Customer balance updated: ' + customer.Customer_Name + ' by ' + formatCurrency(amountChange),
+      'Customer balance updated: ' + customer.Customer_Name + ' by ' + formatCurrency(delta),
       '',
-      'Balance: ' + currentBalance,
+      'Balance: ' + startingBalance,
       'Balance: ' + newBalance
     );
 
     return {
       success: true,
-      oldBalance: currentBalance,
+      oldBalance: startingBalance,
       newBalance: newBalance
     };
 
@@ -463,12 +469,9 @@ function getCustomerPaymentHistory(customerId) {
 function getCustomersWithDebt() {
   try {
     const customers = getCustomers();
-    // In this system, negative balance means Debt
-    return customers.filter(customer => {
-      return parseFloat(customer.Current_Balance) < 0;
-    }).sort((a, b) => {
-      return parseFloat(a.Current_Balance) - parseFloat(b.Current_Balance);
-    });
+    return customers
+      .filter(customer => parseFloat(customer.Current_Balance) > 0)
+      .sort((a, b) => parseFloat(b.Current_Balance) - parseFloat(a.Current_Balance));
   } catch (error) {
     logError('getCustomersWithDebt', error);
     return [];
@@ -511,9 +514,8 @@ function recordCustomerPayment(paymentData) {
     updateAccountBalance(canonicalAccount, paymentAmount, paymentData.User);
 
     // Update customer balance: move toward zero regardless of sign convention
-    const currentBalance = parseFloat(customer.Current_Balance) || 0;
-    const balanceDelta = currentBalance <= 0 ? paymentAmount : -paymentAmount;
-    const newCustomerBalance = currentBalance + balanceDelta;
+    const currentBalance = Math.max(0, parseFloat(customer.Current_Balance) || 0);
+    const newCustomerBalance = Math.max(0, currentBalance - paymentAmount);
     const newTotalPaid = (parseFloat(customer.Total_Paid) || 0) + paymentAmount;
     updateRowById('Customers', 'Customer_ID', customerId, { Current_Balance: newCustomerBalance, Total_Paid: newTotalPaid });
 
@@ -575,8 +577,8 @@ function getCustomerStatement(customerId, startDate, endDate) {
     // Determine opening balance
     const movementAll = transactions.reduce((sum, t) => sum + (toNumber(t.debit) - toNumber(t.credit)), 0);
     const hasOpening = customer.Opening_Balance !== undefined && customer.Opening_Balance !== '' && !isNaN(parseFloat(customer.Opening_Balance));
-    const openingFromCustomer = hasOpening ? toNumber(customer.Opening_Balance) : 0;
-    const baseOpening = hasOpening ? openingFromCustomer : (toNumber(customer.Current_Balance) - movementAll);
+    const openingFromCustomer = hasOpening ? Math.max(0, toNumber(customer.Opening_Balance)) : 0;
+    const baseOpening = hasOpening ? openingFromCustomer : Math.max(0, (toNumber(customer.Current_Balance) - movementAll));
 
     const movementBeforeStart = start
       ? transactions
@@ -584,7 +586,7 @@ function getCustomerStatement(customerId, startDate, endDate) {
           .reduce((sum, t) => sum + (toNumber(t.debit) - toNumber(t.credit)), 0)
       : 0;
 
-    const openingBalance = baseOpening + movementBeforeStart;
+    const openingBalance = Math.max(0, baseOpening + movementBeforeStart);
 
     // Filter by date range if provided
     const filteredTransactions = transactions.filter(t => {
@@ -599,14 +601,15 @@ function getCustomerStatement(customerId, startDate, endDate) {
       date: start || (transactions.length ? transactions[0].date : new Date()),
       type: 'Opening Balance',
       description: 'Balance brought forward',
-      debit: openingBalance > 0 ? openingBalance : 0,
-      credit: openingBalance < 0 ? Math.abs(openingBalance) : 0,
+      debit: openingBalance,
+      credit: 0,
       reference: 'OPENING',
       runningBalance: openingBalance
     }];
 
     filteredTransactions.forEach(txn => {
       running += (toNumber(txn.debit) - toNumber(txn.credit));
+      if (running < 0) running = 0; // Prevent negative balances
       txn.runningBalance = running;
       transactionsForDisplay.push(txn);
     });
@@ -678,9 +681,9 @@ function sendPaymentReminder(customerId, businessName) {
     const customer = getCustomerById(customerId);
     const balance = parseFloat(customer.Current_Balance) || 0;
 
-    // Only send if balance is negative (Debt)
-    if (balance >= 0) {
-      return { success: false, message: 'Customer has no outstanding debt' };
+    // Only send if balance is outstanding (positive)
+    if (balance <= 0) {
+      return { success: false, message: 'Customer has no outstanding balance' };
     }
 
     // Check if customer has email

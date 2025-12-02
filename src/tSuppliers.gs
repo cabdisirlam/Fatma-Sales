@@ -297,12 +297,9 @@ function updateSupplierPurchaseTotals(supplierId, purchaseAmount, user) {
 function updateSupplierPayment(supplierId, paymentAmount, user) {
   try {
     const supplier = getSupplierById(supplierId);
+    const oldBalance = parseFloat(supplier.Current_Balance) || 0;
     const totalPaid = (parseFloat(supplier.Total_Paid) || 0) + parseFloat(paymentAmount);
-    const currentBalance = (parseFloat(supplier.Current_Balance) || 0) - parseFloat(paymentAmount);
-
-    if (currentBalance < 0) {
-      throw new Error('Payment exceeds outstanding balance');
-    }
+    const currentBalance = Math.max(0, oldBalance - parseFloat(paymentAmount));
 
     updateRowById('Suppliers', 'Supplier_ID', supplierId, {
       Total_Paid: totalPaid,
@@ -315,7 +312,7 @@ function updateSupplierPayment(supplierId, paymentAmount, user) {
       'Payment',
       'Payment made to ' + supplier.Supplier_Name + ': ' + formatCurrency(paymentAmount),
       '',
-      'Balance: ' + (currentBalance + paymentAmount),
+      'Balance: ' + oldBalance,
       'Balance: ' + currentBalance
     );
 
@@ -527,7 +524,7 @@ function recordSupplierPayment(supplierId, amount, paymentMethod, reference, not
     // Update supplier totals directly to allow overpayment
     const oldBalance = parseFloat(supplier.Current_Balance) || 0;
     const totalPaid = (parseFloat(supplier.Total_Paid) || 0) + paymentAmount;
-    const newSupplierBalance = oldBalance - paymentAmount;
+    const newSupplierBalance = Math.max(0, oldBalance - paymentAmount);
 
     updateRowById('Suppliers', 'Supplier_ID', supplierId, {
       Total_Paid: totalPaid,
@@ -614,8 +611,8 @@ function getSupplierStatement(supplierId, startDate, endDate) {
     // Determine base opening balance using recorded opening or deriving from current balance
     const movementAll = transactions.reduce((sum, t) => sum + (toNumber(t.debit) - toNumber(t.credit)), 0);
     const hasOpening = supplier.Opening_Balance !== undefined && supplier.Opening_Balance !== '' && !isNaN(parseFloat(supplier.Opening_Balance));
-    const openingFromSupplier = hasOpening ? toNumber(supplier.Opening_Balance) : 0;
-    const baseOpening = hasOpening ? openingFromSupplier : (toNumber(supplier.Current_Balance) - movementAll);
+    const openingFromSupplier = hasOpening ? Math.max(0, toNumber(supplier.Opening_Balance)) : 0;
+    const baseOpening = hasOpening ? openingFromSupplier : Math.max(0, (toNumber(supplier.Current_Balance) - movementAll));
 
     const movementBeforeStart = start
       ? transactions
@@ -623,7 +620,7 @@ function getSupplierStatement(supplierId, startDate, endDate) {
           .reduce((sum, t) => sum + (toNumber(t.debit) - toNumber(t.credit)), 0)
       : 0;
 
-    const openingBalance = baseOpening + movementBeforeStart;
+    const openingBalance = Math.max(0, baseOpening + movementBeforeStart);
 
     // Filter by date range if provided
     const filteredTransactions = transactions.filter(t => {
@@ -638,14 +635,15 @@ function getSupplierStatement(supplierId, startDate, endDate) {
       date: start || (transactions.length ? transactions[0].date : new Date()),
       type: 'Opening Balance',
       description: 'Balance brought forward',
-      debit: openingBalance > 0 ? openingBalance : 0,
-      credit: openingBalance < 0 ? Math.abs(openingBalance) : 0,
+      debit: openingBalance,
+      credit: 0,
       reference: 'OPENING',
       runningBalance: openingBalance
     }];
 
     filteredTransactions.forEach(txn => {
       running += (toNumber(txn.debit) - toNumber(txn.credit));
+      if (running < 0) running = 0; // Prevent negative balances
       txn.runningBalance = running;
       transactionsForDisplay.push(txn);
     });
