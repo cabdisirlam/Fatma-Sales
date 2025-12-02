@@ -3424,6 +3424,19 @@
         .getRecentSales(20); 
     }
 
+    // Fulfillment status updater for sales history actions
+    function setFulfillment(transactionId, status) {
+      if (!transactionId) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          loadSalesHistory(); // refresh table to reflect new status/balance
+        })
+        .withFailureHandler(function(err) {
+          alert('Error updating status: ' + err.message);
+        })
+        .setSaleFulfillmentStatus(transactionId, status, sessionStorage.getItem('userName') || 'SYSTEM');
+    }
+
     // Print sale receipt
     function printSaleReceipt(transactionId) {
       if (!transactionId) {
