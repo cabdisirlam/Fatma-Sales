@@ -5381,76 +5381,7 @@
             </button>
           </div>
 
-          <!-- Edit Supplier Row -->
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <select class="form-select form-select-sm" id="editSupplierSelect" style="max-width: 300px;" onchange="showEditButton()">
-              <option value="">-- Select Supplier to Edit --</option>
-              ${(() => {
-                const activeSuppliers = data.filter(s => s.Status === 'Active');
-                if (activeSuppliers.length === 0) {
-                  return '<option value="" disabled>No active suppliers</option>';
-                }
-                return activeSuppliers.map(supplier => `
-                  <option value="${supplier.Supplier_ID}">
-                    ${supplier.Supplier_Name || supplier.Name} (${supplier.Supplier_ID})
-                  </option>
-                `).join('');
-              })()}
-            </select>
-            <button class="btn btn-warning btn-sm" id="editActionBtn" style="display: none;" onclick="executeEditSupplier()">
-              <i class="bi bi-pencil"></i> Edit
-            </button>
-          </div>
-
-          <!-- Pay Supplier Row -->
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <select class="form-select form-select-sm" id="paySupplierSelect" style="max-width: 300px;" onchange="showPayButton()">
-              <option value="">-- Select Supplier to Pay --</option>
-              ${(() => {
-                const payableSuppliers = data.filter(s => {
-                  const balance = parseFloat(s.Current_Balance || s['Current Balance'] || s.Balance || 0) || 0;
-                  return s.Status === 'Active' && balance > 0;
-                });
-
-                if (payableSuppliers.length === 0) {
-                  return '<option value="" disabled>No suppliers with payable balance</option>';
-                }
-
-                return payableSuppliers.map(supplier => {
-                  const balance = parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
-                  return `
-                    <option value="${supplier.Supplier_ID}">
-                      ${supplier.Supplier_Name || supplier.Name} - Balance: ${formatCurrency(balance)}
-                    </option>
-                  `;
-                }).join('');
-              })()}
-            </select>
-            <button class="btn btn-success btn-sm" id="payActionBtn" style="display: none;" onclick="executePaySupplier()">
-              <i class="bi bi-cash"></i> Pay
-            </button>
-          </div>
-
-          <!-- Statement Supplier Row -->
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <select class="form-select form-select-sm" id="statementSupplierSelect" style="max-width: 300px;" onchange="showStatementButton()">
-              <option value="">-- Select Supplier for Statement --</option>
-              ${(() => {
-                const activeSuppliers = data.filter(s => s.Status === 'Active');
-                if (activeSuppliers.length === 0) {
-                  return '<option value="" disabled>No active suppliers</option>';
-                }
-                return activeSuppliers.map(supplier => `
-                  <option value="${supplier.Supplier_ID}">
-                    ${supplier.Supplier_Name || supplier.Name} (${supplier.Supplier_ID})
-                  </option>
-                `).join('');
-              })()}
-            </select>
-            <button class="btn btn-info btn-sm" id="statementActionBtn" style="display: none;" onclick="executeViewStatement()">
-              <i class="bi bi-file-text"></i> Statement
-            </button>
-          </div>
+          <!-- Inline actions per row now handle edit/pay/statement (dropdowns removed) -->
         </div>
 
         <!-- Compact Summary Cards -->
@@ -5496,12 +5427,12 @@
               <table class="table table-hover">
                 <thead>
                   <tr>
-                    <th>Supplier ID</th>
+                    <th>#</th>
                     <th>Name</th>
-                    <th>Total Cost</th>
-                    <th>Total Payment</th>
-                    <th>Balance</th>
-                    <th>Status</th>
+                    <th class="text-end">Total Cost</th>
+                    <th class="text-end">Total Payment</th>
+                    <th class="text-end">Balance</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -5510,23 +5441,29 @@
       if (!data || data.length === 0) {
         html += '<tr><td colspan="6" class="text-center text-muted py-4">No suppliers found</td></tr>';
       } else {
-        data.slice(0, 50).forEach(function(supplier) {
+        data.slice(0, 50).forEach(function(supplier, idx) {
           const { purchased: totalPurchased, paid: totalPaid, balance } = parseSupplierTotals(supplier);
           const balanceClass = balance > 0 ? 'text-danger' : balance < 0 ? 'text-success' : '';
           const balanceText = balance > 0 ? 'Payable: ' + formatCurrency(balance) :
                              balance < 0 ? 'Credit: ' + formatCurrency(Math.abs(balance)) : formatCurrency(0);
-          const statusBadge = supplier.Status === 'Active' ?
-            '<span class="badge bg-success">Active</span>' :
-            '<span class="badge bg-secondary">Inactive</span>';
+          const statementBtn = `<button class="btn btn-sm btn-outline-primary" title="View Statement" onclick="dashboardViewStatement('${supplier.Supplier_ID || ''}')"><i class="bi bi-journal-text"></i></button>`;
+          const payBtn = `<button class="btn btn-sm btn-outline-success" title="Pay Supplier" onclick="dashboardMakePayment('${supplier.Supplier_ID || ''}')"><i class="bi bi-cash"></i></button>`;
+          const editBtn = `<button class="btn btn-sm btn-outline-warning" title="Edit Supplier" onclick="dashboardEditSupplier('${supplier.Supplier_ID || ''}')"><i class="bi bi-pencil"></i></button>`;
 
           html += `
             <tr>
-              <td>${supplier.Supplier_ID || ''}</td>
-              <td><strong>${supplier.Supplier_Name || supplier.Name || ''}</strong></td>
-              <td>${formatCurrency(totalPurchased)}</td>
-              <td>${formatCurrency(totalPaid)}</td>
-              <td class="${balanceClass}">${balanceText}</td>
-              <td>${statusBadge}</td>
+              <td>${idx + 1}</td>
+              <td><strong>${supplier.Supplier_Name || supplier.Name || ''}</strong><br><small class="text-muted">${supplier.Supplier_ID || ''}</small></td>
+              <td class="text-end">${formatCurrency(totalPurchased)}</td>
+              <td class="text-end">${formatCurrency(totalPaid)}</td>
+              <td class="text-end ${balanceClass}">${formatCurrency(balance)}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  ${statementBtn}
+                  ${payBtn}
+                  ${editBtn}
+                </div>
+              </td>
             </tr>
           `;
         });
