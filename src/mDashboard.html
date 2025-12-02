@@ -3617,6 +3617,10 @@
     function refreshQuickSaleData() {
       const currentCustomer = document.getElementById('dashSaleCustomer') ? document.getElementById('dashSaleCustomer').value : '';
       const currentProduct = document.getElementById('dashSaleProduct') ? document.getElementById('dashSaleProduct').value : '';
+      const soldByField = document.getElementById('dashSoldBy');
+      if (soldByField) soldByField.value = sessionStorage.getItem('userName') || 'SYSTEM';
+      const dateField = document.getElementById('dashSaleDate');
+      if (dateField) dateField.valueAsDate = new Date();
 
       // Refresh customers
       google.script.run.withSuccessHandler(function(customers) {
