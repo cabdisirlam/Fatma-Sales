@@ -4335,10 +4335,9 @@
         html += '<tr><td colspan="6" class="text-center text-muted py-4">No customers found</td></tr>';
       } else {
         data.slice(0, 50).forEach(function(customer) {
-          const balance = parseFloat(customer.Current_Balance || customer.Balance || 0);
-          const balanceClass = balance < 0 ? 'text-danger' : balance > 0 ? 'text-success' : '';
-          const balanceText = balance < 0 ? 'Owes: ' + formatCurrency(Math.abs(balance)) :
-                             balance > 0 ? 'Credit: ' + formatCurrency(balance) : formatCurrency(0);
+          const balance = Math.max(0, parseFloat(customer.Current_Balance || customer.Balance || 0));
+          const balanceClass = balance > 0 ? 'text-danger' : '';
+          const balanceText = balance > 0 ? 'Owes: ' + formatCurrency(balance) : formatCurrency(0);
           const statusBadge = customer.Status === 'Active' ?
             '<span class="badge bg-success">Active</span>' :
             '<span class="badge bg-secondary">Inactive</span>';
