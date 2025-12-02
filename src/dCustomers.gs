@@ -110,6 +110,7 @@ function getCustomerById(customerId) {
     if (!customer) throw new Error('Customer not found: ' + customerId);
     customer.Current_Balance = Math.max(0, parseFloat(customer.Current_Balance) || 0);
     customer.Opening_Balance = Math.max(0, parseFloat(customer.Opening_Balance) || 0);
+    customer.Advance_Credit = Math.max(0, parseFloat(customer.Advance_Credit) || 0);
     return customer;
   } catch (error) {
     logError('getCustomerById', error);
@@ -200,6 +201,7 @@ function addCustomer(customerData) {
 
     // Handle opening balance (positive means customer owes)
     let openingBalance = Math.max(0, parseFloat(customerData.Opening_Balance || customerData.Current_Balance) || 0);
+    const advanceCredit = Math.max(0, parseFloat(customerData.Advance_Credit) || 0);
 
     const createdBy = customerData.User || 'SYSTEM';
 
@@ -221,9 +223,10 @@ function addCustomer(customerData) {
       0,                                               // 12. Total_Purchases
       '',                                              // 13. Last_Purchase_Date
       initialPoints,                                   // 14. Loyalty_Points
-      'Active',                                        // 15. Status
-      new Date(),                                      // 16. Created_Date
-      createdBy                                        // 17. Created_By
+      advanceCredit,                                   // 15. Advance_Credit
+      'Active',                                        // 16. Status
+      new Date(),                                      // 17. Created_Date
+      createdBy                                        // 18. Created_By
     ];
 
     sheet.appendRow(newCustomer);
@@ -260,6 +263,7 @@ function updateCustomer(customerId, customerData) {
     if (customerData.KRA_PIN !== undefined) updates.KRA_PIN = customerData.KRA_PIN;
     if (customerData.Customer_Type !== undefined) updates.Customer_Type = customerData.Customer_Type;
     if (customerData.Credit_Limit !== undefined) updates.Credit_Limit = parseFloat(customerData.Credit_Limit);
+    if (customerData.Advance_Credit !== undefined) updates.Advance_Credit = Math.max(0, parseFloat(customerData.Advance_Credit) || 0);
     if (customerData.Status !== undefined) updates.Status = customerData.Status;
 
     const result = updateRowById('Customers', 'Customer_ID', customerId, updates);

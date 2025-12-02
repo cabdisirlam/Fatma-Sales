@@ -304,12 +304,25 @@ function createSale(saleData) {
 
     // Update Customer Stats & Debt
     if (saleData.Customer_ID && saleData.Customer_ID !== 'WALK-IN') {
-      // Add to total purchases stats and automatic loyalty points (+10 per sale)
-      updateCustomerPurchaseStats(saleData.Customer_ID, grandTotal, saleData.User);
-
-      // If there is an outstanding balance, add to customer debt
-      if (creditAmount > 0) {
-        updateCustomerBalance(saleData.Customer_ID, creditAmount, saleData.User);
+      // If customer has advance credit, apply it before increasing balance
+      try {
+        const customer = getCustomerById(saleData.Customer_ID);
+        let advance = Math.max(0, parseFloat(customer.Advance_Credit) || 0);
+        let remainingBalance = creditAmount;
+        if (advance > 0 && remainingBalance > 0) {
+          const applied = Math.min(advance, remainingBalance);
+          advance -= applied;
+          remainingBalance -= applied;
+          updateRowById('Customers', 'Customer_ID', saleData.Customer_ID, { Advance_Credit: advance });
+        }
+        // Add to total purchases stats and automatic loyalty points (+10 per sale)
+        updateCustomerPurchaseStats(saleData.Customer_ID, grandTotal, saleData.User);
+        // If there is an outstanding balance after applying advance, add to customer debt
+        if (remainingBalance > 0) {
+          updateCustomerBalance(saleData.Customer_ID, remainingBalance, saleData.User);
+        }
+      } catch (custErr) {
+        logError('createSale.advanceCreditApply', custErr);
       }
     }
 
