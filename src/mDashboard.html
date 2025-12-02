@@ -1197,161 +1197,180 @@
 
       <!-- Sales New Section -->
       <div class="content-section" id="section-sales-new">
-        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
-          <h3><i class="bi bi-cart-plus"></i> Quick Sale</h3>
-          <p class="text-muted">Process a sale quickly or handle a return</p>
-          <div class="mb-3">
-            <button class="btn btn-outline-primary btn-sm" type="button" onclick="showSection('quotations')">
-              <i class="bi bi-journal-text"></i> Go to Quotations
-            </button>
-          </div>
+        <!-- Header Section -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+          <h2 style="margin: 0; font-size: 28px; font-weight: 700;"><i class="bi bi-cart-plus"></i> Create New Sale</h2>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">Process sales transactions and quotations efficiently</p>
+        </div>
 
-          <div class="row">
+        <div style="margin-bottom: 20px;">
+          <button class="btn btn-outline-primary" type="button" onclick="showSection('quotations')" style="border-radius: 8px; font-weight: 500;">
+            <i class="bi bi-journal-text"></i> View Quotations
+          </button>
+          <button class="btn btn-outline-secondary ms-2" type="button" onclick="showSection('sales-history')" style="border-radius: 8px; font-weight: 500;">
+            <i class="bi bi-clock-history"></i> Sales History
+          </button>
+        </div>
+
+        <div class="row">
             <div class="col-md-8">
-              <div class="card shadow-sm">
-                <div class="card-body">
+              <div style="border: none; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); background: white; overflow: hidden;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; font-weight: 600;">
+                  <i class="bi bi-receipt"></i> Sale Details
+                </div>
+                <div style="padding: 25px;">
                   <form id="dashboardSaleForm">
                     <div class="row mb-3">
                       <div class="col-md-6">
-                        <label class="form-label fw-bold">Customer</label>
+                        <label class="form-label fw-bold" style="color: #2c3e50;">Customer</label>
                         <div class="d-flex gap-2 mb-2">
-                          <button class="btn btn-sm btn-outline-secondary" type="button" onclick="refreshQuickSaleData()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
-                          <button class="btn btn-sm btn-outline-primary" type="button" onclick="showSection('customers')"><i class="bi bi-plus-circle"></i> Add Customer</button>
+                          <button class="btn btn-sm" type="button" onclick="refreshQuickSaleData()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; border-radius: 8px; font-weight: 500;"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                          <button class="btn btn-sm btn-outline-primary" type="button" onclick="showSection('customers')" style="border-radius: 8px;"><i class="bi bi-plus-circle"></i> Add Customer</button>
                         </div>
-                        <select class="form-select" id="dashSaleCustomer" onchange="onCustomerSelect(this.value)" required>
+                        <select class="form-select" id="dashSaleCustomer" onchange="onCustomerSelect(this.value)" required style="border-radius: 8px;">
                           <option value="">-- Select Customer --</option>
                         </select>
 
-                        <div class="row g-2 mt-2">
+                        <div class="row g-2 mt-2" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
                           <div class="col-md-6">
-                            <label class="form-label small mb-0">Phone</label>
-                            <input type="text" class="form-control form-control-sm" id="custPhoneVal" name="customerPhone" readonly>
+                            <label class="form-label small mb-0" style="color: #64748b;">Phone</label>
+                            <input type="text" class="form-control form-control-sm" id="custPhoneVal" name="customerPhone" readonly style="border-radius: 6px; background: white;">
                           </div>
                           <div class="col-md-6">
-                            <label class="form-label small mb-0">Email</label>
-                            <input type="text" class="form-control form-control-sm" id="custEmailVal" name="customerEmail" readonly>
+                            <label class="form-label small mb-0" style="color: #64748b;">Email</label>
+                            <input type="text" class="form-control form-control-sm" id="custEmailVal" name="customerEmail" readonly style="border-radius: 6px; background: white;">
                           </div>
                           <div class="col-md-6">
-                            <label class="form-label small mb-0">KRA PIN</label>
-                            <input type="text" class="form-control form-control-sm" id="custKraVal" name="customerKra" readonly>
+                            <label class="form-label small mb-0" style="color: #64748b;">KRA PIN</label>
+                            <input type="text" class="form-control form-control-sm" id="custKraVal" name="customerKra" readonly style="border-radius: 6px; background: white;">
                           </div>
                           <div class="col-md-6">
-                            <label class="form-label small mb-0">Location</label>
-                            <input type="text" class="form-control form-control-sm" id="custLocVal" name="customerLocation" readonly>
+                            <label class="form-label small mb-0" style="color: #64748b;">Location</label>
+                            <input type="text" class="form-control form-control-sm" id="custLocVal" name="customerLocation" readonly style="border-radius: 6px; background: white;">
                           </div>
                           <div class="col-md-6">
-                            <label class="form-label small mb-0">Loyalty (edit to add)</label>
-                            <input type="number" class="form-control form-control-sm" id="custLoyaltyVal" name="customerLoyalty" value="1" step="1" min="0">
+                            <label class="form-label small mb-0" style="color: #64748b;">Loyalty Points</label>
+                            <input type="number" class="form-control form-control-sm" id="custLoyaltyVal" name="customerLoyalty" value="1" step="1" min="0" style="border-radius: 6px; background: white;">
                           </div>
                         </div>
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label fw-bold">Date</label>
-                        <input type="date" class="form-control" id="dashSaleDate">
-                      </div>
-                    </div>
-                    <div class="row mb-3">
-                      <div class="col-md-6">
-                        <label class="form-label fw-bold">Sold By</label>
-                        <input type="text" class="form-control" id="dashSoldBy" readonly>
+                        <label class="form-label fw-bold" style="color: #2c3e50;">Date</label>
+                        <input type="date" class="form-control" id="dashSaleDate" style="border-radius: 8px;">
+
+                        <label class="form-label fw-bold mt-3" style="color: #2c3e50;">Sold By</label>
+                        <input type="text" class="form-control" id="dashSoldBy" readonly style="border-radius: 8px; background: #f8f9fa;">
                       </div>
                     </div>
 
-                    <hr>
+                    <hr style="border-color: #e2e8f0; margin: 20px 0;">
+
+                    <h5 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;"><i class="bi bi-bag-plus"></i> Add Items</h5>
 
                     <div class="row align-items-end mb-3">
                       <div class="col-md-5">
-                        <label class="form-label fw-bold mb-0">Product</label>
-                        <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()">
+                        <label class="form-label fw-bold mb-0" style="color: #2c3e50;">Product</label>
+                        <select class="form-select" id="dashSaleProduct" onchange="updateDashProductDetails()" style="border-radius: 8px;">
                           <option value="">-- Choose Item --</option>
                         </select>
                       </div>
                       <div class="col-md-2">
-                        <label class="form-label">Qty</label>
-                        <input type="number" class="form-control" id="dashSaleQty" value="1" min="1">
+                        <label class="form-label" style="color: #2c3e50;">Qty</label>
+                        <input type="number" class="form-control" id="dashSaleQty" value="1" min="1" style="border-radius: 8px;">
                       </div>
                       <div class="col-md-3">
-                        <label class="form-label">Price (Editable)</label>
-                        <input type="number" class="form-control" id="dashSalePrice" min="0" step="1">
+                        <label class="form-label" style="color: #2c3e50;">Price</label>
+                        <input type="number" class="form-control" id="dashSalePrice" min="0" step="1" style="border-radius: 8px;">
                       </div>
                       <div class="col-md-2">
-                        <button type="button" class="btn btn-primary w-100" onclick="addDashCartItem()">
+                        <button type="button" class="btn w-100" onclick="addDashCartItem()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; border-radius: 8px; font-weight: 500; padding: 10px;">
                           <i class="bi bi-plus-lg"></i> Add
                         </button>
                       </div>
                     </div>
 
-                    <div class="card border mb-3">
-                      <div class="card-header py-2">
-                        <strong><i class="bi bi-pencil-square"></i> Manual Item</strong>
+                    <div style="border: 2px dashed #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 20px; background: #f8f9fa;">
+                      <div style="margin-bottom: 10px;">
+                        <strong style="color: #2c3e50;"><i class="bi bi-pencil-square"></i> Manual Item</strong>
+                        <small class="text-muted ms-2">For custom items or services</small>
                       </div>
-                      <div class="card-body">
+                      <div>
                         <div class="row g-2 align-items-end">
                           <div class="col-md-5">
-                            <label class="form-label small mb-1">Item Name</label>
-                            <input type="text" class="form-control form-control-sm" id="dashManualName" placeholder="Custom item or service">
+                            <label class="form-label small mb-1" style="color: #64748b;">Item Name</label>
+                            <input type="text" class="form-control form-control-sm" id="dashManualName" placeholder="Custom item or service" style="border-radius: 6px;">
                           </div>
                           <div class="col-md-2">
-                            <label class="form-label small mb-1">Qty</label>
-                            <input type="number" class="form-control form-control-sm" id="dashManualQty" min="1" step="1" placeholder="1">
+                            <label class="form-label small mb-1" style="color: #64748b;">Qty</label>
+                            <input type="number" class="form-control form-control-sm" id="dashManualQty" min="1" step="1" placeholder="1" style="border-radius: 6px;">
                           </div>
                           <div class="col-md-2">
-                            <label class="form-label small mb-1">Price</label>
-                            <input type="number" class="form-control form-control-sm" id="dashManualPrice" min="0" step="0.01" placeholder="0.00">
+                            <label class="form-label small mb-1" style="color: #64748b;">Price</label>
+                            <input type="number" class="form-control form-control-sm" id="dashManualPrice" min="0" step="0.01" placeholder="0.00" style="border-radius: 6px;">
                           </div>
-                          <div class="col-md-2 d-grid">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addManualDashItem()">
+                          <div class="col-md-3 d-grid">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addManualDashItem()" style="border-radius: 6px; font-weight: 500;">
                               <i class="bi bi-plus-circle"></i> Add Manual
                             </button>
                           </div>
                         </div>
-                        <small class="text-muted">Use manual items for services or products not yet in inventory.</small>
                       </div>
                     </div>
 
-                    <div class="table-responsive border rounded mb-3" style="max-height: 250px; overflow-y: auto;">
+                    <h5 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px; margin-top: 25px;"><i class="bi bi-cart3"></i> Cart</h5>
+
+                    <div class="table-responsive" style="border: 1px solid #e2e8f0; border-radius: 12px; max-height: 250px; overflow-y: auto; background: white;">
                       <table class="table table-sm table-striped mb-0">
-                        <thead class="table-light sticky-top">
+                        <thead style="background: #f8f9fa; position: sticky; top: 0; z-index: 10;">
                           <tr>
-                            <th>Item</th>
-                            <th>Qty</th>
-                            <th>Price</th>
-                            <th>Total</th>
-                            <th>Action</th>
+                            <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50;">Item</th>
+                            <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50;">Qty</th>
+                            <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50;">Price</th>
+                            <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50;">Total</th>
+                            <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50;">Action</th>
                           </tr>
                         </thead>
                         <tbody id="dashCartBody">
-                          <tr><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>
+                          <tr><td colspan="5" class="text-center text-muted py-3">Cart is empty - Add items to get started</td></tr>
                         </tbody>
                       </table>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                      <div>
-                        <h4 class="mb-0 text-success">Total: <span id="dashCartTotal">Ksh 0.00</span></h4>
+                    <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e8f5e9 100%); border-radius: 12px; padding: 20px; margin-top: 20px;">
+                      <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="mb-0" style="color: #27ae60; font-weight: 700;">Total: <span id="dashCartTotal">Ksh 0.00</span></h3>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearDashCart()" style="border-radius: 8px;">
+                          <i class="bi bi-trash"></i> Clear Cart
+                        </button>
                       </div>
-                      <div class="d-flex gap-2 align-items-center flex-wrap">
-                        <button type="button" class="btn btn-outline-secondary" onclick="clearDashCart()">Clear</button>
 
-                        <input type="number" class="form-control" id="dashSaleDiscount" style="width: 130px;" placeholder="Enter discount" value="0" min="0" step="1" oninput="renderDashCart()">
-
-                        <input type="number" class="form-control" id="dashDeliveryCharge" style="width: 140px;" placeholder="Enter delivery charge" value="0" min="0" step="1" oninput="renderDashCart()">
-
-                        <select class="form-select" id="dashSalePayment" style="width: auto;">
-                          <option value="Credit" selected>Credit (Debt)</option>
-                          <option value="Cash">Cash</option>
-                          <option value="M-Pesa">M-Pesa</option>
-                          <option value="Equity Bank">Equity Bank</option>
-                        </select>
-
-                        <div class="d-flex gap-2">
-                          <button type="button" class="btn btn-outline-primary px-3" onclick="submitDashTransaction('Quotation')">
-                            <i class="bi bi-file-text"></i> Quotation
-                          </button>
-                          <button type="button" class="btn btn-success px-4" onclick="submitDashTransaction('Sale')">
-                            <i class="bi bi-check-circle"></i> Sale
-                          </button>
+                      <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                          <label class="form-label small mb-1" style="color: #64748b;">Discount Amount</label>
+                          <input type="number" class="form-control" id="dashSaleDiscount" placeholder="0" value="0" min="0" step="1" oninput="renderDashCart()" style="border-radius: 8px;">
                         </div>
+                        <div class="col-md-4">
+                          <label class="form-label small mb-1" style="color: #64748b;">Delivery Charge</label>
+                          <input type="number" class="form-control" id="dashDeliveryCharge" placeholder="0" value="0" min="0" step="1" oninput="renderDashCart()" style="border-radius: 8px;">
+                        </div>
+                        <div class="col-md-4">
+                          <label class="form-label small mb-1" style="color: #64748b;">Payment Mode</label>
+                          <select class="form-select" id="dashSalePayment" style="border-radius: 8px;">
+                            <option value="Credit" selected>Credit (Debt)</option>
+                            <option value="Cash">Cash</option>
+                            <option value="M-Pesa">M-Pesa</option>
+                            <option value="Equity Bank">Equity Bank</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="d-flex gap-2 justify-content-end">
+                        <button type="button" class="btn btn-outline-primary px-4" onclick="submitDashTransaction('Quotation')" style="border-radius: 8px; font-weight: 500;">
+                          <i class="bi bi-file-text"></i> Save as Quotation
+                        </button>
+                        <button type="button" class="btn px-4" onclick="submitDashTransaction('Sale')" style="background: linear-gradient(135deg, #27ae60 0%, #10b981 100%); border: none; color: white; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);">
+                          <i class="bi bi-check-circle"></i> Complete Sale
+                        </button>
                       </div>
                     </div>
                   </form>
@@ -1360,10 +1379,17 @@
             </div>
 
             <div class="col-md-4">
-              <div class="card bg-light border-0">
-                <div class="card-body">
-                  <h6>Product Details</h6>
-                  <div id="dashProductInfo" class="text-muted small">Select a product to see details.</div>
+              <div style="border: none; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); background: white; overflow: hidden;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; font-weight: 600;">
+                  <i class="bi bi-info-circle"></i> Product Details
+                </div>
+                <div style="padding: 20px;">
+                  <div id="dashProductInfo" class="text-muted" style="font-size: 14px; line-height: 1.8;">
+                    <div class="text-center py-4">
+                      <i class="bi bi-box-seam" style="font-size: 48px; color: #e2e8f0;"></i>
+                      <p class="mt-3" style="color: #94a3b8;">Select a product to view details</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1373,83 +1399,182 @@
 
       <!-- Sales History Section -->
       <div class="content-section" id="section-sales-history">
-        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0"><i class="bi bi-clock-history"></i> Sales History</h3>
-            <button class="btn btn-sm btn-outline-primary" onclick="loadSalesHistory()" title="Refresh">
-              <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
-          </div>
-          <p class="text-muted">Filter and manage sales</p>
+        <!-- Header Section -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+          <h2 style="margin: 0; font-size: 28px; font-weight: 700;"><i class="bi bi-clock-history"></i> Sales History</h2>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">View, filter, and manage all sales transactions</p>
+        </div>
 
-          <!-- Filter Section -->
-          <div class="row g-3 mt-3 mb-4">
+        <!-- Statistics Cards -->
+        <div class="row mb-4" id="salesHistoryStats">
+          <div class="col-md-3">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Total Sales</div>
+              <div style="font-size: 32px; font-weight: 700; color: #667eea; margin: 10px 0;" id="historyTotalSales">0</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Revenue</div>
+              <div style="font-size: 32px; font-weight: 700; color: #27ae60; margin: 10px 0;" id="historyRevenue">Ksh 0</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Credit Sales</div>
+              <div style="font-size: 32px; font-weight: 700; color: #e67e22; margin: 10px 0;" id="historyCreditSales">0</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Avg. Order</div>
+              <div style="font-size: 32px; font-weight: 700; color: #667eea; margin: 10px 0;" id="historyAvgOrder">Ksh 0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+          <div class="row g-3">
             <div class="col-md-3">
               <label for="filterStartDate" class="form-label fw-bold">Start Date</label>
-              <input type="date" class="form-control" id="filterStartDate">
+              <input type="date" class="form-control" id="filterStartDate" style="border-radius: 8px;">
             </div>
             <div class="col-md-3">
               <label for="filterEndDate" class="form-label fw-bold">End Date</label>
-              <input type="date" class="form-control" id="filterEndDate">
+              <input type="date" class="form-control" id="filterEndDate" style="border-radius: 8px;">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label for="filterCustomerName" class="form-label fw-bold">Customer Name</label>
-              <input type="text" class="form-control" id="filterCustomerName" placeholder="Search by customer name...">
+              <input type="text" class="form-control" id="filterCustomerName" placeholder="Search by customer name..." style="border-radius: 8px;">
             </div>
-            <div class="col-md-2 d-flex align-items-end">
-              <button class="btn btn-primary w-100" onclick="loadSalesHistory()">
-                <i class="bi bi-search"></i> Filter
+            <div class="col-md-2">
+              <label for="filterPaymentMode" class="form-label fw-bold">Payment Mode</label>
+              <select class="form-select" id="filterPaymentMode" style="border-radius: 8px;">
+                <option value="">All Payments</option>
+                <option value="Cash">Cash</option>
+                <option value="M-Pesa">M-Pesa</option>
+                <option value="Credit">Credit</option>
+                <option value="Bank">Bank</option>
+              </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+              <button class="btn w-100" onclick="loadSalesHistory()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; border-radius: 8px; font-weight: 500; padding: 10px;">
+                <i class="bi bi-search"></i>
               </button>
             </div>
           </div>
+        </div>
 
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mobile-stack-table">
-              <thead class="table-light">
-                <tr>
-                  <th>Transaction ID</th>
-                  <th>Date</th>
-                  <th>Customer</th>
-                  <th>Payment Mode</th>
-                  <th class="text-end">Total</th>
-                  <th>Status</th>
-                  <th class="text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="salesHistoryBody">
-                <tr><td colspan="7" class="text-center text-muted py-4">Loading sales history...</td></tr>
-              </tbody>
-            </table>
+        <!-- Sales Table -->
+        <div style="border: none; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); background: white; overflow: hidden;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+            <span><i class="bi bi-list-ul"></i> Sales Transactions</span>
+            <button class="btn btn-light btn-sm" onclick="loadSalesHistory()" style="border-radius: 8px; font-weight: 500;">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
+          <div style="padding: 20px;">
+            <div id="salesHistoryLoading" class="text-center py-5" style="display: none;">
+              <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-3" style="color: #7f8c8d;">Loading sales history...</p>
+            </div>
+
+            <div id="salesHistoryTableContainer">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mobile-stack-table" style="margin: 0;">
+                  <thead style="background: #f8f9fa;">
+                    <tr>
+                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Transaction ID</th>
+                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Date & Time</th>
+                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Customer</th>
+                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Items</th>
+                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Payment Mode</th>
+                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Total</th>
+                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Status</th>
+                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: center;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="salesHistoryBody">
+                    <tr><td colspan="8" class="text-center text-muted py-4">Loading sales history...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div id="salesHistoryNoData" style="display: none; text-align: center; padding: 40px 0; color: #7f8c8d;">
+              <i class="bi bi-inbox" style="font-size: 48px;"></i>
+              <p class="mt-3">No sales transactions found</p>
+              <p class="text-muted">Try adjusting your filters or create a new sale</p>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Sales Returns Section -->
       <div class="content-section" id="section-sales-returns">
-        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0"><i class="bi bi-arrow-return-left"></i> Sales Returns</h3>
-            <button class="btn btn-sm btn-outline-primary" onclick="loadSalesReturns()" title="Refresh">
+        <!-- Header Section -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+          <h2 style="margin: 0; font-size: 28px; font-weight: 700;"><i class="bi bi-arrow-return-left"></i> Sales Returns</h2>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">Track and manage returned items and credit notes</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Total Returns</div>
+              <div style="font-size: 32px; font-weight: 700; color: #e74c3c; margin: 10px 0;" id="returnsCount">0</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Return Value</div>
+              <div style="font-size: 32px; font-weight: 700; color: #e67e22; margin: 10px 0;" id="returnsValue">Ksh 0</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Items Returned</div>
+              <div style="font-size: 32px; font-weight: 700; color: #667eea; margin: 10px 0;" id="returnsItemCount">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Returns Table -->
+        <div style="border: none; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); background: white; overflow: hidden;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+            <span><i class="bi bi-list-ul"></i> Returned Items</span>
+            <button class="btn btn-light btn-sm" onclick="loadSalesReturns()" style="border-radius: 8px; font-weight: 500;">
               <i class="bi bi-arrow-clockwise"></i> Refresh
             </button>
           </div>
-          <p class="text-muted">Items marked as returned</p>
-          <div class="table-responsive mt-3">
-            <table class="table table-hover align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Transaction</th>
-                  <th>Date</th>
-                  <th>Customer</th>
-                  <th>Item</th>
-                  <th>Qty</th>
-                  <th class="text-end">Total</th>
-                </tr>
-              </thead>
-              <tbody id="salesReturnsBody">
-                <tr><td colspan="6" class="text-center text-muted py-4">Loading return data...</td></tr>
-              </tbody>
-            </table>
+          <div style="padding: 20px;">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle" style="margin: 0;">
+                <thead style="background: #f8f9fa;">
+                  <tr>
+                    <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Transaction ID</th>
+                    <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Date</th>
+                    <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Customer</th>
+                    <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Item</th>
+                    <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Qty</th>
+                    <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Total</th>
+                  </tr>
+                </thead>
+                <tbody id="salesReturnsBody">
+                  <tr><td colspan="6" class="text-center text-muted py-4">Loading return data...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div id="returnsNoData" style="display: none; text-align: center; padding: 40px 0; color: #7f8c8d;">
+              <i class="bi bi-inbox" style="font-size: 48px;"></i>
+              <p class="mt-3">No returns found</p>
+              <p class="text-muted">All sales are final - no returns recorded</p>
+            </div>
           </div>
         </div>
       </div>
