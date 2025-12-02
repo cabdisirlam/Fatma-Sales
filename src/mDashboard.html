@@ -1293,7 +1293,7 @@
                           </div>
                           <div class="col-md-2">
                             <label class="form-label small mb-1">Qty</label>
-                            <input type="number" class="form-control form-control-sm" id="dashManualQty" min="0" step="0.01" placeholder="1">
+                            <input type="number" class="form-control form-control-sm" id="dashManualQty" min="1" step="1" placeholder="1">
                           </div>
                           <div class="col-md-2">
                             <label class="form-label small mb-1">Price</label>
@@ -3626,10 +3626,13 @@
         if (hasCurrent && document.getElementById('dashSaleCustomer')) {
           document.getElementById('dashSaleCustomer').value = currentCustomer;
           onCustomerSelect(currentCustomer);
-        } else if (typeof resetToWalkIn === 'function') {
-          resetToWalkIn();
+        } else {
+          // Fallback to first option
+          const sel = document.getElementById('dashSaleCustomer');
+          if (sel) sel.value = '';
+          onCustomerSelect('');
         }
-      }).getCustomers({status: 'Active'});
+      }).getCustomers(); // pull full list to avoid missing customers
 
       // Refresh products
       google.script.run.withSuccessHandler(function(items) {
@@ -3843,7 +3846,8 @@
 
     function addManualDashItem() {
       const name = (document.getElementById('dashManualName').value || '').trim();
-      const qty = parseFloat(document.getElementById('dashManualQty').value) || 0;
+      const qtyInput = parseFloat(document.getElementById('dashManualQty').value) || 0;
+      const qty = Math.max(1, Math.floor(qtyInput)); // Manual items use whole-number quantities
       const price = parseFloat(document.getElementById('dashManualPrice').value) || 0;
 
       if (!name) return alert('Enter manual item name');

@@ -53,6 +53,11 @@ function getCustomers(filters) {
           value = "";
         }
 
+        // Normalize balances to non-negative numbers
+        if (header === 'Current_Balance' || header === 'Opening_Balance') {
+          value = Math.max(0, parseFloat(value) || 0);
+        }
+
         customer[header] = value;
       });
 
@@ -103,6 +108,8 @@ function getCustomerById(customerId) {
   try {
     const customer = findRowById('Customers', 'Customer_ID', customerId);
     if (!customer) throw new Error('Customer not found: ' + customerId);
+    customer.Current_Balance = Math.max(0, parseFloat(customer.Current_Balance) || 0);
+    customer.Opening_Balance = Math.max(0, parseFloat(customer.Opening_Balance) || 0);
     return customer;
   } catch (error) {
     logError('getCustomerById', error);
@@ -192,7 +199,7 @@ function addCustomer(customerData) {
     const customerId = generateId('Customers', 'Customer_ID', 'CUST');
 
     // Handle opening balance (positive means customer owes)
-    let openingBalance = parseFloat(customerData.Opening_Balance || customerData.Current_Balance) || 0;
+    let openingBalance = Math.max(0, parseFloat(customerData.Opening_Balance || customerData.Current_Balance) || 0);
 
     const createdBy = customerData.User || 'SYSTEM';
 
