@@ -1156,7 +1156,7 @@
               <button class="btn btn-sm btn-outline-secondary" onclick="openReturnModal()" style="border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
                 <i class="bi bi-arrow-return-left" style="font-size: 14px;"></i> Return
               </button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="showSection('quotations')" style="border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
+              <button class="btn btn-sm btn-outline-secondary" onclick="openQuotationsModal()" style="border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
                 <i class="bi bi-journal-text" style="font-size: 14px;"></i> Quotations
               </button>
             </div>
@@ -2144,6 +2144,66 @@
           <button type="button" class="btn" onclick="submitModalTransaction('Sale')" style="background: linear-gradient(135deg, #27ae60 0%, #10b981 100%); border: none; color: white; border-radius: 8px; font-weight: 600;">
             <i class="bi bi-check-circle"></i> Complete Sale
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quotations Modal -->
+  <div class="modal fade" id="quotationsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+          <h5 class="modal-title"><i class="bi bi-journal-text"></i> Quotations</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="background: #f5f6fa; padding: 20px;">
+
+          <!-- Toolbar -->
+          <div style="background: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+            <div class="d-flex justify-content-between align-items-center">
+              <span style="font-size: 14px; font-weight: 600; color: #2d3748;">All Quotations</span>
+              <button class="btn btn-sm btn-outline-secondary" onclick="loadQuotationsModal()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px;">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+              </button>
+            </div>
+          </div>
+
+          <!-- Quotations Table -->
+          <div style="border: none; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); background: white; overflow: hidden; border: 1px solid #e2e8f0;">
+            <div style="padding: 20px;">
+              <div id="quotationsModalLoading" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3" style="color: #7f8c8d;">Loading quotations...</p>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle" style="margin: 0; font-size: 13px;">
+                  <thead style="background: #f7fafc; border-bottom: 2px solid #e2e8f0;">
+                    <tr>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase;">Quotation ID</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase;">Date</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase;">Customer</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase;">Items</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; text-align: right;">Total</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; text-align: center;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="quotationsModalBody">
+                    <tr><td colspan="6" class="text-center text-muted py-4">Loading quotations...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div id="quotationsModalNoData" style="display: none; text-align: center; padding: 40px 0; color: #7f8c8d;">
+                <i class="bi bi-inbox" style="font-size: 48px;"></i>
+                <p class="mt-3">No quotations found</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -7061,8 +7121,87 @@
     }
 
     function openReturnModal() {
-      alert('Return modal functionality - Coming soon!');
-      // Will use existing returnSaleModal or create new one
+      // Open the existing return sale modal
+      const modal = new bootstrap.Modal(document.getElementById('returnSaleModal'));
+      modal.show();
+    }
+
+    // ==================== QUOTATIONS MODAL FUNCTIONS ====================
+    function openQuotationsModal() {
+      const modal = new bootstrap.Modal(document.getElementById('quotationsModal'));
+      modal.show();
+      loadQuotationsModal();
+    }
+
+    function loadQuotationsModal() {
+      document.getElementById('quotationsModalLoading').style.display = 'block';
+      document.getElementById('quotationsModalBody').innerHTML = '';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          document.getElementById('quotationsModalLoading').style.display = 'none';
+          displayQuotationsModal(data || []);
+        })
+        .withFailureHandler(function(error) {
+          document.getElementById('quotationsModalLoading').style.display = 'none';
+          console.error('Error loading quotations:', error);
+          alert('Error loading quotations: ' + error.message);
+        })
+        .getQuotations();
+    }
+
+    function displayQuotationsModal(quotations) {
+      const tbody = document.getElementById('quotationsModalBody');
+      const noDataDiv = document.getElementById('quotationsModalNoData');
+
+      if (!quotations || quotations.length === 0) {
+        tbody.innerHTML = '';
+        noDataDiv.style.display = 'block';
+        return;
+      }
+
+      noDataDiv.style.display = 'none';
+      tbody.innerHTML = '';
+
+      quotations.forEach(quote => {
+        const row = document.createElement('tr');
+        const date = quote.DateTime ? new Date(quote.DateTime).toLocaleDateString() : '-';
+        const total = parseFloat(quote.Total_Amount || 0);
+
+        row.innerHTML = `
+          <td style="font-size: 13px;">${quote.Quotation_ID || ''}</td>
+          <td style="font-size: 13px;">${date}</td>
+          <td style="font-size: 13px;">${quote.Customer_Name || 'Walk-in'}</td>
+          <td style="font-size: 13px;">${(quote.items || []).length} item(s)</td>
+          <td style="font-size: 13px; text-align: right; font-weight: 600;">Ksh ${total.toFixed(2)}</td>
+          <td style="text-align: center; font-size: 13px;">
+            <button class="btn btn-sm btn-outline-primary" onclick="viewQuotationDetails('${quote.Quotation_ID}')" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;">
+              <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-success" onclick="convertQuotationToSale('${quote.Quotation_ID}')" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;">
+              <i class="bi bi-check2"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="printQuotation('${quote.Quotation_ID}')" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;">
+              <i class="bi bi-printer"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function viewQuotationDetails(quotationId) {
+      alert('View quotation: ' + quotationId + ' - Coming soon!');
+    }
+
+    function convertQuotationToSale(quotationId) {
+      if (confirm('Convert this quotation to a sale?')) {
+        alert('Convert quotation: ' + quotationId + ' - Coming soon!');
+      }
+    }
+
+    function printQuotation(quotationId) {
+      alert('Print quotation: ' + quotationId + ' - Coming soon!');
     }
 
     // ==================== SALES DASHBOARD FILTER FUNCTIONS ====================
