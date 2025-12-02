@@ -3481,7 +3481,7 @@
       new bootstrap.Modal(document.getElementById('dashboardCustomerEditModal')).show();
     }
 
-    function startCustomerReceive(customerId, customerName) {
+    function startCustomerReceive(customerId, customerName, isAdvance) {
       const c = dashboardCustomersData.find(x => x.Customer_ID === customerId);
       const balance = c ? parseFloat(c.Current_Balance || c.Balance || 0) : 0;
       document.getElementById('recvCustomerId').value = customerId;
@@ -3489,7 +3489,8 @@
       document.getElementById('recvCustomerBal').innerText = formatCurrency(balance);
       const amountInput = document.getElementById('recvAmount');
       amountInput.value = '';
-      amountInput.placeholder = balance ? 'Suggested: ' + formatCurrency(Math.abs(balance)) : 'Enter amount';
+      amountInput.placeholder = isAdvance ? 'Enter advance amount' : (balance ? 'Suggested: ' + formatCurrency(Math.abs(balance)) : 'Enter amount');
+      amountInput.dataset.isAdvance = isAdvance ? 'true' : 'false';
       new bootstrap.Modal(document.getElementById('dashboardCustomerPayModal')).show();
     }
 
@@ -4353,6 +4354,8 @@
           const totalPaid = parseFloat(customer.Total_Paid) || 0;
           const balanceClass = balance > 0 ? 'text-danger' : '';
           const statementBtn = `<button class="btn btn-sm btn-outline-primary" title="View Statement" onclick="openCustomerStatement('${customer.Customer_ID || ''}')"><i class="bi bi-journal-text"></i></button>`;
+          const payBtn = `<button class="btn btn-sm btn-outline-success" title="Receive Payment" onclick="startCustomerReceive('${customer.Customer_ID || ''}', '${customer.Customer_Name || ''}', false)"><i class="bi bi-cash-coin"></i></button>`;
+          const advanceBtn = `<button class="btn btn-sm btn-outline-info" title="Receive Advance" onclick="startCustomerReceive('${customer.Customer_ID || ''}', '${customer.Customer_Name || ''}', true)"><i class="bi bi-wallet2"></i></button>`;
           const editBtn = `<button class="btn btn-sm btn-outline-warning" title="Edit Customer" onclick="startCustomerEdit('${customer.Customer_ID || ''}')"><i class="bi bi-pencil"></i></button>`;
           const payBtn = `<button class="btn btn-sm btn-outline-success" title="Receive Payment" onclick="startCustomerReceive('${customer.Customer_ID || ''}', '${customer.Customer_Name || ''}')"><i class="bi bi-cash-coin"></i></button>`;
 
@@ -4367,6 +4370,7 @@
                 <div class="d-flex gap-1">
                   ${statementBtn}
                   ${payBtn}
+                  ${advanceBtn}
                   ${editBtn}
                 </div>
               </td>
