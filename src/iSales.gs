@@ -978,6 +978,22 @@ function recordSalePayment(transactionId, paymentMethod, amount, customerId, use
     // バ. FIX: Update account balance with canonical name
     updateAccountBalance(canonicalAccount, parseFloat(amount), user);
 
+    // Update customer totals even for non-credit sales/payments
+    if (customerId && customerId !== 'WALK-IN') {
+      try {
+        const customer = getCustomerById(customerId);
+        const currentBalance = Math.max(0, parseFloat(customer.Current_Balance) || 0);
+        const newBalance = Math.max(0, currentBalance - parseFloat(amount));
+        const newTotalPaid = (parseFloat(customer.Total_Paid) || 0) + parseFloat(amount);
+        updateRowById('Customers', 'Customer_ID', customerId, {
+          Current_Balance: newBalance,
+          Total_Paid: newTotalPaid
+        });
+      } catch (custErr) {
+        logError('recordSalePayment.customerUpdate', custErr);
+      }
+    }
+
     // Update fulfillment/payment status based on latest payment
     updateSalePaymentProgress(transactionId, user);
 
