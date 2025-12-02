@@ -1146,44 +1146,47 @@
           </div>
         </div>
 
-        <!-- Quick Actions Buttons -->
-        <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-          <h5 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;"><i class="bi bi-lightning-charge"></i> Quick Actions</h5>
-          <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-lg" onclick="openNewSaleModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; border-radius: 8px; font-weight: 600; padding: 12px 24px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-              <i class="bi bi-plus-circle"></i> New Sale
-            </button>
-            <button class="btn btn-outline-danger btn-lg" onclick="openReturnModal()" style="border-radius: 8px; font-weight: 500; padding: 12px 24px;">
-              <i class="bi bi-arrow-return-left"></i> Process Return
-            </button>
-            <button class="btn btn-outline-primary btn-lg" onclick="showSection('quotations')" style="border-radius: 8px; font-weight: 500; padding: 12px 24px;">
-              <i class="bi bi-journal-text"></i> View Quotations
-            </button>
-            <button class="btn btn-outline-secondary btn-lg" onclick="loadSalesHistory()" style="border-radius: 8px; font-weight: 500; padding: 12px 24px;">
-              <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
+        <!-- Actions Toolbar -->
+        <div style="background: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-sm" onclick="openNewSaleModal()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px;">
+                <i class="bi bi-plus-circle" style="font-size: 14px;"></i> New Sale
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="openReturnModal()" style="border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
+                <i class="bi bi-arrow-return-left" style="font-size: 14px;"></i> Return
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="showSection('quotations')" style="border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
+                <i class="bi bi-journal-text" style="font-size: 14px;"></i> Quotations
+              </button>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <span style="font-size: 12px; color: #718096; font-weight: 500;">Quick Actions</span>
+              <button class="btn btn-sm btn-outline-secondary" onclick="loadSalesDashboard()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
+                <i class="bi bi-arrow-clockwise" style="font-size: 14px;"></i> Refresh
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Filter Section -->
-        <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-          <h5 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;"><i class="bi bi-funnel"></i> Filter Sales</h5>
-          <div class="row g-3">
-            <div class="col-md-3">
-              <label for="salesFilterStartDate" class="form-label small" style="color: #64748b; font-weight: 600;">Start Date</label>
-              <input type="date" class="form-control" id="salesFilterStartDate" style="border-radius: 8px;">
-            </div>
-            <div class="col-md-3">
-              <label for="salesFilterEndDate" class="form-label small" style="color: #64748b; font-weight: 600;">End Date</label>
-              <input type="date" class="form-control" id="salesFilterEndDate" style="border-radius: 8px;">
-            </div>
-            <div class="col-md-3">
-              <label for="salesFilterCustomer" class="form-label small" style="color: #64748b; font-weight: 600;">Customer Name</label>
-              <input type="text" class="form-control" id="salesFilterCustomer" placeholder="Search customer..." style="border-radius: 8px;">
+        <div style="background: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-2">
+              <label for="salesFilterStartDate" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Start Date</label>
+              <input type="date" class="form-control form-control-sm" id="salesFilterStartDate" style="border-radius: 4px; font-size: 13px;">
             </div>
             <div class="col-md-2">
-              <label for="salesFilterPayment" class="form-label small" style="color: #64748b; font-weight: 600;">Payment Mode</label>
-              <select class="form-select" id="salesFilterPayment" style="border-radius: 8px;">
+              <label for="salesFilterEndDate" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">End Date</label>
+              <input type="date" class="form-control form-control-sm" id="salesFilterEndDate" style="border-radius: 4px; font-size: 13px;">
+            </div>
+            <div class="col-md-3">
+              <label for="salesFilterCustomer" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Customer</label>
+              <input type="text" class="form-control form-control-sm" id="salesFilterCustomer" placeholder="Search..." style="border-radius: 4px; font-size: 13px;">
+            </div>
+            <div class="col-md-2">
+              <label for="salesFilterPayment" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Payment</label>
+              <select class="form-select form-select-sm" id="salesFilterPayment" style="border-radius: 4px; font-size: 13px;">
                 <option value="">All</option>
                 <option value="Cash">Cash</option>
                 <option value="M-Pesa">M-Pesa</option>
@@ -1191,18 +1194,23 @@
                 <option value="Bank">Bank</option>
               </select>
             </div>
-            <div class="col-md-1 d-flex align-items-end">
-              <button class="btn w-100" onclick="applySalesFilter()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; border-radius: 8px; font-weight: 500; padding: 10px;">
-                <i class="bi bi-search"></i>
+            <div class="col-md-auto">
+              <button class="btn btn-sm" onclick="applySalesFilter()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 16px; font-size: 13px;">
+                <i class="bi bi-search" style="font-size: 14px;"></i> Search
+              </button>
+            </div>
+            <div class="col-md-auto">
+              <button class="btn btn-sm btn-outline-secondary" onclick="clearSalesFilter()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
+                <i class="bi bi-x-circle" style="font-size: 14px;"></i> Clear
               </button>
             </div>
           </div>
         </div>
 
         <!-- Sales History Table -->
-        <div style="border: none; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); background: white; overflow: hidden;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; font-weight: 600;">
-            <i class="bi bi-clock-history"></i> Sales History
+        <div style="border: none; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); background: white; overflow: hidden; border: 1px solid #e2e8f0;">
+          <div style="background: #f7fafc; padding: 12px 20px; font-weight: 600; border-bottom: 1px solid #e2e8f0; color: #2d3748; font-size: 14px;">
+            <i class="bi bi-table" style="color: #667eea;"></i> Sales Transactions
           </div>
           <div style="padding: 20px;">
             <div id="salesDashboardLoading" class="text-center py-5" style="display: none;">
@@ -1214,21 +1222,21 @@
 
             <div id="salesDashboardTableContainer">
               <div class="table-responsive">
-                <table class="table table-hover align-middle" style="margin: 0;">
-                  <thead style="background: #f8f9fa;">
+                <table class="table table-sm table-hover align-middle" style="margin: 0; font-size: 13px;">
+                  <thead style="background: #f7fafc; border-bottom: 2px solid #e2e8f0;">
                     <tr>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Transaction ID</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Date & Time</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Customer</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Items</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Payment</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Total</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Status</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: center;">Actions</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Transaction ID</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Date & Time</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Customer</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Items</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Payment</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">Total</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Status</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">Actions</th>
                     </tr>
                   </thead>
-                  <tbody id="salesDashboardBody">
-                    <tr><td colspan="8" class="text-center text-muted py-4">Loading sales history...</td></tr>
+                  <tbody id="salesDashboardBody" style="border-top: none;">
+                    <tr><td colspan="8" class="text-center text-muted py-4" style="font-size: 13px;">Loading sales history...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -7055,6 +7063,101 @@
     function openReturnModal() {
       alert('Return modal functionality - Coming soon!');
       // Will use existing returnSaleModal or create new one
+    }
+
+    // ==================== SALES DASHBOARD FILTER FUNCTIONS ====================
+    function loadSalesDashboard() {
+      // Reload sales dashboard with current filters
+      applySalesFilter();
+      refreshSalesOverview();
+    }
+
+    function applySalesFilter() {
+      const startDate = document.getElementById('salesFilterStartDate').value;
+      const endDate = document.getElementById('salesFilterEndDate').value;
+      const customer = document.getElementById('salesFilterCustomer').value;
+      const payment = document.getElementById('salesFilterPayment').value;
+
+      // Show loading
+      document.getElementById('salesDashboardLoading').style.display = 'block';
+      document.getElementById('salesDashboardTableContainer').style.display = 'none';
+
+      // Build filter object
+      const filters = {};
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
+      if (customer) filters.customerName = customer;
+      if (payment) filters.paymentMode = payment;
+
+      // Load sales with filters
+      google.script.run
+        .withSuccessHandler(function(data) {
+          document.getElementById('salesDashboardLoading').style.display = 'none';
+          document.getElementById('salesDashboardTableContainer').style.display = 'block';
+          displaySalesDashboard(data || []);
+        })
+        .withFailureHandler(function(error) {
+          document.getElementById('salesDashboardLoading').style.display = 'none';
+          console.error('Error loading sales:', error);
+          alert('Error loading sales: ' + error.message);
+        })
+        .getSales(filters);
+    }
+
+    function clearSalesFilter() {
+      document.getElementById('salesFilterStartDate').value = '';
+      document.getElementById('salesFilterEndDate').value = '';
+      document.getElementById('salesFilterCustomer').value = '';
+      document.getElementById('salesFilterPayment').value = '';
+      applySalesFilter();
+    }
+
+    function displaySalesDashboard(salesData) {
+      const tbody = document.getElementById('salesDashboardBody');
+      const noDataDiv = document.getElementById('salesDashboardNoData');
+
+      if (!salesData || salesData.length === 0) {
+        tbody.innerHTML = '';
+        noDataDiv.style.display = 'block';
+        return;
+      }
+
+      noDataDiv.style.display = 'none';
+      tbody.innerHTML = '';
+
+      salesData.forEach(sale => {
+        const row = document.createElement('tr');
+        const date = sale.DateTime ? new Date(sale.DateTime).toLocaleString() : '-';
+        const total = parseFloat(sale.Total_Amount || 0);
+        const statusClass = sale.Payment_Mode === 'Credit' ? 'bg-warning' : 'bg-success';
+
+        row.innerHTML = `
+          <td style="font-size: 13px;">${sale.Transaction_ID || ''}</td>
+          <td style="font-size: 13px;">${date}</td>
+          <td style="font-size: 13px;">${sale.Customer_Name || 'Walk-in'}</td>
+          <td style="font-size: 13px;">${(sale.items || []).length} item(s)</td>
+          <td style="font-size: 13px;">${sale.Payment_Mode || ''}</td>
+          <td style="font-size: 13px; text-align: right; font-weight: 600;">Ksh ${total.toFixed(2)}</td>
+          <td style="font-size: 13px;"><span class="badge ${statusClass}">${sale.Payment_Mode || ''}</span></td>
+          <td style="text-align: center; font-size: 13px;">
+            <button class="btn btn-sm btn-outline-primary" onclick="viewSaleDetails('${sale.Transaction_ID}')" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;">
+              <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="printReceipt('${sale.Transaction_ID}')" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;">
+              <i class="bi bi-printer"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function viewSaleDetails(transactionId) {
+      alert('View details for: ' + transactionId + ' - Coming soon!');
+    }
+
+    function printReceipt(transactionId) {
+      alert('Print receipt for: ' + transactionId + ' - Coming soon!');
     }
 
     // Auto-initialize on page load
