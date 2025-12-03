@@ -1226,6 +1226,7 @@
                       <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Transaction</th>
                       <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Customer</th>
                       <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">Cost</th>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Status</th>
                       <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">Actions</th>
                     </tr>
                   </thead>
@@ -7522,19 +7523,50 @@
         const row = document.createElement('tr');
         const cost = parseFloat(sale.Grand_Total || sale.Total_Amount || 0);
         const saleDate = sale.DateTime ? new Date(sale.DateTime).toLocaleDateString() : '';
+        const saleStatus = sale.Status || '';
+        const fulfillStatus = sale.Delivery_Status || '';
+        const isReturned = saleStatus === 'Returned' || fulfillStatus === 'Returned';
+
+        let statusBadge = '<span class="badge bg-success">Completed</span>';
+        if (saleStatus === 'Returned' || fulfillStatus === 'Returned') statusBadge = '<span class="badge bg-warning text-dark">Returned</span>';
+        if (saleStatus === 'Cancelled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
+        if (fulfillStatus === 'Delivered') statusBadge = '<span class="badge bg-primary">Delivered</span>';
+        if (fulfillStatus === 'In Store') statusBadge = '<span class="badge bg-info text-dark">In Store</span>';
+        if (fulfillStatus === 'In Transit') statusBadge = '<span class="badge bg-secondary">In Transit</span>';
+
+        const statusMenu = isReturned ? `
+          <span class="badge bg-secondary">No actions</span>
+        ` : `
+          <div class="btn-group">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              Status
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><button class="dropdown-item" onclick="changeSaleStatus('${sale.Transaction_ID}', 'Delivered')">Delivered</button></li>
+              <li><button class="dropdown-item" onclick="changeSaleStatus('${sale.Transaction_ID}', 'In Transit')">In Transit</button></li>
+              <li><button class="dropdown-item" onclick="changeSaleStatus('${sale.Transaction_ID}', 'In Store')">In Store</button></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><button class="dropdown-item text-danger" onclick="changeSaleStatus('${sale.Transaction_ID}', 'Returned')">Returned</button></li>
+            </ul>
+          </div>
+        `;
 
         row.innerHTML = `
           <td style="font-size: 13px;">${saleDate}</td>
           <td style="font-size: 13px;">${sale.Transaction_ID || ''}</td>
           <td style="font-size: 13px;">${sale.Customer_Name || 'Walk-in'}</td>
           <td style="font-size: 13px; text-align: right; font-weight: 600;">${formatCurrency(cost)}</td>
-          <td style="text-align: center; font-size: 13px;">
+          <td style="font-size: 13px;">${statusBadge}</td>
+          <td style="text-align: center; font-size: 13px;" class="${isReturned ? 'returned-row' : ''}">
             <button class="btn btn-sm btn-outline-secondary sale-print-receipt-btn" data-id="${sale.Transaction_ID}" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="Print Receipt">
               <i class="bi bi-printer"></i>
             </button>
-            <button class="btn btn-sm btn-outline-danger sale-return-action-btn" data-id="${sale.Transaction_ID}" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="Return Sale">
-              <i class="bi bi-arrow-return-left"></i>
-            </button>
+            ${statusMenu}
+            ${isReturned ? '' : `
+              <button class="btn btn-sm btn-outline-danger sale-return-action-btn" data-id="${sale.Transaction_ID}" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="Return Sale">
+                <i class="bi bi-arrow-return-left"></i>
+              </button>
+            `}
           </td>
         `;
         tbody.appendChild(row);
