@@ -2843,14 +2843,14 @@
                         <td>${statusBadge}</td>
                         <td class="text-center">
                             <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-primary" onclick="printSaleReceipt('${sale.Transaction_ID}')" title="Print Receipt">
+                                <button class="btn btn-outline-primary sale-print-btn" data-id="${sale.Transaction_ID}" title="Print Receipt">
                                     <i class="bi bi-printer"></i>
                                 </button>
                                 ${sale.Status !== 'Returned' ? `
-                                <button class="btn btn-outline-warning" onclick="editSale('${sale.Transaction_ID}')" title="Edit Sale">
+                                <button class="btn btn-outline-warning sale-edit-btn" data-id="${sale.Transaction_ID}" title="Edit Sale">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button class="btn btn-outline-danger" onclick="returnSale('${sale.Transaction_ID}')" title="Return Sale">
+                                <button class="btn btn-outline-danger sale-return-btn" data-id="${sale.Transaction_ID}" title="Return Sale">
                                     <i class="bi bi-arrow-return-left"></i>
                                 </button>
                                 ` : ''}
@@ -2859,6 +2859,23 @@
                     </tr>`;
             });
             tableBody.innerHTML = rowsHtml;
+
+            // Add event listeners for sale action buttons
+            document.querySelectorAll('.sale-print-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    printSaleReceipt(this.getAttribute('data-id'));
+                });
+            });
+            document.querySelectorAll('.sale-edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    editSale(this.getAttribute('data-id'));
+                });
+            });
+            document.querySelectorAll('.sale-return-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    returnSale(this.getAttribute('data-id'));
+                });
+            });
         }).withFailureHandler(err => {
             tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error: ${err.message}</td></tr>`;
         }).getRecentSales(100, startDate, endDate, customerName);
@@ -3401,7 +3418,7 @@
 
     // Sales helpers
     function formatCurrency(value) {
-      return 'Ksh ' + Math.round(parseFloat(value) || 0).toLocaleString('en-KE');
+      return 'Ksh ' + Math.round(parseFloat(value) || 0).toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
 
     function showSalesAlert(message, type) {
@@ -4953,13 +4970,13 @@
               <td>${statusBadge}</td>
               <td class="text-end">
                 <div class="btn-group btn-group-sm" role="group">
-                  <button class="btn btn-outline-primary" title="Open" onclick="previewQuotation('${quotation.Transaction_ID}')">
+                  <button class="btn btn-outline-primary quot-preview-btn" title="Open" data-id="${quotation.Transaction_ID}">
                     <i class="bi bi-eye"></i>
                   </button>
-                  <button class="btn btn-outline-secondary" title="Print" onclick="printDocument('${quotation.Transaction_ID}', 'Quotation')">
+                  <button class="btn btn-outline-secondary quot-print-btn" title="Print" data-id="${quotation.Transaction_ID}">
                     <i class="bi bi-printer"></i>
                   </button>
-                  <button class="btn btn-outline-danger" title="Delete" onclick="deleteQuotation('${quotation.Transaction_ID}')">
+                  <button class="btn btn-outline-danger quot-delete-btn" title="Delete" data-id="${quotation.Transaction_ID}">
                     <i class="bi bi-trash"></i>
                   </button>
                 </div>
@@ -4978,6 +4995,23 @@
       `;
 
       container.innerHTML = html;
+
+      // Add event listeners for quotation action buttons
+      container.querySelectorAll('.quot-preview-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          previewQuotation(this.getAttribute('data-id'));
+        });
+      });
+      container.querySelectorAll('.quot-print-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          printDocument(this.getAttribute('data-id'), 'Quotation');
+        });
+      });
+      container.querySelectorAll('.quot-delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          deleteQuotation(this.getAttribute('data-id'));
+        });
+      });
     }
 
     // Financials Section
