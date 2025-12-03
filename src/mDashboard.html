@@ -6923,31 +6923,40 @@
     }
 
     function loadModalCustomers() {
+      const select = document.getElementById('modalSaleCustomer');
+      if (!select) {
+        console.error('Customer select element not found');
+        return;
+      }
+
+      // Show loading state
+      select.innerHTML = '<option value="">Loading customers...</option>';
+
       google.script.run
         .withSuccessHandler(function(data) {
           modalCustomersData = data || [];
-          const select = document.getElementById('modalSaleCustomer');
-          if (!select) {
-            console.error('Customer select element not found');
+          select.innerHTML = '<option value="">-- Select Customer --</option>';
+
+          if (modalCustomersData.length === 0) {
+            select.innerHTML = '<option value="">No customers found</option>';
+            console.warn('No customers returned from backend');
             return;
           }
-          select.innerHTML = '<option value="">-- Select Customer --</option>';
+
           modalCustomersData.forEach(c => {
             const option = document.createElement('option');
-            option.value = c.Customer_ID;
-            option.textContent = c.Customer_Name || c.Name;
+            option.value = c.Customer_ID || c.ID;
+            option.textContent = c.Customer_Name || c.Name || 'Unnamed Customer';
             select.appendChild(option);
           });
-          console.log(`Loaded ${modalCustomersData.length} customers`);
+          console.log(`Successfully loaded ${modalCustomersData.length} customers`);
         })
         .withFailureHandler(function(err) {
           console.error('Error loading customers:', err);
-          const select = document.getElementById('modalSaleCustomer');
-          if (select) {
-            select.innerHTML = '<option value="">Error loading customers</option>';
-          }
+          select.innerHTML = '<option value="">Error loading customers</option>';
+          alert('Failed to load customers. Please try refreshing the page.');
         })
-        .getCustomers({status: 'Active'});
+        .getCustomers();
     }
 
     function loadModalInventory() {
