@@ -355,8 +355,8 @@
 </head>
 <body>
   <div class="header-section">
-    <h2><i class="bi bi-box-seam"></i> Inventory</h2>
-    <p>Manage your product inventory, stock levels, and pricing</p>
+    <h2><i class="bi bi-box-seam"></i> Inventory Dashboard</h2>
+    <p>Manage stock levels, track assets, and view valuation</p>
   </div>
 
   <!-- Statistics Cards -->
@@ -459,11 +459,9 @@
               <tr>
                 <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Item ID</th>
                 <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Item Name</th>
-                <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Category</th>
                 <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Cost Price</th>
                 <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Current Qty</th>
                 <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Reorder Level</th>
-                <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Supplier</th>
                 <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Last Updated</th>
                 <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Updated By</th>
                 <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: center;">Actions</th>
@@ -490,14 +488,15 @@
   <div class="modal fade" id="addProductModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
           <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Product</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <form id="addProductForm">
+            <!-- Stock Source Selection -->
             <div class="mb-3">
-              <label class="form-label">Stock Source</label>
+              <label class="form-label fw-bold" style="color: #2c3e50;">Stock Source</label>
               <div class="d-flex gap-3">
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="Stock_Source" id="sourceOpening" value="opening" checked onchange="toggleStockSourceFields()">
@@ -509,68 +508,101 @@
                 </div>
               </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Item Name *</label>
-              <div class="searchable-dropdown">
-                <input
-                  type="text"
-                  class="form-control"
-                  id="itemNameInput"
-                  name="Item_Name"
-                  placeholder="Type to search items..."
-                  autocomplete="off"
-                  required
-                  onfocus="showDropdown()"
-                  oninput="filterMasterItems()">
-                <div class="dropdown-results" id="itemDropdownResults"></div>
+
+            <hr style="border-color: #e2e8f0; margin: 20px 0;">
+
+            <!-- Row 1: Item Name and Supplier (2 Columns) -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold" style="color: #2c3e50;">Item Name *</label>
+                <div class="d-flex gap-2">
+                  <div class="searchable-dropdown flex-grow-1">
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="itemNameInput"
+                      name="Item_Name"
+                      placeholder="Type to search items..."
+                      autocomplete="off"
+                      required
+                      onfocus="showDropdown()"
+                      oninput="filterMasterItems()"
+                      style="border-radius: 8px;">
+                    <div class="dropdown-results" id="itemDropdownResults"></div>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="showCreateMasterModal(document.getElementById('itemNameInput').value)" title="Add new item" style="border-radius: 8px;">
+                    <i class="bi bi-plus-circle"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold" style="color: #2c3e50;">Supplier *</label>
+                <div class="d-flex gap-2">
+                  <select class="form-select flex-grow-1" name="Supplier" id="addSupplierDropdown" required style="border-radius: 8px;">
+                    <option value="">-- Select Supplier --</option>
+                  </select>
+                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="alert('Add supplier functionality coming soon')" title="Add new supplier" style="border-radius: 8px;">
+                    <i class="bi bi-plus-circle"></i>
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Category</label>
-              <input type="text" class="form-control" id="categoryField" name="Category" placeholder="Auto-filled from master data" readonly>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Cost Price *</label>
-              <input type="number" class="form-control" name="Cost_Price" step="0.01" min="0" required>
-            </div>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Initial Quantity *</label>
-                <input type="number" class="form-control" name="Current_Qty" min="0" required>
+
+            <!-- Row 2: Category and Reorder Level (2 Columns) -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold" style="color: #2c3e50;">Category</label>
+                <input type="text" class="form-control" id="categoryField" name="Category" placeholder="Auto-filled from master data" readonly style="border-radius: 8px; background-color: #f7fafc; color: #64748b;">
               </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Reorder Level</label>
-                <input type="number" class="form-control" name="Reorder_Level" value="10" min="0">
+              <div class="col-md-6">
+                <label class="form-label fw-bold" style="color: #2c3e50;">Reorder Level</label>
+                <input type="number" class="form-control" name="Reorder_Level" value="10" min="0" style="border-radius: 8px;">
               </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Supplier *</label>
-              <select class="form-select" name="Supplier" id="addSupplierDropdown" required>
-                <option value="">Loading suppliers...</option>
-              </select>
+
+            <!-- Row 3: Pricing & Stock (3 Equal Columns) -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label class="form-label fw-bold" style="color: #2c3e50;">Cost Price *</label>
+                <input type="number" class="form-control" name="Cost_Price" step="0.01" min="0" required placeholder="0.00" style="border-radius: 8px;">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold" style="color: #2c3e50;">Selling Price *</label>
+                <input type="number" class="form-control" name="Selling_Price" step="0.01" min="0" required placeholder="0.00" style="border-radius: 8px;">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold" style="color: #2c3e50;">Quantity *</label>
+                <input type="number" class="form-control" name="Current_Qty" min="0" required placeholder="0" style="border-radius: 8px;">
+              </div>
             </div>
+
+            <!-- Purchase Fields (Conditional) -->
             <div id="purchaseFields" style="display: none;">
-              <div class="mb-3">
-                <label class="form-label">Payment Method</label>
-                <select class="form-select" name="Payment_Method">
-                  <option value="Cash">Cash</option>
-                  <option value="Bank">Bank</option>
-                  <option value="Mobile">Mobile</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Amount Paid Now</label>
-                <input type="number" class="form-control" name="Paid_Amount" min="0" step="0.01" placeholder="0.00">
-                <div class="form-text">Any unpaid balance will remain under the supplier account.</div>
+              <hr style="border-color: #e2e8f0; margin: 20px 0;">
+              <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;"><i class="bi bi-credit-card"></i> Payment Details</h6>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold" style="color: #2c3e50;">Payment Method</label>
+                  <select class="form-select" name="Payment_Method" style="border-radius: 8px;">
+                    <option value="Cash">Cash</option>
+                    <option value="Bank">Bank</option>
+                    <option value="Mobile">Mobile</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold" style="color: #2c3e50;">Amount Paid Now</label>
+                  <input type="number" class="form-control" name="Paid_Amount" min="0" step="0.01" placeholder="0.00" style="border-radius: 8px;">
+                  <div class="form-text">Any unpaid balance will remain under the supplier account.</div>
+                </div>
               </div>
             </div>
           </form>
           <div id="addProductAlert" class="alert mt-3" style="display: none;"></div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" onclick="submitAddProduct()">
-            <i class="bi bi-check-circle"></i> Add Product
+        <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+          <button type="button" class="btn" onclick="submitAddProduct()" style="background: linear-gradient(135deg, #27ae60 0%, #10b981 100%); border: none; color: white; border-radius: 8px; font-weight: 600;">
+            <i class="bi bi-check-circle"></i> Save Product
           </button>
         </div>
       </div>
@@ -581,9 +613,9 @@
   <div class="modal fade" id="editProductModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
           <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Product</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <form id="editProductForm">
@@ -615,9 +647,9 @@
           </form>
           <div id="editProductAlert" class="alert mt-3" style="display: none;"></div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" onclick="submitEditProduct()">
+        <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+          <button type="button" class="btn" onclick="submitEditProduct()" style="background: linear-gradient(135deg, #27ae60 0%, #10b981 100%); border: none; color: white; border-radius: 8px; font-weight: 600;">
             <i class="bi bi-save"></i> Save Changes
           </button>
         </div>
@@ -629,9 +661,9 @@
   <div class="modal fade" id="adjustStockModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
           <h5 class="modal-title"><i class="bi bi-arrows-move"></i> Adjust Stock</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="alert alert-info mb-3">
@@ -669,9 +701,9 @@
           </form>
           <div id="adjustStockAlert" class="alert mt-3" style="display: none;"></div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" onclick="submitAdjustStock()">
+        <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+          <button type="button" class="btn" onclick="submitAdjustStock()" style="background: linear-gradient(135deg, #27ae60 0%, #10b981 100%); border: none; color: white; border-radius: 8px; font-weight: 600;">
             <i class="bi bi-check-circle"></i> Adjust Stock
           </button>
         </div>
@@ -683,9 +715,9 @@
   <div class="modal fade" id="addMasterItemModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
           <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Create Master Item</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <form id="addMasterItemForm">
@@ -711,9 +743,9 @@
           </form>
           <div id="masterItemAlert" class="alert mt-3" style="display: none;"></div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" onclick="submitAddMasterItem()">
+        <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+          <button type="button" class="btn" onclick="submitAddMasterItem()" style="background: linear-gradient(135deg, #27ae60 0%, #10b981 100%); border: none; color: white; border-radius: 8px; font-weight: 600;">
             <i class="bi bi-check-circle"></i> Save Master Item
           </button>
         </div>
@@ -815,11 +847,9 @@
         row.innerHTML = `
           <td>${item.Item_ID || ''}</td>
           <td><strong>${item.Item_Name || ''}</strong></td>
-          <td>${item.Category || ''}</td>
           <td>Ksh ${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
           <td>${stockQty} ${statusBadge}</td>
           <td>${item.Reorder_Level || 10}</td>
-          <td>${getSupplierDisplayName(item.Supplier)}</td>
           <td>${item.Last_Updated ? new Date(item.Last_Updated).toLocaleString() : '-'}</td>
           <td>${item.Updated_By || '-'}</td>
           <td style="white-space: nowrap;">
