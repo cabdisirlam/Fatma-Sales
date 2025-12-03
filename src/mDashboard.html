@@ -1529,11 +1529,11 @@
                     <tr>
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Transaction</th>
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Customer</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Total</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Paid</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Balance</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Status</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: center;">Actions</th>
+              <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Total</th>
+              <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Paid</th>
+              <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Balance</th>
+              <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Status</th>
+              <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: center;">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="salesHistoryBody">
@@ -3840,6 +3840,7 @@
             if (saleStatus === 'Cancelled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
             if (fulfillStatus === 'Delivered') statusBadge = '<span class="badge bg-primary">Delivered</span>';
             if (fulfillStatus === 'In Store') statusBadge = '<span class="badge bg-info text-dark">In Store</span>';
+            if (fulfillStatus === 'In Transit') statusBadge = '<span class="badge bg-secondary">In Transit</span>';
 
             const printBtn = `
               <button class="btn btn-sm btn-outline-dark me-1" onclick="printDocument('${saleId}', 'Sale')" title="Print Receipt">
@@ -3855,6 +3856,7 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li><button class="dropdown-item" onclick="changeSaleStatus('${saleId}', 'Delivered')">Delivered</button></li>
+                  <li><button class="dropdown-item" onclick="changeSaleStatus('${saleId}', 'In Transit')">In Transit</button></li>
                   <li><button class="dropdown-item" onclick="changeSaleStatus('${saleId}', 'In Store')">In Store</button></li>
                   <li><hr class="dropdown-divider"></li>
                   <li><button class="dropdown-item text-danger" onclick="changeSaleStatus('${saleId}', 'Returned')">Returned</button></li>

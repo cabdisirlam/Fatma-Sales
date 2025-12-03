@@ -1198,7 +1198,7 @@ function updateSalePaymentProgress(transactionId, user) {
  */
 function setSaleFulfillmentStatus(transactionId, status, user) {
   try {
-    const allowed = ['Pending Release', 'Ready for Pickup', 'Delivered', 'In Store', 'Returned'];
+    const allowed = ['Pending Release', 'In Transit', 'Delivered', 'In Store', 'Returned'];
     if (!transactionId) return { success: false, message: 'Transaction ID is required' };
     if (!allowed.includes(status)) return { success: false, message: 'Invalid status' };
 
