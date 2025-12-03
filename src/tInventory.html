@@ -57,20 +57,26 @@
 
     .card {
       border: none;
-      border-radius: 15px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
       margin-bottom: 20px;
       overflow: hidden;
       border: 1px solid #e2e8f0;
+      background: white;
     }
 
     .card-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: #f7fafc;
+      color: #2d3748;
       border-radius: 0 !important;
-      padding: 20px;
+      padding: 12px 20px;
       font-weight: 600;
-      font-size: 15px;
+      font-size: 14px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .card-header i {
+      color: #667eea;
     }
 
     .actions-toolbar {
@@ -165,7 +171,11 @@
       }
 
       .stat-value {
-        font-size: 24px;
+        font-size: 18px;
+      }
+
+      .stat-label {
+        font-size: 10px;
       }
 
       .actions-toolbar {
@@ -178,7 +188,7 @@
       }
 
       .filter-section {
-        padding: 16px;
+        padding: 12px 16px;
       }
     }
 
@@ -192,31 +202,28 @@
     }
 
     .stat-card {
-      background: white;
-      padding: 20px;
+      padding: 15px;
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
       margin-bottom: 20px;
-      border: 1px solid #e2e8f0;
       transition: all 0.3s ease;
+      height: 100%;
     }
 
     .stat-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .stat-value {
-      font-size: 32px;
+      font-size: 20px;
       font-weight: 700;
-      color: #667eea;
-      margin: 10px 0;
+      color: white;
       line-height: 1.2;
+      word-break: break-word;
     }
 
     .stat-label {
-      color: #7f8c8d;
-      font-size: 14px;
+      color: rgba(255,255,255,0.9);
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 8px;
@@ -256,10 +263,10 @@
 
     .filter-section {
       background: white;
-      padding: 20px;
-      border-radius: 12px;
+      padding: 15px 20px;
+      border-radius: 8px;
       margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
       border: 1px solid #e2e8f0;
     }
 
@@ -355,56 +362,61 @@
   <!-- Statistics Cards -->
   <div class="row mb-4" id="statsSection">
     <div class="col-md-3">
-      <div class="stat-card">
+      <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
         <div class="stat-label">Total Items</div>
-        <div class="stat-value" id="totalItems" style="color: #667eea;">0</div>
+        <div class="stat-value" id="totalItems">0</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="stat-card">
+      <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);">
         <div class="stat-label">Low Stock</div>
-        <div class="stat-value" id="lowStock" style="color: #e67e22;">0</div>
+        <div class="stat-value" id="lowStock">0</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="stat-card">
+      <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);">
         <div class="stat-label">Out of Stock</div>
-        <div class="stat-value" id="outOfStock" style="color: #e74c3c;">0</div>
+        <div class="stat-value" id="outOfStock">0</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="stat-card">
+      <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); box-shadow: 0 4px 15px rgba(250, 112, 154, 0.4);">
         <div class="stat-label">Total Value</div>
-        <div class="stat-value" id="totalValue" style="color: #27ae60;">Ksh 0.00</div>
+        <div class="stat-value" id="totalValue">Ksh 0.00</div>
       </div>
     </div>
   </div>
 
   <!-- Filter Section -->
   <div class="filter-section">
-    <div class="row g-3">
+    <div class="row g-2 align-items-end">
       <div class="col-md-4">
-        <label for="searchInput" class="form-label fw-bold" style="font-size: 13px; color: #2d3748;">Search Items</label>
-        <input type="text" class="form-control" id="searchInput" placeholder="Search by item name or ID..." style="border-radius: 8px; font-size: 13px;">
+        <label for="searchInput" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Search Items</label>
+        <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search by item name or ID..." style="border-radius: 4px; font-size: 13px;">
       </div>
-      <div class="col-md-3">
-        <label for="categoryFilter" class="form-label fw-bold" style="font-size: 13px; color: #2d3748;">Category</label>
-        <select class="form-select" id="categoryFilter" style="border-radius: 8px; font-size: 13px;">
+      <div class="col-md-2">
+        <label for="categoryFilter" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Category</label>
+        <select class="form-select form-select-sm" id="categoryFilter" style="border-radius: 4px; font-size: 13px;">
           <option value="">All Categories</option>
         </select>
       </div>
-      <div class="col-md-3">
-        <label for="stockFilter" class="form-label fw-bold" style="font-size: 13px; color: #2d3748;">Stock Level</label>
-        <select class="form-select" id="stockFilter" style="border-radius: 8px; font-size: 13px;">
-          <option value="">All Stock Levels</option>
+      <div class="col-md-2">
+        <label for="stockFilter" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Stock Level</label>
+        <select class="form-select form-select-sm" id="stockFilter" style="border-radius: 4px; font-size: 13px;">
+          <option value="">All Levels</option>
           <option value="low">Low Stock</option>
           <option value="out">Out of Stock</option>
           <option value="ok">In Stock</option>
         </select>
       </div>
-      <div class="col-md-2 d-flex align-items-end">
-        <button class="btn w-100" onclick="loadInventory()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; border-radius: 8px; font-weight: 500; padding: 10px; font-size: 13px;">
-          <i class="bi bi-search"></i>
+      <div class="col-md-auto">
+        <button class="btn btn-sm" onclick="loadInventory()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 16px; font-size: 13px;">
+          <i class="bi bi-search" style="font-size: 14px;"></i> Search
+        </button>
+      </div>
+      <div class="col-md-auto">
+        <button class="btn btn-sm btn-outline-secondary" onclick="clearFilters()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
+          <i class="bi bi-x-circle" style="font-size: 14px;"></i> Clear
         </button>
       </div>
     </div>
@@ -971,7 +983,14 @@
       document.getElementById('purchaseFields').style.display = isPurchase ? 'block' : 'none';
       document.getElementById('addSupplierDropdown').required = isPurchase;
     }
-    
+
+    function clearFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('categoryFilter').value = '';
+      document.getElementById('stockFilter').value = '';
+      displayInventory(inventoryData);
+    }
+
     document.addEventListener('click', e => {
       const dropdown = document.querySelector('.searchable-dropdown');
       if (dropdown && !dropdown.contains(e.target)) {
