@@ -1153,9 +1153,6 @@
               <button class="btn btn-sm" onclick="openNewSaleModal()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px;">
                 <i class="bi bi-plus-circle" style="font-size: 14px;"></i> New Sale
               </button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="openReturnModal()" style="border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
-                <i class="bi bi-arrow-return-left" style="font-size: 14px;"></i> Return
-              </button>
               <button class="btn btn-sm btn-outline-secondary" onclick="openQuotationsModal()" style="border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
                 <i class="bi bi-journal-text" style="font-size: 14px;"></i> Quotations
               </button>
@@ -1215,16 +1212,15 @@
                 <table class="table table-sm table-hover align-middle" style="margin: 0; font-size: 13px;">
                   <thead style="background: #f7fafc; border-bottom: 2px solid #e2e8f0;">
                     <tr>
+                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Date</th>
                       <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Transaction</th>
                       <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Customer</th>
                       <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">Cost</th>
-                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">Paid</th>
-                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">Balance</th>
                       <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="salesDashboardBody" style="border-top: none;">
-                    <tr><td colspan="6" class="text-center text-muted py-4" style="font-size: 13px;">Loading sales history...</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted py-4" style="font-size: 13px;">Loading sales history...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -3664,9 +3660,9 @@
     }
 
     function loadSalesSection() {
-      // This function is a placeholder.
-      // You can add logic here to load any specific data needed for the main sales section.
+      // Load sales dashboard data
       console.log("Sales section loaded");
+      applySalesFilter();
     }
 
     function loadSuppliersSection(forceRefresh) {
@@ -7303,35 +7299,44 @@
 
       salesData.forEach(sale => {
         const row = document.createElement('tr');
-        const cost = parseFloat(sale.Total_Amount || 0);
-        const paid = parseFloat(sale.Amount_Paid || 0);
-        const balance = cost - paid;
-
-        // Determine row styling based on balance
-        const balanceColor = balance > 0 ? '#e74c3c' : '#27ae60';
-        const balanceWeight = balance > 0 ? '600' : '500';
+        const cost = parseFloat(sale.Grand_Total || sale.Total_Amount || 0);
+        const saleDate = sale.DateTime ? new Date(sale.DateTime).toLocaleDateString() : '';
 
         row.innerHTML = `
+          <td style="font-size: 13px;">${saleDate}</td>
           <td style="font-size: 13px;">${sale.Transaction_ID || ''}</td>
           <td style="font-size: 13px;">${sale.Customer_Name || 'Walk-in'}</td>
-          <td style="font-size: 13px; text-align: right; font-weight: 600;">Ksh ${cost.toFixed(2)}</td>
-          <td style="font-size: 13px; text-align: right;">Ksh ${paid.toFixed(2)}</td>
-          <td style="font-size: 13px; text-align: right; font-weight: ${balanceWeight}; color: ${balanceColor};">Ksh ${balance.toFixed(2)}</td>
+          <td style="font-size: 13px; text-align: right; font-weight: 600;">${formatCurrency(cost)}</td>
           <td style="text-align: center; font-size: 13px;">
-            <button class="btn btn-sm btn-outline-primary" onclick="viewSaleDetails('${sale.Transaction_ID}')" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="View Details">
+            <button class="btn btn-sm btn-outline-primary sale-view-btn" data-id="${sale.Transaction_ID}" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="View Details">
               <i class="bi bi-eye"></i>
             </button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="printReceipt('${sale.Transaction_ID}')" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="Print Receipt">
+            <button class="btn btn-sm btn-outline-secondary sale-print-receipt-btn" data-id="${sale.Transaction_ID}" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="Print Receipt">
               <i class="bi bi-printer"></i>
             </button>
-            ${balance > 0 ? `
-            <button class="btn btn-sm btn-outline-success" onclick="receivePayment('${sale.Transaction_ID}', '${sale.Customer_Name}', ${balance})" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="Receive Payment">
-              <i class="bi bi-cash"></i>
+            <button class="btn btn-sm btn-outline-danger sale-return-action-btn" data-id="${sale.Transaction_ID}" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="Return Sale">
+              <i class="bi bi-arrow-return-left"></i>
             </button>
-            ` : ''}
           </td>
         `;
         tbody.appendChild(row);
+      });
+
+      // Add event listeners for action buttons
+      document.querySelectorAll('.sale-view-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          viewSaleDetails(this.getAttribute('data-id'));
+        });
+      });
+      document.querySelectorAll('.sale-print-receipt-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          printSaleReceipt(this.getAttribute('data-id'));
+        });
+      });
+      document.querySelectorAll('.sale-return-action-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          returnSale(this.getAttribute('data-id'));
+        });
       });
     }
 
