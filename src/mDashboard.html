@@ -7257,11 +7257,36 @@
         return;
       }
 
+      // Get payment mode from user
+      const paymentMode = prompt('Select Payment Mode:\n\n1. Cash\n2. M-Pesa\n3. Credit\n4. Bank\n\nEnter number (1-4):', '1');
+
+      if (!paymentMode) {
+        alert('Payment mode is required. Conversion cancelled.');
+        return;
+      }
+
+      const paymentModes = {
+        '1': 'Cash',
+        '2': 'M-Pesa',
+        '3': 'Credit',
+        '4': 'Bank'
+      };
+
+      const selectedPaymentMode = paymentModes[paymentMode] || 'Cash';
+      const currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+
       // Show loading state
       const btn = event.target.closest('button');
       const originalHTML = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+
+      // Prepare conversion data
+      const conversionData = {
+        quotationId: quotationId,
+        paymentMode: selectedPaymentMode,
+        user: currentUser
+      };
 
       google.script.run
         .withSuccessHandler(function(result) {
@@ -7269,7 +7294,7 @@
           btn.innerHTML = originalHTML;
 
           if (result.success) {
-            alert(`Success! Quotation converted to sale.\nSale ID: ${result.saleId || 'N/A'}`);
+            alert(`Success! Quotation converted to sale.\n\nSale ID: ${result.saleId || 'N/A'}\nPayment: ${selectedPaymentMode}`);
             // Refresh the quotations list
             loadQuotationsModal();
           } else {
@@ -7282,7 +7307,7 @@
           console.error('Error converting quotation:', error);
           alert('Error converting quotation to sale: ' + error.message);
         })
-        .convertQuotationToSale(quotationId);
+        .convertQuotationToSale(conversionData);
     }
 
     function printQuotation(quotationId) {
