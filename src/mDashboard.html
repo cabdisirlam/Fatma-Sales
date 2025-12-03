@@ -7537,7 +7537,7 @@
         const statusMenu = isReturned ? `
           <span class="badge bg-secondary">No actions</span>
         ` : `
-          <div class="btn-group">
+          <div class="btn-group dropup">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
               Status
             </button>
@@ -7551,13 +7551,14 @@
           </div>
         `;
 
+        row.className = isReturned ? 'returned-row' : '';
         row.innerHTML = `
           <td style="font-size: 13px;">${saleDate}</td>
           <td style="font-size: 13px;">${sale.Transaction_ID || ''}</td>
           <td style="font-size: 13px;">${sale.Customer_Name || 'Walk-in'}</td>
           <td style="font-size: 13px; text-align: right; font-weight: 600;">${formatCurrency(cost)}</td>
           <td style="font-size: 13px;">${statusBadge}</td>
-          <td style="text-align: center; font-size: 13px;" class="${isReturned ? 'returned-row' : ''}">
+          <td style="text-align: center; font-size: 13px;">
             <button class="btn btn-sm btn-outline-secondary sale-print-receipt-btn" data-id="${sale.Transaction_ID}" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="Print Receipt">
               <i class="bi bi-printer"></i>
             </button>
