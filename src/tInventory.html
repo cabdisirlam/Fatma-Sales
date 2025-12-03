@@ -454,13 +454,16 @@
     }
 
     .stat-card {
-      padding: 10px;
+      background: white;
       border-radius: 12px;
-      margin-bottom: 15px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 16px;
       transition: all 0.3s ease;
       height: 100%;
-      font-size: 12px;
-      font-weight: 500;
     }
 
     .stat-card:hover {
@@ -815,96 +818,101 @@
   </style>
 </head>
 <body>
-  <div class="header-section">
-    <h2><i class="bi bi-box-seam"></i> Inventory Dashboard</h2>
-    <p>Manage stock levels, track assets, and view valuation</p>
-  </div>
-
   <!-- Statistics Cards -->
-  <div class="row mb-4" id="statsSection">
-    <div class="col-md-3">
-      <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
-        <div class="stat-label">Total Items</div>
-        <div class="stat-value" id="totalItems">0</div>
+  <div class="stats-overview mb-4">
+    <div class="stat-card">
+      <div class="stat-icon products">
+        <i class="bi bi-box-seam-fill"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number" id="totalItems">0</div>
+        <div class="stat-text">Total Items</div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);">
-        <div class="stat-label">Low Stock</div>
-        <div class="stat-value" id="lowStock">0</div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%); color: var(--warning-color);">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number" id="lowStock">0</div>
+        <div class="stat-text">Low Stock</div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);">
-        <div class="stat-label">Out of Stock</div>
-        <div class="stat-value" id="outOfStock">0</div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%); color: var(--danger-color);">
+        <i class="bi bi-x-circle-fill"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number" id="outOfStock">0</div>
+        <div class="stat-text">Out of Stock</div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); box-shadow: 0 4px 15px rgba(250, 112, 154, 0.4);">
-        <div class="stat-label">Total Value</div>
-        <div class="stat-value" id="totalValue">Ksh 0.00</div>
+
+    <div class="stat-card">
+      <div class="stat-icon revenue">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number" id="totalValue">Ksh 0.00</div>
+        <div class="stat-text">Total Value</div>
       </div>
     </div>
   </div>
 
-  <!-- Filter Section -->
-  <div class="filter-section">
-    <div class="row g-2 align-items-end">
-      <div class="col-md-4">
-        <label for="searchInput" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Search Items</label>
-        <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search by item name or ID..." style="border-radius: 4px; font-size: 13px;">
-      </div>
-      <div class="col-md-2">
-        <label for="stockFilter" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Stock Level</label>
-        <select class="form-select form-select-sm" id="stockFilter" style="border-radius: 4px; font-size: 13px;">
-          <option value="">All Levels</option>
-          <option value="low">Low Stock</option>
-          <option value="out">Out of Stock</option>
-          <option value="ok">In Stock</option>
-        </select>
-      </div>
-      <div class="col-md-auto">
-        <button class="btn btn-sm" onclick="loadInventory()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 16px; font-size: 13px;">
-          <i class="bi bi-search" style="font-size: 14px;"></i> Search
+  <!-- Filter and Actions Section -->
+  <div class="card mb-3" style="border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+    <div class="card-body" style="padding: 24px;">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0" style="color: var(--text-color); font-weight: 600;">
+          <i class="bi bi-funnel"></i> Filter & Actions
+        </h5>
+        <button class="btn btn-primary" onclick="showAddProductModal()" style="border-radius: 8px; padding: 8px 20px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); border: none; font-weight: 500;">
+          <i class="bi bi-plus-circle"></i> Add Inventory
         </button>
       </div>
-      <div class="col-md-auto">
-        <button class="btn btn-sm btn-outline-secondary" onclick="clearFilters()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
-          <i class="bi bi-x-circle" style="font-size: 14px;"></i> Clear
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <!-- Actions Toolbar -->
-  <div class="actions-toolbar">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <div class="d-flex gap-2 flex-wrap">
-        <button class="btn btn-sm" onclick="showAddProductModal()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px;">
-          <i class="bi bi-plus-circle" style="font-size: 14px;"></i> Add Inventory
-        </button>
-      </div>
-      <div class="d-flex gap-2 align-items-center">
-        <span style="font-size: 12px; color: #718096; font-weight: 500;">Quick Actions</span>
-        <button class="btn btn-sm btn-outline-secondary" onclick="loadInventory()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
-          <i class="bi bi-arrow-clockwise" style="font-size: 14px;"></i> Refresh
-        </button>
+      <div class="row g-3">
+        <div class="col-md-5">
+          <label for="searchInput" class="form-label" style="color: var(--text-light); font-weight: 500; font-size: 0.9rem;">Search Items</label>
+          <input type="text" class="form-control" id="searchInput" placeholder="Search by item name or ID..." style="border-radius: 8px;">
+        </div>
+        <div class="col-md-3">
+          <label for="stockFilter" class="form-label" style="color: var(--text-light); font-weight: 500; font-size: 0.9rem;">Stock Level</label>
+          <select class="form-select" id="stockFilter" style="border-radius: 8px;">
+            <option value="">All Levels</option>
+            <option value="low">Low Stock</option>
+            <option value="out">Out of Stock</option>
+            <option value="ok">In Stock</option>
+          </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end gap-2">
+          <button class="btn btn-primary" onclick="loadInventory()" style="border-radius: 8px; flex: 1;">
+            <i class="bi bi-search"></i> Search
+          </button>
+          <button class="btn btn-outline-secondary" onclick="clearFilters()" style="border-radius: 8px; flex: 1;">
+            <i class="bi bi-x-circle"></i> Clear
+          </button>
+          <button class="btn btn-outline-primary" onclick="loadInventory()" style="border-radius: 8px;">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Inventory Table -->
-  <div class="card">
-    <div class="card-header">
-      <i class="bi bi-list-ul"></i> Inventory Items
+  <div class="card" style="border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+    <div class="card-header" style="background: white; border-bottom: 2px solid var(--border-color); padding: 20px 24px; border-radius: 12px 12px 0 0;">
+      <h5 class="mb-0" style="color: var(--text-color); font-weight: 600;">
+        <i class="bi bi-list-ul"></i> Inventory Items
+      </h5>
     </div>
-    <div class="card-body" style="padding: 20px;">
-      <div id="loadingIndicator" class="loading">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-3" style="color: #7f8c8d;">Loading inventory...</p>
+    <div class="card-body" style="padding: 24px;">
+      <div id="loadingIndicator" class="text-center py-5">
+        <div class="loading-spinner mx-auto mb-3"></div>
+        <p style="color: var(--text-light);">Loading inventory...</p>
       </div>
 
       <div id="inventoryTableContainer" style="display: none;">
@@ -928,10 +936,13 @@
         </div>
       </div>
 
-      <div id="noDataMessage" style="display: none;">
-        <i class="bi bi-inbox"></i>
-        <p>No inventory items found</p>
-        <p class="text-muted" style="font-size: 14px;">Add new inventory items to get started</p>
+      <div id="noDataMessage" class="text-center py-5" style="display: none;">
+        <i class="bi bi-inbox" style="font-size: 4rem; color: var(--text-lighter); margin-bottom: 1rem;"></i>
+        <h5 style="color: var(--text-color); font-weight: 600;">No inventory items found</h5>
+        <p style="color: var(--text-light); font-size: 0.9rem;">Add new inventory items to get started</p>
+        <button class="btn btn-primary mt-3" onclick="showAddProductModal()" style="border-radius: 8px; padding: 10px 24px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); border: none;">
+          <i class="bi bi-plus-circle"></i> Add First Item
+        </button>
       </div>
 
       <div id="errorMessage" style="display: none;"></div>
@@ -940,13 +951,15 @@
 
   <!-- Add Product Modal -->
   <div class="modal fade" id="addProductModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-          <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Product</h5>
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);">
+        <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); color: white; padding: 24px; border: none;">
+          <h5 class="modal-title" style="font-weight: 600; font-size: 1.25rem;">
+            <i class="bi bi-plus-circle"></i> Add New Inventory Item
+          </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="padding: 32px;">
           <form id="addProductForm">
             <!-- Stock Source Selection -->
             <div class="mb-3">
@@ -1034,9 +1047,11 @@
           </form>
           <div id="addProductAlert" class="alert mt-3" style="display: none;"></div>
         </div>
-        <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
-          <button type="button" class="btn" onclick="submitAddProduct()" style="background: linear-gradient(135deg, #27ae60 0%, #10b981 100%); border: none; color: white; border-radius: 8px; font-weight: 600;">
+        <div class="modal-footer" style="background: #f8f9fa; border-top: 2px solid var(--border-color); padding: 20px 32px;">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px; padding: 10px 24px; border: 1px solid var(--border-color);">
+            <i class="bi bi-x-circle"></i> Cancel
+          </button>
+          <button type="button" class="btn btn-success" onclick="submitAddProduct()" style="border-radius: 8px; padding: 10px 24px; font-weight: 600; background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%); border: none;">
             <i class="bi bi-check-circle"></i> Save Product
           </button>
         </div>
@@ -1047,12 +1062,14 @@
   <!-- Edit Product Modal -->
   <div class="modal fade" id="editProductModal" tabindex="-1">
     <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-          <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Product</h5>
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 24px; border: none;">
+          <h5 class="modal-title" style="font-weight: 600; font-size: 1.25rem;">
+            <i class="bi bi-pencil-square"></i> Edit Product
+          </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="padding: 32px;">
           <form id="editProductForm">
             <input type="hidden" id="editItemId" name="Item_ID">
             <div class="mb-3">
@@ -1078,9 +1095,11 @@
           </form>
           <div id="editProductAlert" class="alert mt-3" style="display: none;"></div>
         </div>
-        <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
-          <button type="button" class="btn" onclick="submitEditProduct()" style="background: linear-gradient(135deg, #27ae60 0%, #10b981 100%); border: none; color: white; border-radius: 8px; font-weight: 600;">
+        <div class="modal-footer" style="background: #f8f9fa; border-top: 2px solid var(--border-color); padding: 20px 32px;">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px; padding: 10px 24px; border: 1px solid var(--border-color);">
+            <i class="bi bi-x-circle"></i> Cancel
+          </button>
+          <button type="button" class="btn btn-primary" onclick="submitEditProduct()" style="border-radius: 8px; padding: 10px 24px; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none;">
             <i class="bi bi-save"></i> Save Changes
           </button>
         </div>
@@ -1091,12 +1110,14 @@
   <!-- Adjust Stock Modal -->
   <div class="modal fade" id="adjustStockModal" tabindex="-1">
     <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-          <h5 class="modal-title"><i class="bi bi-arrows-move"></i> Adjust Stock</h5>
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 24px; border: none;">
+          <h5 class="modal-title" style="font-weight: 600; font-size: 1.25rem;">
+            <i class="bi bi-arrows-move"></i> Adjust Stock Level
+          </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="padding: 32px;">
           <div class="alert alert-info mb-3">
             <strong id="adjustItemName"></strong> (Current Stock: <span id="adjustCurrentStock"></span>)
           </div>
@@ -1132,9 +1153,11 @@
           </form>
           <div id="adjustStockAlert" class="alert mt-3" style="display: none;"></div>
         </div>
-        <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
-          <button type="button" class="btn" onclick="submitAdjustStock()" style="background: linear-gradient(135deg, #27ae60 0%, #10b981 100%); border: none; color: white; border-radius: 8px; font-weight: 600;">
+        <div class="modal-footer" style="background: #f8f9fa; border-top: 2px solid var(--border-color); padding: 20px 32px;">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px; padding: 10px 24px; border: 1px solid var(--border-color);">
+            <i class="bi bi-x-circle"></i> Cancel
+          </button>
+          <button type="button" class="btn btn-warning" onclick="submitAdjustStock()" style="border-radius: 8px; padding: 10px 24px; font-weight: 600; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; color: white;">
             <i class="bi bi-check-circle"></i> Adjust Stock
           </button>
         </div>
@@ -1267,9 +1290,6 @@
       document.getElementById('outOfStock').textContent = outOfStockCount;
       document.getElementById('totalValue').textContent = 'Ksh ' + totalValue.toFixed(2);
     }
-    
-    // Smart Dropdown Logic
-    function updateStats(data) {
 
     // Modal Handling
     function showAddProductModal() {
