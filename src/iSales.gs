@@ -1206,11 +1206,19 @@ function setSaleFulfillmentStatus(transactionId, status, user) {
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
     const idCol = headers.indexOf('Transaction_ID');
-    const statusCol = headers.indexOf('Delivery_Status');
+    let statusCol = headers.indexOf('Delivery_Status');
     const saleStatusCol = headers.indexOf('Status');
 
-    if (idCol === -1 || statusCol === -1) {
-      return { success: false, message: 'Sales sheet missing Transaction_ID or Delivery_Status column' };
+    if (idCol === -1) {
+      return { success: false, message: 'Sales sheet missing Transaction_ID column' };
+    }
+
+    // If Delivery_Status column is missing, fall back to Status column
+    if (statusCol === -1 && saleStatusCol !== -1) {
+      statusCol = saleStatusCol;
+    }
+    if (statusCol === -1) {
+      return { success: false, message: 'Sales sheet missing Delivery_Status/Status column' };
     }
 
     let updated = 0;
@@ -1226,16 +1234,13 @@ function setSaleFulfillmentStatus(transactionId, status, user) {
           continue;
         }
 
-        // Always update delivery status
+        // Always update delivery/status column
         sheet.getRange(i + 1, statusCol + 1).setValue(status);
 
-        // Mirror status into primary Status column
-        if (saleStatusCol !== -1) {
-          if (status === 'Returned') {
-            sheet.getRange(i + 1, saleStatusCol + 1).setValue('Returned');
-          } else {
-            sheet.getRange(i + 1, saleStatusCol + 1).setValue(status);
-          }
+        // Mirror status into primary Status column (if different)
+        if (saleStatusCol !== -1 && saleStatusCol !== statusCol) {
+          const mirrored = status === 'Returned' ? 'Returned' : status;
+          sheet.getRange(i + 1, saleStatusCol + 1).setValue(mirrored);
         }
         updated++;
       }

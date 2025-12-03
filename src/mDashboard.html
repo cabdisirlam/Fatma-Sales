@@ -50,7 +50,8 @@
     /* Returned sales rows */
     .returned-row td {
       text-decoration: line-through;
-      opacity: 0.65;
+      opacity: 0.8;
+      color: #c0392b;
     }
 
     /* ==================== SIDEBAR ==================== */
@@ -826,6 +827,37 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-primary" id="masterItemSaveBtn" onclick="saveMasterItem()">Save Item</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Update Modal -->
+  <div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title"><i class="bi bi-flag"></i> Update Status</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="statusModalSaleId">
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="statusModalSelect">
+              <option value="Delivered">Delivered</option>
+              <option value="In Transit">In Transit</option>
+              <option value="In Store">In Store</option>
+              <option value="Returned">Returned</option>
+            </select>
+          </div>
+          <div class="alert alert-info small mb-0">
+            This will update the sale status in the Sales sheet and reflect immediately in the list.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitStatusModal()">Update Status</button>
         </div>
       </div>
     </div>
@@ -3862,6 +3894,32 @@
           alert('Error updating status: ' + err.message);
         })
         .setSaleFulfillmentStatus(transactionId, status, user);
+    }
+
+    // Status modal helpers
+    function openStatusModal(transactionId, currentStatus) {
+      const idInput = document.getElementById('statusModalSaleId');
+      const select = document.getElementById('statusModalSelect');
+      if (idInput) idInput.value = transactionId || '';
+      if (select) {
+        select.value = (currentStatus || 'Delivered');
+      }
+      const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+      modal.show();
+    }
+
+    function submitStatusModal() {
+      const idInput = document.getElementById('statusModalSaleId');
+      const select = document.getElementById('statusModalSelect');
+      const transactionId = idInput ? idInput.value : '';
+      const status = select ? select.value : '';
+      if (!transactionId || !status) {
+        alert('Select a status');
+        return;
+      }
+      const modal = bootstrap.Modal.getInstance(document.getElementById('statusModal'));
+      if (modal) modal.hide();
+      changeSaleStatus(transactionId, status);
     }
 
     // Print sale receipt
@@ -7534,21 +7592,10 @@
         if (fulfillStatus === 'In Store') statusBadge = '<span class="badge bg-info text-dark">In Store</span>';
         if (fulfillStatus === 'In Transit') statusBadge = '<span class="badge bg-secondary">In Transit</span>';
 
-        const statusMenu = isReturned ? `
-          <span class="badge bg-secondary">No actions</span>
-        ` : `
-          <div class="btn-group">
-            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
-              Status
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><button class="dropdown-item" onclick="changeSaleStatus('${sale.Transaction_ID}', 'Delivered')">Delivered</button></li>
-              <li><button class="dropdown-item" onclick="changeSaleStatus('${sale.Transaction_ID}', 'In Transit')">In Transit</button></li>
-              <li><button class="dropdown-item" onclick="changeSaleStatus('${sale.Transaction_ID}', 'In Store')">In Store</button></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><button class="dropdown-item text-danger" onclick="changeSaleStatus('${sale.Transaction_ID}', 'Returned')">Returned</button></li>
-            </ul>
-          </div>
+        const statusMenu = `
+          <button class="btn btn-sm btn-outline-secondary status-modal-btn" data-id="${sale.Transaction_ID}" data-current="${fulfillStatus || saleStatus}" style="padding: 2px 10px; font-size: 12px; border-radius: 3px;">
+            Status
+          </button>
         `;
 
         row.className = isReturned ? 'returned-row' : '';
@@ -7582,6 +7629,11 @@
       document.querySelectorAll('.sale-return-action-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           returnSale(this.getAttribute('data-id'));
+        });
+      });
+      document.querySelectorAll('.status-modal-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          openStatusModal(this.getAttribute('data-id'), this.getAttribute('data-current'));
         });
       });
     }
