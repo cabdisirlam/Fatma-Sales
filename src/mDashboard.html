@@ -2881,74 +2881,10 @@
       }).getCustomerDetails(customerId);
     }
 
-    // Legacy sales history loader (kept for reference; main implementation below)
+    // Legacy sales history loader (kept for reference; redirects to main implementation)
     function loadSalesHistoryLegacy() {
-        const tableBody = document.getElementById('salesHistoryBody');
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading...</td></tr>';
-
-        // Get filter values
-        const startDate = document.getElementById('filterStartDate')?.value || null;
-        const endDate = document.getElementById('filterEndDate')?.value || null;
-        const customerName = document.getElementById('filterCustomerName')?.value || null;
-
-        google.script.run.withSuccessHandler(sales => {
-            if (!sales || sales.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-inbox" style="font-size: 2rem;"></i><br>No sales found</td></tr>';
-                return;
-            }
-
-            let rowsHtml = '';
-            sales.forEach(sale => {
-                const statusBadge = sale.Status === 'Returned'
-                    ? '<span class="badge bg-danger">Returned</span>'
-                    : '<span class="badge bg-success">Completed</span>';
-
-                rowsHtml += `
-                    <tr>
-                        <td>${sale.Transaction_ID}</td>
-                        <td>${new Date(sale.DateTime).toLocaleDateString()} ${new Date(sale.DateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-                        <td>${sale.Customer_Name || 'Walk-in'}</td>
-                        <td><span class="badge bg-info">${sale.itemCount || 0} item(s)</span></td>
-                        <td class="text-end fw-bold">${formatCurrency(sale.Grand_Total)}</td>
-                        <td>${statusBadge}</td>
-                        <td class="text-center">
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-primary sale-print-btn" data-id="${sale.Transaction_ID}" title="Print Receipt">
-                                    <i class="bi bi-printer"></i>
-                                </button>
-                                ${sale.Status !== 'Returned' ? `
-                                <button class="btn btn-outline-warning sale-edit-btn" data-id="${sale.Transaction_ID}" title="Edit Sale">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-outline-danger sale-return-btn" data-id="${sale.Transaction_ID}" title="Return Sale">
-                                    <i class="bi bi-arrow-return-left"></i>
-                                </button>
-                                ` : ''}
-                            </div>
-                        </td>
-                    </tr>`;
-            });
-            tableBody.innerHTML = rowsHtml;
-
-            // Add event listeners for sale action buttons
-            document.querySelectorAll('.sale-print-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    printSaleReceipt(this.getAttribute('data-id'));
-                });
-            });
-            document.querySelectorAll('.sale-edit-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    editSale(this.getAttribute('data-id'));
-                });
-            });
-            document.querySelectorAll('.sale-return-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    returnSale(this.getAttribute('data-id'));
-                });
-            });
-        }).withFailureHandler(err => {
-            tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error: ${err.message}</td></tr>`;
-        }).getRecentSales(100, startDate, endDate, customerName);
+      // Use the primary implementation to avoid divergent UIs
+      loadSalesHistory();
     }
 
     // Initialize dashboard
