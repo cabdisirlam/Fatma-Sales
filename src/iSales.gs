@@ -140,9 +140,42 @@ function createSale(saleData) {
         }
       }
     }
-    // 2. Handle Credit Sales (0 Payment)
+    // 2. Handle Credit Sales (Record Revenue for accrual accounting)
     else if (saleData.Payment_Mode === 'Credit') {
-      totalPaid = 0;
+      // ✅ FIX: Record revenue in Financials for proper accrual accounting
+      // Revenue is recognized when earned (sale made), not when cash received
+      // Use "Accounts Receivable" as account since no cash was received yet
+      const financialTxnId = generateId('Financials', 'Transaction_ID', 'FIN');
+      const financialSheet = getSheet('Financials');
+
+      const revenueTxnRow = [
+        financialTxnId,
+        dateTime,
+        'Sale_Payment', // Type (represents revenue recognition)
+        saleData.Customer_ID || '',
+        'Sales',
+        'Accounts Receivable', // Account (AR - not a payment method account)
+        'Revenue for credit sale ' + transactionId,
+        grandTotal,
+        0, // Debit
+        grandTotal, // Credit (revenue)
+        0, // Balance
+        'Credit', // Payment_Method
+        saleData.Customer_Name || '',
+        transactionId, // Receipt_No
+        transactionId, // Reference
+        'Approved',
+        saleData.User,
+        saleData.User
+      ];
+
+      financialSheet.appendRow(revenueTxnRow);
+
+      // Do NOT update account balance (no cash received)
+      // Customer balance will be updated later (line 322)
+
+      Logger.log('Revenue recorded for credit sale: ' + grandTotal + ' (AR)');
+      totalPaid = 0; // No cash received, but revenue is recorded
     }
     // 3. Handle Standard/Part Payments
     else {
@@ -995,8 +1028,9 @@ function recordSalePayment(transactionId, paymentMethod, amount, customerId, use
     if (customerId && customerId !== 'WALK-IN') {
       try {
         const customer = getCustomerById(customerId);
-        const currentBalance = Math.max(0, parseFloat(customer.Current_Balance) || 0);
-        const newBalance = Math.max(0, currentBalance - parseFloat(amount));
+        // ✅ FIX: Allow negative balances (credits owed to customer)
+        const currentBalance = parseFloat(customer.Current_Balance) || 0;
+        const newBalance = currentBalance - parseFloat(amount);
         const newTotalPaid = (parseFloat(customer.Total_Paid) || 0) + parseFloat(amount);
         updateRowById('Customers', 'Customer_ID', customerId, {
           Current_Balance: newBalance,
