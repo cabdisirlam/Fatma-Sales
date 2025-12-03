@@ -1121,27 +1121,27 @@
         <!-- Statistics Cards -->
         <div class="row mb-4">
           <div class="col-md-3">
-            <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%;">
-              <div style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total Revenue</div>
-              <div style="font-size: 20px; font-weight: 700; color: #27ae60; line-height: 1.2; word-break: break-word;" id="salesTotalRevenue">Ksh 0</div>
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); height: 100%;">
+              <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total Revenue</div>
+              <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesTotalRevenue">Ksh 0</div>
             </div>
           </div>
           <div class="col-md-3">
-            <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%;">
-              <div style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Transactions</div>
-              <div style="font-size: 20px; font-weight: 700; color: #667eea; line-height: 1.2; word-break: break-word;" id="salesTransactionCount">0</div>
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4); height: 100%;">
+              <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Transactions</div>
+              <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesTransactionCount">0</div>
             </div>
           </div>
           <div class="col-md-3">
-            <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%;">
-              <div style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Credit Sales</div>
-              <div style="font-size: 20px; font-weight: 700; color: #e67e22; line-height: 1.2; word-break: break-word;" id="salesCreditCount">0</div>
+            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4); height: 100%;">
+              <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Credit Sales</div>
+              <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesCreditCount">0</div>
             </div>
           </div>
           <div class="col-md-3">
-            <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%;">
-              <div style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Average Order</div>
-              <div style="font-size: 20px; font-weight: 700; color: #667eea; line-height: 1.2; word-break: break-word;" id="salesAverage">Ksh 0</div>
+            <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(250, 112, 154, 0.4); height: 100%;">
+              <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Average Order</div>
+              <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesAverage">Ksh 0</div>
             </div>
           </div>
         </div>
@@ -6927,6 +6927,10 @@
         .withSuccessHandler(function(data) {
           modalCustomersData = data || [];
           const select = document.getElementById('modalSaleCustomer');
+          if (!select) {
+            console.error('Customer select element not found');
+            return;
+          }
           select.innerHTML = '<option value="">-- Select Customer --</option>';
           modalCustomersData.forEach(c => {
             const option = document.createElement('option');
@@ -6934,8 +6938,15 @@
             option.textContent = c.Customer_Name || c.Name;
             select.appendChild(option);
           });
+          console.log(`Loaded ${modalCustomersData.length} customers`);
         })
-        .withFailureHandler(err => console.error('Error loading customers:', err))
+        .withFailureHandler(function(err) {
+          console.error('Error loading customers:', err);
+          const select = document.getElementById('modalSaleCustomer');
+          if (select) {
+            select.innerHTML = '<option value="">Error loading customers</option>';
+          }
+        })
         .getCustomers({status: 'Active'});
     }
 
@@ -7197,20 +7208,29 @@
           <td style="font-size: 13px;">${date}</td>
           <td style="font-size: 13px;">${quote.Customer_Name || 'Walk-in'}</td>
           <td style="font-size: 13px;">${(quote.items || []).length} item(s)</td>
-          <td style="font-size: 13px; text-align: right; font-weight: 600;">Ksh ${total.toFixed(2)}</td>
+          <td style="font-size: 13px; text-align: right; font-weight: 600;">${formatCurrency(total)}</td>
           <td style="text-align: center; font-size: 13px;">
-            <button class="btn btn-sm btn-outline-primary" onclick="viewQuotationDetails('${quote.Quotation_ID}')" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;">
-              <i class="bi bi-eye"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-success" onclick="convertQuotationToSale('${quote.Quotation_ID}')" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;">
+            <button class="btn btn-sm btn-outline-success quot-modal-convert-btn" data-id="${quote.Quotation_ID}" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="Convert to Sale">
               <i class="bi bi-check2"></i>
             </button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="printQuotation('${quote.Quotation_ID}')" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;">
+            <button class="btn btn-sm btn-outline-secondary quot-modal-print-btn" data-id="${quote.Quotation_ID}" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="Print">
               <i class="bi bi-printer"></i>
             </button>
           </td>
         `;
         tbody.appendChild(row);
+      });
+
+      // Add event listeners for quotation modal action buttons
+      document.querySelectorAll('.quot-modal-convert-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          convertQuotationToSale(this.getAttribute('data-id'));
+        });
+      });
+      document.querySelectorAll('.quot-modal-print-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          printDocument(this.getAttribute('data-id'), 'Quotation');
+        });
       });
     }
 
@@ -7320,11 +7340,6 @@
       });
 
       // Add event listeners for action buttons
-      document.querySelectorAll('.sale-view-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          viewSaleDetails(this.getAttribute('data-id'));
-        });
-      });
       document.querySelectorAll('.sale-print-receipt-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           printSaleReceipt(this.getAttribute('data-id'));
