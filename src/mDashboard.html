@@ -1121,27 +1121,27 @@
         <!-- Statistics Cards -->
         <div class="row mb-4">
           <div class="col-md-3">
-            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-              <div style="color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Total Revenue</div>
-              <div style="font-size: 32px; font-weight: 700; color: #27ae60; margin: 10px 0;" id="salesTotalRevenue">Ksh 0</div>
+            <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%;">
+              <div style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total Revenue</div>
+              <div style="font-size: 20px; font-weight: 700; color: #27ae60; line-height: 1.2; word-break: break-word;" id="salesTotalRevenue">Ksh 0</div>
             </div>
           </div>
           <div class="col-md-3">
-            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-              <div style="color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Transactions</div>
-              <div style="font-size: 32px; font-weight: 700; color: #667eea; margin: 10px 0;" id="salesTransactionCount">0</div>
+            <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%;">
+              <div style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Transactions</div>
+              <div style="font-size: 20px; font-weight: 700; color: #667eea; line-height: 1.2; word-break: break-word;" id="salesTransactionCount">0</div>
             </div>
           </div>
           <div class="col-md-3">
-            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-              <div style="color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Credit Sales</div>
-              <div style="font-size: 32px; font-weight: 700; color: #e67e22; margin: 10px 0;" id="salesCreditCount">0</div>
+            <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%;">
+              <div style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Credit Sales</div>
+              <div style="font-size: 20px; font-weight: 700; color: #e67e22; line-height: 1.2; word-break: break-word;" id="salesCreditCount">0</div>
             </div>
           </div>
           <div class="col-md-3">
-            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-              <div style="color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Average Order</div>
-              <div style="font-size: 32px; font-weight: 700; color: #667eea; margin: 10px 0;" id="salesAverage">Ksh 0</div>
+            <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%;">
+              <div style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Average Order</div>
+              <div style="font-size: 20px; font-weight: 700; color: #667eea; line-height: 1.2; word-break: break-word;" id="salesAverage">Ksh 0</div>
             </div>
           </div>
         </div>
@@ -3108,7 +3108,8 @@
       const container = document.getElementById('section-' + sectionName);
       const hasContent = container && (container.querySelector('table') || container.querySelector('.stat-card'));
 
-      if (!hasContent) {
+      // Always load sales-history data even if table exists (to refresh)
+      if (!hasContent || sectionName === 'sales-history') {
         loadSectionData(sectionName);
       }
 
@@ -3607,8 +3608,16 @@
     }
 
     function refreshSalesOverview() {
-      showSalesAlert('Refreshing sales data...', 'info');
-      loadSalesOverview();
+      try {
+        if (typeof showSalesAlert === 'function') {
+          showSalesAlert('Refreshing sales data...', 'info');
+        }
+        if (typeof loadSalesOverview === 'function') {
+          loadSalesOverview();
+        }
+      } catch (error) {
+        console.error('Error refreshing sales overview:', error);
+      }
     }
 
     function loadSuppliersOverview() {
@@ -6854,25 +6863,36 @@
     let modalInventoryData = [];
 
     function openNewSaleModal() {
-      // Reset form and cart
-      document.getElementById('newSaleModalForm').reset();
-      modalCartItems = [];
-      renderModalCart();
+      try {
+        // Show modal first
+        const modal = new bootstrap.Modal(document.getElementById('newSaleModal'));
+        modal.show();
 
-      // Set today's date
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('modalSaleDate').value = today;
+        // Reset form and cart
+        const form = document.getElementById('newSaleModalForm');
+        if (form) form.reset();
 
-      // Set current user
-      document.getElementById('modalSoldBy').value = currentSessionUser || 'SYSTEM';
+        modalCartItems = [];
+        if (typeof renderModalCart === 'function') {
+          renderModalCart();
+        }
 
-      // Load data
-      loadModalCustomers();
-      loadModalInventory();
+        // Set today's date
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('modalSaleDate');
+        if (dateInput) dateInput.value = today;
 
-      // Show modal
-      const modal = new bootstrap.Modal(document.getElementById('newSaleModal'));
-      modal.show();
+        // Set current user
+        const soldByInput = document.getElementById('modalSoldBy');
+        if (soldByInput) soldByInput.value = currentSessionUser || sessionStorage.getItem('userName') || 'SYSTEM';
+
+        // Load data
+        if (typeof loadModalCustomers === 'function') loadModalCustomers();
+        if (typeof loadModalInventory === 'function') loadModalInventory();
+      } catch (error) {
+        console.error('Error opening new sale modal:', error);
+        alert('Error opening sale form. Please refresh the page and try again.');
+      }
     }
 
     function loadModalCustomers() {
@@ -7183,16 +7203,24 @@
 
     // ==================== SALES DASHBOARD FILTER FUNCTIONS ====================
     function loadSalesDashboard() {
-      // Reload sales dashboard with current filters
-      applySalesFilter();
-      refreshSalesOverview();
+      try {
+        // Reload sales dashboard with current filters
+        if (typeof applySalesFilter === 'function') {
+          applySalesFilter();
+        }
+        if (typeof refreshSalesOverview === 'function') {
+          refreshSalesOverview();
+        }
+      } catch (error) {
+        console.error('Error loading sales dashboard:', error);
+        alert('Error refreshing sales data. Please try again.');
+      }
     }
 
     function applySalesFilter() {
       const startDate = document.getElementById('salesFilterStartDate').value;
       const endDate = document.getElementById('salesFilterEndDate').value;
       const customer = document.getElementById('salesFilterCustomer').value;
-      const payment = document.getElementById('salesFilterPayment').value;
 
       // Show loading
       document.getElementById('salesDashboardLoading').style.display = 'block';
@@ -7203,7 +7231,6 @@
       if (startDate) filters.startDate = startDate;
       if (endDate) filters.endDate = endDate;
       if (customer) filters.customerName = customer;
-      if (payment) filters.paymentMode = payment;
 
       // Load sales with filters
       google.script.run
