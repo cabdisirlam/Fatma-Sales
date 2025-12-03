@@ -7248,9 +7248,41 @@
     }
 
     function convertQuotationToSale(quotationId) {
-      if (confirm('Convert this quotation to a sale?')) {
-        alert('Convert quotation: ' + quotationId + ' - Coming soon!');
+      if (!quotationId) {
+        alert('Invalid quotation ID');
+        return;
       }
+
+      if (!confirm(`Convert quotation ${quotationId} to a sale?\n\nThis will create a new sale transaction from this quotation.`)) {
+        return;
+      }
+
+      // Show loading state
+      const btn = event.target.closest('button');
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+
+          if (result.success) {
+            alert(`Success! Quotation converted to sale.\nSale ID: ${result.saleId || 'N/A'}`);
+            // Refresh the quotations list
+            loadQuotationsModal();
+          } else {
+            alert('Failed to convert quotation: ' + (result.message || 'Unknown error'));
+          }
+        })
+        .withFailureHandler(function(error) {
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+          console.error('Error converting quotation:', error);
+          alert('Error converting quotation to sale: ' + error.message);
+        })
+        .convertQuotationToSale(quotationId);
     }
 
     function printQuotation(quotationId) {
