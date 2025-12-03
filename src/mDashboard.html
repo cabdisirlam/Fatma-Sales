@@ -7588,11 +7588,14 @@
         const isReturned = saleStatus === 'Returned' || fulfillStatus === 'Returned';
 
         let statusBadge = '<span class="badge bg-success">Completed</span>';
-        if (saleStatus === 'Returned' || fulfillStatus === 'Returned') statusBadge = '<span class="badge bg-warning text-dark">Returned</span>';
-        if (saleStatus === 'Cancelled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
-        if (fulfillStatus === 'Delivered') statusBadge = '<span class="badge bg-primary">Delivered</span>';
-        if (fulfillStatus === 'In Store') statusBadge = '<span class="badge bg-info text-dark">In Store</span>';
-        if (fulfillStatus === 'In Transit') statusBadge = '<span class="badge bg-secondary">In Transit</span>';
+        const effectiveStatus = (fulfillStatus || saleStatus || '').toString();
+        const lowered = effectiveStatus.toLowerCase();
+        if (lowered === 'returned') statusBadge = '<span class="badge bg-warning text-dark">Returned</span>';
+        else if (lowered === 'cancelled' || lowered === 'canceled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
+        else if (lowered === 'delivered') statusBadge = '<span class="badge bg-primary">Delivered</span>';
+        else if (lowered === 'in store') statusBadge = '<span class="badge bg-info text-dark">In Store</span>';
+        else if (lowered === 'in transit') statusBadge = '<span class="badge bg-secondary">In Transit</span>';
+        else if (effectiveStatus) statusBadge = `<span class="badge bg-light text-dark">${effectiveStatus}</span>`;
 
         const statusMenu = `
           <button class="btn btn-sm btn-outline-secondary status-modal-btn" data-id="${sale.Transaction_ID}" data-current="${fulfillStatus || saleStatus}" style="padding: 2px 10px; font-size: 12px; border-radius: 3px;">
