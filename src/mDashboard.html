@@ -3886,6 +3886,7 @@
         .withSuccessHandler(function(res) {
           if (res && res.success) {
             loadSalesHistory();
+            loadSalesDashboard();
           } else {
             alert(res && res.message ? res.message : 'Could not update status');
           }
@@ -7441,6 +7442,7 @@
             // Refresh lists
             loadQuotationsModal();
             if (typeof loadSalesHistory === 'function') loadSalesHistory();
+            if (typeof loadSalesDashboard === 'function') loadSalesDashboard();
           } else {
             showToast('danger', 'Conversion failed', result.message || 'Unknown error');
           }
