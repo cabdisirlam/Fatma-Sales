@@ -1226,9 +1226,16 @@ function setSaleFulfillmentStatus(transactionId, status, user) {
           continue;
         }
 
+        // Always update delivery status
         sheet.getRange(i + 1, statusCol + 1).setValue(status);
-        if (status === 'Returned' && saleStatusCol !== -1) {
-          sheet.getRange(i + 1, saleStatusCol + 1).setValue('Returned');
+
+        // Mirror status into primary Status column
+        if (saleStatusCol !== -1) {
+          if (status === 'Returned') {
+            sheet.getRange(i + 1, saleStatusCol + 1).setValue('Returned');
+          } else {
+            sheet.getRange(i + 1, saleStatusCol + 1).setValue(status);
+          }
         }
         updated++;
       }
