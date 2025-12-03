@@ -10,142 +10,160 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
   <style>
+    :root {
+      --primary-color: #4f46e5;
+      --primary-dark: #4338ca;
+      --secondary-color: #7c3aed;
+      --success-color: #10b981;
+      --danger-color: #ef4444;
+      --warning-color: #f59e0b;
+      --info-color: #3b82f6;
+
+      --background-color: #f8f9fa;
+      --card-background: #ffffff;
+      --text-color: #1f2937;
+      --text-light: #6b7280;
+      --text-lighter: #9ca3af;
+      --border-color: #e5e7eb;
+    }
+
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f6fa;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      font-size: 14px;
       padding: 20px;
     }
 
     .header-section {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
       color: white;
-      padding: 30px;
-      border-radius: 15px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 24px;
+      border-radius: 8px;
+      margin-bottom: 24px;
     }
 
     .header-section h2 {
       margin: 0;
-      font-size: 28px;
-      font-weight: 700;
-    }
-
-    .header-section p {
-      margin: 10px 0 0 0;
-      opacity: 0.9;
-    }
-
-    .card {
-      border: none;
-      border-radius: 15px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
-
-    .card-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-radius: 15px 15px 0 0 !important;
-      padding: 20px;
+      font-size: 1.5rem;
       font-weight: 600;
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-      padding: 10px 20px;
+    .header-section p {
+      margin: 4px 0 0 0;
+      opacity: 0.9;
+      font-size: 0.875rem;
+    }
+
+    .card {
+      border: 1px solid var(--border-color);
       border-radius: 8px;
-      font-weight: 500;
-      transition: all 0.3s ease;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      margin-bottom: 16px;
+      background: var(--card-background);
+    }
+
+    .card-header {
+      background-color: #f9fafb;
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 16px;
+      font-weight: 600;
+      color: var(--text-color);
+      border-radius: 8px 8px 0 0 !important;
+    }
+    
+    .card-body {
+        padding: 16px;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
     }
 
     .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
     }
 
     .table {
       margin: 0;
+      font-size: 0.875rem;
     }
 
     .table thead {
-      background: #f8f9fa;
+      background: #f9fafb;
     }
 
     .table th {
-      border-bottom: 2px solid #dee2e6;
+      border-bottom: 1px solid var(--border-color);
       font-weight: 600;
-      color: #2c3e50;
+      color: var(--text-light);
+      padding: 10px 12px;
     }
 
+    .table td {
+        padding: 10px 12px;
+        vertical-align: middle;
+    }
+    
     .badge {
-      padding: 6px 12px;
-      border-radius: 6px;
+      padding: 4px 8px;
+      border-radius: 4px;
       font-weight: 500;
+      font-size: 0.75rem;
     }
 
     .stat-card {
       background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 16px;
     }
 
     .stat-value {
-      font-size: 32px;
-      font-weight: 700;
-      color: #667eea;
-      margin: 10px 0;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--text-color);
     }
 
     .stat-label {
-      color: #7f8c8d;
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      color: var(--text-light);
+      font-size: 0.875rem;
     }
 
     .loading {
       text-align: center;
-      padding: 40px;
-      color: #7f8c8d;
+      padding: 32px;
+      color: var(--text-light);
     }
 
     .spinner-border {
-      width: 3rem;
-      height: 3rem;
-    }
-
-    .search-box {
-      margin-bottom: 20px;
+      width: 2rem;
+      height: 2rem;
     }
 
     .filter-section {
       background: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
     }
 
     .stock-low {
-      color: #e74c3c;
+      color: var(--warning-color);
       font-weight: 600;
     }
 
     .stock-ok {
-      color: #27ae60;
-      font-weight: 600;
+      color: var(--success-color);
     }
 
     .stock-out {
-      background-color: #e74c3c;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
+      color: var(--danger-color);
+      font-weight: 600;
     }
   </style>
 </head>
@@ -190,11 +208,6 @@
         <input type="text" class="form-control" id="searchInput" placeholder="Search by item name or ID...">
       </div>
       <div class="col-md-3">
-        <select class="form-select" id="categoryFilter">
-          <option value="">All Categories</option>
-        </select>
-      </div>
-      <div class="col-md-3">
         <select class="form-select" id="stockFilter">
           <option value="">All Stock Levels</option>
           <option value="low">Low Stock</option>
@@ -233,7 +246,6 @@
               <tr>
                 <th>Item ID</th>
                 <th>Item Name</th>
-                <th>Category</th>
                 <th>Stock Qty</th>
                 <th>Cost Price</th>
                 <th>Reorder Level</th>
@@ -364,13 +376,10 @@
     // Load inventory on page load
     document.addEventListener('DOMContentLoaded', function() {
       loadInventory();
-      loadCategories();
-      loadSuppliers();
     });
 
     // Search functionality
     document.getElementById('searchInput').addEventListener('keyup', filterInventory);
-    document.getElementById('categoryFilter').addEventListener('change', filterInventory);
     document.getElementById('stockFilter').addEventListener('change', filterInventory);
 
     let inventoryData = [];
@@ -454,7 +463,6 @@
         row.innerHTML = `
           <td>${item.Item_ID || ''}</td>
           <td><strong>${item.Item_Name || ''}</strong></td>
-          <td>${item.Category || ''}</td>
           <td class="${stockStatus}">${stockQty}</td>
           <td>$${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
           <td>${item.Reorder_Level || 10}</td>
@@ -499,65 +507,16 @@
       document.getElementById('totalValue').textContent = '$' + totalValue.toFixed(2);
     }
 
-    function loadCategories() {
-      google.script.run
-        .withSuccessHandler(function(data) {
-          const categoryFilter = document.getElementById('categoryFilter');
-          const categories = [...new Set(data.map(item => item.Category).filter(cat => cat))];
 
-          categories.forEach(function(category) {
-            const option = document.createElement('option');
-            option.value = category;
-            option.textContent = category;
-            categoryFilter.appendChild(option);
-          });
-        })
-        .withFailureHandler(function(error) {
-          console.error('Error loading categories:', error);
-        })
-        .getInventory({});
-    }
-
-    function loadSuppliers() {
-      google.script.run
-        .withSuccessHandler(function(data) {
-          const supplierSelect = document.getElementById('supplierSelect');
-          const editSupplierSelect = document.getElementById('editSupplier');
-
-          // Filter only active suppliers
-          const activeSuppliers = data.filter(s => s.Status === 'Active');
-
-          activeSuppliers.forEach(function(supplier) {
-            // Add to Add Product modal dropdown
-            const option1 = document.createElement('option');
-            option1.value = supplier.Supplier_ID;
-            option1.textContent = supplier.Supplier_Name + ' (' + supplier.Supplier_ID + ')';
-            supplierSelect.appendChild(option1);
-
-            // Add to Edit Product modal dropdown
-            const option2 = document.createElement('option');
-            option2.value = supplier.Supplier_ID;
-            option2.textContent = supplier.Supplier_Name + ' (' + supplier.Supplier_ID + ')';
-            editSupplierSelect.appendChild(option2);
-          });
-        })
-        .withFailureHandler(function(error) {
-          console.error('Error loading suppliers:', error);
-        })
-        .getSuppliers({Status: 'Active'});
-    }
 
     function filterInventory() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const categoryFilter = document.getElementById('categoryFilter').value;
       const stockFilter = document.getElementById('stockFilter').value;
 
       const filtered = inventoryData.filter(function(item) {
         const matchesSearch = !searchTerm ||
           (item.Item_Name && item.Item_Name.toLowerCase().includes(searchTerm)) ||
           (item.Item_ID && item.Item_ID.toLowerCase().includes(searchTerm));
-
-        const matchesCategory = !categoryFilter || item.Category === categoryFilter;
 
         let matchesStock = true;
         if (stockFilter === 'low') {
@@ -569,7 +528,7 @@
           matchesStock = getStockQty(item) > (item.Reorder_Level || 10);
         }
 
-        return matchesSearch && matchesCategory && matchesStock;
+        return matchesSearch && matchesStock;
       });
 
       displayInventory(filtered);
