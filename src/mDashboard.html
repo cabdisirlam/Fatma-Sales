@@ -7351,7 +7351,10 @@
       const tbody = document.getElementById('quotationsModalBody');
       const noDataDiv = document.getElementById('quotationsModalNoData');
 
-      if (!quotations || quotations.length === 0) {
+      // Hide already converted quotations from this list
+      const visible = (quotations || []).filter(q => (q.Status || '').toString().toLowerCase() !== 'converted');
+
+      if (!visible || visible.length === 0) {
         tbody.innerHTML = '';
         noDataDiv.style.display = 'block';
         return;
@@ -7360,7 +7363,7 @@
       noDataDiv.style.display = 'none';
       tbody.innerHTML = '';
 
-      quotations.forEach(quote => {
+      visible.forEach(quote => {
         const row = document.createElement('tr');
         const date = quote.DateTime ? new Date(quote.DateTime).toLocaleDateString() : '-';
         const total = parseFloat(quote.Total_Amount || 0);
