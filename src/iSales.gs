@@ -1224,10 +1224,19 @@ function setSaleFulfillmentStatus(transactionId, status, user) {
     let updated = 0;
     let alreadyReturned = false;
     const targetId = (transactionId || '').toString().trim().toUpperCase();
+    const targetNum = parseFloat(transactionId);
+
+    const idsMatch = (rowVal) => {
+      const rowStr = (rowVal || '').toString().trim().toUpperCase();
+      if (rowStr === targetId) return true;
+      const rowNum = parseFloat(rowVal);
+      if (!isNaN(rowNum) && !isNaN(targetNum) && rowNum === targetNum) return true;
+      return false;
+    };
 
     for (let i = 1; i < data.length; i++) {
-      const rowId = (data[i][idCol] || '').toString().trim().toUpperCase();
-      if (rowId === targetId) {
+      const rowVal = data[i][idCol];
+      if (idsMatch(rowVal)) {
         const currentDelivery = data[i][statusCol];
         const currentSaleStatus = saleStatusCol !== -1 ? data[i][saleStatusCol] : '';
 
