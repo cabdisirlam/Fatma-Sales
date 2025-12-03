@@ -1995,9 +1995,6 @@
                   <button class="btn btn-sm" type="button" onclick="refreshModalSaleData()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; border-radius: 8px; font-weight: 500;">
                     <i class="bi bi-arrow-clockwise"></i> Refresh
                   </button>
-                  <button class="btn btn-sm btn-outline-primary" type="button" onclick="showSection('customers')" style="border-radius: 8px;">
-                    <i class="bi bi-plus-circle"></i> Add Customer
-                  </button>
                 </div>
                 <select class="form-select" id="modalSaleCustomer" onchange="onModalCustomerSelect(this.value)" required style="border-radius: 8px;">
                   <option value="">-- Select Customer --</option>
@@ -6914,7 +6911,7 @@
 
         // Set current user
         const soldByInput = document.getElementById('modalSoldBy');
-        if (soldByInput) soldByInput.value = currentSessionUser || sessionStorage.getItem('userName') || 'SYSTEM';
+        if (soldByInput) soldByInput.value = sessionStorage.getItem('userName') || 'SYSTEM';
 
         // Load data
         if (typeof loadModalCustomers === 'function') loadModalCustomers();
