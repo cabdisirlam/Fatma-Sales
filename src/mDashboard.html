@@ -7352,7 +7352,11 @@
       const noDataDiv = document.getElementById('quotationsModalNoData');
 
       // Hide already converted quotations from this list
-      const visible = (quotations || []).filter(q => (q.Status || '').toString().toLowerCase() !== 'converted');
+      const visible = (quotations || []).filter(q => {
+        const status = (q.Status || '').toString().toLowerCase();
+        const convertedId = (q.Converted_Sale_ID || '').toString().trim();
+        return status !== 'converted' && convertedId === '';
+      });
 
       if (!visible || visible.length === 0) {
         tbody.innerHTML = '';

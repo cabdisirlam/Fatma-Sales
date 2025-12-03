@@ -874,10 +874,13 @@ function updateQuotationStatus(quotationId, status, convertedSaleId, user) {
       throw new Error('Quotations sheet is missing required columns');
     }
 
-    // Update all rows with this quotation ID
+    const targetId = (quotationId || '').toString().trim().toUpperCase();
+
+    // Update all rows with this quotation ID (case/trim/number safe)
     let updated = false;
     for (let i = 1; i < data.length; i++) {
-      if (data[i][quotIdCol] === quotationId) {
+      const rowId = (data[i][quotIdCol] || '').toString().trim().toUpperCase();
+      if (rowId === targetId) {
         sheet.getRange(i + 1, statusCol + 1).setValue(status);
         if (convertedSaleId && convertedCol !== -1) {
           sheet.getRange(i + 1, convertedCol + 1).setValue(convertedSaleId);
