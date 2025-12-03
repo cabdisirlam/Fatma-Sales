@@ -2881,7 +2881,8 @@
       }).getCustomerDetails(customerId);
     }
 
-    function loadSalesHistory() {
+    // Legacy sales history loader (kept for reference; main implementation below)
+    function loadSalesHistoryLegacy() {
         const tableBody = document.getElementById('salesHistoryBody');
         tableBody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading...</td></tr>';
 
