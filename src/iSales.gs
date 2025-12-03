@@ -1244,6 +1244,16 @@ function setSaleFulfillmentStatus(transactionId, status, user) {
           const mirrored = status === 'Returned' ? 'Returned' : status;
           sheet.getRange(i + 1, saleStatusCol + 1).setValue(mirrored);
         }
+
+        // Apply red styling in sheet for returned rows; clear for others
+        const rowRange = sheet.getRange(i + 1, 1, 1, headers.length);
+        if (status === 'Returned') {
+          rowRange.setBackground('#fdecea');
+          rowRange.setFontColor('#c0392b');
+        } else {
+          rowRange.setBackground(null);
+          rowRange.setFontColor(null);
+        }
         updated++;
       }
     }
