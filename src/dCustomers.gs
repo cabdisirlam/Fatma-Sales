@@ -335,14 +335,13 @@ function deleteCustomer(customerId, user) {
 function updateCustomerBalance(customerId, amountChange, user) {
   try {
     const customer = getCustomerById(customerId);
-    const startingBalance = Math.max(0, parseFloat(customer.Current_Balance) || 0);
+    const startingBalance = parseFloat(customer.Current_Balance) || 0;
     const delta = parseFloat(amountChange) || 0;
     let newBalance = startingBalance + delta;
 
-    // Do not allow negative balances; overpayments cap at zero
-    if (newBalance < 0) {
-      newBalance = 0;
-    }
+    // Allow negative balances - these represent credits owed to customer
+    // Positive balance = customer owes us (debt)
+    // Negative balance = we owe customer (credit/overpayment)
 
     updateRowById('Customers', 'Customer_ID', customerId, {
       Current_Balance: newBalance

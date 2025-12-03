@@ -1369,38 +1369,55 @@ function processSaleReturn(saleId, items, reason, user) {
       }
     }
 
-    // Record refund in Financials
-    const refundTxnId = generateId('Financials', 'Transaction_ID', 'REF');
-    const financialSheet = getSheet('Financials');
+    // ✅ FIX: Only record refund in Financials if revenue was actually recorded
+    // Check if this sale had payments recorded (revenue recognition)
+    const financials = sheetToObjects('Financials');
+    const salePayments = financials.filter(f =>
+      f.Type === 'Sale_Payment' &&
+      (f.Receipt_No === saleId || f.Reference === saleId)
+    );
 
-    // âœ… FIX: Canonicalize account name for consistency with financial statements
-    const canonicalAccount = canonicalizeAccountName(sale.Payment_Mode);
+    const totalPaid = salePayments.reduce((sum, p) => sum + (parseFloat(p.Amount) || 0), 0);
+    const hasRecordedRevenue = totalPaid > 0;
 
-    const refundRow = [
-      refundTxnId,
-      new Date(),
-      'Sale_Refund',
-      sale.Customer_ID || '',
-      'Sales',
-      canonicalAccount, // âœ… FIX: Use canonical account name
-      'Refund for sale ' + saleId + ': ' + reason,
-      parseFloat(refundAmount),
-      parseFloat(refundAmount), // Debit (money out)
-      0, // Credit
-      0, // Balance
-      canonicalAccount, // âœ… FIX: Payment mode also canonicalized
-      sale.Customer_Name,
-      saleId, // Receipt_No
-      saleId, // Reference
-      'Approved',
-      user,
-      user
-    ];
+    // Only create Sale_Refund financial transaction if revenue was recorded
+    if (hasRecordedRevenue) {
+      const refundTxnId = generateId('Financials', 'Transaction_ID', 'REF');
+      const financialSheet = getSheet('Financials');
 
-    financialSheet.appendRow(refundRow);
+      // âœ… FIX: Canonicalize account name for consistency with financial statements
+      const canonicalAccount = canonicalizeAccountName(sale.Payment_Mode);
 
-    // Update account balance (decrease)
-    updateAccountBalance(canonicalAccount, -parseFloat(refundAmount), user); // âœ… FIX: Use canonical account
+      const refundRow = [
+        refundTxnId,
+        new Date(),
+        'Sale_Refund',
+        sale.Customer_ID || '',
+        'Sales',
+        canonicalAccount, // âœ… FIX: Use canonical account name
+        'Refund for sale ' + saleId + ': ' + reason,
+        parseFloat(refundAmount),
+        parseFloat(refundAmount), // Debit (money out)
+        0, // Credit
+        0, // Balance
+        canonicalAccount, // âœ… FIX: Payment mode also canonicalized
+        sale.Customer_Name,
+        saleId, // Receipt_No
+        saleId, // Reference
+        'Approved',
+        user,
+        user
+      ];
+
+      financialSheet.appendRow(refundRow);
+
+      // Update account balance (decrease)
+      updateAccountBalance(canonicalAccount, -parseFloat(refundAmount), user); // âœ… FIX: Use canonical account
+
+      Logger.log('Sale_Refund recorded in Financials: ' + refundAmount + ' (revenue was previously recorded)');
+    } else {
+      Logger.log('Sale_Refund NOT recorded in Financials (no revenue was recorded for this credit sale)');
+    }
 
     // Update customer balance if customer is not walk-in
     // For credit sales, reduce customer debt (they owe less now)
