@@ -1488,19 +1488,9 @@
               <label for="filterEndDate" class="form-label fw-bold">End Date</label>
               <input type="date" class="form-control" id="filterEndDate" style="border-radius: 8px;">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-5">
               <label for="filterCustomerName" class="form-label fw-bold">Customer Name</label>
               <input type="text" class="form-control" id="filterCustomerName" placeholder="Search by customer name..." style="border-radius: 8px;">
-            </div>
-            <div class="col-md-2">
-              <label for="filterPaymentMode" class="form-label fw-bold">Payment Mode</label>
-              <select class="form-select" id="filterPaymentMode" style="border-radius: 8px;">
-                <option value="">All Payments</option>
-                <option value="Cash">Cash</option>
-                <option value="M-Pesa">M-Pesa</option>
-                <option value="Credit">Credit</option>
-                <option value="Bank">Bank</option>
-              </select>
             </div>
             <div class="col-md-1 d-flex align-items-end">
               <button class="btn w-100" onclick="loadSalesHistory()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; border-radius: 8px; font-weight: 500; padding: 10px;">
@@ -1535,14 +1525,13 @@
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Date & Time</th>
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Customer</th>
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Items</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Payment Mode</th>
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Total</th>
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Status</th>
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: center;">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="salesHistoryBody">
-                    <tr><td colspan="8" class="text-center text-muted py-4">Loading sales history...</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4">Loading sales history...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -2849,7 +2838,7 @@
                         <td>${sale.Transaction_ID}</td>
                         <td>${new Date(sale.DateTime).toLocaleDateString()} ${new Date(sale.DateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
                         <td>${sale.Customer_Name || 'Walk-in'}</td>
-                        <td><span class="badge bg-secondary">${sale.Payment_Mode}</span></td>
+                        <td><span class="badge bg-info">${sale.itemCount || 0} item(s)</span></td>
                         <td class="text-end fw-bold">${formatCurrency(sale.Grand_Total)}</td>
                         <td>${statusBadge}</td>
                         <td class="text-center">
