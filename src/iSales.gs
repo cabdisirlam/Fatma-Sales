@@ -657,13 +657,24 @@ function getQuotationById(quotationId) {
     const first = quotRows[0];
 
     // Collect items
-    const items = quotRows.map(row => ({
-      Item_ID: pick(row, ['Item_ID', 'Item ID', 'Item']),
-      Item_Name: pick(row, ['Item_Name', 'Item Name', 'Item']),
-      Qty: parseNumber(pick(row, ['Qty', 'Quantity'])),
-      Unit_Price: parseNumber(pick(row, ['Unit_Price', 'Unit Price', 'Price'])),
-      Line_Total: parseNumber(pick(row, ['Line_Total', 'Line Total', 'Amount', 'Total']))
-    }));
+    const items = quotRows.map(row => {
+      const itemId = pick(row, ['Item_ID', 'Item ID', 'Item']);
+      const unitPrice = parseNumber(pick(row, ['Unit_Price', 'Unit Price', 'Price']));
+      const qty = parseNumber(pick(row, ['Qty', 'Quantity']));
+      const lineTotal = parseNumber(pick(row, ['Line_Total', 'Line Total', 'Amount', 'Total']));
+      const isService = (pick(row, ['Type']) || '').toString().trim().toLowerCase() === 'service';
+      const isManual = row.Is_Manual === true || row['Is Manual'] === true || isService || (itemId && itemId.toString().startsWith('MANUAL'));
+
+      return {
+        Item_ID: itemId,
+        Item_Name: pick(row, ['Item_Name', 'Item Name', 'Item']),
+        Qty: qty,
+        Unit_Price: unitPrice,
+        Line_Total: lineTotal,
+        Is_Manual: isManual,
+        Type: isService ? 'Service' : (pick(row, ['Type']) || '')
+      };
+    });
 
     const subtotalFallback = items.reduce((s, it) => s + (parseFloat(it.Line_Total) || 0), 0);
     const rawSubtotal = parseNumber(pick(first, ['Subtotal']));
@@ -716,35 +727,76 @@ function convertQuotationToSale(quotationId, paymentMode, user) {
       throw new Error('Quotation not found: ' + quotationId);
     }
 
-    if (quotation.Status !== 'Pending') {
-      throw new Error('Quotation already processed (Status: ' + quotation.Status + ')');
+    const rawStatus = (quotation.Status || 'Pending').toString().trim();
+    const normalizedStatus = rawStatus.toLowerCase();
+
+    // Allow Pending/Accepted/blank, block already-processed statuses
+    const blockedStatuses = ['converted', 'rejected', 'cancelled', 'canceled'];
+    if (blockedStatuses.includes(normalizedStatus)) {
+      throw new Error('Quotation already processed (Status: ' + rawStatus + ')');
     }
 
-    // Check if quotation is still valid
-    const validUntil = new Date(quotation.Valid_Until);
-    if (validUntil < new Date()) {
-      throw new Error('Quotation has expired on ' + validUntil.toDateString());
+    // Check if quotation is still valid (only when a valid date is provided)
+    if (quotation.Valid_Until) {
+      const validUntil = new Date(quotation.Valid_Until);
+      if (!isNaN(validUntil.getTime()) && validUntil < new Date()) {
+        throw new Error('Quotation has expired on ' + validUntil.toDateString());
+      }
     }
+
+    // Normalize/validate items
+    const safeItems = (quotation.items || []).map((item, idx) => {
+      const qty = parseFloat(item.Qty) || 0;
+      const price = parseFloat(item.Unit_Price || item.Price || 0);
+      const isManual = item.Is_Manual === true ||
+        (item.Item_ID && item.Item_ID.toString().startsWith('MANUAL')) ||
+        (item.Type && item.Type.toString().toLowerCase() === 'service') ||
+        !item.Item_ID;
+
+      if (qty <= 0) {
+        throw new Error('Invalid quantity for item ' + (item.Item_Name || item.Item_ID || ('#' + (idx + 1))));
+      }
+
+      const itemId = isManual
+        ? (item.Item_ID && item.Item_ID.toString().startsWith('MANUAL') ? item.Item_ID : 'MANUAL-' + quotationId + '-' + (idx + 1))
+        : item.Item_ID;
+
+      return {
+        Item_ID: itemId,
+        Item_Name: item.Item_Name || item.Name || 'Item ' + (idx + 1),
+        Qty: qty,
+        Unit_Price: price,
+        Line_Total: qty * price,
+        Is_Manual: isManual,
+        Type: item.Type || (isManual ? 'Service' : '')
+      };
+    });
+
+    if (safeItems.length === 0) {
+      throw new Error('Quotation has no line items to convert');
+    }
+
+    const actor = user || quotation.Created_By || 'SYSTEM';
 
     // Create sale from quotation
     const saleData = {
-      items: quotation.items,
-      Customer_ID: quotation.Customer_ID,
+      items: safeItems,
+      Customer_ID: quotation.Customer_ID || 'WALK-IN',
       Customer_Name: quotation.Customer_Name,
       Location: quotation.Location,
       KRA_PIN: quotation.KRA_PIN,
       Delivery_Charge: quotation.Delivery_Charge,
       Discount: quotation.Discount,
-      Payment_Mode: paymentMode,
-      User: user
+      Payment_Mode: paymentMode || quotation.Payment_Mode || 'Credit',
+      User: actor
     };
 
     const saleResult = createSale(saleData);
 
     // Update quotation status in Quotations sheet
-    updateQuotationStatus(quotationId, 'Converted', saleResult.transactionId, user);
+    updateQuotationStatus(quotationId, 'Converted', saleResult.transactionId, actor);
 
-    logAudit(user, 'Quotations', 'Convert', 'Converted quotation ' + quotationId + ' to sale ' + saleResult.transactionId, '', '', '');
+    logAudit(actor, 'Quotations', 'Convert', 'Converted quotation ' + quotationId + ' to sale ' + saleResult.transactionId, '', '', '');
 
     return {
       success: true,
@@ -1135,7 +1187,7 @@ function updateSalePaymentProgress(transactionId, user) {
  */
 function setSaleFulfillmentStatus(transactionId, status, user) {
   try {
-    const allowed = ['Pending Release', 'Ready for Pickup', 'Delivered'];
+    const allowed = ['Pending Release', 'Ready for Pickup', 'Delivered', 'In Store', 'Returned'];
     if (!transactionId) return { success: false, message: 'Transaction ID is required' };
     if (!allowed.includes(status)) return { success: false, message: 'Invalid status' };
 
@@ -1144,17 +1196,35 @@ function setSaleFulfillmentStatus(transactionId, status, user) {
     const headers = data[0];
     const idCol = headers.indexOf('Transaction_ID');
     const statusCol = headers.indexOf('Delivery_Status');
+    const saleStatusCol = headers.indexOf('Status');
 
     if (idCol === -1 || statusCol === -1) {
       return { success: false, message: 'Sales sheet missing Transaction_ID or Delivery_Status column' };
     }
 
     let updated = 0;
+    let alreadyReturned = false;
+
     for (let i = 1; i < data.length; i++) {
       if (data[i][idCol] === transactionId) {
+        const currentDelivery = data[i][statusCol];
+        const currentSaleStatus = saleStatusCol !== -1 ? data[i][saleStatusCol] : '';
+
+        if (status === 'Returned' && (currentDelivery === 'Returned' || currentSaleStatus === 'Returned')) {
+          alreadyReturned = true;
+          continue;
+        }
+
         sheet.getRange(i + 1, statusCol + 1).setValue(status);
+        if (status === 'Returned' && saleStatusCol !== -1) {
+          sheet.getRange(i + 1, saleStatusCol + 1).setValue('Returned');
+        }
         updated++;
       }
+    }
+
+    if (alreadyReturned && updated === 0) {
+      return { success: false, message: 'Sale already marked as Returned' };
     }
 
     if (updated === 0) {

@@ -43,6 +43,16 @@
       line-height: 1.6;
     }
 
+    /* Stacked modals (e.g., convert inside quotations modal) */
+    .modal.modal-foreground { z-index: 2000; }
+    .modal-backdrop.modal-foreground-backdrop { z-index: 1995; }
+
+    /* Returned sales rows */
+    .returned-row td {
+      text-decoration: line-through;
+      opacity: 0.65;
+    }
+
     /* ==================== SIDEBAR ==================== */
     .sidebar {
       position: fixed;
@@ -1517,11 +1527,11 @@
                 <table class="table table-hover align-middle mobile-stack-table" style="margin: 0;">
                   <thead style="background: #f8f9fa;">
                     <tr>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Transaction ID</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Date & Time</th>
+                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Transaction</th>
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Customer</th>
-                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Items</th>
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Total</th>
+                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Paid</th>
+                      <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: right;">Balance</th>
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Status</th>
                       <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: center;">Actions</th>
                     </tr>
@@ -2054,6 +2064,32 @@
               </div>
             </div>
 
+            <div style="border: 2px dashed #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 20px; background: #f8f9fa;">
+              <div style="margin-bottom: 10px;">
+                <strong style="color: #2c3e50;"><i class="bi bi-wrench-adjustable-circle"></i> Service / Manual Item</strong>
+                <small class="text-muted ms-2">Use for services or non-stock items</small>
+              </div>
+              <div class="row g-2 align-items-end">
+                <div class="col-md-5">
+                  <label class="form-label small mb-1" style="color: #64748b;">Service Name</label>
+                  <input type="text" class="form-control form-control-sm" id="modalServiceName" placeholder="e.g. Installation service" style="border-radius: 6px;">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small mb-1" style="color: #64748b;">Qty</label>
+                  <input type="number" class="form-control form-control-sm" id="modalServiceQty" min="1" step="1" placeholder="1" style="border-radius: 6px;">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small mb-1" style="color: #64748b;">Price</label>
+                  <input type="number" class="form-control form-control-sm" id="modalServicePrice" min="0" step="0.01" placeholder="0.00" style="border-radius: 6px;">
+                </div>
+                <div class="col-md-2 d-grid">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addModalServiceItem()" style="border-radius: 6px; font-weight: 500;">
+                    <i class="bi bi-plus-circle"></i> Add Service
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div class="table-responsive" style="border: 1px solid #e2e8f0; border-radius: 12px; max-height: 250px; overflow-y: auto; background: white; margin-bottom: 20px;">
               <table class="table table-sm table-striped mb-0">
                 <thead style="background: #f8f9fa; position: sticky; top: 0; z-index: 10;">
@@ -2139,7 +2175,7 @@
             <select class="form-select" id="convertPaymentMode" required>
               <option value="Cash">Cash</option>
               <option value="M-Pesa">M-Pesa</option>
-              <option value="Credit">Credit</option>
+              <option value="Credit" selected>Credit</option>
               <option value="Bank">Bank Transfer</option>
             </select>
           </div>
@@ -3787,36 +3823,48 @@
             return;
           }
 
-      tbody.innerHTML = rows.map(function(row, idx) {
-          const isReturned = row.Status === 'Returned' || row.Status === 'Cancelled';
-          const balance = Math.max(0, parseFloat(row.Balance || (row.Grand_Total - (row.Total_Paid || 0)) || 0));
-          const paid = parseFloat(row.Total_Paid) || 0;
-          const grand = parseFloat(row.Grand_Total) || 0;
-          const fulfillStatus = row.Delivery_Status || 'Pending Release';
-            
-            // 1. Status Badge
-            let statusBadge = '<span class="badge bg-success">Completed</span>';
-            if (row.Status === 'Returned') statusBadge = '<span class="badge bg-warning text-dark">Returned</span>';
-            if (row.Status === 'Cancelled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
+          tbody.innerHTML = rows.map(function(row, idx) {
+            const saleId = row.Transaction_ID;
+            const isReturned = row.Status === 'Returned' || row.Status === 'Cancelled' || row.Delivery_Status === 'Returned';
+            const balance = Math.max(0, parseFloat(row.Balance || (row.Grand_Total - (row.Total_Paid || 0)) || 0));
+            const paid = parseFloat(row.Total_Paid) || 0;
+            const grand = parseFloat(row.Grand_Total) || 0;
+            const fulfillStatus = row.Delivery_Status || 'Pending Release';
+            const saleStatus = row.Status || 'Completed';
+            const rowClass = isReturned ? 'returned-row' : '';
 
-            // Fulfillment chips
-            // 2. Print Button (Thermal Printer Ready)
+            // Status badge
+            let statusBadge = '<span class="badge bg-success">Completed</span>';
+            if (saleStatus === 'Returned' || fulfillStatus === 'Returned') statusBadge = '<span class="badge bg-warning text-dark">Returned</span>';
+            if (saleStatus === 'Cancelled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
+            if (fulfillStatus === 'Delivered') statusBadge = '<span class="badge bg-primary">Delivered</span>';
+            if (fulfillStatus === 'In Store') statusBadge = '<span class="badge bg-info text-dark">In Store</span>';
+
             const printBtn = `
-              <button class="btn btn-sm btn-outline-dark me-1" onclick="printDocument('${row.Transaction_ID}', 'Sale')" title="Print Receipt">
+              <button class="btn btn-sm btn-outline-dark me-1" onclick="printDocument('${saleId}', 'Sale')" title="Print Receipt">
                 <i class="bi bi-printer"></i>
               </button>`;
-            
-            // 3. Return Button (Only visible if not already returned)
-            const returnBtn = !isReturned 
-              ? `<button class="btn btn-sm btn-outline-danger" onclick="initiateReturn('${row.Transaction_ID}')" title="Return Items">
-                   <i class="bi bi-arrow-return-left"></i>
-                 </button>` 
-              : '';
+
+            const statusMenu = isReturned ? `
+              <span class="badge bg-secondary">No actions</span>
+            ` : `
+              <div class="btn-group">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                  Status
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><button class="dropdown-item" onclick="changeSaleStatus('${saleId}', 'Delivered')">Delivered</button></li>
+                  <li><button class="dropdown-item" onclick="changeSaleStatus('${saleId}', 'In Store')">In Store</button></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><button class="dropdown-item text-danger" onclick="changeSaleStatus('${saleId}', 'Returned')">Returned</button></li>
+                </ul>
+              </div>
+            `;
 
             return `
-              <tr>
-                <td>${idx + 1}</td>
-                <td><strong>${row.Customer_Name || 'Walk-in'}</strong><br><small class="text-muted">${row.Transaction_ID}</small></td>
+              <tr class="${rowClass}">
+                <td><strong>${saleId}</strong><br><small class="text-muted">${row.DateTime || ''}</small></td>
+                <td>${row.Customer_Name || 'Walk-in'}</td>
                 <td class="text-end">${formatCurrency(grand)}</td>
                 <td class="text-end">${formatCurrency(paid)}</td>
                 <td class="text-end ${balance > 0 ? 'text-danger' : ''}">${formatCurrency(balance)}</td>
@@ -3824,7 +3872,7 @@
                 <td>
                   <div class="d-flex justify-content-start flex-wrap gap-1">
                     ${printBtn}
-                    ${returnBtn}
+                    ${statusMenu}
                   </div>
                 </td>
               </tr>
@@ -3849,6 +3897,31 @@
           alert('Error updating status: ' + err.message);
         })
         .setSaleFulfillmentStatus(transactionId, status, sessionStorage.getItem('userName') || 'SYSTEM');
+    }
+
+    function changeSaleStatus(transactionId, status) {
+      if (!transactionId || !status) return;
+
+      let message = `Update status to ${status}?`;
+      if (status === 'Returned') {
+        message = 'Mark this sale as Returned? This will hide it from active sales and block further returns.';
+      }
+      if (!confirm(message)) return;
+
+      const user = sessionStorage.getItem('userName') || 'SYSTEM';
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success) {
+            loadSalesHistory();
+          } else {
+            alert(res && res.message ? res.message : 'Could not update status');
+          }
+        })
+        .withFailureHandler(function(err) {
+          alert('Error updating status: ' + err.message);
+        })
+        .setSaleFulfillmentStatus(transactionId, status, user);
     }
 
     // Print sale receipt
@@ -7007,12 +7080,14 @@
           select.innerHTML = '<option value="">-- Choose Product --</option>';
           modalInventoryData.forEach(item => {
             const stockQty = item.Current_Qty || item.Stock_Qty || 0;
-            if (stockQty > 0) {
+            const isService = (item.Type || '').toString().toLowerCase() === 'service';
+            if (stockQty > 0 || isService) {
               const option = document.createElement('option');
               option.value = item.Item_ID;
               option.textContent = `${item.Item_Name} - Ksh ${item.Selling_Price} (Stock: ${stockQty})`;
               option.dataset.price = item.Selling_Price;
               option.dataset.name = item.Item_Name;
+              option.dataset.type = item.Type || '';
               select.appendChild(option);
             }
           });
@@ -7079,6 +7154,42 @@
       document.getElementById('modalSalePrice').value = '';
     }
 
+    function addModalServiceItem() {
+      const name = (document.getElementById('modalServiceName').value || '').trim();
+      const qtyInput = parseFloat(document.getElementById('modalServiceQty').value) || 0;
+      const qty = Math.max(1, Math.floor(qtyInput));
+      const price = parseFloat(document.getElementById('modalServicePrice').value) || 0;
+
+      if (!name) {
+        showModalAlert('Enter a service name', 'warning');
+        return;
+      }
+      if (qty <= 0) {
+        showModalAlert('Enter a valid quantity for the service', 'warning');
+        return;
+      }
+      if (price < 0) {
+        showModalAlert('Enter a valid price for the service', 'warning');
+        return;
+      }
+
+      const serviceId = 'SERVICE-' + Date.now() + '-' + modalCartItems.length;
+      modalCartItems.push({
+        Item_ID: serviceId,
+        Item_Name: name,
+        Qty: qty,
+        Unit_Price: price,
+        Is_Manual: true,
+        Type: 'Service'
+      });
+
+      renderModalCart();
+
+      document.getElementById('modalServiceName').value = '';
+      document.getElementById('modalServiceQty').value = '';
+      document.getElementById('modalServicePrice').value = '';
+    }
+
     function removeModalCartItem(index) {
       modalCartItems.splice(index, 1);
       renderModalCart();
@@ -7106,10 +7217,11 @@
       modalCartItems.forEach((item, index) => {
         const itemTotal = item.Qty * item.Unit_Price;
         subtotal += itemTotal;
+        const label = item.Is_Manual ? '<span class="badge bg-secondary me-2">Service</span>' : '';
 
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>${item.Item_Name}</td>
+          <td>${label}${item.Item_Name}</td>
           <td>${item.Qty}</td>
           <td>Ksh ${item.Unit_Price.toFixed(2)}</td>
           <td>Ksh ${itemTotal.toFixed(2)}</td>
@@ -7293,35 +7405,12 @@
         return;
       }
 
-      // Set quotation ID in modal
-      document.getElementById('convertQuotationId').value = quotationId;
-      document.getElementById('convertQuotationIdDisplay').textContent = quotationId;
+      const user = sessionStorage.getItem('userName') || 'SYSTEM';
+      const paymentMode = 'Credit'; // default to manual payment capture later
 
-      // Set current user
-      const currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
-      document.getElementById('convertUser').value = currentUser;
-
-      // Reset payment mode to default
-      document.getElementById('convertPaymentMode').value = 'Cash';
-
-      // Show modal
-      const modal = new bootstrap.Modal(document.getElementById('convertQuotationModal'));
-      modal.show();
-    }
-
-    function confirmConvertQuotation() {
-      const quotationId = document.getElementById('convertQuotationId').value;
-      const paymentMode = document.getElementById('convertPaymentMode').value;
-      const user = document.getElementById('convertUser').value;
-
-      if (!quotationId || !paymentMode || !user) {
-        alert('Please fill in all required fields');
+      if (!confirm(`You are converting quotation ${quotationId} to a sale.\n\nProceed?`)) {
         return;
       }
-
-      // Close modal
-      const modal = bootstrap.Modal.getInstance(document.getElementById('convertQuotationModal'));
-      modal.hide();
 
       // Show loading overlay
       const loadingDiv = document.createElement('div');
