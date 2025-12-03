@@ -793,8 +793,15 @@ function convertQuotationToSale(quotationId, paymentMode, user) {
 
     const saleResult = createSale(saleData);
 
-    // Update quotation status in Quotations sheet
-    updateQuotationStatus(quotationId, 'Converted', saleResult.transactionId, actor);
+    // Update quotation status in Quotations sheet (best-effort)
+    let statusUpdated = false;
+    try {
+      updateQuotationStatus(quotationId, 'Converted', saleResult.transactionId, actor);
+      statusUpdated = true;
+    } catch (statusErr) {
+      logError('convertQuotationToSale.statusUpdate', statusErr);
+      // Do not throw here; sale already created. Caller will show warning.
+    }
 
     logAudit(actor, 'Quotations', 'Convert', 'Converted quotation ' + quotationId + ' to sale ' + saleResult.transactionId, '', '', '');
 
@@ -802,7 +809,8 @@ function convertQuotationToSale(quotationId, paymentMode, user) {
       success: true,
       saleId: saleResult.transactionId,
       quotationId: quotationId,
-      message: 'Quotation converted to sale successfully'
+      statusUpdated: statusUpdated,
+      message: statusUpdated ? 'Quotation converted to sale successfully' : 'Sale created; quotation status update failed'
     };
 
   } catch (error) {

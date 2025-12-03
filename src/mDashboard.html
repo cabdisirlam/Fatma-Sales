@@ -7432,40 +7432,75 @@
           document.getElementById('convertLoadingOverlay').remove();
 
           if (result.success) {
-            // Show success modal
-            showConversionSuccess(result.saleId, paymentMode);
-            // Refresh quotations list
+            // Show toast success
+            showToast('success', 'Converted to Sale', `Sale ID: ${result.saleId}. Payment: ${paymentMode}` + (result.statusUpdated === false ? ' (Quotation status not updated)' : ''));
+            // Refresh lists
             loadQuotationsModal();
+            if (typeof loadSalesHistory === 'function') loadSalesHistory();
           } else {
-            alert('Failed to convert quotation: ' + (result.message || 'Unknown error'));
+            showToast('danger', 'Conversion failed', result.message || 'Unknown error');
           }
         })
         .withFailureHandler(function(error) {
           // Remove loading overlay
           document.getElementById('convertLoadingOverlay').remove();
           console.error('Error converting quotation:', error);
-          alert('Error converting quotation to sale: ' + error.message);
+          showToast('danger', 'Conversion error', error.message || 'Unknown error');
         })
         .convertQuotationToSale(quotationId, paymentMode, user);
     }
 
-    function showConversionSuccess(saleId, paymentMode) {
-      const successDiv = document.createElement('div');
-      successDiv.innerHTML = `
-        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-          <div style="background: white; padding: 40px; border-radius: 12px; text-align: center; max-width: 400px;">
-            <div style="color: #27ae60; font-size: 48px; margin-bottom: 20px;">
-              <i class="bi bi-check-circle-fill"></i>
-            </div>
-            <h4 style="color: #2c3e50; margin-bottom: 15px;">Conversion Successful!</h4>
-            <p style="color: #7f8c8d; margin-bottom: 10px;">Quotation converted to sale</p>
-            <p style="font-size: 18px; font-weight: 600; color: #667eea; margin-bottom: 10px;">Sale ID: ${saleId}</p>
-            <p style="color: #7f8c8d; margin-bottom: 25px;">Payment: ${paymentMode}</p>
-            <button class="btn btn-primary" onclick="this.closest('div').parentElement.remove()">Close</button>
-          </div>
+    function showToast(type, title, message) {
+      const colors = {
+        success: '#27ae60',
+        info: '#3b82f6',
+        warning: '#f39c12',
+        danger: '#e74c3c'
+      };
+      const containerId = 'toast-container';
+      let container = document.getElementById(containerId);
+      if (!container) {
+        container = document.createElement('div');
+        container.id = containerId;
+        container.style.position = 'fixed';
+        container.style.top = '20px';
+        container.style.right = '20px';
+        container.style.zIndex = '9999';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '10px';
+        document.body.appendChild(container);
+      }
+
+      const toast = document.createElement('div');
+      toast.style.minWidth = '260px';
+      toast.style.padding = '12px 14px';
+      toast.style.borderRadius = '10px';
+      toast.style.boxShadow = '0 8px 20px rgba(0,0,0,0.12)';
+      toast.style.background = '#ffffff';
+      toast.style.borderLeft = `5px solid ${colors[type] || '#667eea'}`;
+      toast.style.display = 'flex';
+      toast.style.flexDirection = 'column';
+      toast.style.gap = '4px';
+      toast.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 700; color: #2c3e50;">${title || ''}</span>
+          <button style="border: none; background: transparent; font-size: 14px; color: #95a5a6; cursor: pointer;">×</button>
         </div>
+        <div style="color: #7f8c8d; font-size: 13px;">${message || ''}</div>
       `;
-      document.body.appendChild(successDiv);
+
+      const closeBtn = toast.querySelector('button');
+      closeBtn.addEventListener('click', () => {
+        toast.remove();
+      });
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+        if (container.children.length === 0) container.remove();
+      }, 4000);
     }
 
     function printQuotation(quotationId) {
