@@ -12,28 +12,35 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f6fa;
+      background: #f4f6fb;
       padding: 20px;
     }
+
+    .gradient-purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .gradient-pink { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .gradient-blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .gradient-orange { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
 
     .header-section {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 30px;
-      border-radius: 15px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.25);
     }
 
     .header-section h2 {
       margin: 0;
       font-size: 28px;
-      font-weight: 700;
+      font-weight: 800;
+      letter-spacing: 0.3px;
     }
 
     .header-section p {
-      margin: 10px 0 0 0;
-      opacity: 0.9;
+      margin: 8px 0 0 0;
+      opacity: 0.95;
+      font-weight: 500;
     }
 
     @media (max-width: 768px) {
@@ -42,49 +49,37 @@
         margin-bottom: 20px;
       }
 
-      .header-section h2 {
-        font-size: 22px;
-      }
-
-      .header-section p {
-        font-size: 14px;
-      }
-
-      .filter-section .row > div {
-        margin-bottom: 10px;
-      }
+      .header-section h2 { font-size: 22px; }
+      .header-section p { font-size: 14px; }
+      .filter-section .row > div { margin-bottom: 10px; }
     }
 
     .card {
       border: none;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
       margin-bottom: 20px;
       overflow: hidden;
-      border: 1px solid #e2e8f0;
       background: white;
     }
 
     .card-header {
       background: #f7fafc;
       color: #2d3748;
-      border-radius: 0 !important;
-      padding: 12px 20px;
-      font-weight: 600;
+      padding: 14px 20px;
+      font-weight: 700;
       font-size: 14px;
       border-bottom: 1px solid #e2e8f0;
     }
 
-    .card-header i {
-      color: #667eea;
-    }
+    .card-header i { color: #667eea; }
 
     .actions-toolbar {
       background: white;
       padding: 12px 20px;
-      border-radius: 8px;
+      border-radius: 12px;
       margin-bottom: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
       border: 1px solid #e2e8f0;
     }
 
@@ -92,26 +87,37 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border: none;
       padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 500;
+      border-radius: 10px;
+      font-weight: 600;
       transition: all 0.3s ease;
       font-size: 14px;
+      box-shadow: 0 8px 18px rgba(102, 126, 234, 0.35);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 12px 24px rgba(102, 126, 234, 0.45);
     }
 
-    .btn-sm {
-      font-size: 13px;
-      padding: 6px 12px;
+    .btn-ghost {
+      background: white;
+      color: #4a5568;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      font-weight: 600;
+      padding: 10px 14px;
+      transition: all 0.2s ease;
     }
+
+    .btn-ghost:hover { background: #f7fafc; }
+
+    .btn-sm { font-size: 13px; padding: 6px 12px; }
 
     .btn-outline-secondary {
       border-color: #cbd5e0;
       color: #4a5568;
       transition: all 0.3s ease;
+      border-radius: 10px;
     }
 
     .btn-outline-secondary:hover {
@@ -120,178 +126,101 @@
       color: #2d3748;
     }
 
-    .table {
-      margin: 0;
-      font-size: 14px;
-    }
-
-    .table thead {
-      background: #f8f9fa;
-    }
-
+    .table { margin: 0; font-size: 14px; }
+    .table thead { background: #f8fafc; }
     .table th {
-      border-bottom: 2px solid #dee2e6;
-      font-weight: 600;
+      border-bottom: 2px solid #e2e8f0;
+      font-weight: 700;
       color: #2c3e50;
       white-space: nowrap;
       font-size: 13px;
       padding: 12px;
+      background: #f8fafc;
     }
 
-    .table td {
-      vertical-align: middle;
-      font-size: 13px;
-      padding: 12px;
-    }
+    .table td { vertical-align: middle; font-size: 13px; padding: 12px; }
 
-    .table-responsive {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
+    .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
     /* Responsive adjustments for mobile */
     @media (max-width: 768px) {
-      .table {
-        font-size: 12px;
-      }
-
-      .table th,
-      .table td {
-        padding: 8px 6px;
-        font-size: 12px;
-      }
-
-      .btn-sm {
-        padding: 4px 8px;
-        font-size: 11px;
-      }
-
-      .stat-card {
-        margin-bottom: 15px;
-      }
-
-      .stat-value {
-        font-size: 18px;
-      }
-
-      .stat-label {
-        font-size: 10px;
-      }
-
-      .actions-toolbar {
-        padding: 12px 16px;
-      }
-
-      .actions-toolbar .d-flex {
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .filter-section {
-        padding: 12px 16px;
-      }
+      .table { font-size: 12px; }
+      .table th, .table td { padding: 8px 6px; font-size: 12px; }
+      .btn-sm { padding: 4px 8px; font-size: 11px; }
+      .stat-card { margin-bottom: 15px; }
+      .stat-value { font-size: 18px; }
+      .stat-label { font-size: 10px; }
+      .actions-toolbar { padding: 12px 16px; }
+      .actions-toolbar .d-flex { flex-direction: column; gap: 12px; }
+      .filter-section { padding: 12px 16px; }
     }
 
     .badge {
       padding: 4px 10px;
-      border-radius: 6px;
-      font-weight: 500;
+      border-radius: 8px;
+      font-weight: 600;
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
 
     .stat-card {
-      padding: 15px;
-      border-radius: 12px;
+      padding: 16px;
+      border-radius: 14px;
       margin-bottom: 20px;
       transition: all 0.3s ease;
       height: 100%;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-2px);
-    }
-
-    .stat-value {
-      font-size: 20px;
-      font-weight: 700;
       color: white;
-      line-height: 1.2;
-      word-break: break-word;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.12);
     }
+
+    .stat-card .stat-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.18);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    .stat-card:hover { transform: translateY(-3px); }
+
+    .stat-value { font-size: 22px; font-weight: 800; line-height: 1.2; }
 
     .stat-label {
       color: rgba(255,255,255,0.9);
       font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       margin-bottom: 8px;
+      font-weight: 700;
     }
 
-    .loading {
-      text-align: center;
-      padding: 50px 40px;
-      color: #7f8c8d;
-    }
+    .loading { text-align: center; padding: 50px 40px; color: #7f8c8d; }
+    .spinner-border { width: 3rem; height: 3rem; }
 
-    .spinner-border {
-      width: 3rem;
-      height: 3rem;
-    }
-
-    #noDataMessage {
-      text-align: center;
-      padding: 50px 20px;
-      color: #7f8c8d;
-    }
-
-    #noDataMessage i {
-      font-size: 48px;
-      color: #cbd5e0;
-      margin-bottom: 16px;
-    }
-
-    #noDataMessage p {
-      margin-top: 12px;
-      font-size: 15px;
-    }
-
-    .search-box {
-      margin-bottom: 20px;
-    }
+    #noDataMessage { text-align: center; padding: 50px 20px; color: #7f8c8d; }
+    #noDataMessage i { font-size: 48px; color: #cbd5e0; margin-bottom: 16px; }
+    #noDataMessage p { margin-top: 12px; font-size: 15px; }
 
     .filter-section {
       background: white;
       padding: 15px 20px;
-      border-radius: 8px;
+      border-radius: 12px;
       margin-bottom: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
       border: 1px solid #e2e8f0;
     }
 
-    .stock-low {
-      color: #e74c3c;
-      font-weight: 600;
-    }
-
-    .stock-ok {
-      color: #27ae60;
-      font-weight: 600;
-    }
-
-    .stock-out {
-      background-color: #e74c3c;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
+    .stock-low { color: #e74c3c; font-weight: 700; }
+    .stock-ok { color: #27ae60; font-weight: 700; }
+    .stock-out { background-color: #e74c3c; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
 
     /* Custom Searchable Dropdown Styles */
-    .searchable-dropdown {
-      position: relative;
-    }
+    .searchable-dropdown { position: relative; }
 
     .searchable-dropdown .dropdown-results {
       position: absolute;
@@ -309,9 +238,7 @@
       display: none;
     }
 
-    .searchable-dropdown .dropdown-results.show {
-      display: block;
-    }
+    .searchable-dropdown .dropdown-results.show { display: block; }
 
     .searchable-dropdown .dropdown-item {
       padding: 10px 15px;
@@ -320,67 +247,55 @@
       transition: background-color 0.2s;
     }
 
-    .searchable-dropdown .dropdown-item:hover {
-      background-color: #f8f9fa;
-    }
+    .searchable-dropdown .dropdown-item:hover { background-color: #f8f9fa; }
 
-    .searchable-dropdown .dropdown-item.add-new {
-      color: #667eea;
-      font-weight: 600;
-      background-color: #f8f9ff;
-    }
+    .searchable-dropdown .dropdown-item.add-new { color: #667eea; font-weight: 600; background-color: #f8f9ff; }
+    .searchable-dropdown .dropdown-item.add-new:hover { background-color: #e8ebff; }
 
-    .searchable-dropdown .dropdown-item.add-new:hover {
-      background-color: #e8ebff;
-    }
-
-    .searchable-dropdown .dropdown-item .item-name {
-      font-weight: 500;
-      color: #2c3e50;
-    }
-
-    .searchable-dropdown .dropdown-item .item-category {
-      font-size: 0.875rem;
-      color: #7f8c8d;
-      margin-left: 8px;
-    }
-
-    .searchable-dropdown .no-results {
-      padding: 15px;
-      text-align: center;
-      color: #7f8c8d;
-      font-style: italic;
-    }
+    .searchable-dropdown .dropdown-item .item-name { font-weight: 600; color: #2c3e50; }
+    .searchable-dropdown .dropdown-item .item-category { font-size: 0.875rem; color: #7f8c8d; margin-left: 8px; }
+    .searchable-dropdown .no-results { padding: 15px; text-align: center; color: #7f8c8d; font-style: italic; }
   </style>
 </head>
 <body>
   <div class="header-section">
-    <h2><i class="bi bi-box-seam"></i> Inventory Dashboard</h2>
-    <p>Manage stock levels, track assets, and view valuation</p>
+    <div class="d-flex align-items-center gap-3">
+      <div class="rounded-circle bg-white bg-opacity-25 p-3" style="line-height: 0;">
+        <i class="bi bi-box-seam" style="font-size: 24px;"></i>
+      </div>
+      <div>
+        <h2 class="mb-1">Inventory Dashboard</h2>
+        <p class="mb-0">Manage stock levels, track assets, and view valuation</p>
+      </div>
+    </div>
   </div>
 
   <!-- Statistics Cards -->
   <div class="row mb-4" id="statsSection">
-    <div class="col-md-3">
-      <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+    <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+      <div class="stat-card gradient-purple">
+        <div class="stat-icon"><i class="bi bi-collection"></i></div>
         <div class="stat-label">Total Items</div>
         <div class="stat-value" id="totalItems">0</div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);">
+    <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+      <div class="stat-card gradient-pink">
+        <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
         <div class="stat-label">Low Stock</div>
         <div class="stat-value" id="lowStock">0</div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);">
+    <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+      <div class="stat-card gradient-blue">
+        <div class="stat-icon"><i class="bi bi-slash-circle"></i></div>
         <div class="stat-label">Out of Stock</div>
         <div class="stat-value" id="outOfStock">0</div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); box-shadow: 0 4px 15px rgba(250, 112, 154, 0.4);">
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card gradient-orange">
+        <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
         <div class="stat-label">Total Value</div>
         <div class="stat-value" id="totalValue">Ksh 0.00</div>
       </div>
@@ -410,12 +325,12 @@
         </select>
       </div>
       <div class="col-md-auto">
-        <button class="btn btn-sm" onclick="loadInventory()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 16px; font-size: 13px;">
+        <button class="btn btn-primary btn-sm" onclick="loadInventory()">
           <i class="bi bi-search" style="font-size: 14px;"></i> Search
         </button>
       </div>
       <div class="col-md-auto">
-        <button class="btn btn-sm btn-outline-secondary" onclick="clearFilters()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
+        <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
           <i class="bi bi-x-circle" style="font-size: 14px;"></i> Clear
         </button>
       </div>
@@ -426,13 +341,13 @@
   <div class="actions-toolbar">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div class="d-flex gap-2 flex-wrap">
-        <button class="btn btn-sm" onclick="showAddProductModal()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px;">
-          <i class="bi bi-plus-circle" style="font-size: 14px;"></i> Add Inventory
+        <button class="btn btn-primary btn-sm" onclick="showAddProductModal()">
+          <i class="bi bi-plus-circle" style="font-size: 14px;"></i> Add Product
         </button>
       </div>
       <div class="d-flex gap-2 align-items-center">
-        <span style="font-size: 12px; color: #718096; font-weight: 500;">Quick Actions</span>
-        <button class="btn btn-sm btn-outline-secondary" onclick="loadInventory()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
+        <span style="font-size: 12px; color: #718096; font-weight: 600;">Quick Actions</span>
+        <button class="btn btn-ghost btn-sm" onclick="loadInventory()">
           <i class="bi bi-arrow-clockwise" style="font-size: 14px;"></i> Refresh
         </button>
       </div>
@@ -457,14 +372,16 @@
           <table class="table table-hover align-middle" style="margin: 0;">
             <thead style="background: #f8f9fa;">
               <tr>
-                <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Item ID</th>
-                <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Item Name</th>
-                <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Cost Price</th>
-                <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Current Qty</th>
-                <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Reorder Level</th>
-                <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Last Updated</th>
-                <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap;">Updated By</th>
-                <th style="border-bottom: 2px solid #dee2e6; font-weight: 600; color: #2c3e50; white-space: nowrap; text-align: center;">Actions</th>
+                <th>Item ID</th>
+                <th>Item Name</th>
+                <th>Stock Qty</th>
+                <th>Cost Price</th>
+                <th>Selling Price</th>
+                <th>Reorder Level</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+                <th>Updated By</th>
+                <th style="text-align: center;">Actions</th>
               </tr>
             </thead>
             <tbody id="inventoryTableBody">
@@ -486,7 +403,7 @@
 
   <!-- Add Product Modal -->
   <div class="modal fade" id="addProductModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
           <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Product</h5>
@@ -494,24 +411,9 @@
         </div>
         <div class="modal-body">
           <form id="addProductForm">
-            <!-- Stock Source Selection -->
-            <div class="mb-3">
-              <label class="form-label fw-bold" style="color: #2c3e50;">Stock Source</label>
-              <div class="d-flex gap-3">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="Stock_Source" id="sourceOpening" value="opening" checked onchange="toggleStockSourceFields()">
-                  <label class="form-check-label" for="sourceOpening">Opening Balance</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="Stock_Source" id="sourcePurchase" value="purchase" onchange="toggleStockSourceFields()">
-                  <label class="form-check-label" for="sourcePurchase">Purchase from Supplier</label>
-                </div>
-              </div>
-            </div>
+            <input type="hidden" name="Stock_Source" value="opening">
 
-            <hr style="border-color: #e2e8f0; margin: 20px 0;">
-
-            <!-- Row 1: Item Name and Supplier (2 Columns) -->
+            <!-- Primary Details -->
             <div class="row mb-3">
               <div class="col-md-6">
                 <label class="form-label fw-bold" style="color: #2c3e50;">Item Name *</label>
@@ -527,73 +429,52 @@
                       required
                       onfocus="showDropdown()"
                       oninput="filterMasterItems()"
-                      style="border-radius: 8px;">
+                      style="border-radius: 10px;">
                     <div class="dropdown-results" id="itemDropdownResults"></div>
                   </div>
-                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="showCreateMasterModal(document.getElementById('itemNameInput').value)" title="Add new item" style="border-radius: 8px;">
-                    <i class="bi bi-plus-circle"></i>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" onclick="showCreateMasterModal(document.getElementById('itemNameInput').value)" title="Add new item">
+                    <i class="bi bi-plus-lg"></i>
                   </button>
                 </div>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold" style="color: #2c3e50;">Supplier *</label>
                 <div class="d-flex gap-2">
-                  <select class="form-select flex-grow-1" name="Supplier" id="addSupplierDropdown" required style="border-radius: 8px;">
+                  <select class="form-select flex-grow-1" name="Supplier" id="addSupplierDropdown" required style="border-radius: 10px;">
                     <option value="">-- Select Supplier --</option>
                   </select>
-                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="alert('Add supplier functionality coming soon')" title="Add new supplier" style="border-radius: 8px;">
-                    <i class="bi bi-plus-circle"></i>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" onclick="alert('Add supplier functionality coming soon')" title="Add new supplier">
+                    <i class="bi bi-plus-lg"></i>
                   </button>
                 </div>
               </div>
             </div>
 
-            <!-- Row 2: Category and Reorder Level (2 Columns) -->
+            <!-- Classification -->
             <div class="row mb-3">
               <div class="col-md-6">
                 <label class="form-label fw-bold" style="color: #2c3e50;">Category</label>
-                <input type="text" class="form-control" id="categoryField" name="Category" placeholder="Auto-filled from master data" readonly style="border-radius: 8px; background-color: #f7fafc; color: #64748b;">
+                <input type="text" class="form-control" id="categoryField" name="Category" placeholder="Auto-filled from master data" readonly style="border-radius: 10px; background-color: #f7fafc; color: #64748b;">
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold" style="color: #2c3e50;">Reorder Level</label>
-                <input type="number" class="form-control" name="Reorder_Level" value="10" min="0" style="border-radius: 8px;">
+                <input type="number" class="form-control" name="Reorder_Level" value="10" min="0" style="border-radius: 10px;">
               </div>
             </div>
 
-            <!-- Row 3: Pricing & Stock (3 Equal Columns) -->
+            <!-- Pricing & Stock -->
             <div class="row mb-3">
               <div class="col-md-4">
                 <label class="form-label fw-bold" style="color: #2c3e50;">Cost Price *</label>
-                <input type="number" class="form-control" name="Cost_Price" step="0.01" min="0" required placeholder="0.00" style="border-radius: 8px;">
+                <input type="number" class="form-control" name="Cost_Price" step="0.01" min="0" required placeholder="0.00" style="border-radius: 10px;">
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-bold" style="color: #2c3e50;">Selling Price *</label>
-                <input type="number" class="form-control" name="Selling_Price" step="0.01" min="0" required placeholder="0.00" style="border-radius: 8px;">
+                <input type="number" class="form-control" name="Selling_Price" step="0.01" min="0" required placeholder="0.00" style="border-radius: 10px;">
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-bold" style="color: #2c3e50;">Quantity *</label>
-                <input type="number" class="form-control" name="Current_Qty" min="0" required placeholder="0" style="border-radius: 8px;">
-              </div>
-            </div>
-
-            <!-- Purchase Fields (Conditional) -->
-            <div id="purchaseFields" style="display: none;">
-              <hr style="border-color: #e2e8f0; margin: 20px 0;">
-              <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;"><i class="bi bi-credit-card"></i> Payment Details</h6>
-              <div class="row mb-3">
-                <div class="col-md-6">
-                  <label class="form-label fw-bold" style="color: #2c3e50;">Payment Method</label>
-                  <select class="form-select" name="Payment_Method" style="border-radius: 8px;">
-                    <option value="Cash">Cash</option>
-                    <option value="Bank">Bank</option>
-                    <option value="Mobile">Mobile</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-bold" style="color: #2c3e50;">Amount Paid Now</label>
-                  <input type="number" class="form-control" name="Paid_Amount" min="0" step="0.01" placeholder="0.00" style="border-radius: 8px;">
-                  <div class="form-text">Any unpaid balance will remain under the supplier account.</div>
-                </div>
+                <input type="number" class="form-control" name="Current_Qty" min="0" required placeholder="0" style="border-radius: 10px;">
               </div>
             </div>
           </form>
@@ -842,14 +723,16 @@
       data.forEach(item => {
         const row = document.createElement('tr');
         const stockQty = item.Current_Qty !== undefined ? item.Current_Qty : (item.Stock_Qty || 0);
-        let statusBadge = stockQty <= 0 ? '<span class="badge bg-danger">Out of Stock</span>' : (stockQty <= (item.Reorder_Level || 10) ? '<span class="badge bg-warning">Low Stock</span>' : '<span class="badge bg-success">In Stock</span>');
-        
+        let statusBadge = stockQty <= 0 ? '<span class="badge bg-danger">Out of Stock</span>' : (stockQty <= (item.Reorder_Level || 10) ? '<span class="badge bg-warning text-dark">Low Stock</span>' : '<span class="badge bg-success">In Stock</span>');
+
         row.innerHTML = `
           <td>${item.Item_ID || ''}</td>
           <td><strong>${item.Item_Name || ''}</strong></td>
-          <td>Ksh ${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
-          <td>${stockQty} ${statusBadge}</td>
+          <td>${stockQty}</td>
+          <td>${formatCurrency(item.Cost_Price)}</td>
+          <td>${formatCurrency(item.Selling_Price)}</td>
           <td>${item.Reorder_Level || 10}</td>
+          <td>${statusBadge}</td>
           <td>${item.Last_Updated ? new Date(item.Last_Updated).toLocaleString() : '-'}</td>
           <td>${item.Updated_By || '-'}</td>
           <td style="white-space: nowrap;">
@@ -874,7 +757,12 @@
       });
       document.getElementById('lowStock').textContent = lowStockCount;
       document.getElementById('outOfStock').textContent = outOfStockCount;
-      document.getElementById('totalValue').textContent = 'Ksh ' + totalValue.toFixed(2);
+      document.getElementById('totalValue').textContent = formatCurrency(totalValue);
+    }
+
+    function formatCurrency(amount) {
+      const value = parseFloat(amount || 0);
+      return 'Ksh ' + value.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
     
     // Smart Dropdown Logic
@@ -901,8 +789,13 @@
         addNewDiv.innerHTML = `<i class="bi bi-plus-circle"></i> Add New Item: "${input.value}"`;
         addNewDiv.onclick = () => showCreateMasterModal(input.value);
         resultsDiv.appendChild(addNewDiv);
-        
+
         resultsDiv.classList.add('show');
+    }
+
+    function showDropdown() {
+      const resultsDiv = document.getElementById('itemDropdownResults');
+      if (resultsDiv) resultsDiv.classList.add('show');
     }
 
     function selectItem(itemName, category) {
@@ -915,7 +808,6 @@
     function showAddProductModal() {
       document.getElementById('addProductForm').reset();
       document.getElementById('addProductAlert').style.display = 'none';
-      toggleStockSourceFields();
       new bootstrap.Modal(document.getElementById('addProductModal')).show();
     }
 
@@ -1006,12 +898,6 @@
             option.value = cat;
             datalist.appendChild(option);
         });
-    }
-
-    function toggleStockSourceFields() {
-      const isPurchase = document.getElementById('sourcePurchase').checked;
-      document.getElementById('purchaseFields').style.display = isPurchase ? 'block' : 'none';
-      document.getElementById('addSupplierDropdown').required = isPurchase;
     }
 
     function clearFilters() {
