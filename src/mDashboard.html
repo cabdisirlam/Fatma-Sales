@@ -3679,13 +3679,15 @@
     function loadSuppliersOverview() {
       google.script.run
         .withSuccessHandler(function(data) {
-          document.getElementById('supplierTotalCount').textContent = data.totalSuppliers || 0;
-          document.getElementById('supplierPendingOrders').textContent = data.pendingOrders || 0;
+          if (data && data.success && data.overview) {
+            document.getElementById('supplierTotalCount').textContent = data.overview.totalSuppliers || 0;
+            document.getElementById('supplierPendingOrders').textContent = data.overview.pendingOrders || 0;
+          }
         })
         .withFailureHandler(function(error) {
           console.error('Error loading suppliers overview:', error);
         })
-        .getSuppliersOverview();
+        .getSupplierDashboardData();
     }
 
     function loadUsersOverview() {

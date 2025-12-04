@@ -125,10 +125,7 @@
             </div>
         </div>
 
-        <!-- Summary Cards -->
-        <div class="row" id="summary-cards">
-            <!-- Cards will be dynamically inserted here -->
-        </div>
+
 
         <!-- Action Bar -->
         <div class="d-flex justify-content-end align-items-center action-bar">
@@ -175,42 +172,15 @@
             loadDashboardData();
         }
 
-        function updateUI(data) {
-            console.log("Received data:", data);
-            updateSummaryCards(data.overview);
-            updateSupplierTable(data.suppliers);
-            hideLoader();
-        }
+                function updateUI(data) {
 
-        function updateSummaryCards(overview) {
-            const container = document.getElementById('summary-cards');
-            container.innerHTML = 
-                `<div class="col-md-3">
-                    <div class="summary-card bg-gradient-purple">
-                        <div class="label">Total Suppliers</div>
-                        <div class="value">${overview.totalSuppliers}</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="summary-card bg-gradient-pink">
-                        <div class="label">Active</div>
-                        <div class="value">${overview.activeSuppliers}</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="summary-card bg-gradient-cyan">
-                        <div class="label">Pending Orders</div>
-                        <div class="value">${overview.pendingOrders}</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="summary-card bg-gradient-orange">
-                        <div class="label">Total Payable</div>
-                        <div class="value">Ksh ${overview.totalPayable.toLocaleString()}</div>
-                    </div>
-                </div>
-            `;
-        }
+                    console.log("Received data:", data);
+
+                    updateSupplierTable(data.suppliers);
+
+                    hideLoader();
+
+                }
 
         function updateSupplierTable(suppliers) {
             const container = document.getElementById('table-container');
