@@ -4820,8 +4820,13 @@
               </table>
             </div>
           </div>
-        </div>
+      `;
 
+      container.innerHTML = html;
+
+      // Ensure Add Supplier modal exists once at document level
+      if (!document.getElementById('supplierAddModal')) {
+        const modalTemplate = `
         <div class="modal fade" id="supplierAddModal" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
@@ -4885,10 +4890,9 @@
               </div>
             </div>
           </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', modalTemplate);
+      }
     }
 
     // --- CUSTOMER DASHBOARD ACTIONS ---
