@@ -2988,6 +2988,83 @@
       return sectionName;
     }
 
+    // Ensure customer add modal exists and show it
+    function ensureCustomerModal() {
+      let modalEl = document.getElementById('customerAddModal');
+      if (!modalEl) {
+        const template = `
+        <div class="modal fade" id="customerAddModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-stars"></i> Add Customer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <form class="mt-2" id="quickAddCustomerForm" onsubmit="handleQuickAdd(event, 'customer')">
+                  <div class="row g-2">
+                    <div class="col-md-4">
+                      <label class="form-label">Full Name *</label>
+                      <input type="text" class="form-control" name="name" placeholder="Jane Doe" required>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Phone *</label>
+                      <input type="tel" class="form-control" name="phone" placeholder="07xx xxx xxx" required>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Email</label>
+                      <input type="email" class="form-control" name="email" placeholder="name@example.com">
+                    </div>
+                  </div>
+                  <div class="row g-2 mt-2">
+                    <div class="col-md-4">
+                      <label class="form-label">KRA PIN</label>
+                      <input type="text" class="form-control" name="kra_pin" placeholder="A00...">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Location</label>
+                      <input type="text" class="form-control" name="location" placeholder="e.g. Nairobi">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Initial Loyalty Points</label>
+                      <input type="number" class="form-control" name="loyalty_points" value="0">
+                    </div>
+                  </div>
+                  <div class="row g-2 mt-2">
+                    <div class="col-md-4">
+                      <label class="form-label">Opening Balance</label>
+                      <input type="number" class="form-control" name="Opening_Balance" step="1">
+                    </div>
+                    <div class="col-md-8 d-flex align-items-end justify-content-end gap-2">
+                      <button class="btn btn-outline-secondary" type="button" onclick="clearCustomerDraft()">Clear</button>
+                      <button class="btn btn-success" type="submit" id="quickAddCustomerBtn">
+                        <i class="bi bi-check-circle"></i> Save Customer
+                      </button>
+                    </div>
+                  </div>
+                  <div id="quickAddCustomerAlert" class="alert alert-success mt-3 d-none"></div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', template);
+        modalEl = document.getElementById('customerAddModal');
+        initCustomerDraft();
+      }
+      return modalEl;
+    }
+
+    function openCustomerQuickAdd() {
+      const modalEl = ensureCustomerModal();
+      if (!modalEl) return;
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
+      modalEl.classList.add('modal-foreground');
+      modalEl.addEventListener('hidden.bs.modal', () => modalEl.classList.remove('modal-foreground'), { once: true });
+      modal.show();
+      initCustomerDraft();
+    }
+
     function openMappedSubmenu(menuItemId) {
       const submenuItems = document.querySelectorAll('.menu-item.has-submenu');
       submenuItems.forEach(item => {
@@ -3531,12 +3608,12 @@
               form.reset();
               setTimeout(() => {
                 loadCustomersSection(true);
-                const modalEl = document.getElementById('customerAddModal');
+                const modalEl = ensureCustomerModal();
                 if (modalEl) {
-                  const modal = bootstrap.Modal.getInstance(modalEl);
-                  if (modal) modal.hide();
+                  const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                  modal.hide();
                 }
-              }, 2000);
+              }, 400);
             } else {
               showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add customer'));
             }
@@ -4685,7 +4762,7 @@
       // Build HTML
       let html = `
         <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#customerAddModal">
+          <button class="btn btn-primary btn-sm" type="button" onclick="openCustomerQuickAdd()">
             <i class="bi bi-person-plus"></i> Add Customer
           </button>
           <button class="btn btn-outline-secondary btn-sm" onclick="loadCustomersSection(true)">
@@ -5614,6 +5691,20 @@
       }
     }
 
+    function initCustomerDraft() {
+      const custForm = document.getElementById('quickAddCustomerForm');
+      if (custForm && window.localStorage && !custForm.dataset.draftInit) {
+        custForm.dataset.draftInit = 'true';
+        try {
+          const draft = JSON.parse(localStorage.getItem('draft.customer.add') || '{}');
+          Object.keys(draft).forEach(k => { if (custForm[k]) custForm[k].value = draft[k]; });
+        } catch(e) {}
+        custForm.addEventListener('input', () => {
+          localStorage.setItem('draft.customer.add', JSON.stringify(formToObject(custForm)));
+        });
+      }
+    }
+
     function clearInventoryDraft() {
       const invForm = document.getElementById('quickAddProductForm');
       if (invForm) {
@@ -5628,6 +5719,12 @@
         supForm.reset();
       }
       if (window.localStorage) localStorage.removeItem('draft.supplier.add');
+    }
+
+    function clearCustomerDraft() {
+      const custForm = document.getElementById('quickAddCustomerForm');
+      if (custForm) custForm.reset();
+      if (window.localStorage) localStorage.removeItem('draft.customer.add');
     }
 
     function restoreForm(form, data) {
