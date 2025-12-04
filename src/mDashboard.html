@@ -1785,39 +1785,7 @@
           </div>
 
           <div id="financialsContent">
-            <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
-              <div class="module-card" onclick="alert('Income - Feature coming soon')">
-                <div class="module-icon">
-                  <i class="bi bi-arrow-down-circle"></i>
-                </div>
-                <h3 class="module-title">Income</h3>
-                <p class="module-description">Track all income</p>
-              </div>
-
-              <div class="module-card" onclick="alert('Expenses - Feature coming soon')">
-                <div class="module-icon">
-                  <i class="bi bi-arrow-up-circle"></i>
-                </div>
-                <h3 class="module-title">Expenses</h3>
-                <p class="module-description">Manage expenses</p>
-              </div>
-
-              <div class="module-card" onclick="alert('Transactions - Feature coming soon')">
-                <div class="module-icon">
-                  <i class="bi bi-arrow-left-right"></i>
-                </div>
-                <h3 class="module-title">Transactions</h3>
-                <p class="module-description">View all transactions</p>
-              </div>
-
-              <div class="module-card" onclick="alert('Financial Reports - Feature coming soon')">
-                <div class="module-icon">
-                  <i class="bi bi-file-earmark-text"></i>
-                </div>
-                <h3 class="module-title">Reports</h3>
-                <p class="module-description">Financial reports</p>
-              </div>
-            </div>
+            <!-- Financial content renders here -->
           </div>
         </div>
       </div>
@@ -5096,17 +5064,8 @@
       const container = document.getElementById('financialsContent') || document.getElementById('section-financials');
       if (!container) return;
 
-      const netProfit = (summary.totalRevenue || 0) - (summary.totalExpenses || 0);
-      const profitClass = netProfit >= 0 ? 'text-success' : 'text-danger';
-      const keyAccounts = ['Equity Bank', 'M-Pesa', 'Cash'];
-      const breakdown = (summary.accountBreakdown || []).slice().sort((a, b) => {
-        const ia = keyAccounts.indexOf(a.name);
-        const ib = keyAccounts.indexOf(b.name);
-        if (ia !== -1 && ib !== -1) return ia - ib;
-        if (ia !== -1) return -1;
-        if (ib !== -1) return 1;
-        return (a.name || '').localeCompare(b.name || '');
-      });
+      const keyAccounts = ['M-Pesa', 'Cash', 'Equity Bank'];
+      const breakdownSource = (summary.accountBreakdown || []).slice();
 
       const depositAccounts = (ui.depositAccounts && ui.depositAccounts.length ? ui.depositAccounts : ui.accounts || []);
       const accountOptions = (depositAccounts || []).map(acc => `<option value="${acc}">${acc}</option>`).join('');
@@ -5126,7 +5085,7 @@
 
       const preferredAccounts = ['M-Pesa', 'Cash', 'Equity Bank'];
       const focusedBreakdown = preferredAccounts.map(name => {
-        return breakdown.find(b => (b.name || '').toLowerCase() === name.toLowerCase()) || {
+        return breakdownSource.find(b => (b.name || '').toLowerCase() === name.toLowerCase()) || {
           name,
           openingBalance: 0,
           inflow: 0,
@@ -5137,9 +5096,6 @@
 
       let html = `
         <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-outline-secondary btn-sm" onclick="loadFinancialsSection()">
-            <i class="bi bi-arrow-clockwise"></i> Refresh
-          </button>
           <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#finReceiveModal">
             <i class="bi bi-box-arrow-in-down-left"></i> Receive Payment
           </button>
@@ -5151,55 +5107,28 @@
           </button>
         </div>
         <div id="financialAlert" class="alert d-none"></div>
-        <div class="row g-3 mb-3">
-          <div class="col-md-3">
-            <div class="stat-card">
-              <div class="small text-muted">Total Revenue</div>
-              <div class="fs-5 fw-bold text-success">${formatCurrency(summary.totalRevenue)}</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <div class="small text-muted">Total Expenses</div>
-              <div class="fs-5 fw-bold text-danger">${formatCurrency(summary.totalExpenses)}</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <div class="small text-muted">Net Profit</div>
-              <div class="fs-5 fw-bold ${profitClass}">${formatCurrency(netProfit)}</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <div class="small text-muted">Account Balance</div>
-              <div class="fs-5 fw-bold">${formatCurrency(summary.currentBalance)}</div>
-              <div class="small text-muted">Includes opening balances</div>
-            </div>
-          </div>
-        </div>
         <div class="row g-3 mb-4">
           ${focusedBreakdown.map(acc => `
             <div class="col-md-4">
-              <div class="stat-card h-100">
+              <div class="stat-card h-100" style="background: linear-gradient(135deg, ${acc.name === 'M-Pesa' ? '#00c6ff 0%, #0072ff 100%' : acc.name === 'Cash' ? '#f6d365 0%, #fda085 100%' : '#89f7fe 0%, #66a6ff 100%'}); color: white;">
                 <div class="d-flex justify-content-between align-items-start">
                   <div>
                     <div class="fw-semibold" style="font-size: 15px;">${acc.name}</div>
-                    <div class="text-muted" style="font-size: 12px;">Opening: ${formatCurrency(acc.openingBalance)}</div>
+                    <div class="text-white-50" style="font-size: 12px;">Opening: ${formatCurrency(acc.openingBalance)}</div>
                   </div>
                   <span class="badge bg-light text-dark border">Current</span>
                 </div>
                 <div class="mt-2" style="font-size: 13px;">
                   <div class="d-flex justify-content-between mb-1">
-                    <span class="text-muted">Debit (DR)</span>
-                    <strong class="text-success">${formatCurrency(acc.inflow)}</strong>
+                    <span class="text-white-75">Debit (DR)</span>
+                    <strong>${formatCurrency(acc.inflow)}</strong>
                   </div>
                   <div class="d-flex justify-content-between mb-1">
-                    <span class="text-muted">Credit (CR)</span>
-                    <strong class="text-danger">${formatCurrency(acc.outflow)}</strong>
+                    <span class="text-white-75">Credit (CR)</span>
+                    <strong>${formatCurrency(acc.outflow)}</strong>
                   </div>
                   <div class="d-flex justify-content-between">
-                    <span class="text-muted">Balance</span>
+                    <span class="text-white-75">Balance</span>
                     <strong>${formatCurrency(acc.balance)}</strong>
                   </div>
                 </div>
@@ -5262,7 +5191,7 @@
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-wallet2"></i> Pay Supplier / Expense</h5>
+                <h5 class="modal-title"><i class="bi bi-wallet2"></i> Pay Out</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
@@ -5275,22 +5204,31 @@
                     </select>
                   </div>
                   <div class="mb-3">
+                    <label class="form-label">Payment Type</label>
+                    <div class="btn-group w-100" role="group" aria-label="Payment type">
+                      <input type="radio" class="btn-check" name="payType" id="payTypeExpense" value="expense" checked>
+                      <label class="btn btn-outline-secondary" for="payTypeExpense">Expense</label>
+                      <input type="radio" class="btn-check" name="payType" id="payTypeSupplier" value="supplier_payment">
+                      <label class="btn btn-outline-secondary" for="payTypeSupplier">Supplier</label>
+                    </div>
+                  </div>
+                  <div class="mb-3 pay-expense-fields">
                     <label class="form-label">Expense Category</label>
-                    <select class="form-select" name="category" required>
+                    <select class="form-select" name="category">
                       <option value="">Select category</option>
                       ${categoryOptions}
                     </select>
                   </div>
-                  <div class="mb-3">
-                    <label class="form-label">Supplier (optional)</label>
+                  <div class="mb-3 pay-supplier-fields" style="display:none;">
+                    <label class="form-label">Supplier</label>
                     <select class="form-select" name="supplierId">
-                      <option value="">No supplier</option>
+                      <option value="">Select supplier</option>
                       ${supplierOptions}
                     </select>
                   </div>
                   <div class="mb-3">
-                    <label class="form-label">Payee / Supplier</label>
-                    <input type="text" class="form-control" name="payee" placeholder="Supplier name" required>
+                    <label class="form-label">Payee</label>
+                    <input type="text" class="form-control" name="payee" placeholder="Who are you paying?" required>
                   </div>
                   <div class="row g-2 mb-3">
                     <div class="col-md-6">
@@ -5305,7 +5243,7 @@
                   <div class="d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">
-                      <i class="bi bi-wallet2"></i> Pay Supplier
+                      <i class="bi bi-wallet2"></i> Pay
                     </button>
                   </div>
                 </form>
@@ -5501,7 +5439,7 @@
       }
 
       const payload = {
-        txnType: supplierId ? 'supplier_payment' : 'expense',
+        txnType: form.payType.value === 'supplier_payment' ? 'supplier_payment' : 'expense',
         account: form.account.value,
         category: form.category.value,
         payee: form.payee.value,
@@ -5662,7 +5600,24 @@
       const receiveForm = document.getElementById('financialReceiveForm');
       if (receiveForm) receiveForm.addEventListener('input', () => draftStorage.save('draft.fin.receive', formToObject(receiveForm)));
       const expenseForm = document.getElementById('financialExpenseForm');
-      if (expenseForm) expenseForm.addEventListener('input', () => draftStorage.save('draft.fin.expense', formToObject(expenseForm)));
+      if (expenseForm) {
+        expenseForm.addEventListener('input', () => draftStorage.save('draft.fin.expense', formToObject(expenseForm)));
+        const togglePayType = () => {
+          const isSupplier = expenseForm.payType && expenseForm.payType.value === 'supplier_payment';
+          const supplierFields = expenseForm.querySelector('.pay-supplier-fields');
+          const expenseFields = expenseForm.querySelector('.pay-expense-fields');
+          if (supplierFields) supplierFields.style.display = isSupplier ? '' : 'none';
+          if (expenseFields) expenseFields.style.display = isSupplier ? 'none' : '';
+        };
+        if (expenseForm.payType) {
+          if (expenseForm.payType.forEach) {
+            expenseForm.payType.forEach(r => r.addEventListener('change', togglePayType));
+          } else {
+            expenseForm.payType.addEventListener('change', togglePayType);
+          }
+          togglePayType();
+        }
+      }
       const openingForm = document.getElementById('financialOpeningForm');
       if (openingForm) openingForm.addEventListener('input', () => draftStorage.save('draft.fin.opening', formToObject(openingForm)));
     }
