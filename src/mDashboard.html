@@ -1957,6 +1957,9 @@
                   <button class="btn btn-sm" type="button" onclick="refreshModalSaleData()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; border-radius: 8px; font-weight: 500;">
                     <i class="bi bi-arrow-clockwise"></i> Refresh
                   </button>
+                  <button class="btn btn-sm btn-outline-primary" type="button" onclick="openCustomerQuickAdd()">
+                    <i class="bi bi-person-plus"></i> Add Customer
+                  </button>
                 </div>
                 <select class="form-select" id="modalSaleCustomer" onchange="onModalCustomerSelect(this.value)" required style="border-radius: 8px;">
                   <option value="">-- Select Customer --</option>
@@ -6875,7 +6878,9 @@
       document.getElementById('masterItemDescription').value = '';
       document.getElementById('masterItemStatus').value = 'Active';
       const modalEl = document.getElementById('masterItemModal');
-      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl, {backdrop: true});
+      modalEl.classList.add('modal-foreground');
+      modalEl.addEventListener('hidden.bs.modal', () => modalEl.classList.remove('modal-foreground'), { once: true });
       modal.show();
     }
 
@@ -7111,6 +7116,8 @@
     let modalCartItems = [];
     let modalCustomersData = [];
     let modalInventoryData = [];
+    let modalCustomerDraft = {};
+    let modalCustomerDraftTimer;
 
     function openNewSaleModal() {
       try {
@@ -7125,6 +7132,18 @@
         modalCartItems = [];
         if (typeof renderModalCart === 'function') {
           renderModalCart();
+        }
+
+        // Restore customer selection draft
+        modalCustomerDraft = {};
+        const draft = localStorage.getItem('draft.modal.customer');
+        if (draft) {
+          modalCustomerDraft = JSON.parse(draft);
+          const custSelect = document.getElementById('modalSaleCustomer');
+          if (custSelect && modalCustomerDraft.id) {
+            custSelect.value = modalCustomerDraft.id;
+            onModalCustomerSelect(modalCustomerDraft.id);
+          }
         }
 
         // Set today's date
@@ -7218,6 +7237,10 @@
         document.getElementById('modalCustEmail').value = '';
         document.getElementById('modalCustKra').value = '';
         document.getElementById('modalCustLocation').value = '';
+      }
+      // Save draft
+      if (window.localStorage) {
+        localStorage.setItem('draft.modal.customer', JSON.stringify({ id: customerId }));
       }
     }
 
