@@ -3458,28 +3458,34 @@
         }
 
         // Call backend to save product
+        if (window.__savingProduct) return;
+        window.__savingProduct = true;
+
         google.script.run
           .withSuccessHandler(function(response) {
             if (response.success) {
               showQuickAddAlert(alertBox, 'success', 'Product added successfully! Item ID: ' + response.itemId);
               form.reset();
+              if (window.localStorage) localStorage.removeItem('draft.inventory.add');
               // Reload inventory section after 2 seconds
               setTimeout(() => {
                 loadInventorySection(true);
                 const modalEl = document.getElementById('inventoryAddModal');
                 if (modalEl) {
-                  const modal = bootstrap.Modal.getInstance(modalEl);
-                  if (modal) modal.hide();
+                  const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                  modal.hide();
                 }
-              }, 2000);
+              }, 400);
             } else {
               showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add product'));
             }
             resetSubmitButton(submitBtn, 'product');
+            window.__savingProduct = false;
           })
           .withFailureHandler(function(error) {
             showQuickAddAlert(alertBox, 'danger', 'Error: ' + error.message);
             resetSubmitButton(submitBtn, 'product');
+            window.__savingProduct = false;
           })
           .addProduct(productData);
       } else if (type === 'customer') {
@@ -4421,7 +4427,7 @@
 
       let html = `
         <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inventoryAddModal">
+          <button class="btn btn-primary" type="button" onclick="openInventoryAddModal()">
             <i class="bi bi-plus-circle"></i> Add Product
           </button>
           <button class="btn btn-outline-secondary" onclick="loadInventorySection(true)">
@@ -4473,7 +4479,7 @@
                         <select class="form-select" name="supplier" id="inventorySupplierDropdown" required>
                           <option value="">Loading suppliers...</option>
                         </select>
-                        <button class="btn btn-outline-secondary" type="button" onclick="showSection('suppliers-list', event)" title="Add Supplier">
+                        <button class="btn btn-outline-secondary" type="button" onclick="openSupplierModal()" title="Add Supplier">
                           <i class="bi bi-plus-circle"></i>
                         </button>
                       </div>
@@ -5573,6 +5579,33 @@
       return obj;
     }
 
+    // Draft storage for inventory/supplier forms
+    document.addEventListener('DOMContentLoaded', function() {
+      // Inventory draft
+      const invForm = document.getElementById('quickAddProductForm');
+      if (invForm && window.localStorage) {
+        try {
+          const draft = JSON.parse(localStorage.getItem('draft.inventory.add') || '{}');
+          Object.keys(draft).forEach(k => { if (invForm[k]) invForm[k].value = draft[k]; });
+        } catch(e) {}
+        invForm.addEventListener('input', () => {
+          localStorage.setItem('draft.inventory.add', JSON.stringify(formToObject(invForm)));
+        });
+      }
+
+      // Supplier draft
+      const supForm = document.getElementById('addSupplierForm');
+      if (supForm && window.localStorage) {
+        try {
+          const draft = JSON.parse(localStorage.getItem('draft.supplier.add') || '{}');
+          Object.keys(draft).forEach(k => { if (supForm[k]) supForm[k].value = draft[k]; });
+        } catch(e) {}
+        supForm.addEventListener('input', () => {
+          localStorage.setItem('draft.supplier.add', JSON.stringify(formToObject(supForm)));
+        });
+      }
+    });
+
     function restoreForm(form, data) {
       if (!form || !data) return;
       Object.keys(data).forEach(k => {
@@ -5784,6 +5817,9 @@
       const alertDiv = document.getElementById('supplierFormAlert');
       alertDiv.style.display = 'none';
 
+      if (window.__savingSupplier) return;
+      window.__savingSupplier = true;
+
       google.script.run
         .withSuccessHandler(function(result) {
           if (result.success) {
@@ -5791,6 +5827,7 @@
             alertDiv.textContent = 'Supplier added successfully!';
             alertDiv.style.display = 'block';
             form.reset();
+            if (window.localStorage) localStorage.removeItem('draft.supplier.add');
             const modalEl = ensureSupplierModal();
             if (modalEl) {
               const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
@@ -5802,11 +5839,13 @@
             alertDiv.textContent = 'Error: ' + result.message;
             alertDiv.style.display = 'block';
           }
+          window.__savingSupplier = false;
         })
         .withFailureHandler(function(error) {
           alertDiv.className = 'alert alert-danger mt-3';
           alertDiv.textContent = 'Error: ' + error.message;
           alertDiv.style.display = 'block';
+          window.__savingSupplier = false;
         })
         .addSupplier(supplierData);
     }
@@ -6022,7 +6061,10 @@
     function openSupplierModal() {
       const modalEl = ensureSupplierModal();
       if (!modalEl) return;
-      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
+      // Bring to front if another modal is open
+      modalEl.classList.add('modal-foreground');
+      modalEl.addEventListener('hidden.bs.modal', () => modalEl.classList.remove('modal-foreground'), { once: true });
       modal.show();
     }
 
