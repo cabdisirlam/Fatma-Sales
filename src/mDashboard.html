@@ -1717,7 +1717,7 @@
             <h2 style="margin: 0; font-size: 26px; font-weight: 700;"><i class="bi bi-truck"></i> Supplier Management</h2>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">View suppliers, manage orders, and track payments</p>
           </div>
-          <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <div id="suppliersListContainer" style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
             <h3><i class="bi bi-truck"></i> Suppliers List</h3>
             <p class="text-muted">View and manage all suppliers</p>
             <hr>
@@ -1732,7 +1732,7 @@
             <h2 style="margin: 0; font-size: 26px; font-weight: 700;"><i class="bi bi-truck"></i> Supplier Management</h2>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">View suppliers, manage orders, and track payments</p>
           </div>
-          <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <div id="suppliersAddContainer" style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
             <h3><i class="bi bi-plus-circle"></i> Add New Supplier</h3>
             <p class="text-muted">Register a new supplier</p>
             <hr>
@@ -1747,7 +1747,7 @@
             <h2 style="margin: 0; font-size: 26px; font-weight: 700;"><i class="bi bi-truck"></i> Supplier Management</h2>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">View suppliers, manage orders, and track payments</p>
           </div>
-          <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <div id="suppliersOrdersContainer" style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
             <h3><i class="bi bi-cart-plus"></i> Purchase Orders</h3>
             <p class="text-muted">Manage purchase orders from suppliers</p>
             <hr>
@@ -1762,7 +1762,7 @@
             <h2 style="margin: 0; font-size: 26px; font-weight: 700;"><i class="bi bi-truck"></i> Supplier Management</h2>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">View suppliers, manage orders, and track payments</p>
           </div>
-          <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+          <div id="suppliersPaymentsContainer" style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
             <h3><i class="bi bi-credit-card"></i> Supplier Payments</h3>
             <p class="text-muted">Track and manage payments to suppliers</p>
             <hr>
@@ -5689,7 +5689,7 @@
 
     // Suppliers List Section
     function loadSuppliersList() {
-      const container = document.getElementById('section-suppliers-list');
+      const container = document.getElementById('suppliersListContainer') || document.getElementById('section-suppliers-list');
       if (!container) return;
 
       const contentDiv = container.querySelector('.placeholder-content') || container;
@@ -5707,7 +5707,7 @@
 
     // Add Supplier Section
     function loadAddSupplier() {
-      const container = document.getElementById('section-suppliers-add');
+      const container = document.getElementById('suppliersAddContainer') || document.getElementById('section-suppliers-add');
       if (!container) return;
 
       let html = `
@@ -5806,7 +5806,7 @@
     // Store suppliers data for later use
     function displaySuppliers(data) {
       dashboardSuppliersData = data;
-      const container = document.getElementById('section-suppliers-list');
+      const container = document.getElementById('suppliersListContainer') || document.getElementById('section-suppliers-list');
       if (!container) return;
 
       const parseSupplierTotals = (supplier) => {
@@ -6234,7 +6234,7 @@
 
     // Purchase Orders Section
     function loadPurchaseOrders() {
-      const container = document.getElementById('section-suppliers-orders');
+      const container = document.getElementById('suppliersOrdersContainer') || document.getElementById('section-suppliers-orders');
       if (!container) return;
 
       const contentDiv = container.querySelector('.placeholder-content') || container;
@@ -6251,7 +6251,7 @@
     }
 
     function displayPurchaseOrders(data) {
-      const container = document.getElementById('section-suppliers-orders');
+      const container = document.getElementById('suppliersOrdersContainer') || document.getElementById('section-suppliers-orders');
       if (!container) return;
 
       const totalOrders = data.length;
@@ -6333,7 +6333,7 @@
 
     // Supplier Payments Section
     function loadSupplierPayments() {
-      const container = document.getElementById('section-suppliers-payments');
+      const container = document.getElementById('suppliersPaymentsContainer') || document.getElementById('section-suppliers-payments');
       if (!container) return;
 
       container.innerHTML = `
