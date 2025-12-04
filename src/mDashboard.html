@@ -5667,11 +5667,11 @@
             summaryDiv.innerHTML = '';
           } else {
             let running = parseFloat(report.openingBalance) || 0;
-            let totalDr = 0;
-            let totalCr = 0;
+            let totalDr = 0; // inflow (receipts)
+            let totalCr = 0; // outflow (payments)
             tbody.innerHTML = report.transactions.map(t => {
-              const dr = parseFloat(t.out) || 0; // Pay outs (debit)
-              const cr = parseFloat(t.in) || 0;  // Receipts (credit)
+              const dr = parseFloat(t.in) || 0;  // Receipts (DR)
+              const cr = parseFloat(t.out) || 0; // Payments (CR)
               running += dr;
               running -= cr;
               totalDr += dr;
@@ -5682,7 +5682,7 @@
                 <td>${t.type}</td>
                 <td>${t.description || ''}</td>
                 <td class="text-end text-success">${dr > 0 ? formatCurrency(dr) : '-'}</td>
-                <td class="text-end text-danger">${cr > 0 ? formatCurrency(-cr) : '-'}</td>
+                <td class="text-end text-danger">${cr > 0 ? formatCurrency(cr) : '-'}</td>
                 <td class="text-end">${formatCurrency(running)}</td>
               </tr>`;
             }).join('');
@@ -5703,7 +5703,7 @@
               <div class="col-6 col-md-3">
                 <div class="p-2 border rounded bg-light h-100">
                   <div class="small text-muted">Credit (CR)</div>
-                  <div class="fw-bold text-danger">${formatCurrency(-totalCr)}</div>
+                  <div class="fw-bold text-danger">${formatCurrency(totalCr)}</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
