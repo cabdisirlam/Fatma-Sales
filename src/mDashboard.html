@@ -5179,12 +5179,24 @@
 
       const preferredAccounts = ['M-Pesa', 'Cash', 'Equity Bank'];
       const focusedBreakdown = preferredAccounts.map(name => {
-        return breakdownSource.find(b => (b.name || '').toLowerCase() === name.toLowerCase()) || {
+        const acc = breakdownSource.find(b => (b.name || '').toLowerCase() === name.toLowerCase()) || {
           name,
           openingBalance: 0,
           inflow: 0,
           outflow: 0,
           balance: 0
+        };
+        // Recompute to align with statement: DR = inflow (receipts), CR = outflow (payments)
+        const dr = Math.max(0, Math.abs(parseFloat(acc.outflow) || 0));
+        const cr = Math.max(0, Math.abs(parseFloat(acc.inflow) || 0));
+        const opening = parseFloat(acc.openingBalance) || 0;
+        const balance = opening + dr - cr;
+        return {
+          name: acc.name,
+          openingBalance: opening,
+          inflow: dr,
+          outflow: cr,
+          balance: balance
         };
       });
 
