@@ -5806,9 +5806,9 @@
             let totalDr = 0; // inflow (receipts)
             let totalCr = 0; // outflow (payments)
             tbody.innerHTML = report.transactions.map(t => {
-              // Backend uses in/out; map so DR = inflow (payment from), CR = outflow (payment to)
-              const dr = Math.max(0, Math.abs(parseFloat(t.out) || 0));   // Receipts (DR, positive)
-              const cr = Math.max(0, Math.abs(parseFloat(t.in) || 0));    // Payments (CR, positive)
+              // DR = inflow (payment from customer/other), CR = outflow (payment to supplier/expense)
+              const dr = Math.max(0, Math.abs(parseFloat(t.in) || 0));
+              const cr = Math.max(0, Math.abs(parseFloat(t.out) || 0));
               running += dr;
               running -= cr;
               totalDr += dr;
