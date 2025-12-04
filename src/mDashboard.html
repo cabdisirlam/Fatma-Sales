@@ -5664,45 +5664,56 @@
         .withSuccessHandler(function(report) {
           if (!report || !report.transactions || report.transactions.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No transactions for this period.</td></tr>';
+            summaryDiv.innerHTML = '';
           } else {
-            tbody.innerHTML = report.transactions.map(t => `
+            let running = parseFloat(report.openingBalance) || 0;
+            let totalDr = 0;
+            let totalCr = 0;
+            tbody.innerHTML = report.transactions.map(t => {
+              const dr = parseFloat(t.out) || 0; // Pay outs (debit)
+              const cr = parseFloat(t.in) || 0;  // Receipts (credit)
+              running += dr;
+              running -= cr;
+              totalDr += dr;
+              totalCr += cr;
+              return `
               <tr>
                 <td>${new Date(t.date).toLocaleDateString()}</td>
                 <td>${t.type}</td>
                 <td>${t.description || ''}</td>
-                <td class="text-end text-success">${t.out > 0 ? formatCurrency(t.out) : '-'}</td>
-                <td class="text-end text-danger">${t.in > 0 ? formatCurrency(t.in) : '-'}</td>
-                <td class="text-end">${formatCurrency(t.runningBalance || t.balance)}</td>
-              </tr>
-            `).join('');
-          }
+                <td class="text-end text-success">${dr > 0 ? formatCurrency(dr) : '-'}</td>
+                <td class="text-end text-danger">${cr > 0 ? formatCurrency(-cr) : '-'}</td>
+                <td class="text-end">${formatCurrency(running)}</td>
+              </tr>`;
+            }).join('');
 
-          summaryDiv.innerHTML = `
-            <div class="col-6 col-md-3">
-              <div class="p-2 border rounded bg-light h-100">
-                <div class="small text-muted">Opening</div>
-                <div class="fw-bold">${formatCurrency(report.openingBalance)}</div>
+            summaryDiv.innerHTML = `
+              <div class="col-6 col-md-3">
+                <div class="p-2 border rounded bg-light h-100">
+                  <div class="small text-muted">Opening</div>
+                  <div class="fw-bold">${formatCurrency(report.openingBalance)}</div>
+                </div>
               </div>
-            </div>
-            <div class="col-6 col-md-3">
-              <div class="p-2 border rounded bg-light h-100">
-                <div class="small text-muted">Debit (DR)</div>
-                <div class="fw-bold text-success">${formatCurrency(report.totalPayments)}</div>
+              <div class="col-6 col-md-3">
+                <div class="p-2 border rounded bg-light h-100">
+                  <div class="small text-muted">Debit (DR)</div>
+                  <div class="fw-bold text-success">${formatCurrency(totalDr)}</div>
+                </div>
               </div>
-            </div>
-            <div class="col-6 col-md-3">
-              <div class="p-2 border rounded bg-light h-100">
-                <div class="small text-muted">Credit (CR)</div>
-                <div class="fw-bold text-danger">${formatCurrency(report.totalAdditions)}</div>
+              <div class="col-6 col-md-3">
+                <div class="p-2 border rounded bg-light h-100">
+                  <div class="small text-muted">Credit (CR)</div>
+                  <div class="fw-bold text-danger">${formatCurrency(-totalCr)}</div>
+                </div>
               </div>
-            </div>
-            <div class="col-6 col-md-3">
-              <div class="p-2 border rounded bg-light h-100">
-                <div class="small text-muted">Closing</div>
-                <div class="fw-bold">${formatCurrency(report.closingBalance)}</div>
+              <div class="col-6 col-md-3">
+                <div class="p-2 border rounded bg-light h-100">
+                  <div class="small text-muted">Closing</div>
+                  <div class="fw-bold">${formatCurrency(running)}</div>
+                </div>
               </div>
-            </div>
-          `;
+            `;
+          }
         })
         .withFailureHandler(function(error) {
           tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Error loading statement: ' + error.message + '</td></tr>';
