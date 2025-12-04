@@ -2887,7 +2887,7 @@
         .withFailureHandler(function(error) {
           console.error('Error loading inventory count:', error);
         })
-        .getInventory({});
+        .getInventoryCached({});
 
       // Load customers count
       google.script.run
