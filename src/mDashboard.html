@@ -5187,12 +5187,12 @@
           balance: 0
         };
         // Recompute to align with statement: DR = inflow (receipts), CR = outflow (payments)
-        // Use heuristics similar to statement: treat inflow primarily as "out" data and outflow as "in" if needed
         const rawIn = Math.abs(parseFloat(acc.inflow) || 0);
         const rawOut = Math.abs(parseFloat(acc.outflow) || 0);
-        // Default: treat outflow (acc.outflow) as inflow, inflow (acc.inflow) as outflow when they look inverted
-        const dr = rawOut || rawIn;  // Receipts
-        const cr = rawIn && rawOut ? rawIn : (rawIn && !rawOut ? rawIn : rawIn); // Payments fallback
+        // Heuristic: if the account is Cash, use inflow as DR and outflow as CR directly
+        const isCash = (acc.name || '').toLowerCase() === 'cash';
+        const dr = isCash ? rawIn : (rawOut || rawIn);   // Receipts
+        const cr = isCash ? rawOut : (rawIn && rawOut ? rawIn : rawIn); // Payments
         const opening = parseFloat(acc.openingBalance) || 0;
         const balance = opening + dr - cr;
         return {
