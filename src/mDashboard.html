@@ -4634,7 +4634,7 @@
 
     // Customers Section
     function loadCustomersSection(forceRefresh = false) {
-      const container = document.getElementById('section-customers');
+      const container = document.getElementById('customersContainer') || document.getElementById('section-customers');
       if (!container) return;
 
       // Check Cache: If we have data and aren't forcing a refresh, use it!
@@ -4662,7 +4662,7 @@
 
     function displayCustomers(data) {
       dashboardCustomersData = data; // Store data for actions
-      const container = document.getElementById('section-customers');
+      const container = document.getElementById('customersContainer') || document.getElementById('section-customers');
       if (!container) return;
 
       const activeCustomers = data.filter(c => c.Status === 'Active').length;
