@@ -4492,7 +4492,10 @@
                       <label class="form-label">Reorder Level</label>
                       <input type="number" class="form-control" name="reorderLevel" min="0" value="10">
                     </div>
-                    <div class="col-md-3 d-flex align-items-end justify-content-end">
+                    <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
+                      <button class="btn btn-outline-secondary" type="button" onclick="clearInventoryDraft()">
+                        Clear
+                      </button>
                       <button class="btn btn-success" type="submit" id="quickAddProductBtn">
                         <i class="bi bi-check-circle"></i> Save Product
                       </button>
@@ -5579,11 +5582,11 @@
       return obj;
     }
 
-    // Draft storage for inventory/supplier forms
-    document.addEventListener('DOMContentLoaded', function() {
-      // Inventory draft
+    // Draft storage for inventory/supplier forms (initialize when modals open)
+    function initInventoryDraft() {
       const invForm = document.getElementById('quickAddProductForm');
-      if (invForm && window.localStorage) {
+      if (invForm && window.localStorage && !invForm.dataset.draftInit) {
+        invForm.dataset.draftInit = 'true';
         try {
           const draft = JSON.parse(localStorage.getItem('draft.inventory.add') || '{}');
           Object.keys(draft).forEach(k => { if (invForm[k]) invForm[k].value = draft[k]; });
@@ -5592,10 +5595,12 @@
           localStorage.setItem('draft.inventory.add', JSON.stringify(formToObject(invForm)));
         });
       }
+    }
 
-      // Supplier draft
+    function initSupplierDraft() {
       const supForm = document.getElementById('addSupplierForm');
-      if (supForm && window.localStorage) {
+      if (supForm && window.localStorage && !supForm.dataset.draftInit) {
+        supForm.dataset.draftInit = 'true';
         try {
           const draft = JSON.parse(localStorage.getItem('draft.supplier.add') || '{}');
           Object.keys(draft).forEach(k => { if (supForm[k]) supForm[k].value = draft[k]; });
@@ -5604,7 +5609,23 @@
           localStorage.setItem('draft.supplier.add', JSON.stringify(formToObject(supForm)));
         });
       }
-    });
+    }
+
+    function clearInventoryDraft() {
+      const invForm = document.getElementById('quickAddProductForm');
+      if (invForm) {
+        invForm.reset();
+      }
+      if (window.localStorage) localStorage.removeItem('draft.inventory.add');
+    }
+
+    function clearSupplierDraft() {
+      const supForm = document.getElementById('addSupplierForm');
+      if (supForm) {
+        supForm.reset();
+      }
+      if (window.localStorage) localStorage.removeItem('draft.supplier.add');
+    }
 
     function restoreForm(form, data) {
       if (!form || !data) return;
@@ -6052,7 +6073,8 @@
                       </select>
                     </div>
                   </div>
-                  <div class="d-flex justify-content-end">
+                  <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearSupplierDraft()">Clear</button>
                     <button type="submit" class="btn btn-primary">
                       <i class="bi bi-check-circle"></i> Save Supplier
                     </button>
@@ -6065,6 +6087,7 @@
         </div>`;
         document.body.insertAdjacentHTML('beforeend', modalTemplate);
         modalEl = document.getElementById('supplierAddModal');
+        initSupplierDraft();
       }
       return modalEl;
     }
@@ -6077,6 +6100,17 @@
       modalEl.classList.add('modal-foreground');
       modalEl.addEventListener('hidden.bs.modal', () => modalEl.classList.remove('modal-foreground'), { once: true });
       modal.show();
+      initSupplierDraft();
+    }
+
+    function openInventoryAddModal() {
+      const modalEl = document.getElementById('inventoryAddModal');
+      if (!modalEl) return;
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
+      modalEl.classList.add('modal-foreground');
+      modalEl.addEventListener('hidden.bs.modal', () => modalEl.classList.remove('modal-foreground'), { once: true });
+      modal.show();
+      initInventoryDraft();
     }
 
     function resetEditSubmitButton() {
