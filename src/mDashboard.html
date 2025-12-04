@@ -4382,7 +4382,7 @@
 
     // Inventory Section
     function loadInventorySection(forceRefresh = false) {
-      const container = document.getElementById('section-inventory');
+      const container = document.getElementById('inventoryContainer') || document.getElementById('section-inventory');
       if (!container) return;
 
       // Fetch master data for product names/categories when needed
@@ -4426,7 +4426,7 @@
     }
 
     function displayInventory(data) {
-      const container = document.getElementById('section-inventory');
+      const container = document.getElementById('inventoryContainer') || document.getElementById('section-inventory');
       if (!container) return;
 
       const getStockQty = (item) => (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
