@@ -6979,6 +6979,11 @@
       modalEl.classList.add('modal-foreground');
       modalEl.addEventListener('hidden.bs.modal', () => modalEl.classList.remove('modal-foreground'), { once: true });
       modal.show();
+      // Push backdrop forward
+      const backdrops = document.querySelectorAll('.modal-backdrop');
+      if (backdrops.length) {
+        backdrops[backdrops.length - 1].classList.add('modal-foreground-backdrop');
+      }
     }
 
     function setMasterModalAlert(type, message) {
