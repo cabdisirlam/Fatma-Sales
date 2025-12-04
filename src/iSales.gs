@@ -364,6 +364,9 @@ function createSale(saleData) {
     // Sync delivery/payment status for fulfillment queue
     updateSalePaymentProgress(transactionId, saleData.User);
 
+    // ✅ NEW: Clear caches for immediate updates
+    clearSaleRelatedCaches();
+
     return {
       success: true,
       transactionId: transactionId,
@@ -449,6 +452,9 @@ function cancelSale(transactionId, reason, user) {
     }
 
     logAudit(user, 'Sales', 'Cancel Sale', 'Cancelled sale ' + transactionId + '. Reason: ' + reason, '', '', '');
+
+    // ✅ Clear caches for immediate updates
+    clearSaleRelatedCaches();
 
     return { success: true, message: 'Sale cancelled, inventory returned, and payments refunded.' };
 
@@ -1590,6 +1596,9 @@ function processSaleReturn(saleId, items, reason, user) {
       JSON.stringify({saleId, refundAmount, items, customerBalanceUpdated: sale.Customer_ID && sale.Customer_ID !== 'WALK-IN'})
     );
 
+    // ✅ Clear caches for immediate updates
+    clearSaleRelatedCaches();
+
     return {
       success: true,
       refundAmount: refundAmount,
@@ -1657,6 +1666,47 @@ function getSalesReport(startDate, endDate) {
       totalItems: 0,
       averageTransactionValue: 0
     };
+  }
+}
+
+// =====================================================
+// CACHE MANAGEMENT FOR REAL-TIME UPDATES
+// =====================================================
+
+/**
+ * ✅ NEW: Clear all caches related to sales for immediate updates
+ * Called after creating/updating/deleting sales
+ * Ensures dashboard shows new data immediately
+ */
+function clearSaleRelatedCaches() {
+  try {
+    // Clear sales-related caches
+    if (typeof clearCachedData === 'function') {
+      clearCachedData('cache_sales_recent');
+      clearCachedData('cache_dashboard_data');
+      clearCachedData('cache_sales_overview');
+    }
+
+    // Clear inventory cache (quantities changed)
+    if (typeof clearInventoryCache === 'function') {
+      clearInventoryCache();
+    }
+
+    // Clear customer cache (if customer balance updated)
+    if (typeof clearCachedData === 'function') {
+      clearCachedData('cache_customers_all');
+      clearCachedData('cache_customer_debt');
+    }
+
+    // Clear financial cache (new transaction recorded)
+    if (typeof clearCachedData === 'function') {
+      clearCachedData('cache_financials_summary');
+    }
+
+    Logger.log('✅ Cleared all sale-related caches for immediate updates');
+  } catch (error) {
+    // Don't throw error - cache clearing is not critical
+    logError('clearSaleRelatedCaches', error);
   }
 }
 

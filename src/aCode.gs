@@ -941,3 +941,150 @@ function sheetToObjects(sheetName, filters) {
     throw new Error(`Failed to convert sheet "${sheetName}" to objects: ${error.message}`);
   }
 }
+
+// =====================================================
+// BATCH API CALLS FOR PERFORMANCE
+// =====================================================
+
+/**
+ * ✅ NEW: Batch multiple function calls into one request
+ * Reduces network round-trips from N calls to 1 call
+ *
+ * @param {Array} operations - Array of operations to execute
+ * @returns {Object} Results keyed by operation ID
+ *
+ * @example
+ * batchCall([
+ *   { id: 'sales', function: 'getSalesOverview', params: [] },
+ *   { id: 'inventory', function: 'getInventory', params: [null] },
+ *   { id: 'customers', function: 'getCustomers', params: [null] }
+ * ])
+ */
+function batchCall(operations) {
+  try {
+    if (!Array.isArray(operations)) {
+      throw new Error('Operations must be an array');
+    }
+
+    const results = {};
+    const startTime = new Date().getTime();
+
+    for (let i = 0; i < operations.length; i++) {
+      const op = operations[i];
+
+      if (!op.id || !op.function) {
+        results[op.id || 'unknown_' + i] = {
+          success: false,
+          error: 'Operation must have id and function properties'
+        };
+        continue;
+      }
+
+      try {
+        // Get function reference
+        const func = this[op.function] || globalThis[op.function];
+
+        if (typeof func !== 'function') {
+          results[op.id] = {
+            success: false,
+            error: 'Function not found: ' + op.function
+          };
+          continue;
+        }
+
+        // Execute function with parameters
+        const result = func.apply(this, op.params || []);
+        results[op.id] = {
+          success: true,
+          data: result
+        };
+
+      } catch (error) {
+        logError('batchCall.' + op.function, error);
+        results[op.id] = {
+          success: false,
+          error: error.message
+        };
+      }
+    }
+
+    const endTime = new Date().getTime();
+    const duration = endTime - startTime;
+
+    Logger.log('Batch call completed: ' + operations.length + ' operations in ' + duration + 'ms');
+
+    return {
+      success: true,
+      results: results,
+      duration: duration,
+      operationCount: operations.length
+    };
+
+  } catch (error) {
+    logError('batchCall', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// =====================================================
+// FORCE REFRESH - BYPASS CACHE
+// =====================================================
+
+/**
+ * ✅ NEW: Force refresh data by clearing cache first
+ * Use this for refresh buttons to get truly fresh data
+ *
+ * @param {string} dataType - Type of data to refresh ('inventory', 'customers', 'sales', 'all')
+ * @returns {Object} Fresh data from database
+ */
+function forceRefreshData(dataType) {
+  try {
+    // Clear cache first
+    switch(dataType) {
+      case 'inventory':
+        if (typeof clearInventoryCache === 'function') {
+          clearInventoryCache();
+        }
+        return getInventory();
+
+      case 'customers':
+        if (typeof clearCachedData === 'function') {
+          clearCachedData('cache_customers_all');
+        }
+        return getCustomers();
+
+      case 'sales':
+        if (typeof clearCachedData === 'function') {
+          clearCachedData('cache_sales_recent');
+          clearCachedData('cache_dashboard_data');
+        }
+        return getSalesOverview();
+
+      case 'dashboard':
+        if (typeof clearCachedData === 'function') {
+          clearCachedData('cache_dashboard_data');
+        }
+        return getDashboardStats();
+
+      case 'all':
+        // Clear all caches
+        if (typeof clearAllCaches === 'function') {
+          clearAllCaches();
+        }
+        return {
+          inventory: getInventory(),
+          customers: getCustomers(),
+          sales: getSalesOverview()
+        };
+
+      default:
+        throw new Error('Invalid data type: ' + dataType);
+    }
+  } catch (error) {
+    logError('forceRefreshData', error);
+    throw error;
+  }
+}

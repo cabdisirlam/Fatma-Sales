@@ -2672,7 +2672,7 @@
     let sectionHistory = [];
     const navHistory = [];
     let isGoingBack = false;
-    let currentUser = sessionStorage.getItem('userName') || 'SYSTEM';
+    let currentUser = localStorage.getItem('userName') || 'SYSTEM';
     const draftStorage = {
       save(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {} },
       load(key) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } },
@@ -2686,10 +2686,10 @@
     let dashboardCustomersData = [];
 
     // Track the active user for audit logging and attribution
-    if (!sessionStorage.getItem('userName') && typeof google !== 'undefined' && google.script && google.script.run) {
+    if (!localStorage.getItem('userName') && typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run.withSuccessHandler(function(email) {
         currentUser = email || 'SYSTEM';
-        sessionStorage.setItem('userName', currentUser);
+        localStorage.setItem('userName', currentUser);
       }).getActiveUserEmail();
     }
 
@@ -2729,8 +2729,8 @@
       loadDashboardStats();
 
       // Initialize dashboard (from restored JS)
-      const userName = sessionStorage.getItem('userName');
-      const userRole = sessionStorage.getItem('userRole');
+      const userName = localStorage.getItem('userName');
+      const userRole = localStorage.getItem('userRole');
       if (userName && userRole) {
         initDashboard(userName, userRole);
       }
@@ -2825,7 +2825,7 @@
 
     // Initialize dashboard
     function initDashboard(userName, userRole) {
-      const userEmail = sessionStorage.getItem('userEmail');
+      const userEmail = localStorage.getItem('userEmail');
       document.getElementById('userName').textContent = userName || 'N/A';
       document.getElementById('userRole').textContent = userRole || 'N/A';
 
@@ -3724,8 +3724,16 @@
     }
 
     function logout() {
-      sessionStorage.clear();
-      location.reload();
+      // ✅ UPDATED: Clear user session from localStorage (keep draft data)
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('sessionId');
+      localStorage.removeItem('token');
+      localStorage.removeItem('loginTime');
+
+      // Redirect to login page
+      window.location.href = window.location.origin + window.location.pathname;
     }
 
     // Offline banner handlers
@@ -3868,7 +3876,7 @@
         .withFailureHandler(function(err) {
           alert('Error updating status: ' + err.message);
         })
-        .setSaleFulfillmentStatus(transactionId, status, sessionStorage.getItem('userName') || 'SYSTEM');
+        .setSaleFulfillmentStatus(transactionId, status, localStorage.getItem('userName') || 'SYSTEM');
     }
 
     function changeSaleStatus(transactionId, status) {
@@ -3880,7 +3888,7 @@
       }
       if (!confirm(message)) return;
 
-      const user = sessionStorage.getItem('userName') || 'SYSTEM';
+      const user = localStorage.getItem('userName') || 'SYSTEM';
 
       google.script.run
         .withSuccessHandler(function(res) {
@@ -4034,7 +4042,7 @@
           bootstrap.Modal.getInstance(document.getElementById('returnSaleModal')).hide();
           loadSalesHistory(); // Refresh list
         })
-        .processSaleReturn(saleId, itemsToReturn, reason, sessionStorage.getItem('userName'));
+        .processSaleReturn(saleId, itemsToReturn, reason, localStorage.getItem('userName'));
     }
 
     function createNewQuotation() {
@@ -4108,7 +4116,7 @@
       const dateField = document.getElementById('dashSaleDate');
       if(dateField) dateField.valueAsDate = new Date();
       const soldByField = document.getElementById('dashSoldBy');
-      if (soldByField) soldByField.value = sessionStorage.getItem('userName') || 'SYSTEM';
+      if (soldByField) soldByField.value = localStorage.getItem('userName') || 'SYSTEM';
 
       // Load Customers
       google.script.run.withSuccessHandler(function(customers) {
@@ -4153,11 +4161,11 @@
       const currentCustomer = document.getElementById('dashSaleCustomer') ? document.getElementById('dashSaleCustomer').value : '';
       const currentProduct = document.getElementById('dashSaleProduct') ? document.getElementById('dashSaleProduct').value : '';
       const soldByField = document.getElementById('dashSoldBy');
-      if (soldByField) soldByField.value = sessionStorage.getItem('userName') || 'SYSTEM';
+      if (soldByField) soldByField.value = localStorage.getItem('userName') || 'SYSTEM';
       const dateField = document.getElementById('dashSaleDate');
       if (dateField) dateField.valueAsDate = new Date();
 
-      // Refresh customers
+      // ✅ UPDATED: Force refresh customers (clears cache first)
       google.script.run.withSuccessHandler(function(customers) {
         dashCustomers = customers || [];
         populateCustomerSelect(dashCustomers);
@@ -4171,9 +4179,9 @@
           if (sel) sel.value = '';
           onCustomerSelect('');
         }
-      }).getCustomers(); // pull full list to avoid missing customers
+      }).forceRefreshData('customers'); // ✅ NEW: Force fresh data
 
-      // Refresh products
+      // ✅ UPDATED: Force refresh products (clears cache first)
       google.script.run.withSuccessHandler(function(items) {
         dashProducts = items || [];
         const sel = document.getElementById('dashSaleProduct');
@@ -4189,7 +4197,7 @@
           sel.value = currentProduct;
           updateDashProductDetails();
         }
-      }).getInventory();
+      }).forceRefreshData('inventory'); // ✅ NEW: Force fresh data
     }
 
     // --- UPDATE PRODUCT DETAILS ON SELECTION ---
@@ -4253,8 +4261,8 @@
         DateTime: document.getElementById('dashSaleDate').value, // Manual Date
         Payment_Mode: document.getElementById('dashSalePayment').value,
         items: dashCart,
-        User: sessionStorage.getItem('userName') || 'SYSTEM',
-        Sold_By: document.getElementById('dashSoldBy').value || (sessionStorage.getItem('userName') || 'SYSTEM'),
+        User: localStorage.getItem('userName') || 'SYSTEM',
+        Sold_By: document.getElementById('dashSoldBy').value || (localStorage.getItem('userName') || 'SYSTEM'),
         Delivery_Charge: parseFloat(document.getElementById('dashDeliveryCharge').value) || 0,
         Discount: parseFloat(document.getElementById('dashSaleDiscount').value) || 0,
         Loyalty_Points: parseInt(document.getElementById('custLoyaltyVal').value || '0', 10) || 0,
@@ -4934,7 +4942,7 @@
             Phone: document.getElementById('customerEditCustomerPhone').value,
             Email: document.getElementById('customerEditCustomerEmail').value,
             Location: document.getElementById('customerEditCustomerLocation').value,
-            User: sessionStorage.getItem('userName')
+            User: localStorage.getItem('userName')
         };
         
         const btn = document.getElementById('btnSubmitCustEdit');
@@ -4975,7 +4983,7 @@
             Amount: amt,
             Account: acc,
             Reference: ref,
-            User: sessionStorage.getItem('userName')
+            User: localStorage.getItem('userName')
         });
     }
 
@@ -6425,7 +6433,7 @@
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
-      const user = sessionStorage.getItem('userName') || 'SYSTEM';
+      const user = localStorage.getItem('userName') || 'SYSTEM';
 
       google.script.run
         .withSuccessHandler(function(result) {
@@ -7276,7 +7284,7 @@
 
         // Set current user
         const soldByInput = document.getElementById('modalSoldBy');
-        if (soldByInput) soldByInput.value = sessionStorage.getItem('userName') || 'SYSTEM';
+        if (soldByInput) soldByInput.value = localStorage.getItem('userName') || 'SYSTEM';
 
         // Load data
         if (typeof loadModalCustomers === 'function') loadModalCustomers();
@@ -7567,9 +7575,23 @@
     }
 
     function refreshModalSaleData() {
-      loadModalCustomers();
-      loadModalInventory();
-      showModalAlert('Data refreshed', 'success');
+      // ✅ UPDATED: Force refresh with cache clearing
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.customers) {
+            modalCustomers = data.customers;
+            populateModalCustomerSelect();
+          }
+          if (data.inventory) {
+            modalProducts = data.inventory;
+            populateModalProductSelect();
+          }
+          showModalAlert('Data refreshed with latest from database', 'success');
+        })
+        .withFailureHandler(function(error) {
+          showModalAlert('Refresh failed: ' + error.message, 'danger');
+        })
+        .forceRefreshData('all'); // ✅ NEW: Force fresh data for both
     }
 
     function openReturnModal() {
@@ -7668,7 +7690,7 @@
         return;
       }
 
-      const user = sessionStorage.getItem('userName') || 'SYSTEM';
+      const user = localStorage.getItem('userName') || 'SYSTEM';
       const paymentMode = 'Credit'; // default to manual payment capture later
 
       if (!confirm(`You are converting quotation ${quotationId} to a sale.\n\nProceed?`)) {

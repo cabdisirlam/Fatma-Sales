@@ -251,12 +251,13 @@
             }
 
             if (response && response.success) {
-                // Store user data in sessionStorage
-                sessionStorage.setItem('userEmail', response.user.Email);
-                sessionStorage.setItem('userName', response.user.Username);
-                sessionStorage.setItem('userRole', response.user.Role);
-                sessionStorage.setItem('sessionId', response.sessionId);
-                sessionStorage.setItem('token', response.token);
+                // ✅ UPDATED: Store user data in localStorage (persists across reloads)
+                localStorage.setItem('userEmail', response.user.Email);
+                localStorage.setItem('userName', response.user.Username);
+                localStorage.setItem('userRole', response.user.Role);
+                localStorage.setItem('sessionId', response.sessionId);
+                localStorage.setItem('token', response.token);
+                localStorage.setItem('loginTime', new Date().getTime());
 
                 // Show success message
                 showAlert('Login successful! Loading dashboard...', 'success');
@@ -280,9 +281,9 @@
         }
 
         function loadDashboard() {
-            // Get user data from session
-            const userName = sessionStorage.getItem('userName');
-            const userRole = sessionStorage.getItem('userRole');
+            // ✅ UPDATED: Get user data from localStorage
+            const userName = localStorage.getItem('userName');
+            const userRole = localStorage.getItem('userRole');
 
             // Show loading state if needed
             // setLoading(true);
@@ -379,9 +380,59 @@
             btnSpinner.style.display = loading ? 'inline' : 'none';
         }
 
-        // Focus email field on load
+        // ✅ NEW: Auto-restore session on page load
+        function checkExistingSession() {
+            const token = localStorage.getItem('token');
+            const email = localStorage.getItem('userEmail');
+            const loginTime = localStorage.getItem('loginTime');
+
+            // Check if session exists
+            if (!token || !email || !loginTime) {
+                return false; // No session, show login form
+            }
+
+            // Check if session expired (8 hours = 28800000 milliseconds)
+            const now = new Date().getTime();
+            const sessionAge = now - parseInt(loginTime);
+            const maxAge = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+
+            if (sessionAge > maxAge) {
+                // Session expired, clear and show login
+                clearSession();
+                showAlert('Session expired. Please login again.', 'warning');
+                return false;
+            }
+
+            // Session valid, show loading and restore dashboard
+            showAlert('Restoring your session...', 'info');
+            document.getElementById('loginForm').style.display = 'none';
+
+            setTimeout(function() {
+                loadDashboard();
+            }, 500);
+
+            return true;
+        }
+
+        // ✅ NEW: Clear session data
+        function clearSession() {
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('sessionId');
+            localStorage.removeItem('token');
+            localStorage.removeItem('loginTime');
+        }
+
+        // Focus email field on load and check for existing session
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('email').focus();
+            // Try to restore existing session first
+            const restored = checkExistingSession();
+
+            // If no session restored, focus email field
+            if (!restored) {
+                document.getElementById('email').focus();
+            }
         });
     </script>
 </body>
