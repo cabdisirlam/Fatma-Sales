@@ -1784,37 +1784,39 @@
             </button>
           </div>
 
-          <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
-            <div class="module-card" onclick="alert('Income - Feature coming soon')">
-              <div class="module-icon">
-                <i class="bi bi-arrow-down-circle"></i>
+          <div id="financialsContent">
+            <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+              <div class="module-card" onclick="alert('Income - Feature coming soon')">
+                <div class="module-icon">
+                  <i class="bi bi-arrow-down-circle"></i>
+                </div>
+                <h3 class="module-title">Income</h3>
+                <p class="module-description">Track all income</p>
               </div>
-              <h3 class="module-title">Income</h3>
-              <p class="module-description">Track all income</p>
-            </div>
 
-            <div class="module-card" onclick="alert('Expenses - Feature coming soon')">
-              <div class="module-icon">
-                <i class="bi bi-arrow-up-circle"></i>
+              <div class="module-card" onclick="alert('Expenses - Feature coming soon')">
+                <div class="module-icon">
+                  <i class="bi bi-arrow-up-circle"></i>
+                </div>
+                <h3 class="module-title">Expenses</h3>
+                <p class="module-description">Manage expenses</p>
               </div>
-              <h3 class="module-title">Expenses</h3>
-              <p class="module-description">Manage expenses</p>
-            </div>
 
-            <div class="module-card" onclick="alert('Transactions - Feature coming soon')">
-              <div class="module-icon">
-                <i class="bi bi-arrow-left-right"></i>
+              <div class="module-card" onclick="alert('Transactions - Feature coming soon')">
+                <div class="module-icon">
+                  <i class="bi bi-arrow-left-right"></i>
+                </div>
+                <h3 class="module-title">Transactions</h3>
+                <p class="module-description">View all transactions</p>
               </div>
-              <h3 class="module-title">Transactions</h3>
-              <p class="module-description">View all transactions</p>
-            </div>
 
-            <div class="module-card" onclick="alert('Financial Reports - Feature coming soon')">
-              <div class="module-icon">
-                <i class="bi bi-file-earmark-text"></i>
+              <div class="module-card" onclick="alert('Financial Reports - Feature coming soon')">
+                <div class="module-icon">
+                  <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <h3 class="module-title">Reports</h3>
+                <p class="module-description">Financial reports</p>
               </div>
-              <h3 class="module-title">Reports</h3>
-              <p class="module-description">Financial reports</p>
             </div>
           </div>
         </div>
@@ -5072,7 +5074,7 @@
 
     // Financials Section
     function loadFinancialsSection() {
-      const container = document.getElementById('section-financials');
+      const container = document.getElementById('financialsContent') || document.getElementById('section-financials');
       if (!container) return;
 
       const contentDiv = container.querySelector('.placeholder-content') || container;
@@ -5091,7 +5093,7 @@
     }
 
     function displayFinancials(summary, ui) {
-      const container = document.getElementById('section-financials');
+      const container = document.getElementById('financialsContent') || document.getElementById('section-financials');
       if (!container) return;
 
       const netProfit = (summary.totalRevenue || 0) - (summary.totalExpenses || 0);
