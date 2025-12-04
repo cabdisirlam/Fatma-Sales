@@ -1773,10 +1773,15 @@
 
       <!-- Financials Section -->
       <div class="content-section" id="section-financials">
-        <div style="max-width: 1200px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
-            <h2 style="margin: 0; font-size: 26px; font-weight: 700;"><i class="bi bi-cash-coin"></i> Financial Management</h2>
-            <p style="margin: 10px 0 0 0; opacity: 0.9;">Track income, expenses, transactions, and financial reports</p>
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div>
+              <h2 style="margin: 0; font-size: 26px; font-weight: 700;"><i class="bi bi-cash-coin"></i> Financial Management</h2>
+              <p style="margin: 10px 0 0 0; opacity: 0.9;">Track income, expenses, transactions, and financial reports</p>
+            </div>
+            <button class="btn btn-light" onclick="loadFinancialsSection()" title="Refresh" style="color: #5a5a5a; border-radius: 10px; font-weight: 600;">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
           </div>
 
           <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
