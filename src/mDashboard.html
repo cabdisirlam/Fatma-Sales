@@ -3088,10 +3088,11 @@
       // Only load data if the container is empty OR explicitly requested.
       // This prevents the "freeze" every time you press Back.
       const container = document.getElementById('section-' + sectionName);
+      const needsInitLoad = container && container.dataset && container.dataset.loaded !== 'true' && (sectionName === 'users-list');
       const hasContent = container && (container.querySelector('table') || container.querySelector('.stat-card'));
 
       // Always load sales-history data even if table exists (to refresh)
-      if (!hasContent || sectionName === 'sales-history') {
+      if (!hasContent || sectionName === 'sales-history' || needsInitLoad) {
         loadSectionData(sectionName);
       }
 
@@ -3247,6 +3248,10 @@
             </tr>
           `;
         }).join('');
+
+        // Mark as loaded so lazy-load triggers once
+        const section = document.getElementById('section-users-list');
+        if (section) section.dataset.loaded = 'true';
       } catch (error) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error rendering user list.</td></tr>';
         console.error('Error in displayUsersList:', error);
