@@ -52,24 +52,15 @@ function onInstall() {
  * Show dashboard
  */
 function showDashboard() {
-  const html = HtmlService.createHtmlOutputFromFile('mDashboard')
-    .setTitle(CONFIG.SHOP_NAME + ' Dashboard')
-    .setWidth(800)
-    .setHeight(600);
-  SpreadsheetApp.getUi().showModalDialog(html, CONFIG.SHOP_NAME + ' Dashboard');
+  showDialog('mDashboard', CONFIG.SHOP_NAME + ' Dashboard', 800, 600);
 }
 
 /**
  * Show new sale dialog
  */
 function showNewSaleDialog() {
-  // Try to get UI - check if available
   try {
-    const html = HtmlService.createHtmlOutputFromFile('oNewSale')
-      .setTitle('New Sale')
-      .setWidth(600)
-      .setHeight(500);
-    SpreadsheetApp.getUi().showModalDialog(html, 'New Sale');
+    showDialog('oNewSale', 'New Sale', 600, 500);
     return { success: true };
   } catch (e) {
     // If UI not available (called from restricted context), return signal
@@ -103,33 +94,21 @@ function delayedShowNewSaleDialog(attempt) {
  * Show products manager
  */
 function showProductsManager() {
-  const html = HtmlService.createHtmlOutputFromFile('pProducts')
-    .setTitle('Manage Products')
-    .setWidth(700)
-    .setHeight(600);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Manage Products');
+  showDialog('pProducts', 'Manage Products', 700, 600);
 }
 
 /**
  * Show customers manager
  */
 function showCustomersManager() {
-  const html = HtmlService.createHtmlOutputFromFile('lCustomers')
-    .setTitle('Manage Customers')
-    .setWidth(700)
-    .setHeight(600);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Manage Customers');
+  showDialog('lCustomers', 'Manage Customers', 700, 600);
 }
 
 /**
  * Show reports
  */
 function showReports() {
-  const html = HtmlService.createHtmlOutputFromFile('qReports')
-    .setTitle('Reports')
-    .setWidth(800)
-    .setHeight(600);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Reports');
+  showDialog('qReports', 'Reports', 800, 600);
 }
 
 /**
@@ -145,66 +124,57 @@ function showInventory() {
  * Show settings
  */
 function showSettings() {
-  const html = HtmlService.createHtmlOutputFromFile('rSettings')
-    .setTitle('Settings')
-    .setWidth(500)
-    .setHeight(400);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Settings');
+  showDialog('rSettings', 'Settings', 500, 400);
 }
 
 /**
  * Show user management
  */
 function showUserManagement() {
-  const html = HtmlService.createHtmlOutputFromFile('sUserManagement')
-    .setTitle('User Management')
-    .setWidth(1000)
-    .setHeight(700);
-  SpreadsheetApp.getUi().showModalDialog(html, 'User Management');
+  showDialog('sUserManagement', 'User Management', 1000, 700);
 }
 
 /**
  * Show inventory manager
  */
 function showInventoryManager() {
-  const html = HtmlService.createHtmlOutputFromFile('tInventory')
-    .setTitle('Inventory Management')
-    .setWidth(900)
-    .setHeight(700);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Inventory Management');
+  showDialog('tInventory', 'Inventory Management', 900, 700);
 }
 
 /**
  * Show suppliers manager
  */
 function showSuppliersManager() {
-  const html = HtmlService.createHtmlOutputFromFile('uSuppliers')
-    .setTitle('Suppliers Management')
-    .setWidth(900)
-    .setHeight(700);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Suppliers Management');
+  showDialog('uSuppliers', 'Suppliers Management', 900, 700);
 }
 
 /**
  * Show financials
  */
 function showFinancials() {
-  const html = HtmlService.createHtmlOutputFromFile('vFinancials')
-    .setTitle('Financial Overview')
-    .setWidth(1000)
-    .setHeight(700);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Financial Overview');
+  showDialog('vFinancials', 'Financial Overview', 1000, 700);
 }
 
 /**
  * Show expenses
  */
 function showExpenses() {
-  const html = HtmlService.createHtmlOutputFromFile('wExpenses')
-    .setTitle('Expenses Management')
-    .setWidth(900)
-    .setHeight(700);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Expenses Management');
+  showDialog('wExpenses', 'Expenses Management', 900, 700);
+}
+
+/**
+ * Displays a modal dialog with the specified HTML file and dimensions.
+ * @param {string} fileName The name of the HTML file to display.
+ * @param {string} title The title of the dialog.
+ * @param {number} width The width of the dialog.
+ * @param {number} height The height of the dialog.
+ */
+function showDialog(fileName, title, width, height) {
+  const html = HtmlService.createHtmlOutputFromFile(fileName)
+    .setTitle(title)
+    .setWidth(width)
+    .setHeight(height);
+  SpreadsheetApp.getUi().showModalDialog(html, title);
 }
 
 

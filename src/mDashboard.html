@@ -5799,9 +5799,25 @@
             let totalDr = 0; // inflow (receipts)
             let totalCr = 0; // outflow (payments)
             tbody.innerHTML = report.transactions.map(t => {
-              // Backend uses out for inflow, in for outflow in some cases; map to DR/CR with absolute values
-              const dr = Math.max(0, Math.abs(parseFloat(t.out) || 0)); // Receipts
-              const cr = Math.max(0, Math.abs(parseFloat(t.in) || 0));  // Payments
+              const rawIn = Math.abs(parseFloat(t.in) || 0);
+              const rawOut = Math.abs(parseFloat(t.out) || 0);
+              const type = (t.type || '').toLowerCase();
+              const desc = (t.description || '').toLowerCase();
+              const isInflow = type.includes('sale_payment') || type.includes('customer_payment') || type.includes('opening') || desc.includes('opening') || type.includes('receipt');
+              const isOutflow = type.includes('supplier_payment') || type.includes('expense') || type.includes('purchase_payment') || desc.includes('supplier') || desc.includes('expense');
+
+              let inflow = rawIn;
+              let outflow = rawOut;
+              if (isInflow && !isOutflow) {
+                inflow = rawIn || rawOut;
+                outflow = 0;
+              } else if (isOutflow && !isInflow) {
+                outflow = rawOut || rawIn;
+                inflow = 0;
+              }
+
+              const dr = inflow;
+              const cr = outflow;
               running += dr;
               running -= cr;
               totalDr += dr;
