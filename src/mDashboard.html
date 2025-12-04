@@ -4825,74 +4825,7 @@
       container.innerHTML = html;
 
       // Ensure Add Supplier modal exists once at document level
-      if (!document.getElementById('supplierAddModal')) {
-        const modalTemplate = `
-        <div class="modal fade" id="supplierAddModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Supplier</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <form id="addSupplierForm" onsubmit="handleAddSupplier(event)">
-                  <div class="row">
-                    <div class="col-md-6 mb-3">
-                      <label class="form-label">Supplier Name *</label>
-                      <input type="text" class="form-control" name="Supplier_Name" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                      <label class="form-label">Contact Person</label>
-                      <input type="text" class="form-control" name="Contact_Person">
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-md-6 mb-3">
-                      <label class="form-label">Phone *</label>
-                      <input type="tel" class="form-control" name="Phone" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                      <label class="form-label">Email</label>
-                      <input type="email" class="form-control" name="Email">
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-md-12 mb-3">
-                      <label class="form-label">Address</label>
-                      <textarea class="form-control" name="Address" rows="2"></textarea>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-md-4 mb-3">
-                      <label class="form-label">Payment Terms</label>
-                      <input type="text" class="form-control" name="Payment_Terms" placeholder="e.g., Net 30">
-                    </div>
-                    <div class="col-md-4 mb-3">
-                      <label class="form-label">Opening Balance</label>
-                      <input type="number" class="form-control" name="Opening_Balance" step="1" min="0" placeholder="0.00">
-                      <div class="form-text">Starting payable balance to carry forward.</div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                      <label class="form-label">Status</label>
-                      <select class="form-select" name="Status">
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-primary">
-                      <i class="bi bi-check-circle"></i> Save Supplier
-                    </button>
-                  </div>
-                </form>
-                <div id="supplierFormAlert" class="alert mt-3" style="display: none;"></div>
-              </div>
-            </div>
-          </div>
-        </div>`;
-        document.body.insertAdjacentHTML('beforeend', modalTemplate);
-      }
+      ensureSupplierModal();
     }
 
     // --- CUSTOMER DASHBOARD ACTIONS ---
@@ -5843,6 +5776,7 @@
 
     function handleAddSupplier(event) {
       event.preventDefault();
+      ensureSupplierModal();
       const form = event.target;
       const formData = new FormData(form);
       const supplierData = Object.fromEntries(formData);
@@ -5857,10 +5791,10 @@
             alertDiv.textContent = 'Supplier added successfully!';
             alertDiv.style.display = 'block';
             form.reset();
-            const modalEl = document.getElementById('supplierAddModal');
+            const modalEl = ensureSupplierModal();
             if (modalEl) {
-              const modal = bootstrap.Modal.getInstance(modalEl);
-              if (modal) modal.hide();
+              const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+              modal.hide();
             }
             loadSuppliersList();
           } else {
@@ -5906,7 +5840,7 @@
       let html = `
         <!-- Action Buttons Row -->
         <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#supplierAddModal">
+          <button class="btn btn-primary btn-sm" type="button" onclick="openSupplierModal()">
             <i class="bi bi-plus-circle"></i> Add Supplier
           </button>
           <button class="btn btn-outline-secondary btn-sm" onclick="loadSuppliersList()">
@@ -6009,6 +5943,87 @@
 
     function getSupplierBalance(supplier) {
       return parseFloat(supplier.Current_Balance || supplier['Current Balance'] || supplier.Balance || 0) || 0;
+    }
+
+    function ensureSupplierModal() {
+      let modalEl = document.getElementById('supplierAddModal');
+      if (!modalEl) {
+        const modalTemplate = `
+        <div class="modal fade" id="supplierAddModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Supplier</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <form id="addSupplierForm" onsubmit="handleAddSupplier(event)">
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Supplier Name *</label>
+                      <input type="text" class="form-control" name="Supplier_Name" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Contact Person</label>
+                      <input type="text" class="form-control" name="Contact_Person">
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Phone *</label>
+                      <input type="tel" class="form-control" name="Phone" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Email</label>
+                      <input type="email" class="form-control" name="Email">
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-12 mb-3">
+                      <label class="form-label">Address</label>
+                      <textarea class="form-control" name="Address" rows="2"></textarea>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Payment Terms</label>
+                      <input type="text" class="form-control" name="Payment_Terms" placeholder="e.g., Net 30">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Opening Balance</label>
+                      <input type="number" class="form-control" name="Opening_Balance" step="1" min="0" placeholder="0.00">
+                      <div class="form-text">Starting payable balance to carry forward.</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Status</label>
+                      <select class="form-select" name="Status">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="bi bi-check-circle"></i> Save Supplier
+                    </button>
+                  </div>
+                </form>
+                <div id="supplierFormAlert" class="alert mt-3" style="display: none;"></div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', modalTemplate);
+        modalEl = document.getElementById('supplierAddModal');
+      }
+      return modalEl;
+    }
+
+    function openSupplierModal() {
+      const modalEl = ensureSupplierModal();
+      if (!modalEl) return;
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      modal.show();
     }
 
     function resetEditSubmitButton() {
