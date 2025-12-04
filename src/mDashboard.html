@@ -3466,7 +3466,11 @@
               // Reload inventory section after 2 seconds
               setTimeout(() => {
                 loadInventorySection(true);
-                toggleQuickAdd('product');
+                const modalEl = document.getElementById('inventoryAddModal');
+                if (modalEl) {
+                  const modal = bootstrap.Modal.getInstance(modalEl);
+                  if (modal) modal.hide();
+                }
               }, 2000);
             } else {
               showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add product'));
@@ -4413,99 +4417,107 @@
 
       let html = `
         <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-primary" onclick="toggleQuickAdd('product')">
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inventoryAddModal">
             <i class="bi bi-plus-circle"></i> Add Product
           </button>
           <button class="btn btn-outline-secondary" onclick="loadInventorySection(true)">
             <i class="bi bi-arrow-clockwise"></i> Refresh
           </button>
         </div>
-        <div id="quickAddProduct" class="quick-add-card d-none mb-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <h6 class="mb-0"><i class="bi bi-lightning-charge"></i> Quick Add Product</h6>
-            <button class="btn btn-sm btn-link text-decoration-none" onclick="toggleQuickAdd('product')">Close</button>
+
+        <div class="modal fade" id="inventoryAddModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-box-seam"></i> Add Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <form id="quickAddProductForm" class="mt-2" onsubmit="handleQuickAdd(event, 'product')">
+                  <div class="row g-2">
+                    <div class="col-md-5">
+                      <label class="form-label">Item Name</label>
+                      <div class="input-group">
+                        <select class="form-select" name="itemName" id="masterDataSelect" onchange="onMasterItemSelect(this)" required>
+                          <option value="">${masterDataCache.length ? 'Select item...' : 'No master data found'}</option>
+                          ${masterDataCache.map(item => `<option value="${item.Item_Name}">${item.Item_Name}</option>`).join('')}
+                          <option value="__custom">+ Add new item</option>
+                        </select>
+                        <button class="btn btn-outline-secondary" type="button" onclick="openMasterItemModal()">
+                          <i class="bi bi-plus-circle"></i>
+                        </button>
+                      </div>
+                      <input type="text" class="form-control mt-2 d-none" name="customItemName" id="customItemName" placeholder="Enter new item name">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Category</label>
+                      <input type="text" class="form-control" name="category" id="quickAddCategory" placeholder="Auto-filled" ${masterDataCache.length ? 'readonly style="background-color: #e9ecef;"' : ''}>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Cost</label>
+                      <input type="number" class="form-control" name="cost" min="0" step="1" required>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Price</label>
+                      <input type="number" class="form-control" name="price" min="0" step="1">
+                    </div>
+                  </div>
+                  <div class="row g-2 mt-2">
+                    <div class="col-md-4">
+                      <label class="form-label">Supplier</label>
+                      <div class="input-group">
+                        <select class="form-select" name="supplier" id="inventorySupplierDropdown" required>
+                          <option value="">Loading suppliers...</option>
+                        </select>
+                        <button class="btn btn-outline-secondary" type="button" onclick="showSection('suppliers-list', event)" title="Add Supplier">
+                          <i class="bi bi-plus-circle"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Quantity</label>
+                      <input type="number" class="form-control" name="qty" min="0" value="0" required>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Reorder Level</label>
+                      <input type="number" class="form-control" name="reorderLevel" min="0" value="10">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end justify-content-end">
+                      <button class="btn btn-success" type="submit" id="quickAddProductBtn">
+                        <i class="bi bi-check-circle"></i> Save Product
+                      </button>
+                    </div>
+                  </div>
+                  <div id="quickAddProductAlert" class="alert alert-success mt-3 d-none"></div>
+                </form>
+              </div>
+            </div>
           </div>
-          <form class="mt-2" onsubmit="handleQuickAdd(event, 'product')">
-            <div class="row g-2">
-              <div class="col-md-5">
-                <label class="form-label">Item Name</label>
-                <div class="input-group">
-                  <select class="form-select" name="itemName" id="masterDataSelect" onchange="onMasterItemSelect(this)" required>
-                    <option value="">${masterDataCache.length ? 'Select item...' : 'No master data found'}</option>
-                    ${masterDataCache.map(item => `<option value="${item.Item_Name}">${item.Item_Name}</option>`).join('')}
-                    <option value="__custom">+ Add new item</option>
-                  </select>
-                  <button class="btn btn-outline-secondary" type="button" onclick="openMasterItemModal()">
-                    <i class="bi bi-plus-circle"></i>
-                  </button>
-                </div>
-                <input type="text" class="form-control mt-2 d-none" name="customItemName" id="customItemName" placeholder="Enter new item name">
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Category</label>
-                <input type="text" class="form-control" name="category" id="quickAddCategory" placeholder="Auto-filled" ${masterDataCache.length ? 'readonly style="background-color: #e9ecef;"' : ''}>
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Cost</label>
-                <input type="number" class="form-control" name="cost" min="0" step="1" required>
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Price</label>
-                <input type="number" class="form-control" name="price" min="0" step="1">
-              </div>
-            </div>
-            <div class="row g-2 mt-2">
-              <div class="col-md-3">
-                <label class="form-label">Supplier</label>
-                <div class="input-group">
-                  <select class="form-select" name="supplier" id="supplierDropdown" required>
-                    <option value="">Loading suppliers...</option>
-                  </select>
-                  <button class="btn btn-outline-secondary" type="button" onclick="showSection('suppliers-list', event)" title="Add Supplier">
-                    <i class="bi bi-plus-circle"></i>
-                  </button>
-                </div>
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Quantity</label>
-                <input type="number" class="form-control" name="qty" min="0" value="0" required>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Reorder Level</label>
-                <input type="number" class="form-control" name="reorderLevel" min="0" value="10">
-              </div>
-              <div class="col-md-3 d-flex align-items-end justify-content-end">
-                <button class="btn btn-success" type="submit" id="quickAddProductBtn">
-                  <i class="bi bi-check-circle"></i> Save Product
-                </button>
-              </div>
-            </div>
-            <div id="quickAddProductAlert" class="alert alert-success mt-3 d-none"></div>
-          </form>
         </div>
+
         <div class="row mb-4">
           <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Items</h6>
-              <h3>${data.length}</h3>
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+              <div class="small text-white-75">Total Items</div>
+              <div class="fs-5 fw-bold">${data.length}</div>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Low Stock</h6>
-              <h3 class="text-warning">${data.filter(i => getStockQty(i) > 0 && getStockQty(i) <= (i.Reorder_Level || 10)).length}</h3>
+            <div class="stat-card" style="background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%); color: white;">
+              <div class="small text-white-75">Low Stock</div>
+              <div class="fs-5 fw-bold">${data.filter(i => getStockQty(i) > 0 && getStockQty(i) <= (i.Reorder_Level || 10)).length}</div>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Out of Stock</h6>
-              <h3 class="text-danger">${data.filter(i => getStockQty(i) <= 0).length}</h3>
+            <div class="stat-card" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: white;">
+              <div class="small text-white-75">Out of Stock</div>
+              <div class="fs-5 fw-bold">${data.filter(i => getStockQty(i) <= 0).length}</div>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="stat-card">
-              <h6>Total Value</h6>
-              <h3>${formatCurrency(data.reduce((sum, i) => sum + (getStockQty(i) * i.Cost_Price || 0), 0))}</h3>
+            <div class="stat-card" style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); color: white;">
+              <div class="small text-white-75">Total Value</div>
+              <div class="fs-5 fw-bold">${formatCurrency(data.reduce((sum, i) => sum + (getStockQty(i) * i.Cost_Price || 0), 0))}</div>
             </div>
           </div>
         </div>
@@ -4513,7 +4525,7 @@
           <div class="card-header"><i class="bi bi-box-seam"></i> Inventory Items</div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-hover">
+              <table class="table table-hover table-sm" style="font-size: 13px;">
                 <thead>
                   <tr>
                     <th>Item ID</th>
@@ -4577,7 +4589,7 @@
 
     // Load suppliers and populate the supplier dropdown
     function loadSuppliersForDropdown() {
-      const dropdown = document.getElementById('supplierDropdown');
+      const dropdown = document.getElementById('inventorySupplierDropdown');
       if (!dropdown) return;
 
       google.script.run
