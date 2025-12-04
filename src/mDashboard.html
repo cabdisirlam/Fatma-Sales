@@ -5670,8 +5670,8 @@
                 <td>${new Date(t.date).toLocaleDateString()}</td>
                 <td>${t.type}</td>
                 <td>${t.description || ''}</td>
-                <td class="text-end text-success">${t.in > 0 ? formatCurrency(t.in) : '-'}</td>
-                <td class="text-end text-danger">${t.out > 0 ? formatCurrency(t.out) : '-'}</td>
+                <td class="text-end text-success">${t.out > 0 ? formatCurrency(t.out) : '-'}</td>
+                <td class="text-end text-danger">${t.in > 0 ? formatCurrency(t.in) : '-'}</td>
                 <td class="text-end">${formatCurrency(t.runningBalance || t.balance)}</td>
               </tr>
             `).join('');
@@ -5687,13 +5687,13 @@
             <div class="col-6 col-md-3">
               <div class="p-2 border rounded bg-light h-100">
                 <div class="small text-muted">Debit (DR)</div>
-                <div class="fw-bold text-success">${formatCurrency(report.totalAdditions)}</div>
+                <div class="fw-bold text-success">${formatCurrency(report.totalPayments)}</div>
               </div>
             </div>
             <div class="col-6 col-md-3">
               <div class="p-2 border rounded bg-light h-100">
                 <div class="small text-muted">Credit (CR)</div>
-                <div class="fw-bold text-danger">${formatCurrency(report.totalPayments)}</div>
+                <div class="fw-bold text-danger">${formatCurrency(report.totalAdditions)}</div>
               </div>
             </div>
             <div class="col-6 col-md-3">
