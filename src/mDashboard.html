@@ -3059,8 +3059,7 @@
       const modalEl = ensureCustomerModal();
       if (!modalEl) return;
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
-      modalEl.classList.add('modal-foreground');
-      modalEl.addEventListener('hidden.bs.modal', () => modalEl.classList.remove('modal-foreground'), { once: true });
+      bringModalToFront(modalEl);
       modal.show();
       initCustomerDraft();
     }
@@ -5727,6 +5726,22 @@
       if (window.localStorage) localStorage.removeItem('draft.customer.add');
     }
 
+    function bringModalToFront(modalEl) {
+      if (!modalEl) return;
+      modalZIndexCounter += 2;
+      modalEl.style.zIndex = modalZIndexCounter;
+      modalEl.classList.add('modal-foreground');
+      modalEl.addEventListener('hidden.bs.modal', () => modalEl.classList.remove('modal-foreground'), { once: true });
+      setTimeout(() => {
+        const backs = document.querySelectorAll('.modal-backdrop');
+        if (backs.length) {
+          const b = backs[backs.length - 1];
+          b.style.zIndex = modalZIndexCounter - 1;
+          b.classList.add('modal-foreground-backdrop');
+        }
+      }, 0);
+    }
+
     function restoreForm(form, data) {
       if (!form || !data) return;
       Object.keys(data).forEach(k => {
@@ -6196,9 +6211,7 @@
       const modalEl = ensureSupplierModal();
       if (!modalEl) return;
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
-      // Bring to front if another modal is open
-      modalEl.classList.add('modal-foreground');
-      modalEl.addEventListener('hidden.bs.modal', () => modalEl.classList.remove('modal-foreground'), { once: true });
+      bringModalToFront(modalEl);
       modal.show();
       initSupplierDraft();
     }
@@ -6207,8 +6220,7 @@
       const modalEl = document.getElementById('inventoryAddModal');
       if (!modalEl) return;
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
-      modalEl.classList.add('modal-foreground');
-      modalEl.addEventListener('hidden.bs.modal', () => modalEl.classList.remove('modal-foreground'), { once: true });
+      bringModalToFront(modalEl);
       modal.show();
       initInventoryDraft();
     }
@@ -6976,14 +6988,8 @@
       document.getElementById('masterItemStatus').value = 'Active';
       const modalEl = document.getElementById('masterItemModal');
       const modal = bootstrap.Modal.getOrCreateInstance(modalEl, {backdrop: true});
-      modalEl.classList.add('modal-foreground');
-      modalEl.addEventListener('hidden.bs.modal', () => modalEl.classList.remove('modal-foreground'), { once: true });
+      bringModalToFront(modalEl);
       modal.show();
-      // Push backdrop forward
-      const backdrops = document.querySelectorAll('.modal-backdrop');
-      if (backdrops.length) {
-        backdrops[backdrops.length - 1].classList.add('modal-foreground-backdrop');
-      }
     }
 
     function setMasterModalAlert(type, message) {
@@ -7220,6 +7226,7 @@
     let modalInventoryData = [];
     let modalCustomerDraft = {};
     let modalCustomerDraftTimer;
+    let modalZIndexCounter = 2100;
 
     function openNewSaleModal() {
       try {
