@@ -1224,3 +1224,65 @@ function createLowStockAlertTrigger() {
     throw new Error('Error creating trigger: ' + error.message);
   }
 }
+
+// =====================================================
+// DASHBOARD FUNCTIONS
+// =====================================================
+
+/**
+ * Gets all data required for the Inventory Management dashboard.
+ */
+function getInventoryDashboardData() {
+  try {
+    // getInventory() already aggregates batches, which is perfect.
+    const inventoryItems = getInventory(); 
+
+    let lowStockCount = 0;
+    let outOfStockCount = 0;
+    let totalValue = 0;
+
+    const formattedInventory = inventoryItems.map(item => {
+      const stockLevel = parseFloat(item.Current_Qty) || 0;
+      const reorderLevel = parseFloat(item.Reorder_Level) || 0;
+      const costPrice = parseFloat(item.Cost_Price) || 0;
+
+      let status = 'In Stock';
+      if (stockLevel <= 0) {
+        status = 'Out of Stock';
+        outOfStockCount++;
+      } else if (stockLevel <= reorderLevel) {
+        status = 'Low Stock';
+        lowStockCount++;
+      }
+      
+      totalValue += stockLevel * costPrice;
+
+      return {
+        Item_ID: item.Item_ID,
+        Item_Name: item.Item_Name,
+        Stock_Level: stockLevel,
+        Unit: item.Unit || 'Pcs', // Assuming 'Pcs' as a default unit
+        Cost_Price: costPrice,
+        Selling_Price: parseFloat(item.Selling_Price) || 0,
+        Status: status
+      };
+    });
+
+    const overview = {
+      totalItems: inventoryItems.length,
+      lowStock: lowStockCount,
+      outOfStock: outOfStockCount,
+      totalValue: totalValue
+    };
+
+    return {
+      success: true,
+      overview: overview,
+      inventory: formattedInventory.sort((a,b) => a.Item_Name.localeCompare(b.Item_Name))
+    };
+
+  } catch (error) {
+    logError('getInventoryDashboardData', error);
+    return { success: false, message: 'Error loading inventory dashboard: ' + error.message };
+  }
+}

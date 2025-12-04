@@ -1,170 +1,305 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <base target="_top">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-  <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f5f6fa; padding: 20px; }
-    .header-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-    .card { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .balance-negative { color: #e74c3c; font-weight: 600; }
-    .balance-positive { color: #27ae60; font-weight: 600; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --purple-gradient: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+            --pink-red-gradient: linear-gradient(135deg, #ff8177 0%, #ff867a 0%, #ff8c7f 21%, #f99185 52%, #cf556c 78%, #b12a5b 100%);
+            --cyan-gradient: linear-gradient(135deg, #2af598 0%, #009efd 100%);
+            --orange-yellow-gradient: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            --body-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --card-border-color: #e9ecef;
+            --text-color: #495057;
+            --text-muted: #6c757d;
+            --shadow-sm: 0 .125rem .25rem rgba(0,0,0,.075);
+            --shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+            --shadow-lg: 0 1rem 3rem rgba(0,0,0,.175);
+            --border-radius: .75rem;
+        }
+
+        body {
+            background-color: var(--body-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+        }
+
+        .header-banner {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .header-banner .icon {
+            font-size: 3rem;
+            margin-right: 1.5rem;
+        }
+
+        .summary-card {
+            border-radius: var(--border-radius);
+            color: white;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .summary-card .label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .bg-gradient-purple { background: var(--purple-gradient); }
+        .bg-gradient-pink { background: var(--pink-red-gradient); }
+        .bg-gradient-cyan { background: var(--cyan-gradient); }
+        .bg-gradient-orange { background: var(--orange-yellow-gradient); }
+
+        .action-bar {
+            margin-bottom: 1.5rem;
+        }
+
+        .card-table {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--card-border-color);
+        }
+
+        .card-table .table-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .btn-gradient-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            transition: opacity 0.3s;
+        }
+
+        .btn-gradient-primary:hover {
+            opacity: 0.9;
+            color: white;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .balance-negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .loader {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+    </style>
 </head>
 <body>
-  <div class="header-section">
-    <h2><i class="bi bi-people"></i> Customer Management</h2>
-  </div>
-
-  <div class="card mb-3">
-    <div class="card-body d-flex gap-2">
-      <input type="text" class="form-control" id="searchInput" placeholder="Search customers...">
-      <button class="btn btn-primary" onclick="loadCustomers()">Refresh</button>
-      <button class="btn btn-success" onclick="showAddModal()">Add New</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-body">
-      <div id="loadingIndicator" class="text-center py-4">
-        <div class="spinner-border text-primary"></div>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-hover" id="customersTable" style="display:none;">
-          <thead>
-            <tr><th>Name</th><th>Phone</th><th>Location</th><th>KRA PIN</th><th>Balance</th><th>Actions</th></tr>
-          </thead>
-          <tbody id="customersTableBody"></tbody>
-        </table>
-      </div>
-      <div id="noData" class="text-center py-4 text-muted" style="display:none;">No customers found</div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="customerModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title">Customer Details</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-        <div class="modal-body">
-          <form id="customerForm">
-            <input type="hidden" id="custId">
-            <div class="mb-2"><label>Name</label><input type="text" class="form-control" id="custName" required></div>
-            <div class="mb-2"><label>Phone</label><input type="text" class="form-control" id="custPhone"></div>
-            <div class="mb-2"><label>Location</label><input type="text" class="form-control" id="custLocation"></div>
-            <div class="mb-2"><label>KRA PIN</label><input type="text" class="form-control" id="custKRA"></div>
-            <div class="mb-2" id="balDiv"><label>Opening Balance (Debt)</label><input type="number" class="form-control" id="custBal" placeholder="0.00"></div>
-          </form>
+    <div class="container-fluid p-4">
+        <!-- Header Banner -->
+        <div class="header-banner">
+            <div class="icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div>
+                <h1 class="h3 mb-1">Customer Management</h1>
+                <p class="mb-0">View customer profiles, history, and credit status</p>
+            </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-primary" onclick="saveCustomer()">Save</button>
+
+        <!-- Summary Cards -->
+        <div class="row" id="summary-cards">
+            <!-- Cards will be dynamically inserted here -->
         </div>
-      </div>
+
+        <!-- Action Bar -->
+        <div class="d-flex justify-content-end align-items-center action-bar">
+            <div>
+                <button class="btn btn-gradient-primary me-2" onclick="addCustomer()">
+                    <i class="bi bi-plus-circle"></i> Add Customer
+                </button>
+                <button class="btn btn-outline-secondary" onclick="refreshData()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Customer List Table -->
+        <div class="card-table">
+            <h5 class="table-title">Customer Directory</h5>
+            <div id="table-container" class="table-responsive">
+                <!-- Table will be dynamically inserted here -->
+            </div>
+             <div id="loader" class="loader">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading customer data...</p>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    let customersData = [];
-    
-    window.onload = loadCustomers;
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            loadDashboardData();
+        });
 
-    function loadCustomers() {
-      document.getElementById('loadingIndicator').style.display = 'block';
-      document.getElementById('customersTable').style.display = 'none';
-      document.getElementById('noData').style.display = 'none';
+        function loadDashboardData() {
+            showLoader();
+            google.script.run
+                .withSuccessHandler(updateUI)
+                .withFailureHandler(showError)
+                .getCustomerDashboardData();
+        }
 
-      google.script.run
-        .withSuccessHandler(renderCustomers)
-        .withFailureHandler(error => {
-           document.getElementById('loadingIndicator').style.display = 'none';
-           alert('Error: ' + error.message);
-        })
-        .getCustomers({});
-    }
+        function refreshData() {
+            loadDashboardData();
+        }
+        
+        function updateUI(data) {
+            console.log("Received data:", data);
+            updateSummaryCards(data.overview);
+            updateCustomerTable(data.customers);
+            hideLoader();
+        }
 
-    function renderCustomers(data) {
-      document.getElementById('loadingIndicator').style.display = 'none';
-      customersData = data || [];
-      
-      if(customersData.length === 0) {
-        document.getElementById('noData').style.display = 'block';
-        return;
-      }
+        function updateSummaryCards(overview) {
+            const container = document.getElementById('summary-cards');
+            container.innerHTML = `
+                <div class="col-md-3">
+                    <div class="summary-card bg-gradient-purple">
+                        <div class="label">Total Customers</div>
+                        <div class="value">${overview.totalCustomers}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card bg-gradient-pink">
+                        <div class="label">New This Month</div>
+                        <div class="value">${overview.newThisMonth}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card bg-gradient-cyan">
+                        <div class="label">Active Credit</div>
+                        <div class="value">${overview.activeCredit}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card bg-gradient-orange">
+                        <div class="label">Outstanding</div>
+                        <div class="value">Ksh ${overview.outstanding.toLocaleString()}</div>
+                    </div>
+                </div>
+            `;
+        }
 
-      const tbody = document.getElementById('customersTableBody');
-      tbody.innerHTML = '';
-      
-      customersData.forEach(c => {
-        const bal = parseFloat(c.Current_Balance || c.Balance || 0);
-        let balClass = bal < 0 ? 'balance-negative' : 'text-muted';
-        let balText = bal < 0 ? `Owes ${Math.abs(bal)}` : bal;
+        function updateCustomerTable(customers) {
+            const container = document.getElementById('table-container');
+            if (!customers || customers.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted">No customers found.</p>';
+                return;
+            }
 
-        tbody.innerHTML += `
-          <tr>
-            <td>${c.Customer_Name}</td>
-            <td>${c.Phone}</td>
-            <td>${c.Location || '-'}</td>
-            <td>${c.KRA_PIN || '-'}</td>
-            <td class="${balClass}">${balText}</td>
-            <td><button class="btn btn-sm btn-outline-primary" onclick="editCustomer('${c.Customer_ID}')">Edit</button></td>
-          </tr>
-        `;
-      });
-      document.getElementById('customersTable').style.display = 'table';
-    }
+            let tableHtml = `
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Location</th>
+                            <th>KRA PIN</th>
+                            <th class="text-end">Balance</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
-    function showAddModal() {
-      document.getElementById('customerForm').reset();
-      document.getElementById('custId').value = '';
-      document.getElementById('balDiv').style.display = 'block';
-      new bootstrap.Modal(document.getElementById('customerModal')).show();
-    }
+            customers.forEach(customer => {
+                const balance = parseFloat(customer.Balance) || 0;
+                const balanceClass = balance < 0 ? 'balance-negative' : '';
+                tableHtml += `
+                    <tr>
+                        <td>${customer.Name || ''}</td>
+                        <td>${customer.Phone || ''}</td>
+                        <td>${customer.Location || ''}</td>
+                        <td>${customer.KRA_PIN || ''}</td>
+                        <td class="text-end ${balanceClass}">${balance.toLocaleString('en-US', { style: 'currency', currency: 'Ksh' })}</td>
+                        <td class="text-center action-buttons">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editCustomer('${customer.Customer_ID}')"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCustomer('${customer.Customer_ID}')"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
 
-    function editCustomer(id) {
-      const c = customersData.find(x => x.Customer_ID === id);
-      if(!c) return;
-      document.getElementById('custId').value = id;
-      document.getElementById('custName').value = c.Customer_Name;
-      document.getElementById('custPhone').value = c.Phone;
-      document.getElementById('custLocation').value = c.Location || '';
-      document.getElementById('custKRA').value = c.KRA_PIN || '';
-      document.getElementById('balDiv').style.display = 'none'; // Hide balance on edit
-      new bootstrap.Modal(document.getElementById('customerModal')).show();
-    }
+            tableHtml += '</tbody></table>';
+            container.innerHTML = tableHtml;
+        }
 
-    function saveCustomer() {
-      const id = document.getElementById('custId').value;
-      const data = {
-        Customer_Name: document.getElementById('custName').value,
-        Phone: document.getElementById('custPhone').value,
-        Location: document.getElementById('custLocation').value,
-        KRA_PIN: document.getElementById('custKRA').value,
-        Opening_Balance: document.getElementById('custBal').value,
-        User: sessionStorage.getItem('userName') || 'SYSTEM'
-      };
+        function showLoader() {
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('table-container').innerHTML = '';
+        }
 
-      const handler = id 
-        ? google.script.run.withSuccessHandler(onSaved).updateCustomer(id, data)
-        : google.script.run.withSuccessHandler(onSaved).addCustomer(data);
-    }
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
 
-    function onSaved(res) {
-      if(res.success) {
-        bootstrap.Modal.getInstance(document.getElementById('customerModal')).hide();
-        loadCustomers();
-      } else {
-        alert(res.message);
-      }
-    }
-    
-    document.getElementById('searchInput').addEventListener('keyup', function(e) {
-      const term = e.target.value.toLowerCase();
-      const filtered = customersData.filter(c => 
-        (c.Customer_Name + c.Phone + c.Location).toLowerCase().includes(term)
-      );
-      renderCustomers(filtered);
-    });
-  </script>
+        function showError(error) {
+            hideLoader();
+            const container = document.getElementById('table-container');
+            container.innerHTML = `<p class="text-center text-danger">Error loading data: ${error.message}</p>`;
+            console.error("Error loading data:", error);
+        }
+
+        function addCustomer() {
+            // Placeholder for add customer functionality
+            alert("Add new customer functionality to be implemented.");
+        }
+
+        function editCustomer(customerId) {
+            // Placeholder for edit customer functionality
+            alert("Editing customer: " + customerId);
+        }
+
+        function deleteCustomer(customerId) {
+            // Placeholder for delete customer functionality
+            if(confirm("Are you sure you want to delete customer: " + customerId + "?")) {
+                alert("Deleting customer: " + customerId);
+            }
+        }
+
+    </script>
 </body>
 </html>

@@ -1,1699 +1,298 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <base target="_top">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Suppliers Management</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --purple-gradient: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+            --pink-red-gradient: linear-gradient(135deg, #ff8177 0%, #ff867a 0%, #ff8c7f 21%, #f99185 52%, #cf556c 78%, #b12a5b 100%);
+            --cyan-gradient: linear-gradient(135deg, #2af598 0%, #009efd 100%);
+            --orange-yellow-gradient: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            --body-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --card-border-color: #e9ecef;
+            --text-color: #495057;
+            --shadow-sm: 0 .125rem .25rem rgba(0,0,0,.075);
+            --shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+            --border-radius: .75rem;
+        }
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+        body {
+            background-color: var(--body-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+        }
 
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f6fa;
-      padding: 20px;
-    }
+        .header-banner {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+        }
 
-    .header-section {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 30px;
-      border-radius: 15px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
+        .header-banner .icon {
+            font-size: 3rem;
+            margin-right: 1.5rem;
+        }
 
-    .header-section h2 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 700;
-    }
+        .summary-card {
+            border-radius: var(--border-radius);
+            color: white;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease-in-out;
+        }
+        
+        .summary-card:hover {
+            transform: translateY(-5px);
+        }
 
-    .header-section p {
-      margin: 10px 0 0 0;
-      opacity: 0.9;
-    }
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
 
-    .card {
-      border: none;
-      border-radius: 15px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
+        .summary-card .label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
 
-    .card-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-radius: 15px 15px 0 0 !important;
-      padding: 20px;
-      font-weight: 600;
-    }
+        .bg-gradient-purple { background: var(--purple-gradient); }
+        .bg-gradient-pink { background: var(--pink-red-gradient); }
+        .bg-gradient-cyan { background: var(--cyan-gradient); }
+        .bg-gradient-orange { background: var(--orange-yellow-gradient); }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-    }
+        .action-bar {
+            margin-bottom: 1.5rem;
+        }
 
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-    }
+        .card-table {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--card-border-color);
+        }
 
-    .btn-success {
-      border-radius: 8px;
-      padding: 10px 20px;
-    }
+        .card-table .table-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
 
-    .table {
-      margin: 0;
-    }
+        .btn-gradient-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            transition: opacity 0.3s;
+        }
 
-    .table thead {
-      background: #f8f9fa;
-    }
+        .btn-gradient-primary:hover {
+            opacity: 0.9;
+            color: white;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
 
-    .table th {
-      border-bottom: 2px solid #dee2e6;
-      font-weight: 600;
-      color: #2c3e50;
-    }
-
-    .badge {
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-weight: 500;
-    }
-
-    .stat-card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
-
-    .stat-value {
-      font-size: 20px;
-      font-weight: 700;
-      color: #667eea;
-      margin: 10px 0;
-    }
-
-    .stat-label {
-      color: #7f8c8d;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: #7f8c8d;
-    }
-
-    .spinner-border {
-      width: 3rem;
-      height: 3rem;
-    }
-
-    .search-box {
-      margin-bottom: 20px;
-    }
-
-    .filter-section {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    .balance-positive {
-      color: #27ae60;
-      font-weight: 600;
-    }
-
-    .balance-negative {
-      color: #e74c3c;
-      font-weight: 600;
-    }
-
-    .form-label {
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 8px;
-    }
-
-    .form-control, .form-select {
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      padding: 10px 15px;
-    }
-
-    .form-control:focus, .form-select:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    }
-
-    /* Mobile Responsive Styles */
-    @media (max-width: 768px) {
-      body {
-        padding: 10px;
-      }
-
-      .header-section {
-        padding: 20px 15px;
-        margin-bottom: 20px;
-      }
-
-      .header-section h2 {
-        font-size: 22px;
-      }
-
-      .stat-card {
-        margin-bottom: 15px;
-        padding: 15px;
-      }
-
-      .stat-value {
-        font-size: 24px;
-      }
-
-      .stat-label {
-        font-size: 12px;
-      }
-
-      .filter-section {
-        padding: 15px;
-      }
-
-      .filter-section .row > div {
-        margin-bottom: 10px;
-      }
-
-      .table {
-        font-size: 14px;
-      }
-
-      .table th, .table td {
-        padding: 8px 5px;
-      }
-
-      /* Stack action buttons vertically on mobile */
-      .btn-group {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-      }
-
-      .btn-group .btn {
-        width: 100%;
-      }
-
-      /* Make modals full screen on mobile */
-      .modal-xl {
-        max-width: 100%;
-        margin: 0;
-      }
-
-      .modal-dialog-centered {
-        min-height: calc(100% - 20px);
-      }
-
-      .modal-content {
-        min-height: calc(100vh - 20px);
-      }
-
-      /* Improve form inputs on mobile */
-      .form-control, .form-select {
-        font-size: 16px; /* Prevents zoom on iOS */
-      }
-
-      /* Hide less important columns on mobile */
-      .table td:nth-child(3),
-      .table th:nth-child(3),
-      .table td:nth-child(5),
-      .table th:nth-child(5) {
-        display: none;
-      }
-
-      /* Make cards more compact */
-      .card {
-        margin-bottom: 15px;
-      }
-
-      .card-header {
-        padding: 15px;
-        font-size: 14px;
-      }
-
-      .card-body {
-        padding: 15px;
-      }
-
-      /* Improve alert readability on mobile */
-      .alert {
-        font-size: 14px;
-        padding: 10px;
-      }
-
-      /* Make buttons touch-friendly */
-      .btn {
-        min-height: 44px;
-        padding: 10px 15px;
-      }
-
-      .btn-sm {
-        min-height: 36px;
-        padding: 6px 10px;
-      }
-    }
-
-    /* Extra small devices (phones in portrait, less than 576px) */
-    @media (max-width: 576px) {
-      .header-section h2 {
-        font-size: 18px;
-      }
-
-      .stat-value {
-        font-size: 20px;
-      }
-
-      .table {
-        font-size: 12px;
-      }
-
-      /* Further simplify table on very small screens */
-      .table td:nth-child(4),
-      .table th:nth-child(4),
-      .table td:nth-child(7),
-      .table th:nth-child(7) {
-        display: none;
-      }
-
-      /* Stack form rows on small screens */
-      .row .col-md-6,
-      .row .col-md-4,
-      .row .col-md-3 {
-        margin-bottom: 10px;
-      }
-    }
-
-    /* Print styles for statements */
-    @media print {
-      .modal-header,
-      .modal-footer,
-      .btn,
-      .filter-section,
-      #statsSection {
-        display: none !important;
-      }
-
-      .modal-dialog {
-        max-width: 100%;
-        margin: 0;
-      }
-
-      .modal-content {
-        border: none;
-        box-shadow: none;
-      }
-
-      body {
-        background: white;
-      }
-
-      .card {
-        border: 1px solid #ddd;
-        page-break-inside: avoid;
-      }
-
-      .table {
-        font-size: 12px;
-      }
-    }
-  </style>
+        .loader {
+            text-align: center;
+            padding: 2rem;
+        }
+    </style>
 </head>
 <body>
-  <div class="header-section">
-    <h2><i class="bi bi-building"></i> Suppliers Management</h2>
-    <p>Manage your suppliers, purchase orders, and payment tracking</p>
-  </div>
-
-  <!-- Statistics Cards -->
-  <div class="row" id="statsSection">
-    <div class="col-md-3">
-      <div class="stat-card">
-        <div class="stat-label">Total Suppliers</div>
-        <div class="stat-value" id="totalSuppliers">0</div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="stat-card">
-        <div class="stat-label">Active Suppliers</div>
-        <div class="stat-value" id="activeSuppliers">0</div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="stat-card">
-        <div class="stat-label">Total Payable</div>
-        <div class="stat-value balance-negative" id="totalPayable">Ksh 0.00</div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="stat-card">
-        <div class="stat-label">Total Purchased</div>
-        <div class="stat-value" id="totalPurchased">Ksh 0.00</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Supplier Selection and Actions -->
-  <div class="filter-section">
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label for="supplierSelect" class="form-label">Select Supplier</label>
-        <select class="form-select" id="supplierSelect" onchange="onSupplierSelected()">
-          <option value="">-- Select a supplier --</option>
-        </select>
-      </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Actions</label>
-        <div class="d-flex gap-2">
-          <button type="button" class="btn btn-warning" id="editSupplierBtn" onclick="editSelectedSupplier()" disabled>
-            <i class="bi bi-pencil"></i> Edit
-          </button>
-          <button type="button" class="btn btn-success" id="paySupplierBtn" onclick="paySelectedSupplier()" disabled>
-            <i class="bi bi-cash"></i> Pay
-          </button>
-          <button type="button" class="btn btn-info" id="statementBtn" onclick="viewSelectedStatement()" disabled>
-            <i class="bi bi-file-text"></i> Statement
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter Section -->
-  <div class="filter-section">
-    <div class="row">
-      <div class="col-md-5">
-        <input type="text" class="form-control" id="searchInput" placeholder="Search by name, contact, or ID...">
-      </div>
-      <div class="col-md-3">
-        <select class="form-select" id="statusFilter">
-          <option value="">All Status</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <button class="btn btn-primary w-100" onclick="loadSuppliers()">
-          <i class="bi bi-arrow-clockwise"></i> Refresh
-        </button>
-      </div>
-      <div class="col-md-2">
-        <button class="btn btn-success w-100" onclick="showAddSupplierForm()">
-          <i class="bi bi-plus-circle"></i> Add New
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Supplier Form (Initially Hidden) -->
-  <div class="card" id="addSupplierForm" style="display: none;">
-    <div class="card-header" id="supplierFormTitle">
-      <i class="bi bi-plus-circle"></i> Add New Supplier
-    </div>
-    <div class="card-body">
-      <form id="supplierForm" onsubmit="handleSaveSupplier(event)">
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="supplierName" class="form-label">Supplier Name *</label>
-            <input type="text" class="form-control" id="supplierName" required>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="supplierContact" class="form-label">Contact Person</label>
-            <input type="text" class="form-control" id="supplierContact">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="supplierPhone" class="form-label">Phone *</label>
-            <input type="tel" class="form-control" id="supplierPhone" required>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="supplierEmail" class="form-label">Email</label>
-            <input type="email" class="form-control" id="supplierEmail">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12 mb-3">
-            <label for="supplierAddress" class="form-label">Address</label>
-            <textarea class="form-control" id="supplierAddress" rows="2"></textarea>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="supplierPaymentTerms" class="form-label">Payment Terms</label>
-            <input type="text" class="form-control" id="supplierPaymentTerms" placeholder="e.g., Net 30">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="supplierOpeningBalance" class="form-label">Opening Balance</label>
-            <input type="number" class="form-control" id="supplierOpeningBalance" min="0" step="0.01" placeholder="0.00">
-            <div class="form-text">Starting payable balance to carry forward.</div>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="supplierStatus" class="form-label">Status</label>
-            <select class="form-select" id="supplierStatus">
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary" id="supplierFormSubmit">
-            <i class="bi bi-check-circle"></i> Save Supplier
-          </button>
-          <button type="button" class="btn btn-secondary" onclick="hideAddSupplierForm()">
-            <i class="bi bi-x-circle"></i> Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Suppliers Table -->
-  <div class="card">
-    <div class="card-header">
-      <i class="bi bi-list-ul"></i> Suppliers List
-    </div>
-    <div class="card-body">
-      <div id="loadingIndicator" class="loading">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-3">Loading suppliers...</p>
-      </div>
-
-      <div id="suppliersTableContainer" style="display: none;">
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Supplier ID</th>
-                <th>Name</th>
-                <th>Contact Person</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Balance</th>
-                <th>Payment Terms</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="suppliersTableBody">
-              <!-- Data will be loaded here -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="noDataMessage" style="display: none;" class="text-center text-muted py-4">
-        <i class="bi bi-inbox" style="font-size: 48px;"></i>
-        <p class="mt-3">No suppliers found</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Purchase Order Modal -->
-  <div class="modal fade" id="purchaseModal" tabindex="-1" aria-labelledby="purchaseModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white;">
-          <h5 class="modal-title" id="purchaseModalLabel">
-            <i class="bi bi-cart-plus"></i> Create Purchase Order
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="purchaseSupplierId">
-
-          <!-- Supplier Info -->
-          <div class="alert alert-info mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <strong>Supplier:</strong> <span id="purchaseSupplierName"></span>
-              </div>
-              <div>
-                <strong>Current Balance:</strong> <span id="purchaseCurrentBalance" class="balance-negative"></span>
-              </div>
+    <div class="container-fluid p-4">
+        <!-- Header Banner -->
+        <div class="header-banner">
+            <div class="icon">
+                <i class="bi bi-truck"></i>
             </div>
-          </div>
-
-          <!-- Item Search and Selection -->
-          <div class="card mb-3">
-            <div class="card-header">
-              <i class="bi bi-search"></i> Add Items to Purchase
+            <div>
+                <h1 class="h3 mb-1">Supplier Management</h1>
+                <p class="mb-0">Manage supplier relationships and purchase orders</p>
             </div>
-            <div class="card-body">
-              <div class="row mb-3">
-                <div class="col-md-8">
-                  <input type="text" class="form-control" id="itemSearchInput" placeholder="Search items by name, ID, or category...">
-                </div>
-                <div class="col-md-4">
-                  <button class="btn btn-primary w-100" onclick="searchInventoryItems()">
-                    <i class="bi bi-search"></i> Search
-                  </button>
-                </div>
-              </div>
-
-              <div id="itemSearchResults" style="max-height: 200px; overflow-y: auto;">
-                <!-- Search results will appear here -->
-              </div>
-            </div>
-          </div>
-
-          <!-- Manual Item Entry -->
-          <div class="card mb-3">
-            <div class="card-header">
-              <i class="bi bi-pencil-square"></i> Add Manual Item
-            </div>
-            <div class="card-body">
-              <div class="row g-2">
-                <div class="col-md-4">
-                  <input type="text" class="form-control" id="manualItemName" placeholder="Item name">
-                </div>
-                <div class="col-md-2">
-                  <input type="number" class="form-control" id="manualItemQty" placeholder="Qty" min="0" step="0.01">
-                </div>
-                <div class="col-md-2">
-                  <input type="number" class="form-control" id="manualItemCost" placeholder="Cost Price" min="0" step="0.01">
-                </div>
-                <div class="col-md-2">
-                  <input type="number" class="form-control" id="manualItemSelling" placeholder="Selling Price" min="0" step="0.01">
-                </div>
-                <div class="col-md-2 d-grid">
-                  <button class="btn btn-outline-secondary" onclick="addManualItemToPurchase()">
-                    <i class="bi bi-plus-circle"></i> Add
-                  </button>
-                </div>
-              </div>
-              <small class="text-muted d-block mt-2">Use this to capture items not yet in inventory; they will be created automatically.</small>
-            </div>
-          </div>
-
-          <!-- Selected Items -->
-          <div class="card mb-3">
-            <div class="card-header">
-              <i class="bi bi-cart"></i> Purchase Items
-            </div>
-            <div class="card-body">
-              <div class="table-responsive">
-                <table class="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Item</th>
-                      <th>Qty</th>
-                      <th>Cost Price</th>
-                      <th>Total</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody id="purchaseItemsTable">
-                    <tr>
-                      <td colspan="5" class="text-center text-muted">No items added yet</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="row mt-3">
-                <div class="col-md-8"></div>
-                <div class="col-md-4">
-                  <div class="d-flex justify-content-between mb-2">
-                    <strong>Total Amount:</strong>
-                    <strong id="purchaseTotalAmount" class="text-primary">Ksh 0.00</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Payment Details -->
-          <div class="card">
-            <div class="card-header">
-              <i class="bi bi-cash"></i> Payment Details
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="purchasePaymentMethod" class="form-label">Payment Method</label>
-                  <select class="form-select" id="purchasePaymentMethod">
-                    <option value="Cash">Cash</option>
-                    <option value="M-Pesa">M-Pesa</option>
-                    <option value="Equity Bank">Equity Bank</option>
-                  </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label for="purchasePaidAmount" class="form-label">Amount Paid Now</label>
-                  <input type="number" class="form-control" id="purchasePaidAmount" min="0" step="0.01" value="0" onchange="updatePurchaseBalance()">
-                  <div class="form-text">Enter 0 for credit purchase (pay later)</div>
-                </div>
-              </div>
-
-              <div class="alert alert-warning mb-0" id="purchaseBalanceAlert">
-                <strong>Balance Due:</strong> <span id="purchaseBalanceDue">Ksh 0.00</span>
-                <div class="form-text mb-0">This amount will be added to supplier's payable balance</div>
-              </div>
-            </div>
-          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            <i class="bi bi-x-circle"></i> Cancel
-          </button>
-          <button type="button" class="btn btn-success" id="submitPurchaseBtn" onclick="submitPurchase()">
-            <i class="bi bi-check-circle"></i> Create Purchase
-          </button>
+
+        <!-- Summary Cards -->
+        <div class="row" id="summary-cards">
+            <!-- Cards will be dynamically inserted here -->
         </div>
-      </div>
+
+        <!-- Action Bar -->
+        <div class="d-flex justify-content-end align-items-center action-bar">
+            <div>
+                <button class="btn btn-gradient-primary me-2" onclick="addSupplier()">
+                    <i class="bi bi-plus-circle"></i> Add Supplier
+                </button>
+                <button class="btn btn-outline-secondary" onclick="refreshData()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Supplier List Table -->
+        <div class="card-table">
+            <h5 class="table-title">Registered Suppliers</h5>
+            <div id="table-container" class="table-responsive">
+                <!-- Table will be dynamically inserted here -->
+            </div>
+             <div id="loader" class="loader">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading supplier data...</p>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- Supplier Statement Modal -->
-  <div class="modal fade" id="statementModal" tabindex="-1" aria-labelledby="statementModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white;">
-          <h5 class="modal-title" id="statementModalLabel">
-            <i class="bi bi-file-text"></i> Supplier Statement
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div id="statementLoading" class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-3">Loading statement...</p>
-          </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            loadDashboardData();
+        });
 
-          <div id="statementContent" style="display: none;">
-            <!-- Supplier Info -->
-            <div class="card mb-3">
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-6">
-                    <h5 id="statementSupplierName"></h5>
-                    <p class="mb-1"><strong>Supplier ID:</strong> <span id="statementSupplierId"></span></p>
-                    <p class="mb-1"><strong>Contact:</strong> <span id="statementContact"></span></p>
-                    <p class="mb-0"><strong>Phone:</strong> <span id="statementPhone"></span></p>
-                  </div>
-                  <div class="col-md-6 text-end">
-                    <div class="stat-card mb-0">
-                      <div class="stat-label">Current Balance</div>
-                      <div class="stat-value balance-negative" id="statementBalance">Ksh 0.00</div>
+        function loadDashboardData() {
+            showLoader();
+            google.script.run
+                .withSuccessHandler(updateUI)
+                .withFailureHandler(showError)
+                .getSupplierDashboardData();
+        }
+
+        function refreshData() {
+            loadDashboardData();
+        }
+
+        function updateUI(data) {
+            console.log("Received data:", data);
+            updateSummaryCards(data.overview);
+            updateSupplierTable(data.suppliers);
+            hideLoader();
+        }
+
+        function updateSummaryCards(overview) {
+            const container = document.getElementById('summary-cards');
+            container.innerHTML = 
+                `<div class="col-md-3">
+                    <div class="summary-card bg-gradient-purple">
+                        <div class="label">Total Suppliers</div>
+                        <div class="value">${overview.totalSuppliers}</div>
                     </div>
-                  </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Date Filter -->
-            <div class="card mb-3">
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-4">
-                    <label for="statementStartDate" class="form-label">From Date</label>
-                    <input type="date" class="form-control" id="statementStartDate">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="statementEndDate" class="form-label">To Date</label>
-                    <input type="date" class="form-control" id="statementEndDate">
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-primary w-100" onclick="filterStatementByDate()">
-                      <i class="bi bi-funnel"></i> Filter
-                    </button>
-                  </div>
+                <div class="col-md-3">
+                    <div class="summary-card bg-gradient-pink">
+                        <div class="label">Active</div>
+                        <div class="value">${overview.activeSuppliers}</div>
+                    </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Statement Summary -->
-            <div class="row mb-3">
-              <div class="col-md-4">
-                <div class="stat-card">
-                  <div class="stat-label">Opening Balance</div>
-                  <div class="stat-value" id="statementOpening">Ksh 0.00</div>
+                <div class="col-md-3">
+                    <div class="summary-card bg-gradient-cyan">
+                        <div class="label">Pending Orders</div>
+                        <div class="value">${overview.pendingOrders}</div>
+                    </div>
                 </div>
-              </div>
-              <div class="col-md-4">
-                <div class="stat-card">
-                  <div class="stat-label">Total Purchases</div>
-                  <div class="stat-value balance-negative" id="statementDebits">Ksh 0.00</div>
+                <div class="col-md-3">
+                    <div class="summary-card bg-gradient-orange">
+                        <div class="label">Total Payable</div>
+                        <div class="value">Ksh ${overview.totalPayable.toLocaleString()}</div>
+                    </div>
                 </div>
-              </div>
-              <div class="col-md-4">
-                <div class="stat-card">
-                  <div class="stat-label">Total Payments</div>
-                  <div class="stat-value balance-positive" id="statementCredits">Ksh 0.00</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Transactions Table -->
-            <div class="table-responsive">
-              <table class="table table-sm table-hover">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Description</th>
-                    <th>Reference</th>
-                    <th class="text-end">Purchases</th>
-                    <th class="text-end">Payments</th>
-                    <th class="text-end">Balance</th>
-                  </tr>
-                </thead>
-                <tbody id="statementTransactions">
-                  <!-- Transactions will be loaded here -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            <i class="bi bi-x-circle"></i> Close
-          </button>
-          <button type="button" class="btn btn-primary" onclick="printStatement()">
-            <i class="bi bi-printer"></i> Print
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Payment Modal -->
-  <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white;">
-          <h5 class="modal-title" id="paymentModalLabel">
-            <i class="bi bi-cash-coin"></i> Record Supplier Payment
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="paymentSupplierId">
-
-          <div class="alert alert-info mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <strong>Supplier:</strong> <span id="paymentSupplierName"></span>
-              </div>
-              <div>
-                <strong>Balance:</strong> <span id="paymentCurrentBalance" class="balance-negative"></span>
-              </div>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label for="paymentAmount" class="form-label">Payment Amount (Ksh) *</label>
-            <input type="number" class="form-control" id="paymentAmount" min="0" step="0.01" required>
-            <div class="form-text">Enter the amount you're paying to this supplier</div>
-          </div>
-
-          <div class="mb-3">
-            <label for="paymentMethod" class="form-label">Payment Method *</label>
-            <select class="form-select" id="paymentMethod" required>
-              <option value="Cash">Cash</option>
-              <option value="M-Pesa">M-Pesa</option>
-              <option value="Equity Bank">Equity Bank</option>
-            </select>
-            <div class="form-text">Select the account to pay from</div>
-          </div>
-
-          <div class="mb-3">
-            <label for="paymentReference" class="form-label">Reference/Receipt No</label>
-            <input type="text" class="form-control" id="paymentReference" placeholder="e.g., TXN123456">
-            <div class="form-text">Optional: M-Pesa code, check number, or receipt reference</div>
-          </div>
-
-          <div class="mb-3">
-            <label for="paymentNotes" class="form-label">Notes</label>
-            <textarea class="form-control" id="paymentNotes" rows="2" placeholder="Optional payment notes"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            <i class="bi bi-x-circle"></i> Cancel
-          </button>
-          <button type="button" class="btn btn-success" id="submitPaymentBtn" onclick="submitPayment()">
-            <i class="bi bi-check-circle"></i> Submit Payment
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // Load suppliers on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      loadSuppliers();
-
-      // Add event listeners as backup to inline onclick handlers
-      const editBtn = document.getElementById('editSupplierBtn');
-      const payBtn = document.getElementById('paySupplierBtn');
-      const statementBtn = document.getElementById('statementBtn');
-
-      if (editBtn) {
-        editBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          editSelectedSupplier();
-        });
-      }
-
-      if (payBtn) {
-        payBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          paySelectedSupplier();
-        });
-      }
-
-      if (statementBtn) {
-        statementBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          viewSelectedStatement();
-        });
-      }
-
-      console.log('Button event listeners attached');
-    });
-
-    // Search functionality
-    document.getElementById('searchInput').addEventListener('keyup', filterSuppliers);
-    document.getElementById('statusFilter').addEventListener('change', filterSuppliers);
-
-    let suppliersData = [];
-    let editingSupplierId = null;
-    let currentStatementSupplierId = null;
-
-    function getNumericField(supplier, keys) {
-      for (let i = 0; i < keys.length; i++) {
-        const value = supplier[keys[i]];
-        const number = parseFloat(value);
-        if (!isNaN(number)) {
-          return number;
-        }
-      }
-      return 0;
-    }
-
-    function getExistingNumericField(supplier, keys) {
-      for (let i = 0; i < keys.length; i++) {
-        const value = supplier[keys[i]];
-        if (value === undefined || value === '') continue;
-
-        const number = parseFloat(value);
-        if (!isNaN(number)) {
-          return number;
-        }
-      }
-      return null;
-    }
-
-    function loadSuppliers() {
-      document.getElementById('loadingIndicator').style.display = 'block';
-      document.getElementById('suppliersTableContainer').style.display = 'none';
-      document.getElementById('noDataMessage').style.display = 'none';
-
-      google.script.run
-        .withSuccessHandler(function(data) {
-          suppliersData = data;
-          displaySuppliers(data);
-          updateStats(data);
-          populateSupplierDropdown(data);
-          document.getElementById('loadingIndicator').style.display = 'none';
-        })
-        .withFailureHandler(function(error) {
-          document.getElementById('loadingIndicator').innerHTML =
-            '<div class="alert alert-danger">Error loading suppliers: ' + error.message + '</div>';
-        })
-        .getSuppliers({});
-    }
-
-    function populateSupplierDropdown(data) {
-      const select = document.getElementById('supplierSelect');
-      const currentValue = select.value;
-
-      // Clear existing options except the first one
-      select.innerHTML = '<option value="">-- Select a supplier --</option>';
-
-      if (!data || data.length === 0) {
-        return;
-      }
-
-      // Sort by supplier name
-      const sortedData = [...data].sort((a, b) => {
-        const nameA = (a.Supplier_Name || a.Name || '').toLowerCase();
-        const nameB = (b.Supplier_Name || b.Name || '').toLowerCase();
-        return nameA.localeCompare(nameB);
-      });
-
-      sortedData.forEach(supplier => {
-        const option = document.createElement('option');
-        option.value = supplier.Supplier_ID;
-        option.textContent = `${supplier.Supplier_Name || supplier.Name || ''} (${supplier.Supplier_ID})`;
-        select.appendChild(option);
-      });
-
-      // Restore previous selection if it still exists
-      if (currentValue) {
-        select.value = currentValue;
-        onSupplierSelected();
-      }
-    }
-
-    function onSupplierSelected() {
-      const supplierId = document.getElementById('supplierSelect').value;
-      const editBtn = document.getElementById('editSupplierBtn');
-      const payBtn = document.getElementById('paySupplierBtn');
-      const statementBtn = document.getElementById('statementBtn');
-
-      console.log('Supplier selected:', supplierId);
-
-      if (!supplierId) {
-        // Disable all action buttons
-        editBtn.disabled = true;
-        payBtn.disabled = true;
-        statementBtn.disabled = true;
-        return;
-      }
-
-      // Find the selected supplier
-      const supplier = suppliersData.find(s => s.Supplier_ID === supplierId);
-      if (!supplier) {
-        console.error('Supplier not found:', supplierId);
-        return;
-      }
-
-      // Enable action buttons
-      editBtn.disabled = false;
-      statementBtn.disabled = false;
-
-      // Enable pay button only if there's a balance
-      const balance = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Balance']);
-      payBtn.disabled = balance <= 0;
-
-      console.log('Buttons enabled - Edit:', !editBtn.disabled, 'Pay:', !payBtn.disabled, 'Statement:', !statementBtn.disabled);
-    }
-
-    function editSelectedSupplier() {
-      console.log('Edit button clicked');
-      const supplierId = document.getElementById('supplierSelect').value;
-      if (!supplierId) {
-        alert('Please select a supplier first');
-        return;
-      }
-      console.log('Editing supplier:', supplierId);
-      editSupplier(supplierId);
-    }
-
-    function paySelectedSupplier() {
-      console.log('Pay button clicked');
-      const supplierId = document.getElementById('supplierSelect').value;
-      if (!supplierId) {
-        alert('Please select a supplier first');
-        return;
-      }
-      console.log('Opening payment for supplier:', supplierId);
-      makePayment(supplierId);
-    }
-
-    function viewSelectedStatement() {
-      console.log('Statement button clicked');
-      const supplierId = document.getElementById('supplierSelect').value;
-      if (!supplierId) {
-        alert('Please select a supplier first');
-        return;
-      }
-      console.log('Viewing statement for supplier:', supplierId);
-      viewStatement(supplierId);
-    }
-
-    function displaySuppliers(data) {
-      const tbody = document.getElementById('suppliersTableBody');
-      tbody.innerHTML = '';
-
-      if (!data || data.length === 0) {
-        document.getElementById('noDataMessage').style.display = 'block';
-        return;
-      }
-
-      document.getElementById('suppliersTableContainer').style.display = 'block';
-
-      data.forEach(function(supplier) {
-        const row = document.createElement('tr');
-
-        const balance = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Balance']);
-        const balanceClass = balance > 0 ? 'balance-negative' : balance < 0 ? 'balance-positive' : '';
-        const balanceText = balance > 0 ? 'Payable: Ksh ' + balance.toFixed(2) :
-                           balance < 0 ? 'Credit: Ksh ' + Math.abs(balance).toFixed(2) : 'Ksh 0.00';
-
-        const statusBadge = supplier.Status === 'Active' ?
-          '<span class="badge bg-success">Active</span>' :
-          '<span class="badge bg-secondary">Inactive</span>';
-
-        row.innerHTML = `
-          <td>${supplier.Supplier_ID || ''}</td>
-          <td><strong>${supplier.Supplier_Name || supplier.Name || ''}</strong></td>
-          <td>${supplier.Contact_Person || '-'}</td>
-          <td>${supplier.Phone || '-'}</td>
-          <td>${supplier.Email || '-'}</td>
-          <td class="${balanceClass}">${balanceText}</td>
-          <td>${supplier.Payment_Terms || '-'}</td>
-          <td>${statusBadge}</td>
-          <td>
-            <button class="btn btn-sm btn-primary" onclick='createPurchase("${supplier.Supplier_ID}")' title="New Purchase">
-              <i class="bi bi-cart-plus"></i> Purchase
-            </button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    function updateStats(data) {
-      if (!data || data.length === 0) {
-        return;
-      }
-
-      const totalSuppliers = data.length;
-      const activeSuppliers = data.filter(s => s.Status === 'Active').length;
-      let totalPayable = 0;
-      let totalPurchased = 0;
-
-      data.forEach(function(supplier) {
-        const balance = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Balance']);
-        const purchased = getNumericField(supplier, ['Total_Purchased', 'Total Purchased']);
-
-        if (balance > 0) {
-          totalPayable += balance;
+            `;
         }
 
-        totalPurchased += purchased;
-      });
+        function updateSupplierTable(suppliers) {
+            const container = document.getElementById('table-container');
+            if (!suppliers || suppliers.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted">No suppliers found.</p>';
+                return;
+            }
 
-      document.getElementById('totalSuppliers').textContent = totalSuppliers;
-      document.getElementById('activeSuppliers').textContent = activeSuppliers;
-      document.getElementById('totalPayable').textContent = 'Ksh ' + totalPayable.toFixed(2);
-      document.getElementById('totalPurchased').textContent = 'Ksh ' + totalPurchased.toFixed(2);
-    }
+            let tableHtml = 
+                `<table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Supplier ID</th>
+                            <th>Name</th>
+                            <th>Contact Person</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th class="text-end">Balance</th>
+                            <th>Payment Terms</th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `
 
-    function filterSuppliers() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const statusFilter = document.getElementById('statusFilter').value;
+            suppliers.forEach(supplier => {
+                const balance = parseFloat(supplier.Balance) || 0;
+                tableHtml += 
+                    `<tr>
+                        <td>${supplier.Supplier_ID || ''}</td>
+                        <td>${supplier.Name || ''}</td>
+                        <td>${supplier.Contact_Person || ''}</td>
+                        <td>${supplier.Phone || ''}</td>
+                        <td>${supplier.Email || ''}</td>
+                        <td class="text-end">${balance.toLocaleString('en-US', { style: 'currency', currency: 'Ksh' })}</td>
+                        <td>${supplier.Payment_Terms || 'N/A'}</td>
+                        <td><span class="badge bg-light text-dark">${supplier.Status || 'Unknown'}</span></td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editSupplier('${supplier.Supplier_ID}')"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSupplier('${supplier.Supplier_ID}')"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `
+            });
 
-      const filtered = suppliersData.filter(function(supplier) {
-        const matchesSearch = !searchTerm ||
-          (supplier.Name && supplier.Name.toLowerCase().includes(searchTerm)) ||
-          (supplier.Supplier_Name && supplier.Supplier_Name.toLowerCase().includes(searchTerm)) ||
-          (supplier.Supplier_ID && supplier.Supplier_ID.toLowerCase().includes(searchTerm)) ||
-          (supplier.Contact_Person && supplier.Contact_Person.toLowerCase().includes(searchTerm)) ||
-          (supplier.Phone && supplier.Phone.includes(searchTerm)) ||
-          (supplier.Email && supplier.Email.toLowerCase().includes(searchTerm));
-
-        const matchesStatus = !statusFilter || supplier.Status === statusFilter;
-
-        return matchesSearch && matchesStatus;
-      });
-
-      displaySuppliers(filtered);
-      updateStats(filtered);
-    }
-
-    function resetSupplierForm() {
-      editingSupplierId = null;
-      document.getElementById('supplierForm').reset();
-      document.getElementById('supplierFormTitle').innerHTML = '<i class="bi bi-plus-circle"></i> Add New Supplier';
-      document.getElementById('supplierFormSubmit').innerHTML = '<i class="bi bi-check-circle"></i> Save Supplier';
-    }
-
-    function showAddSupplierForm() {
-      document.getElementById('addSupplierForm').style.display = 'block';
-      resetSupplierForm();
-      document.getElementById('supplierName').focus();
-    }
-
-    function hideAddSupplierForm() {
-      document.getElementById('addSupplierForm').style.display = 'none';
-      resetSupplierForm();
-    }
-
-    function handleSaveSupplier(event) {
-      event.preventDefault();
-
-      const openingBalanceInput = document.getElementById('supplierOpeningBalance').value.trim();
-
-      const supplierData = {
-        Supplier_Name: document.getElementById('supplierName').value,
-        Contact_Person: document.getElementById('supplierContact').value,
-        Phone: document.getElementById('supplierPhone').value,
-        Email: document.getElementById('supplierEmail').value,
-        Address: document.getElementById('supplierAddress').value,
-        Payment_Terms: document.getElementById('supplierPaymentTerms').value,
-        Status: document.getElementById('supplierStatus').value
-      };
-
-      const openingBalanceValue = parseFloat(openingBalanceInput);
-
-      if (openingBalanceInput === '') {
-        supplierData.Opening_Balance = 0;
-      } else if (!isNaN(openingBalanceValue)) {
-        supplierData.Opening_Balance = openingBalanceValue;
-      }
-
-      const onSuccess = function(result, actionText) {
-        if (result.success) {
-          alert('Supplier ' + actionText + ' successfully!');
-          hideAddSupplierForm();
-          loadSuppliers();
-        } else {
-          alert('Error: ' + result.message);
+            tableHtml += '</tbody></table>';
+            container.innerHTML = tableHtml;
         }
-      };
 
-      const onFailure = function(error) {
-        alert('Error saving supplier: ' + error.message);
-      };
-
-      if (editingSupplierId) {
-        google.script.run
-          .withSuccessHandler(function(result) { onSuccess(result, 'updated'); })
-          .withFailureHandler(onFailure)
-          .updateSupplier(editingSupplierId, supplierData);
-      } else {
-        google.script.run
-          .withSuccessHandler(function(result) { onSuccess(result, 'added'); })
-          .withFailureHandler(onFailure)
-          .addSupplier(supplierData);
-      }
-    }
-
-    // Purchase order variables
-    let purchaseItems = [];
-    let inventoryCache = [];
-
-    // Create new purchase order
-    function createPurchase(supplierId) {
-      const supplier = suppliersData.find(s => s.Supplier_ID === supplierId);
-      if (!supplier) {
-        alert('Supplier not found');
-        return;
-      }
-
-      // Reset purchase items
-      purchaseItems = [];
-
-      // Populate supplier info
-      const balance = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Balance']);
-      document.getElementById('purchaseSupplierId').value = supplierId;
-      document.getElementById('purchaseSupplierName').textContent = supplier.Supplier_Name || supplier.Name || '';
-      document.getElementById('purchaseCurrentBalance').textContent = 'Ksh ' + balance.toFixed(2);
-      document.getElementById('purchasePaidAmount').value = '0';
-      document.getElementById('itemSearchInput').value = '';
-      document.getElementById('itemSearchResults').innerHTML = '';
-
-      updatePurchaseDisplay();
-
-      // Load inventory for search
-      if (inventoryCache.length === 0) {
-        google.script.run
-          .withSuccessHandler(function(items) {
-            inventoryCache = items;
-          })
-          .getInventory({});
-      }
-
-      // Show modal
-      const modal = new bootstrap.Modal(document.getElementById('purchaseModal'));
-      modal.show();
-    }
-
-    function searchInventoryItems() {
-      const searchTerm = document.getElementById('itemSearchInput').value.toLowerCase();
-      const resultsDiv = document.getElementById('itemSearchResults');
-
-      if (!searchTerm) {
-        resultsDiv.innerHTML = '<p class="text-muted">Enter a search term</p>';
-        return;
-      }
-
-      const filtered = inventoryCache.filter(item => {
-        return (item.Item_Name && item.Item_Name.toLowerCase().includes(searchTerm)) ||
-               (item.Item_ID && item.Item_ID.toLowerCase().includes(searchTerm)) ||
-               (item.Category && item.Category.toLowerCase().includes(searchTerm));
-      });
-
-      if (filtered.length === 0) {
-        resultsDiv.innerHTML = '<p class="text-muted">No items found</p>';
-        return;
-      }
-
-      let html = '<div class="list-group">';
-      filtered.slice(0, 10).forEach(item => {
-        const alreadyAdded = purchaseItems.some(p => p.Item_ID === item.Item_ID);
-        html += `
-          <a href="#" class="list-group-item list-group-item-action ${alreadyAdded ? 'disabled' : ''}" onclick="addItemToPurchase('${item.Item_ID}'); return false;">
-            <div class="d-flex justify-content-between">
-              <div>
-                <strong>${item.Item_Name}</strong>
-                <small class="d-block text-muted">${item.Item_ID} | ${item.Category || '-'}</small>
-              </div>
-              <div class="text-end">
-                <span class="badge bg-primary">Ksh ${(item.Cost_Price || 0).toFixed(2)}</span>
-                <small class="d-block text-muted">Stock: ${item.Current_Qty || 0}</small>
-              </div>
-            </div>
-          </a>
-        `;
-      });
-      html += '</div>';
-
-      resultsDiv.innerHTML = html;
-    }
-
-    function addManualItemToPurchase() {
-      const name = document.getElementById('manualItemName').value.trim();
-      const qty = parseFloat(document.getElementById('manualItemQty').value) || 0;
-      const cost = parseFloat(document.getElementById('manualItemCost').value) || 0;
-      const sellingRaw = document.getElementById('manualItemSelling').value;
-      const selling = sellingRaw === '' ? cost : (parseFloat(sellingRaw) || cost);
-
-      if (!name) return alert('Enter item name');
-      if (qty <= 0) return alert('Enter quantity');
-      if (cost < 0) return alert('Enter valid cost price');
-
-      const itemId = 'MANUAL-' + Date.now();
-      purchaseItems.push({
-        Item_ID: itemId,
-        Item_Name: name,
-        Qty: qty,
-        Cost_Price: cost,
-        Selling_Price: selling,
-        Is_Manual: true,
-        Category: 'Manual'
-      });
-
-      updatePurchaseDisplay();
-      clearManualItemForm();
-    }
-
-    function clearManualItemForm() {
-      document.getElementById('manualItemName').value = '';
-      document.getElementById('manualItemQty').value = '';
-      document.getElementById('manualItemCost').value = '';
-      document.getElementById('manualItemSelling').value = '';
-    }
-
-    function addItemToPurchase(itemId) {
-      const item = inventoryCache.find(i => i.Item_ID === itemId);
-      if (!item) return;
-
-      // Check if already added
-      if (purchaseItems.some(p => p.Item_ID === itemId)) {
-        alert('Item already added to purchase');
-        return;
-      }
-
-      purchaseItems.push({
-        Item_ID: item.Item_ID,
-        Item_Name: item.Item_Name,
-        Qty: 1,
-        Cost_Price: item.Cost_Price || 0
-      });
-
-      updatePurchaseDisplay();
-      searchInventoryItems(); // Refresh search to show item as disabled
-    }
-
-    function removeItemFromPurchase(itemId) {
-      purchaseItems = purchaseItems.filter(p => p.Item_ID !== itemId);
-      updatePurchaseDisplay();
-      searchInventoryItems(); // Refresh search results
-    }
-
-    function updateItemQuantity(itemId, qty) {
-      const item = purchaseItems.find(p => p.Item_ID === itemId);
-      if (item) {
-        item.Qty = parseFloat(qty) || 1;
-        updatePurchaseDisplay();
-      }
-    }
-
-    function updateItemCostPrice(itemId, price) {
-      const item = purchaseItems.find(p => p.Item_ID === itemId);
-      if (item) {
-        item.Cost_Price = parseFloat(price) || 0;
-        updatePurchaseDisplay();
-      }
-    }
-
-    function updatePurchaseDisplay() {
-      const tbody = document.getElementById('purchaseItemsTable');
-
-      if (purchaseItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No items added yet</td></tr>';
-        document.getElementById('purchaseTotalAmount').textContent = 'Ksh 0.00';
-        updatePurchaseBalance();
-        return;
-      }
-
-      let html = '';
-      let total = 0;
-
-      purchaseItems.forEach(item => {
-        const lineTotal = item.Qty * item.Cost_Price;
-        total += lineTotal;
-
-        html += `
-          <tr>
-            <td><strong>${item.Item_Name}</strong><br><small class="text-muted">${item.Item_ID}</small></td>
-            <td style="width: 100px;"><input type="number" class="form-control form-control-sm" value="${item.Qty}" min="1" step="1" onchange="updateItemQuantity('${item.Item_ID}', this.value)"></td>
-            <td style="width: 120px;"><input type="number" class="form-control form-control-sm" value="${item.Cost_Price}" min="0" step="0.01" onchange="updateItemCostPrice('${item.Item_ID}', this.value)"></td>
-            <td class="text-end"><strong>Ksh ${lineTotal.toFixed(2)}</strong></td>
-            <td style="width: 50px;"><button class="btn btn-sm btn-danger" onclick="removeItemFromPurchase('${item.Item_ID}')"><i class="bi bi-trash"></i></button></td>
-          </tr>
-        `;
-      });
-
-      tbody.innerHTML = html;
-      document.getElementById('purchaseTotalAmount').textContent = 'Ksh ' + total.toFixed(2);
-      updatePurchaseBalance();
-    }
-
-    function updatePurchaseBalance() {
-      const totalAmount = purchaseItems.reduce((sum, item) => sum + (item.Qty * item.Cost_Price), 0);
-      const paidAmount = parseFloat(document.getElementById('purchasePaidAmount').value) || 0;
-      const balance = totalAmount - paidAmount;
-
-      document.getElementById('purchaseBalanceDue').textContent = 'Ksh ' + balance.toFixed(2);
-
-      if (balance > 0) {
-        document.getElementById('purchaseBalanceAlert').className = 'alert alert-warning mb-0';
-      } else if (balance < 0) {
-        document.getElementById('purchaseBalanceAlert').className = 'alert alert-danger mb-0';
-        document.getElementById('purchaseBalanceDue').textContent = 'Overpayment: Ksh ' + Math.abs(balance).toFixed(2);
-      } else {
-        document.getElementById('purchaseBalanceAlert').className = 'alert alert-success mb-0';
-      }
-    }
-
-    function submitPurchase() {
-      if (purchaseItems.length === 0) {
-        alert('Please add at least one item to the purchase');
-        return;
-      }
-
-      const supplierId = document.getElementById('purchaseSupplierId').value;
-      const supplier = suppliersData.find(s => s.Supplier_ID === supplierId);
-      const paymentMethod = document.getElementById('purchasePaymentMethod').value;
-      const paidAmount = parseFloat(document.getElementById('purchasePaidAmount').value) || 0;
-      const totalAmount = purchaseItems.reduce((sum, item) => sum + (item.Qty * item.Cost_Price), 0);
-
-      if (paidAmount > totalAmount) {
-        if (!confirm('Paid amount exceeds total. This will create a credit for the supplier. Continue?')) {
-          return;
+        function showLoader() {
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('table-container').innerHTML = '';
         }
-      }
 
-      // Disable submit button
-      const submitBtn = document.getElementById('submitPurchaseBtn');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
 
-      const user = sessionStorage.getItem('userName') || 'SYSTEM';
+        function showError(error) {
+            hideLoader();
+            const container = document.getElementById('table-container');
+            container.innerHTML = 
+`<p class="text-center text-danger">Error loading data: 
+${error.message}</p>
+`;
+            console.error("Error loading data:", error);
+        }
 
-      const purchaseData = {
-        Supplier_ID: supplierId,
-        Supplier_Name: supplier.Supplier_Name || supplier.Name,
-        items: purchaseItems,
-        Payment_Method: paymentMethod,
-        Paid_Amount: paidAmount,
-        User: user
-      };
+        function addSupplier() {
+            alert("Add new supplier functionality to be implemented.");
+        }
 
-      google.script.run
-        .withSuccessHandler(function(result) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Create Purchase';
+        function editSupplier(supplierId) {
+            alert("Editing supplier: " + supplierId);
+        }
 
-          if (result.success) {
-            alert('Purchase order created successfully!\n\nPurchase ID: ' + result.purchaseId + '\nTotal: Ksh ' + result.totalAmount.toFixed(2) + '\nPaid: Ksh ' + result.paidAmount.toFixed(2) + '\nBalance: Ksh ' + result.balance.toFixed(2));
-            bootstrap.Modal.getInstance(document.getElementById('purchaseModal')).hide();
-            loadSuppliers(); // Refresh to show updated balance
-          } else {
-            alert('Error: ' + result.message);
-          }
-        })
-        .withFailureHandler(function(error) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Create Purchase';
-          alert('Error creating purchase: ' + error.message);
-        })
-        .createPurchase(purchaseData);
-    }
-
-    // Make payment to supplier
-    function makePayment(supplierId) {
-      const supplier = suppliersData.find(s => s.Supplier_ID === supplierId);
-      if (!supplier) {
-        alert('Supplier not found');
-        return;
-      }
-
-      // Populate payment modal
-      const balance = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Balance']);
-      document.getElementById('paymentSupplierId').value = supplierId;
-      document.getElementById('paymentSupplierName').textContent = supplier.Supplier_Name || supplier.Name || '';
-      document.getElementById('paymentCurrentBalance').textContent = 'Ksh ' + balance.toFixed(2);
-      const amountInput = document.getElementById('paymentAmount');
-      amountInput.value = '';
-      amountInput.placeholder = 'Balance: Ksh ' + balance.toFixed(2);
-      amountInput.removeAttribute('max');
-      document.getElementById('paymentMethod').value = 'Cash';
-      document.getElementById('paymentReference').value = '';
-      document.getElementById('paymentNotes').value = '';
-
-      // Show modal
-      const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
-      modal.show();
-    }
-
-    function submitPayment() {
-      const supplierId = document.getElementById('paymentSupplierId').value;
-      const amount = parseFloat(document.getElementById('paymentAmount').value);
-      const paymentMethod = document.getElementById('paymentMethod').value;
-      const reference = document.getElementById('paymentReference').value;
-      const notes = document.getElementById('paymentNotes').value;
-
-      if (!amount || amount <= 0) {
-        alert('Please enter a valid payment amount');
-        return;
-      }
-
-      const supplier = suppliersData.find(s => s.Supplier_ID === supplierId);
-      const balance = getNumericField(supplier, ['Current_Balance', 'Current Balance', 'Balance']);
-
-      // Disable submit button to prevent double submission
-      const submitBtn = document.getElementById('submitPaymentBtn');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-
-      const user = sessionStorage.getItem('userName') || 'SYSTEM';
-
-      // Call backend to record payment
-      google.script.run
-        .withSuccessHandler(function(result) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Submit Payment';
-
-          if (result.success) {
-            alert('Payment of Ksh ' + amount.toFixed(2) + ' recorded successfully!');
-            bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
-            loadSuppliers();
-          } else {
-            alert('Error: ' + result.message);
-          }
-        })
-        .withFailureHandler(function(error) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Submit Payment';
-          alert('Error recording payment: ' + error.message);
-        })
-        .recordSupplierPayment(supplierId, amount, paymentMethod, reference, notes, user);
-    }
-
-    // View supplier statement
-    function viewStatement(supplierId) {
-      const supplier = suppliersData.find(s => s.Supplier_ID === supplierId);
-      if (!supplier) {
-        alert('Supplier not found');
-        return;
-      }
-
-      // Store current supplier ID for filtering
-      currentStatementSupplierId = supplierId;
-
-      // Clear date filters
-      document.getElementById('statementStartDate').value = '';
-      document.getElementById('statementEndDate').value = '';
-
-      // Show modal with loading state
-      const modal = new bootstrap.Modal(document.getElementById('statementModal'));
-      modal.show();
-
-      document.getElementById('statementLoading').style.display = 'block';
-      document.getElementById('statementContent').style.display = 'none';
-
-      // Load statement data (from beginning to date)
-      loadStatementData(supplierId, null, null);
-    }
-
-    function loadStatementData(supplierId, startDate, endDate) {
-      // Load statement data
-      google.script.run
-        .withSuccessHandler(function(statement) {
-          displayStatement(statement);
-          document.getElementById('statementLoading').style.display = 'none';
-          document.getElementById('statementContent').style.display = 'block';
-        })
-        .withFailureHandler(function(error) {
-          document.getElementById('statementLoading').innerHTML =
-            '<div class="alert alert-danger">Error loading statement: ' + error.message + '</div>';
-        })
-        .getSupplierStatement(supplierId, startDate, endDate);
-    }
-
-    function filterStatementByDate() {
-      if (!currentStatementSupplierId) {
-        alert('No supplier statement is currently loaded');
-        return;
-      }
-
-      const startDate = document.getElementById('statementStartDate').value;
-      const endDate = document.getElementById('statementEndDate').value;
-
-      // Show loading state
-      document.getElementById('statementLoading').style.display = 'block';
-      document.getElementById('statementContent').style.display = 'none';
-
-      // Reload statement with date filters
-      loadStatementData(currentStatementSupplierId, startDate || null, endDate || null);
-    }
-
-    function displayStatement(statement) {
-      const supplier = statement.supplier;
-
-      // Populate supplier info
-      document.getElementById('statementSupplierName').textContent = supplier.Supplier_Name || supplier.Name || '';
-      document.getElementById('statementSupplierId').textContent = supplier.Supplier_ID || '';
-      document.getElementById('statementContact').textContent = supplier.Contact_Person || '-';
-      document.getElementById('statementPhone').textContent = supplier.Phone || '-';
-
-      // Populate summary
-      const closingBalance = parseFloat(statement.closingBalance || 0) || 0;
-      const openingBalance = parseFloat(statement.openingBalance || 0) || 0;
-      const totalDebits = parseFloat(statement.totalDebits || 0) || 0;
-      const totalCredits = parseFloat(statement.totalCredits || 0) || 0;
-
-      document.getElementById('statementBalance').textContent = 'Ksh ' + closingBalance.toFixed(2);
-      document.getElementById('statementOpening').textContent = 'Ksh ' + openingBalance.toFixed(2);
-      document.getElementById('statementDebits').textContent = 'Ksh ' + totalDebits.toFixed(2);
-      document.getElementById('statementCredits').textContent = 'Ksh ' + totalCredits.toFixed(2);
-
-      // Populate transactions table
-      const tbody = document.getElementById('statementTransactions');
-      tbody.innerHTML = '';
-
-      if (!statement.transactions || statement.transactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No transactions found</td></tr>';
-        return;
-      }
-
-      statement.transactions.forEach(function(txn) {
-        const row = document.createElement('tr');
-        const date = new Date(txn.date);
-        const dateStr = date.toLocaleDateString('en-GB');
-
-        const debit = txn.debit || 0;
-        const credit = txn.credit || 0;
-        const balance = txn.balance || 0;
-
-        const typeClass = txn.type === 'Purchase' ? 'text-danger' : (txn.type === 'Payment' ? 'text-success' : '');
-        const balanceClass = balance > 0 ? 'balance-negative' : balance < 0 ? 'balance-positive' : '';
-
-        row.innerHTML = `
-          <td>${dateStr}</td>
-          <td><span class="badge ${txn.type === 'Purchase' ? 'bg-danger' : (txn.type === 'Payment' ? 'bg-success' : 'bg-secondary')}">${txn.type}</span></td>
-          <td>${txn.description || '-'}</td>
-          <td>${txn.reference || '-'}</td>
-          <td class="text-end">${debit > 0 ? 'Ksh ' + debit.toFixed(2) : '-'}</td>
-          <td class="text-end">${credit > 0 ? 'Ksh ' + credit.toFixed(2) : '-'}</td>
-          <td class="text-end ${balanceClass}"><strong>Ksh ${balance.toFixed(2)}</strong></td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    function printStatement() {
-      const originalTitle = document.title;
-      document.title = 'Supplier Statement - Smatika Kenya';
-      window.print();
-      setTimeout(() => { document.title = originalTitle; }, 100);
-    }
-
-    // Edit supplier
-    function editSupplier(supplierId) {
-      const supplier = suppliersData.find(s => s.Supplier_ID === supplierId);
-
-      if (!supplier) {
-        alert('Supplier not found');
-        return;
-      }
-
-      editingSupplierId = supplierId;
-      document.getElementById('supplierFormTitle').innerHTML = '<i class="bi bi-pencil"></i> Edit Supplier';
-      document.getElementById('supplierFormSubmit').innerHTML = '<i class="bi bi-check-circle"></i> Update Supplier';
-      document.getElementById('addSupplierForm').style.display = 'block';
-
-      document.getElementById('supplierName').value = supplier.Supplier_Name || supplier.Name || '';
-      document.getElementById('supplierContact').value = supplier.Contact_Person || '';
-      document.getElementById('supplierPhone').value = supplier.Phone || '';
-      document.getElementById('supplierEmail').value = supplier.Email || '';
-      document.getElementById('supplierAddress').value = supplier.Address || '';
-      document.getElementById('supplierPaymentTerms').value = supplier.Payment_Terms || '';
-      const openingBalance = getExistingNumericField(supplier, ['Opening_Balance', 'Opening Balance']);
-      document.getElementById('supplierOpeningBalance').value = openingBalance !== null ? openingBalance : '';
-      document.getElementById('supplierStatus').value = supplier.Status || 'Active';
-
-      document.getElementById('supplierName').focus();
-    }
-  </script>
+        function deleteSupplier(supplierId) {
+            if(confirm("Are you sure you want to delete supplier: " + supplierId + "?")) {
+                alert("Deleting supplier: " + supplierId);
+            }
+        }
+    </script>
 </body>
 </html>

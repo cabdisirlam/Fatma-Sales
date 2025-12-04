@@ -667,19 +667,79 @@ function getSupplierStatement(supplierId, startDate, endDate) {
   }
 }
 
-function getSuppliersOverview() {
+// =====================================================
+// DASHBOARD FUNCTIONS
+// =====================================================
+
+/**
+ * Gets all data required for the Supplier Management dashboard.
+ * This is the single entry point for the frontend to reduce server calls.
+ */
+function getSupplierDashboardData() {
   try {
-    const suppliers = getSuppliers();
+    const suppliers = sheetToObjects('Suppliers');
     const purchases = sheetToObjects('Purchases');
     
-    const pendingOrders = purchases.filter(p => p.Payment_Status === 'Pending').length;
+    const overview = getSupplierOverviewStats(suppliers, purchases);
+    const supplierList = getSupplierList(suppliers);
 
     return {
-      totalSuppliers: suppliers.length,
-      pendingOrders: pendingOrders
+      success: true,
+      overview: overview,
+      suppliers: supplierList
     };
   } catch (error) {
-    logError('getSuppliersOverview', error);
-    throw new Error('Unable to load suppliers overview: ' + error.message);
+    logError('getSupplierDashboardData', error);
+    return { success: false, message: 'Error loading supplier dashboard: ' + error.message };
   }
+}
+
+/**
+ * Generates the overview statistics for the summary cards.
+ * @param {Array<Object>} suppliers - The array of supplier objects.
+ * @param {Array<Object>} purchases - The array of purchase objects.
+ * @returns {Object} An object containing overview stats.
+ */
+function getSupplierOverviewStats(suppliers, purchases) {
+    let activeSuppliers = 0;
+    let totalPayable = 0;
+
+    suppliers.forEach(supplier => {
+        if (supplier.Status === 'Active') {
+            activeSuppliers++;
+        }
+        const balance = parseFloat(supplier.Current_Balance) || 0;
+        if (balance > 0) {
+            totalPayable += balance;
+        }
+    });
+
+    const pendingOrders = purchases.filter(p => p.Payment_Status === 'Pending' || p.Payment_Status === 'Partial').length;
+
+    return {
+        totalSuppliers: suppliers.length,
+        activeSuppliers: activeSuppliers,
+        pendingOrders: pendingOrders,
+        totalPayable: totalPayable
+    };
+}
+
+/**
+ * Formats the raw supplier data for table display.
+ * @param {Array<Object>} suppliers - The array of supplier objects.
+ * @returns {Array<Object>} A formatted array of suppliers for the UI.
+ */
+function getSupplierList(suppliers) {
+    return suppliers.map(s => {
+        return {
+            Supplier_ID: s.Supplier_ID,
+            Name: s.Supplier_Name,
+            Contact_Person: s.Contact_Person,
+            Phone: s.Phone,
+            Email: s.Email,
+            Balance: s.Current_Balance,
+            Payment_Terms: s.Payment_Terms,
+            Status: s.Status
+        };
+    }).sort((a, b) => a.Name.localeCompare(b.Name));
 }

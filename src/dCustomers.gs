@@ -864,32 +864,83 @@ ${results.map(r => {
     throw new Error('Error sending payment reminders: ' + error.message);
   }
 }
+// =====================================================
+// DASHBOARD FUNCTIONS
+// =====================================================
 
 /**
- * Create time-based trigger for weekly payment reminders
- * Run this once to set up weekly reminders on Monday at 9 AM
+ * Gets all data required for the Customer Management dashboard.
+ * This is the single entry point for the frontend to reduce server calls.
  */
-function createPaymentReminderTrigger() {
+function getCustomerDashboardData() {
   try {
-    // Delete existing triggers for this function
-    const triggers = ScriptApp.getProjectTriggers();
-    triggers.forEach(trigger => {
-      if (trigger.getHandlerFunction() === 'sendAllPaymentReminders') {
-        ScriptApp.deleteTrigger(trigger);
-      }
-    });
+    const customers = sheetToObjects('Customers'); // Using a robust utility
+    const overview = getCustomersOverview(customers);
+    const customerList = getCustomersList(customers);
 
-    // Create new trigger for Monday at 9 AM weekly
-    ScriptApp.newTrigger('sendAllPaymentReminders')
-      .timeBased()
-      .onWeekDay(ScriptApp.WeekDay.MONDAY)
-      .atHour(9)
-      .create();
-
-    return { success: true, message: 'Payment reminder trigger created for Mondays at 9 AM' };
-
+    return {
+      success: true,
+      overview: overview,
+      customers: customerList
+    };
   } catch (error) {
-    logError('createPaymentReminderTrigger', error);
-    throw new Error('Error creating trigger: ' + error.message);
+    logError('getCustomerDashboardData', error);
+    return { success: false, message: 'Error loading customer dashboard: ' + error.message };
   }
 }
+
+/**
+ * Generates the overview statistics for the summary cards.
+ * @param {Array<Object>} customers - The array of customer objects.
+ * @returns {Object} An object containing overview stats.
+ */
+function getCustomersOverview(customers) {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    let newThisMonth = 0;
+    let activeCredit = 0;
+    let outstanding = 0;
+
+    customers.forEach(customer => {
+        // Calculate new customers this month
+        const createdDate = new Date(customer.Created_Date);
+        if (createdDate >= startOfMonth) {
+            newThisMonth++;
+        }
+
+        // Calculate outstanding balances
+        const balance = parseFloat(customer.Current_Balance) || 0;
+        if (balance > 0) {
+            activeCredit++;
+            outstanding += balance;
+        }
+    });
+
+    return {
+        totalCustomers: customers.length,
+        newThisMonth: newThisMonth,
+        activeCredit: activeCredit,
+        outstanding: outstanding
+    };
+}
+
+
+/**
+ * Formats the raw customer data for table display.
+ * @param {Array<Object>} customers - The array of customer objects.
+ * @returns {Array<Object>} A formatted array of customers for the UI.
+ */
+function getCustomersList(customers) {
+    return customers.map(customer => {
+        return {
+            Customer_ID: customer.Customer_ID,
+            Name: customer.Customer_Name,
+            Phone: customer.Phone,
+            Location: customer.Location,
+            KRA_PIN: customer.KRA_PIN,
+            Balance: customer.Current_Balance 
+        };
+    }).sort((a, b) => a.Name.localeCompare(b.Name)); // Sort alphabetically by name
+}
+
