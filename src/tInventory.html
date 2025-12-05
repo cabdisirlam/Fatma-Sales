@@ -183,6 +183,91 @@
         </div>
     </div>
 
+    <!-- Return to Supplier Modal -->
+    <div class="modal fade" id="returnInventoryModal" tabindex="-1" aria-labelledby="returnInventoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="returnInventoryModalLabel">
+                        <i class="bi bi-arrow-counterclockwise"></i> Return to Supplier
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i> This will <strong>decrease inventory</strong> and reduce supplier balance.
+                    </div>
+
+                    <form id="returnInventoryForm">
+                        <input type="hidden" id="return-item-id" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Item Name</label>
+                            <p id="return-item-name" class="form-control-plaintext text-muted"></p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Current Stock</label>
+                            <p id="return-current-stock" class="form-control-plaintext text-muted"></p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="return-supplier" class="form-label">Return to Supplier <span class="text-danger">*</span></label>
+                            <select class="form-select" id="return-supplier" required>
+                                <option value="">Select supplier...</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="return-quantity" class="form-label">Return Quantity <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="return-quantity" min="0.01" step="0.01" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="return-reason" class="form-label">Reason <span class="text-danger">*</span></label>
+                            <select class="form-select" id="return-reason" required>
+                                <option value="">Select reason...</option>
+                                <option value="Defective Goods">Defective Goods</option>
+                                <option value="Wrong Item Received">Wrong Item Received</option>
+                                <option value="Excess Stock">Excess Stock</option>
+                                <option value="Expired/Damaged">Expired/Damaged</option>
+                                <option value="Quality Issues">Quality Issues</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="return-reason-other-container" style="display: none;">
+                            <label for="return-reason-other" class="form-label">Please specify</label>
+                            <input type="text" class="form-control" id="return-reason-other">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="return-payment-method" class="form-label">Return Method <span class="text-danger">*</span></label>
+                            <select class="form-select" id="return-payment-method" required>
+                                <option value="Credit">Credit Note (Reduce Balance)</option>
+                                <option value="Cash">Cash Refund</option>
+                                <option value="Bank">Bank Transfer</option>
+                                <option value="M-Pesa">M-Pesa</option>
+                            </select>
+                            <small class="form-text text-muted">Credit Note will reduce your payable to the supplier</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="return-notes" class="form-label">Additional Notes</label>
+                            <textarea class="form-control" id="return-notes" rows="2" placeholder="Optional notes..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" onclick="submitReturnInventory()">
+                        <i class="bi bi-box-arrow-left"></i> Process Return to Supplier
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let allItems = []; // Store all items for client-side filtering
@@ -268,7 +353,7 @@
                 return;
             }
 
-            let tableHtml = 
+            let tableHtml =
                 `<table class="table table-hover align-middle">
                     <thead>
                         <tr>
@@ -279,6 +364,7 @@
                             <th class="text-end">Cost Price</th>
                             <th class="text-end">Selling Price</th>
                             <th class="text-center">Status</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -286,7 +372,7 @@
 
             items.forEach(item => {
                 const statusBadge = getStatusBadge(item.Status);
-                tableHtml += 
+                tableHtml +=
                     `<tr>
                         <td>${item.Item_ID || ''}</td>
                         <td>${item.Item_Name || ''}</td>
@@ -295,6 +381,11 @@
                         <td class="text-end">${(item.Cost_Price || 0).toLocaleString('en-US', { style: 'currency', currency: 'Ksh' })}</td>
                         <td class="text-end">${(item.Selling_Price || 0).toLocaleString('en-US', { style: 'currency', currency: 'Ksh' })}</td>
                         <td class="text-center">${statusBadge}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary" onclick="returnInventory('${item.Item_ID}')" title="Return Inventory">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
@@ -346,6 +437,157 @@ ${status}
 
         function addProduct() {
             alert("Add new product functionality to be implemented.");
+        }
+
+        function returnInventory(itemId) {
+            // Find the item in the current list
+            const item = allItems.find(i => i.Item_ID === itemId);
+
+            if (!item) {
+                alert('Item not found');
+                return;
+            }
+
+            // Populate modal with item details
+            document.getElementById('return-item-id').value = item.Item_ID;
+            document.getElementById('return-item-name').textContent = item.Item_Name;
+            document.getElementById('return-current-stock').textContent = item.Stock_Level + ' ' + (item.Unit || 'units');
+
+            // Reset form
+            document.getElementById('returnInventoryForm').reset();
+            document.getElementById('return-item-id').value = item.Item_ID; // Restore after reset
+            document.getElementById('return-reason-other-container').style.display = 'none';
+
+            // Load suppliers list
+            loadSuppliersForReturn();
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('returnInventoryModal'));
+            modal.show();
+        }
+
+        function loadSuppliersForReturn() {
+            google.script.run
+                .withSuccessHandler(function(suppliers) {
+                    const select = document.getElementById('return-supplier');
+                    select.innerHTML = '<option value="">Select supplier...</option>';
+
+                    if (suppliers && suppliers.length > 0) {
+                        suppliers.forEach(supplier => {
+                            const option = document.createElement('option');
+                            option.value = supplier.Supplier_ID;
+                            option.textContent = supplier.Supplier_Name + ' (' + supplier.Supplier_ID + ')';
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error loading suppliers:', error);
+                })
+                .getSuppliers();
+        }
+
+        // Show/hide "Other" reason input
+        document.addEventListener('DOMContentLoaded', function() {
+            const reasonSelect = document.getElementById('return-reason');
+            if (reasonSelect) {
+                reasonSelect.addEventListener('change', function() {
+                    const otherContainer = document.getElementById('return-reason-other-container');
+                    if (this.value === 'Other') {
+                        otherContainer.style.display = 'block';
+                    } else {
+                        otherContainer.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        function submitReturnInventory() {
+            const itemId = document.getElementById('return-item-id').value;
+            const supplierId = document.getElementById('return-supplier').value;
+            const quantity = parseFloat(document.getElementById('return-quantity').value);
+            let reason = document.getElementById('return-reason').value;
+            const paymentMethod = document.getElementById('return-payment-method').value;
+            const notes = document.getElementById('return-notes').value;
+
+            // Validation
+            if (!itemId || !supplierId || !quantity || !reason || !paymentMethod) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            if (quantity <= 0) {
+                alert('Quantity must be greater than 0');
+                return;
+            }
+
+            // Check if quantity exceeds current stock
+            const item = allItems.find(i => i.Item_ID === itemId);
+            if (item && quantity > item.Stock_Level) {
+                alert('Return quantity (' + quantity + ') exceeds current stock (' + item.Stock_Level + ')');
+                return;
+            }
+
+            // If reason is "Other", use the custom text
+            if (reason === 'Other') {
+                const otherReason = document.getElementById('return-reason-other').value;
+                if (!otherReason || otherReason.trim() === '') {
+                    alert('Please specify the reason');
+                    return;
+                }
+                reason = otherReason;
+            }
+
+            // Build full reason string with notes
+            let fullReason = reason;
+            if (notes) {
+                fullReason += ' - ' + notes;
+            }
+
+            // Confirm action
+            const supplierName = document.getElementById('return-supplier').selectedOptions[0].text;
+            if (!confirm('Return ' + quantity + ' units to ' + supplierName + '?\n\nThis will:\n- Decrease inventory by ' + quantity + ' units\n- Reduce supplier balance\n- Create return transaction')) {
+                return;
+            }
+
+            // Show loading state
+            const submitBtn = event.target;
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+            // Call backend to process supplier return
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+
+                    if (result.success) {
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('returnInventoryModal'));
+                        modal.hide();
+
+                        // Show success message
+                        alert('Supplier return processed successfully!\n\nReturned: ' + quantity + ' units\nTotal Cost: Ksh ' + (result.totalReturnCost || 0).toLocaleString() + '\n\nSupplier balance and inventory have been updated.');
+
+                        // Refresh data
+                        loadDashboardData();
+                    } else {
+                        alert('Error: ' + (result.message || 'Failed to process return'));
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    alert('Error processing return: ' + error.message);
+                })
+                .processSupplierReturn(
+                    supplierId,
+                    [{Item_ID: itemId, Qty: quantity}],
+                    fullReason,
+                    paymentMethod,
+                    'USER'
+                );
         }
 
     </script>
