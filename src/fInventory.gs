@@ -389,36 +389,6 @@ function addProduct(productData) {
         '',
         JSON.stringify({itemId, batchId, qty: purchaseQty})
       );
-    } else if (isPurchase) {
-      // For purchases, we need to create a "template" batch with the product metadata
-      // so that increaseStock can find the item details
-      // This batch will have 0 quantity, and createPurchase will add the actual stock
-      const templateBatch = [
-        itemId,                                  // 1. Item_ID
-        productData.Item_Name || '',             // 2. Item_Name
-        productData.Category || 'General',       // 3. Category
-        costPrice,                               // 4. Cost_Price
-        sellingPrice,                            // 5. Selling_Price
-        0,                                       // 6. Current_Qty (0 - will be added by createPurchase)
-        parseFloat(productData.Reorder_Level)||10,// 7. Reorder_Level
-        supplierName,                            // 8. Supplier
-        new Date(),                              // 9. Last_Updated
-        productData.User || 'SYSTEM',            // 10. Updated_By
-        batchId,                                 // 11. Batch_ID (V3.0)
-        new Date()                               // 12. Date_Received (V3.0)
-      ];
-
-      sheet.appendRow(templateBatch);
-
-      logAudit(
-        productData.User || 'SYSTEM',
-        'Inventory',
-        'Create',
-        'Created product template: ' + productData.Item_Name + ' (will be stocked via purchase)',
-        '',
-        '',
-        JSON.stringify({itemId, batchId: 'template'})
-      );
     }
 
     // If this is a purchase, create a purchase record to update supplier balances and payments
