@@ -6962,8 +6962,21 @@
     // Logout function
     function logout() {
       if (confirm('Are you sure you want to logout?')) {
+        // Clear auth/session data
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('sessionId');
+        localStorage.removeItem('token');
+        localStorage.removeItem('loginTime');
         sessionStorage.clear();
-        location.reload();
+
+        // Clear cached datasets
+        try { DATA_CACHE = {}; } catch (e) {}
+        try { localStorage.removeItem('inventory_cache_all'); } catch (e) {}
+
+        // Redirect to login page
+        window.location.href = window.location.origin + window.location.pathname;
       }
     }
 
