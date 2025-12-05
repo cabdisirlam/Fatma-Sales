@@ -571,3 +571,25 @@ function emergencySystemReset() {
     };
   }
 }
+
+// =====================================================
+// ACCOUNTING UTILITIES
+// =====================================================
+
+/**
+ * One-click Chart of Accounts update for returns/credit notes.
+ * Adds missing Accounts Receivable and Sales Returns accounts if absent.
+ */
+function upgradeChartOfAccountsForReturns() {
+  try {
+    const result = ensureReturnAccountsInitialized();
+    return {
+      success: result && result.success !== false,
+      added: (result && result.added) || [],
+      message: result && result.message ? result.message : 'Chart of Accounts checked/updated'
+    };
+  } catch (error) {
+    logError('upgradeChartOfAccountsForReturns', error);
+    return { success: false, message: error.message };
+  }
+}

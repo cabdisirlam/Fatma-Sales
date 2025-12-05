@@ -182,6 +182,76 @@ function validateAccount(accountName) {
   }
 }
 
+/**
+ * Ensure required accounts for returns/credit notes exist in Chart_of_Accounts.
+ * Adds if missing: Accounts Receivable (asset) and Sales Returns (contra-revenue).
+ */
+function ensureReturnAccountsInitialized() {
+  try {
+    const sheet = getSheet('Chart_of_Accounts');
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return { success: true, added: [] };
+
+    const headers = data[0];
+    const nameCol = headers.indexOf('Account_Name');
+    const codeCol = headers.indexOf('Account_Code');
+    const typeCol = headers.indexOf('Type');
+    const categoryCol = headers.indexOf('Category');
+    const descCol = headers.indexOf('Description');
+    const balCol = headers.indexOf('Balance');
+
+    if (nameCol === -1) {
+      return { success: false, message: 'Chart_of_Accounts missing Account_Name column' };
+    }
+
+    const existing = new Set();
+    for (let i = 1; i < data.length; i++) {
+      const name = (data[i][nameCol] || '').toString().trim().toLowerCase();
+      if (name) existing.add(name);
+    }
+
+    const requiredAccounts = [
+      {
+        code: '01300',
+        name: 'Accounts Receivable',
+        type: 'Asset',
+        category: 'Current Asset',
+        description: 'Customer balances (credit sales)',
+        balance: 0
+      },
+      {
+        code: '04050',
+        name: 'Sales Returns',
+        type: 'Revenue',
+        category: 'Income',
+        description: 'Contra revenue for returned sales',
+        balance: 0
+      }
+    ];
+
+    const added = [];
+    requiredAccounts.forEach(acc => {
+      if (!existing.has(acc.name.toLowerCase())) {
+        const row = [];
+        row[codeCol] = acc.code;
+        row[nameCol] = acc.name;
+        if (typeCol !== -1) row[typeCol] = acc.type;
+        if (categoryCol !== -1) row[categoryCol] = acc.category;
+        if (descCol !== -1) row[descCol] = acc.description;
+        if (balCol !== -1) row[balCol] = acc.balance;
+        sheet.appendRow(row);
+        existing.add(acc.name.toLowerCase());
+        added.push(acc.name);
+      }
+    });
+
+    return { success: true, added: added };
+  } catch (error) {
+    logError('ensureReturnAccountsInitialized', error);
+    return { success: false, message: error.message };
+  }
+}
+
 // =====================================================
 // TRANSACTION HANDLING
 // =====================================================

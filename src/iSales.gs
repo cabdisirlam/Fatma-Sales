@@ -1493,7 +1493,15 @@ function processSaleReturn(saleId, items, reason, user) {
       throw new Error('Invalid sale');
     }
 
+    // Ensure core accounts needed for returns/credit notes exist
+    if (typeof ensureReturnAccountsInitialized === 'function') {
+      ensureReturnAccountsInitialized();
+    }
+
     let refundAmount = 0;
+    let totalCOGSReversal = 0;
+    let refundTxnId = null;
+    let creditNoteTxnId = null;
 
     // Process each returned item
     for (const returnItem of items) {
@@ -1512,6 +1520,10 @@ function processSaleReturn(saleId, items, reason, user) {
       const itemRefund = returnQty * saleItem.Unit_Price;
       refundAmount += itemRefund;
 
+      // Track cost for COGS reversal (prefer original batch cost)
+      const batchCostPrice = getReturnBatchCostPrice(saleItem.Item_ID, saleItem.Batch_ID);
+      totalCOGSReversal += returnQty * batchCostPrice;
+
       // Return stock to inventory - use ORIGINAL batch if available
       if (saleItem.Batch_ID && saleItem.Batch_ID !== 'UNKNOWN') {
         increaseStockSpecificBatch(returnItem.Item_ID, saleItem.Batch_ID, returnQty, user);
@@ -1523,7 +1535,7 @@ function processSaleReturn(saleId, items, reason, user) {
       }
     }
 
-    // ✅ FIX: Only record refund in Financials if revenue was actually recorded
+    // ? FIX: Only record refund in Financials if revenue was actually recorded
     // Check if this sale had payments recorded (revenue recognition)
     const financials = sheetToObjects('Financials');
     const salePayments = financials.filter(f =>
@@ -1536,41 +1548,122 @@ function processSaleReturn(saleId, items, reason, user) {
 
     // Only create Sale_Refund financial transaction if revenue was recorded
     if (hasRecordedRevenue) {
-      const refundTxnId = generateId('Financials', 'Transaction_ID', 'REF');
       const financialSheet = getSheet('Financials');
+      const paymentMode = (sale.Payment_Mode || '').toString().toLowerCase();
 
-      // âœ… FIX: Canonicalize account name for consistency with financial statements
-      const canonicalAccount = canonicalizeAccountName(sale.Payment_Mode);
+      if (paymentMode === 'credit') {
+        // Credit sale -> credit note (reduce Accounts Receivable, no cash movement)
+        creditNoteTxnId = generateId('Financials', 'Transaction_ID', 'CRN');
+        const creditNoteRow = [
+          creditNoteTxnId,
+          new Date(),
+          'Credit_Note',
+          sale.Customer_ID || '',
+          'Sales Return',
+          'Accounts Receivable',
+          'Credit note for sale ' + saleId + ': ' + reason,
+          parseFloat(refundAmount),
+          0, // Debit
+          parseFloat(refundAmount), // Credit (reduce AR)
+          0, // Balance
+          'Credit',
+          sale.Customer_Name,
+          saleId, // Receipt_No
+          saleId, // Reference
+          'Approved',
+          user,
+          user
+        ];
+        financialSheet.appendRow(creditNoteRow);
+        Logger.log('Credit_Note recorded for return (AR reduced): ' + refundAmount);
+      } else {
+        refundTxnId = generateId('Financials', 'Transaction_ID', 'REF');
+        const canonicalAccount = canonicalizeAccountName(sale.Payment_Mode);
 
-      const refundRow = [
-        refundTxnId,
+        const refundRow = [
+          refundTxnId,
+          new Date(),
+          'Sale_Refund',
+          sale.Customer_ID || '',
+          'Sales',
+          canonicalAccount, // ?. FIX: Use canonical account name
+          'Refund for sale ' + saleId + ': ' + reason,
+          parseFloat(refundAmount),
+          parseFloat(refundAmount), // Debit (money out)
+          0, // Credit
+          0, // Balance
+          canonicalAccount, // ?. FIX: Payment mode also canonicalized
+          sale.Customer_Name,
+          saleId, // Receipt_No
+          saleId, // Reference
+          'Approved',
+          user,
+          user
+        ];
+
+        financialSheet.appendRow(refundRow);
+
+        // Update account balance (decrease)
+        updateAccountBalance(canonicalAccount, -parseFloat(refundAmount), user); // ?. FIX: Use canonical account
+
+        Logger.log('Sale_Refund recorded in Financials: ' + refundAmount + ' (revenue was previously recorded)');
+      }
+    } else {
+      Logger.log('Sale_Refund NOT recorded in Financials (no revenue was recorded for this credit sale)');
+    }
+
+    // Reverse COGS: debit Inventory Asset, credit Cost of Goods Sold
+    if (totalCOGSReversal > 0) {
+      const financialSheet = getSheet('Financials');
+      const inventoryTxnId = generateId('Financials', 'Transaction_ID', 'INV');
+      const cogsRevTxnId = generateId('Financials', 'Transaction_ID', 'COGSREV');
+
+      const inventoryRow = [
+        inventoryTxnId,
         new Date(),
-        'Sale_Refund',
+        'Inventory_Return',
         sale.Customer_ID || '',
-        'Sales',
-        canonicalAccount, // âœ… FIX: Use canonical account name
-        'Refund for sale ' + saleId + ': ' + reason,
-        parseFloat(refundAmount),
-        parseFloat(refundAmount), // Debit (money out)
-        0, // Credit
-        0, // Balance
-        canonicalAccount, // âœ… FIX: Payment mode also canonicalized
+        'Inventory',
+        'Inventory Asset',
+        'Inventory returned for sale ' + saleId,
+        totalCOGSReversal,
+        totalCOGSReversal, // Debit (increase inventory asset)
+        0,
+        0,
+        '',
         sale.Customer_Name,
-        saleId, // Receipt_No
-        saleId, // Reference
+        saleId,
+        saleId,
         'Approved',
         user,
         user
       ];
 
-      financialSheet.appendRow(refundRow);
+      const cogsReverseRow = [
+        cogsRevTxnId,
+        new Date(),
+        'COGS_Reversal',
+        sale.Customer_ID || '',
+        'Cost of Goods Sold',
+        'Cost of Goods Sold',
+        'COGS reversal for return of sale ' + saleId,
+        totalCOGSReversal,
+        0,
+        totalCOGSReversal, // Credit (reduce expense)
+        0,
+        '',
+        sale.Customer_Name,
+        saleId,
+        saleId,
+        'Approved',
+        user,
+        user
+      ];
 
-      // Update account balance (decrease)
-      updateAccountBalance(canonicalAccount, -parseFloat(refundAmount), user); // âœ… FIX: Use canonical account
+      financialSheet.appendRow(inventoryRow);
+      financialSheet.appendRow(cogsReverseRow);
 
-      Logger.log('Sale_Refund recorded in Financials: ' + refundAmount + ' (revenue was previously recorded)');
-    } else {
-      Logger.log('Sale_Refund NOT recorded in Financials (no revenue was recorded for this credit sale)');
+      Logger.log('COGS reversed for return: ' + totalCOGSReversal + ' for sale ' + saleId);
     }
 
     // Update customer balance if customer is not walk-in
@@ -1582,6 +1675,13 @@ function processSaleReturn(saleId, items, reason, user) {
       } catch (custError) {
         Logger.log('Warning: Could not update customer balance for ' + sale.Customer_ID + ': ' + custError.message);
         // Don't fail the whole return if customer balance update fails
+      }
+
+      // Reverse customer stats/loyalty for the returned amount
+      try {
+        updateCustomerPurchaseStats(sale.Customer_ID, -parseFloat(refundAmount), user);
+      } catch (custStatsErr) {
+        Logger.log('Warning: Could not update customer stats for return ' + sale.Customer_ID + ': ' + custStatsErr.message);
       }
     }
 
@@ -1596,19 +1696,53 @@ function processSaleReturn(saleId, items, reason, user) {
       JSON.stringify({saleId, refundAmount, items, customerBalanceUpdated: sale.Customer_ID && sale.Customer_ID !== 'WALK-IN'})
     );
 
-    // ✅ Clear caches for immediate updates
+    // ? Clear caches for immediate updates
     clearSaleRelatedCaches();
 
     return {
       success: true,
       refundAmount: refundAmount,
       refundTxnId: refundTxnId,
+      creditNoteTxnId: creditNoteTxnId,
       message: 'Return processed successfully. Stock restored and customer balance updated.'
     };
 
   } catch (error) {
     logError('processSaleReturn', error);
     throw new Error('Error processing return: ' + error.message);
+  }
+}
+
+/**
+ * Helper: Get cost price for returned item (prefers original batch cost)
+ */
+function getReturnBatchCostPrice(itemId, batchId) {
+  try {
+    const sheet = getSheet('Inventory');
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) {
+      return 0;
+    }
+
+    const headers = data[0];
+    const itemIdIndex = headers.indexOf('Item_ID');
+    const batchIdIndex = headers.indexOf('Batch_ID');
+    const costPriceIndex = headers.indexOf('Cost_Price');
+
+    // First try to match the exact batch
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (row[itemIdIndex] === itemId && row[batchIdIndex] === batchId) {
+        return parseFloat(row[costPriceIndex]) || 0;
+      }
+    }
+
+    // Fallback: use current item cost price
+    const item = getInventoryItemById(itemId);
+    return parseFloat(item.Cost_Price) || 0;
+  } catch (error) {
+    logError('getReturnBatchCostPrice', error);
+    return 0;
   }
 }
 
