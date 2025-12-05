@@ -123,6 +123,35 @@ function getOpeningBalanceMap() {
   return {};
 }
 
+/**
+ * Get account type from Chart of Accounts
+ * Returns: 'Asset', 'Liability', 'Equity', 'Revenue', 'Expense', or null
+ */
+function getAccountType(accountName) {
+  try {
+    const sheet = getSheet('Chart_of_Accounts');
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return null;
+
+    const headers = data[0];
+    const nameCol = headers.indexOf('Account_Name');
+    const typeCol = headers.indexOf('Account_Type');
+
+    if (nameCol === -1 || typeCol === -1) return null;
+
+    const searchName = (accountName || '').toString().trim().toLowerCase();
+    for (let i = 1; i < data.length; i++) {
+      const acctName = (data[i][nameCol] || '').toString().trim().toLowerCase();
+      if (acctName === searchName) {
+        return data[i][typeCol] || null;
+      }
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // =====================================================
 // CHART OF ACCOUNTS VALIDATION
 // =====================================================
@@ -460,12 +489,30 @@ function getFinancialSummary(startDate, endDate) {
 
     const accountBreakdown = Array.from(accountSet).map(acc => {
       const opening = openingBalances[acc] || 0;
-      const inflow = accountDebits[acc] || 0;  // Assets: DR increases
-      const outflow = accountCredits[acc] || 0; // Assets: CR decreases
-      const balance = opening + inflow - outflow;
+      const debits = accountDebits[acc] || 0;
+      const credits = accountCredits[acc] || 0;
+
+      // Get account type to determine balance calculation logic
+      const accountType = getAccountType(acc);
+      let balance, inflow, outflow;
+
+      // ✅ FIX: Apply correct accounting logic based on account type
+      if (accountType === 'Liability' || accountType === 'Equity' || accountType === 'Revenue') {
+        // Liabilities, Equity, Revenue: Credit increases (normal credit balance)
+        inflow = credits;   // CR increases
+        outflow = debits;   // DR decreases
+        balance = opening + credits - debits;
+      } else {
+        // Assets, Expenses: Debit increases (normal debit balance)
+        inflow = debits;    // DR increases
+        outflow = credits;  // CR decreases
+        balance = opening + debits - credits;
+      }
+
       accountBalances[acc] = balance;
       return {
         name: acc,
+        accountType: accountType,
         openingBalance: opening,
         inflow: inflow,
         outflow: outflow,
