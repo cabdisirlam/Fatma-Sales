@@ -493,7 +493,14 @@ function getFinancialSummary(startDate, endDate) {
       const credits = accountCredits[acc] || 0;
 
       // Get account type to determine balance calculation logic
-      const accountType = getAccountType(acc);
+      let accountType = getAccountType(acc);
+
+      // ✅ SAFEGUARD: Ensure default cash accounts are always treated as Assets
+      const defaultAssets = ['Cash', 'M-Pesa', 'Equity Bank'];
+      if (defaultAssets.indexOf(acc) !== -1 && !accountType) {
+        accountType = 'Asset';
+      }
+
       let balance, inflow, outflow;
 
       // ✅ FIX: Apply correct accounting logic based on account type
