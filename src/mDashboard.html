@@ -5176,9 +5176,14 @@
 
       const depositAccounts = (ui.depositAccounts && ui.depositAccounts.length ? ui.depositAccounts : ui.accounts || []);
       const accountOptions = (depositAccounts || []).map(acc => `<option value="${acc}">${acc}</option>`).join('');
+      const allowedStatementAccounts = ['m-pesa', 'mpesa', 'cash', 'equity bank'];
       const statementAccountOptions = (ui.accounts || [])
-        .filter(acc => !acc || !acc.toString().toLowerCase().includes('inventory'))
-        .map(acc => `<option value="${acc}">${acc}</option>`).join('');
+        .filter(acc => {
+          const name = (acc || '').toString().toLowerCase();
+          return allowedStatementAccounts.includes(name);
+        })
+        .map(acc => `<option value="${acc}">${acc}</option>`)
+        .join('');
       const customerOptions = (ui.customers || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
       const categoryOptions = (ui.categories || []).map(c => `<option value="${c}">${c}</option>`).join('');
       const supplierOptions = (ui.suppliers || [])
@@ -5199,15 +5204,10 @@
           outflow: 0,
           balance: 0
         };
-        // Recompute to align with statement: DR = inflow (receipts), CR = outflow (payments)
-        const rawIn = Math.abs(parseFloat(acc.inflow) || 0);
-        const rawOut = Math.abs(parseFloat(acc.outflow) || 0);
-        // Heuristic: if the account is Cash, use inflow as DR and outflow as CR directly
-        const isCash = (acc.name || '').toLowerCase() === 'cash';
-        const dr = isCash ? rawIn : (rawOut || rawIn);   // Receipts
-        const cr = isCash ? rawOut : (rawIn && rawOut ? rawIn : rawIn); // Payments
+        const dr = Math.abs(parseFloat(acc.inflow) || 0);   // Receipts (DR)
+        const cr = Math.abs(parseFloat(acc.outflow) || 0);  // Payments (CR)
         const opening = parseFloat(acc.openingBalance) || 0;
-        const balance = opening + dr - cr;
+        const balance = typeof acc.balance === 'number' ? acc.balance : (opening + dr - cr);
         return {
           name: acc.name,
           openingBalance: opening,
