@@ -1796,6 +1796,15 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
     // ? Clear caches for immediate updates
     clearSaleRelatedCaches();
 
+    // V3.2: Mark original sale as returned
+    try {
+      setSaleFulfillmentStatus(saleId, 'Returned', user);
+      Logger.log('Marked original sale ' + saleId + ' as Returned.');
+    } catch (e) {
+      logError('processSaleReturn.setOriginalStatus', e);
+      // Do not throw error, as the core return logic succeeded
+    }
+
     return {
       success: true,
       refundAmount: refundAmount,
