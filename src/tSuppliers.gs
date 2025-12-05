@@ -423,17 +423,42 @@ function getSupplierPurchaseHistory(supplierId) {
  */
 function getSupplierPaymentHistory(supplierId) {
   try {
+    const toNumber = (val) => {
+      if (val === null || val === undefined) return 0;
+      const cleaned = val.toString().replace(/[^0-9.\-]/g, '');
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    };
+
     const financials = sheetToObjects('Financials');
 
-    // Filter for supplier payments
+    // Include normal payments and supplier returns/credit notes
     const payments = financials.filter(txn => {
-      const isSupplierType = (txn.Type === 'Supplier_Payment' || txn.Type === 'Purchase_Payment');
+      const type = (txn.Type || '').toString();
+      const isSupplierType = (
+        type === 'Supplier_Payment' ||
+        type === 'Purchase_Payment' ||
+        type === 'Supplier_Credit_Note' ||
+        type === 'Supplier_Refund' ||
+        type === 'Inventory_Return_To_Supplier'
+      );
       if (!isSupplierType) return false;
 
       const desc = (txn.Description || '').toString();
       const payee = (txn.Payee || '').toString();
       const reference = (txn.Reference || '').toString();
       return desc.indexOf(supplierId) !== -1 || payee.indexOf(supplierId) !== -1 || reference.indexOf(supplierId) !== -1;
+    }).map(txn => {
+      // Normalize amount so credit notes/refunds reduce balance (treat as payment)
+      const debit = toNumber(txn.Debit);
+      const credit = toNumber(txn.Credit);
+      const amount = debit || credit || toNumber(txn.Amount);
+      return {
+        ...txn,
+        Amount: amount,
+        Debit: debit,
+        Credit: credit
+      };
     });
 
     // Sort by date descending
