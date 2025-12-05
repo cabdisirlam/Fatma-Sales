@@ -3736,7 +3736,8 @@
       localStorage.removeItem('loginTime');
 
       // Redirect to login page
-      window.location.href = window.location.origin + window.location.pathname;
+      const scriptUrl = window.location.href.split('?')[0];
+      window.location.href = scriptUrl.replace('mDashboard', 'nIndex');
     }
 
     // Offline banner handlers
@@ -6979,7 +6980,8 @@
         try { localStorage.removeItem('inventory_cache_all'); } catch (e) {}
 
         // Redirect to login page
-        window.location.href = window.location.origin + window.location.pathname;
+        const scriptUrl = window.location.href.split('?')[0];
+        window.location.href = scriptUrl.replace('mDashboard', 'nIndex');
       }
     }
 
