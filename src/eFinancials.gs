@@ -226,6 +226,14 @@ function ensureReturnAccountsInitialized() {
         category: 'Income',
         description: 'Contra revenue for returned sales',
         balance: 0
+      },
+      {
+        code: '02100',
+        name: 'Accounts Payable',
+        type: 'Liability',
+        category: 'Current Liability',
+        description: 'Supplier balances (credit purchases)',
+        balance: 0
       }
     ];
 

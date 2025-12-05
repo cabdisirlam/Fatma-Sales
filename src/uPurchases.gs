@@ -158,6 +158,133 @@ function createPurchase(purchaseData) {
 }
 
 /**
+ * Process a supplier return (send inventory back to supplier).
+ * Decreases stock (FIFO), credits Inventory Asset, and debits either Accounts Payable (credit note) or cash/bank.
+ */
+function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
+  try {
+    if (!supplierId) throw new Error('Supplier_ID is required');
+    if (!items || !Array.isArray(items) || items.length === 0) throw new Error('Items are required');
+    if (!reason) throw new Error('Reason is required');
+
+    // Ensure accounts exist
+    if (typeof ensureReturnAccountsInitialized === 'function') {
+      ensureReturnAccountsInitialized();
+    }
+
+    const supplier = getSupplierById(supplierId);
+    let totalReturnCost = 0;
+
+    // Decrease stock using FIFO and sum the cost
+    items.forEach(item => {
+      const qty = parseFloat(item.Qty) || 0;
+      if (!item.Item_ID || qty <= 0) {
+        throw new Error('Invalid item/quantity for return');
+      }
+
+      const stockResult = decreaseStock(item.Item_ID, qty, user || 'SYSTEM');
+      if (!stockResult || !stockResult.success) {
+        throw new Error('Failed to decrease stock for item ' + item.Item_ID);
+      }
+      totalReturnCost += stockResult.totalCOGS || 0;
+    });
+
+    // Financial entries
+    const financialSheet = getSheet('Financials');
+    const date = new Date();
+    const canonicalPayment = canonicalizeAccountName(paymentMethod);
+    const isCreditNote = (paymentMethod || '').toString().toLowerCase() === 'credit';
+
+    // Debit side: reduce AP (credit note) OR cash/bank in (refund)
+    const debitAccount = isCreditNote ? 'Accounts Payable' : canonicalPayment || 'Cash';
+
+    // Debit entry (AP or cash/bank)
+    const debitTxnId = generateId('Financials', 'Transaction_ID', isCreditNote ? 'SUPCRN' : 'SUPRF');
+    const debitRow = [
+      debitTxnId,
+      date,
+      isCreditNote ? 'Supplier_Credit_Note' : 'Supplier_Refund',
+      '', // Customer_ID
+      'Purchases Return',
+      debitAccount,
+      (isCreditNote ? 'Credit note ' : 'Refund ') + 'for supplier return: ' + reason,
+      totalReturnCost,
+      totalReturnCost, // Debit
+      0, // Credit
+      0,
+      isCreditNote ? 'Credit' : canonicalPayment,
+      supplier.Supplier_Name,
+      '', // Receipt_No
+      supplierId,
+      'Approved',
+      user,
+      user
+    ];
+    financialSheet.appendRow(debitRow);
+
+    // Credit Inventory Asset
+    const creditTxnId = generateId('Financials', 'Transaction_ID', 'INVRET');
+    const creditRow = [
+      creditTxnId,
+      date,
+      'Inventory_Return_To_Supplier',
+      '', // Customer_ID
+      'Inventory',
+      'Inventory Asset',
+      'Inventory returned to supplier: ' + reason,
+      totalReturnCost,
+      0,
+      totalReturnCost, // Credit (reduce asset)
+      0,
+      '',
+      supplier.Supplier_Name,
+      '',
+      supplierId,
+      'Approved',
+      user,
+      user
+    ];
+    financialSheet.appendRow(creditRow);
+
+    // Update supplier balances (reduce purchases and balance)
+    const currentBalance = parseFloat(supplier.Current_Balance) || 0;
+    const totalPurchased = parseFloat(supplier.Total_Purchased) || 0;
+    const newBalance = Math.max(0, currentBalance - totalReturnCost);
+    const newTotalPurchased = Math.max(0, totalPurchased - totalReturnCost);
+    updateRowById('Suppliers', 'Supplier_ID', supplierId, {
+      Current_Balance: newBalance,
+      Total_Purchased: newTotalPurchased
+    });
+
+    // Audit log
+    logAudit(
+      user || 'SYSTEM',
+      'Purchases',
+      'Supplier Return',
+      'Returned goods to supplier ' + supplier.Supplier_Name + ' amount: ' + formatCurrency(totalReturnCost) + ' Reason: ' + reason,
+      '',
+      '',
+      JSON.stringify({ supplierId, items, totalReturnCost, paymentMethod })
+    );
+
+    // Clear caches that depend on inventory/suppliers
+    try { clearInventoryCache(); } catch (e) {}
+
+    return {
+      success: true,
+      supplierId: supplierId,
+      totalReturnCost: totalReturnCost,
+      debitTxnId: debitTxnId,
+      creditTxnId: creditTxnId,
+      message: 'Supplier return processed successfully'
+    };
+  } catch (error) {
+    logError('processSupplierReturn', error);
+    throw new Error('Error processing supplier return: ' + error.message);
+  }
+}
+
+/**
  * Record purchase payment
  * V3.0: Validates payment method against Chart of Accounts
  */
