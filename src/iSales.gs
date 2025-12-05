@@ -1484,8 +1484,13 @@ function getQuotations(filters) {
 
 /**
  * Process sale return/refund
+ * @param {string} saleId - Sale transaction ID
+ * @param {Array} items - Items being returned
+ * @param {string} reason - Reason for return
+ * @param {string} user - User processing the return
+ * @param {boolean} refundCash - true = give cash back (refund), false = reduce balance only (return)
  */
-function processSaleReturn(saleId, items, reason, user) {
+function processSaleReturn(saleId, items, reason, user, refundCash) {
   try {
     const sale = getSaleById(saleId);
 
@@ -1502,6 +1507,14 @@ function processSaleReturn(saleId, items, reason, user) {
     let totalCOGSReversal = 0;
     let refundTxnId = null;
     let creditNoteTxnId = null;
+
+    // Auto-determine refund type if not specified:
+    // - Credit sales default to no cash (credit note)
+    // - Cash sales default to cash refund
+    if (refundCash === undefined || refundCash === null) {
+      const paymentMode = (sale.Payment_Mode || '').toString().toLowerCase();
+      refundCash = (paymentMode !== 'credit');
+    }
 
     // Process each returned item
     for (const returnItem of items) {
@@ -1549,10 +1562,9 @@ function processSaleReturn(saleId, items, reason, user) {
     // Only create Sale_Refund financial transaction if revenue was recorded
     if (hasRecordedRevenue) {
       const financialSheet = getSheet('Financials');
-      const paymentMode = (sale.Payment_Mode || '').toString().toLowerCase();
 
-      if (paymentMode === 'credit') {
-        // Credit sale -> credit note (reduce Accounts Receivable, no cash movement)
+      if (!refundCash) {
+        // Return without cash refund -> credit note (reduce Accounts Receivable or customer balance, no cash movement)
         creditNoteTxnId = generateId('Financials', 'Transaction_ID', 'CRN');
         const creditNoteRow = [
           creditNoteTxnId,
@@ -1575,8 +1587,9 @@ function processSaleReturn(saleId, items, reason, user) {
           user
         ];
         financialSheet.appendRow(creditNoteRow);
-        Logger.log('Credit_Note recorded for return (AR reduced): ' + refundAmount);
+        Logger.log('Credit_Note recorded for return (AR/Balance reduced, no cash): ' + refundAmount);
       } else {
+        // Refund with cash back -> reduce cash account
         refundTxnId = generateId('Financials', 'Transaction_ID', 'REF');
         const canonicalAccount = canonicalizeAccountName(sale.Payment_Mode);
 
