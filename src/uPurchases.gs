@@ -187,6 +187,17 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
         throw new Error('Failed to decrease stock for item ' + item.Item_ID);
       }
       totalReturnCost += stockResult.totalCOGS || 0;
+
+      // Append audit trail entry for each item return
+      logAudit(
+        user || 'SYSTEM',
+        'Inventory',
+        'Supplier Return',
+        'Returned ' + qty + ' of item ' + item.Item_ID + ' to supplier ' + supplierId,
+        '',
+        '',
+        JSON.stringify({ itemId: item.Item_ID, qty: qty, reason: reason })
+      );
     });
 
     // Financial entries
