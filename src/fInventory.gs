@@ -796,10 +796,26 @@ function increaseStockSpecificBatch(itemId, batchId, qty, user) {
  * V3.0: Creates a NEW BATCH ROW instead of updating existing row
  * FIFO Architecture: Each purchase creates a separate batch for accurate cost tracking
  */
-function increaseStock(itemId, qty, user, unitCost) {
+function increaseStock(itemId, qty, user, unitCost, baseItem) {
   try {
-    // Get item details from the most recent batch (for metadata like Item_Name, Category, etc.)
-    const item = getInventoryItemById(itemId);
+    let item;
+    try {
+      item = getInventoryItemById(itemId);
+    } catch (e) {
+      // If item doesn't exist, fall back to provided baseItem (used for first-time purchases)
+      if (!baseItem) throw e;
+      item = {
+        Item_ID: itemId,
+        Item_Name: baseItem.Item_Name || 'New Item',
+        Category: baseItem.Category || 'General',
+        Cost_Price: baseItem.Cost_Price || baseItem.unitCost || 0,
+        Selling_Price: baseItem.Selling_Price || baseItem.Price || baseItem.Cost_Price || 0,
+        Reorder_Level: baseItem.Reorder_Level || 10,
+        Supplier: baseItem.Supplier_ID || baseItem.Supplier || '',
+        Last_Updated: new Date(),
+        Updated_By: user || 'SYSTEM'
+      };
+    }
 
     // Generate unique Batch_ID
     const timestamp = new Date().getTime();

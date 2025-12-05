@@ -11,48 +11,20 @@ function ensurePurchaseItem(item, user) {
   try {
     return getInventoryItemById(item.Item_ID);
   } catch (e) {
-    const sheet = getSheet('Inventory');
-    const now = new Date();
+    // Do NOT auto-append placeholder row; just return a stub so increaseStock can create the first batch
     const itemId = (item.Item_ID && item.Item_ID.toString().trim() !== '') ? item.Item_ID : generateId('Inventory', 'Item_ID', 'ITEM');
-    const batchId = 'BATCH-' + itemId + '-' + now.getTime();
     const cost = parseFloat(item.Cost_Price) || 0;
     const selling = (item.Selling_Price !== undefined && item.Selling_Price !== null && item.Selling_Price !== '')
       ? (parseFloat(item.Selling_Price) || cost)
       : cost;
-
-    const newRow = [
-      itemId,
-      item.Item_Name || 'Manual Item',
-      item.Category || 'Manual',
-      cost,
-      selling,
-      0,                // Current_Qty (will be increased by purchase)
-      10,               // Reorder_Level default
-      item.Supplier || '',
-      now,
-      user || 'SYSTEM',
-      batchId,
-      now
-    ];
-
-    sheet.appendRow(newRow);
-    try { clearInventoryCache(); } catch (cacheErr) { Logger.log(cacheErr); }
-
-    logAudit(
-      user || 'SYSTEM',
-      'Inventory',
-      'Create',
-      'Auto-created item for purchase: ' + (item.Item_Name || itemId),
-      '',
-      '',
-      JSON.stringify({ itemId, source: 'purchase', manual: true })
-    );
-
     return {
       Item_ID: itemId,
       Item_Name: item.Item_Name || 'Manual Item',
+      Category: item.Category || 'Manual',
       Cost_Price: cost,
       Selling_Price: selling,
+      Reorder_Level: item.Reorder_Level || 10,
+      Supplier: item.Supplier || item.Supplier_ID || '',
       Current_Qty: 0,
       Stock_Qty: 0
     };
@@ -119,7 +91,7 @@ function createPurchase(purchaseData) {
 
     // Increase stock for each item (V3.0: Pass Cost_Price for batch tracking)
     for (const item of items) {
-      increaseStock(item.Item_ID, item.Qty, purchaseData.User, item.Cost_Price);
+      increaseStock(item.Item_ID, item.Qty, purchaseData.User, item.Cost_Price, item);
     }
 
     // Update supplier totals
