@@ -202,12 +202,15 @@
           <option value="ok">In Stock</option>
         </select>
       </div>
-      <div class="col-md-2 d-flex gap-2">
+      <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-success flex-fill" onclick="showAddProductModal()">
+          <i class="bi bi-plus-circle"></i> Add Product
+        </button>
+        <button class="btn btn-warning flex-fill" onclick="openReturnToSupplier()">
+          <i class="bi bi-arrow-90deg-left"></i> Return Product
+        </button>
         <button class="btn btn-primary flex-fill" onclick="loadInventory()">
           <i class="bi bi-arrow-clockwise"></i> Refresh
-        </button>
-        <button class="btn btn-success flex-fill" onclick="showAddProductModal()">
-          <i class="bi bi-plus-circle"></i> Add
         </button>
       </div>
     </div>
@@ -367,13 +370,19 @@
           <h5 class="modal-title"><i class="bi bi-arrow-90deg-left"></i> Return to Supplier</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body">
-          <input type="hidden" id="returnItemId">
-          <div class="mb-2">
-            <div class="small text-muted">Item</div>
-            <div id="returnItemName" style="font-weight:600;"></div>
-            <div class="text-muted small">Max available: <span id="returnMaxQty">0</span></div>
-          </div>
+      <div class="modal-body">
+        <input type="hidden" id="returnItemId">
+        <div class="mb-3" id="returnItemSelectContainer" style="display: none;">
+          <label class="form-label">Select Product *</label>
+          <select class="form-select" id="returnItemSelect" onchange="handleReturnItemSelect()">
+            <option value="">Select Product</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <div class="small text-muted">Item</div>
+          <div id="returnItemName" style="font-weight:600;"></div>
+          <div class="text-muted small">Max available: <span id="returnMaxQty">0</span></div>
+        </div>
           <div class="mb-3">
             <label class="form-label">Supplier *</label>
             <select class="form-select" id="returnSupplier" required>
@@ -714,12 +723,68 @@
     }
 
     // ===== RETURN TO SUPPLIER =====
-    function openReturnToSupplier(itemId) {
+    function buildReturnSelectOptions() {
+      const selectContainer = document.getElementById('returnItemSelectContainer');
+      const select = document.getElementById('returnItemSelect');
+      if (!selectContainer || !select) return;
+
+      select.innerHTML = '<option value=\"\">Select Product</option>';
+      inventoryData.forEach(function(item) {
+        const label = (item.Item_Name || item.Item_ID || 'Product') + ' - Stock: ' + getStockQty(item);
+        const opt = document.createElement('option');
+        opt.value = item.Item_ID;
+        opt.textContent = label;
+        select.appendChild(opt);
+      });
+      selectContainer.style.display = '';
+    }
+
+    function handleReturnItemSelect() {
+      const select = document.getElementById('returnItemSelect');
+      if (!select) return;
+      const id = select.value;
+      if (id) {
+        openReturnToSupplier(id, true);
+      }
+    }
+
+    function openReturnToSupplier(itemId, fromSelect) {
+      if (!inventoryData || !inventoryData.length) {
+        alert('Load inventory before processing returns.');
+        return;
+      }
+
+      const selectContainer = document.getElementById('returnItemSelectContainer');
+      const select = document.getElementById('returnItemSelect');
+
+      if (!itemId) {
+        document.getElementById('returnItemId').value = '';
+        document.getElementById('returnItemName').textContent = 'Select a product to return';
+        document.getElementById('returnMaxQty').textContent = '0';
+        document.getElementById('returnQty').value = '';
+        document.getElementById('returnReason').value = '';
+        document.getElementById('returnPaymentMethod').value = 'Credit';
+        if (selectContainer && select) {
+          buildReturnSelectOptions();
+          select.value = '';
+          selectContainer.style.display = '';
+        }
+        const modal = new bootstrap.Modal(document.getElementById('returnToSupplierModal'));
+        modal.show();
+        return;
+      }
+
       const item = inventoryData.find(function(entry) { return entry.Item_ID === itemId; });
       if (!item) {
         alert('Item not found');
         return;
       }
+
+      // If the user picked from the dropdown, keep it visible; otherwise hide the chooser
+      if (selectContainer && !fromSelect) {
+        selectContainer.style.display = 'none';
+      }
+
       document.getElementById('returnItemId').value = item.Item_ID;
       document.getElementById('returnItemName').textContent = item.Item_Name || '';
       document.getElementById('returnMaxQty').textContent = getStockQty(item);
@@ -733,7 +798,8 @@
         supplierSelect.value = item.Supplier;
       }
 
-      const modal = new bootstrap.Modal(document.getElementById('returnToSupplierModal'));
+      const modalEl = document.getElementById('returnToSupplierModal');
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
       modal.show();
     }
 
