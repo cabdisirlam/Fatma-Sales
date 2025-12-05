@@ -4497,11 +4497,17 @@
       if (!container) return;
 
       const getStockQty = (item) => (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
+      const productOptions = data.map(item => `<option value="${item.Item_ID}">${item.Item_Name || item.Item_ID || 'Product'} - Stock: ${getStockQty(item)}</option>`).join('');
+      const supplierOptions = Array.from(new Set(data.map(item => item.Supplier).filter(Boolean)))
+        .map(s => `<option value="${s}">${s}</option>`).join('');
 
       let html = `
         <div class="d-flex flex-wrap gap-2 mb-3">
           <button class="btn btn-primary" type="button" onclick="openInventoryAddModal()">
             <i class="bi bi-plus-circle"></i> Add Product
+          </button>
+          <button class="btn btn-warning" type="button" onclick="openReturnProductModal()">
+            <i class="bi bi-arrow-90deg-left"></i> Return Product
           </button>
           <button class="btn btn-outline-secondary" onclick="loadInventorySection(true)">
             <i class="bi bi-arrow-clockwise"></i> Refresh
@@ -4576,6 +4582,67 @@
                   </div>
                   <div id="quickAddProductAlert" class="alert alert-success mt-3 d-none"></div>
                 </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal fade" id="returnProductModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="bi bi-arrow-90deg-left"></i> Return Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="alert alert-warning mb-3">
+                  Returning will decrease inventory and create a supplier credit/payment entry.
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Product</label>
+                  <select class="form-select" id="returnProductSelect" onchange="updateReturnProductDetails()">
+                    <option value="">Select Product</option>
+                    ${productOptions}
+                  </select>
+                </div>
+                <div class="mb-2">
+                  <div class="small text-muted">Selected Item</div>
+                  <div id="returnProductName" style="font-weight:600;">-</div>
+                  <div class="text-muted small">Max available: <span id="returnProductStock">0</span></div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Supplier</label>
+                  <select class="form-select" id="returnProductSupplier">
+                    <option value="">Select Supplier</option>
+                    ${supplierOptions}
+                  </select>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" class="form-control" id="returnProductQty" min="0" step="0.01" placeholder="Qty to return">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-select" id="returnProductPayment">
+                      <option value="Credit">Credit (Supplier Credit Note)</option>
+                      <option value="Cash">Cash</option>
+                      <option value="M-Pesa">M-Pesa</option>
+                      <option value="Equity Bank">Equity Bank</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Reason</label>
+                  <textarea class="form-control" id="returnProductReason" rows="2" placeholder="e.g., Damaged goods, wrong items"></textarea>
+                </div>
+                <div id="returnProductAlert" class="alert mt-2" style="display:none;"></div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="returnProductSubmit" onclick="submitReturnProduct()">
+                  <i class="bi bi-arrow-90deg-left"></i> Return Product
+                </button>
               </div>
             </div>
           </div>
@@ -6250,6 +6317,106 @@
       bringModalToFront(modalEl);
       modal.show();
       initInventoryDraft();
+    }
+
+    function openReturnProductModal() {
+      const modalEl = document.getElementById('returnProductModal');
+      if (!modalEl) return;
+
+      const select = document.getElementById('returnProductSelect');
+      if (select) select.value = '';
+      document.getElementById('returnProductName').textContent = '-';
+      document.getElementById('returnProductStock').textContent = '0';
+      document.getElementById('returnProductSupplier').value = '';
+      document.getElementById('returnProductQty').value = '';
+      document.getElementById('returnProductReason').value = '';
+      document.getElementById('returnProductPayment').value = 'Credit';
+      const alertBox = document.getElementById('returnProductAlert');
+      if (alertBox) alertBox.style.display = 'none';
+
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
+      bringModalToFront(modalEl);
+      modal.show();
+    }
+
+    function updateReturnProductDetails() {
+      const select = document.getElementById('returnProductSelect');
+      if (!select) return;
+      const itemId = select.value;
+      const inventory = DATA_CACHE && DATA_CACHE['inventory'] ? DATA_CACHE['inventory'] : [];
+      const item = inventory.find(i => i.Item_ID === itemId);
+      if (!item) {
+        document.getElementById('returnProductName').textContent = '-';
+        document.getElementById('returnProductStock').textContent = '0';
+        return;
+      }
+      const stock = (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
+      document.getElementById('returnProductName').textContent = item.Item_Name || item.Item_ID || '-';
+      document.getElementById('returnProductStock').textContent = stock;
+      if (item.Supplier && document.getElementById('returnProductSupplier')) {
+        document.getElementById('returnProductSupplier').value = item.Supplier;
+      }
+    }
+
+    function submitReturnProduct() {
+      const productId = document.getElementById('returnProductSelect').value;
+      const supplierId = document.getElementById('returnProductSupplier').value;
+      const qty = parseFloat(document.getElementById('returnProductQty').value) || 0;
+      const reason = (document.getElementById('returnProductReason').value || '').trim();
+      const paymentMethod = document.getElementById('returnProductPayment').value;
+      const alertBox = document.getElementById('returnProductAlert');
+
+      if (alertBox) {
+        alertBox.className = 'alert mt-2';
+        alertBox.style.display = 'none';
+        alertBox.textContent = '';
+      }
+
+      if (!productId) return showReturnError('Select a product to return.');
+      if (!supplierId) return showReturnError('Select a supplier.');
+      if (qty <= 0) return showReturnError('Quantity must be greater than zero.');
+      if (!reason) return showReturnError('Reason is required.');
+
+      const btn = document.getElementById('returnProductSubmit');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+
+      function showReturnError(msg) {
+        if (alertBox) {
+          alertBox.className = 'alert alert-danger mt-2';
+          alertBox.textContent = msg;
+          alertBox.style.display = 'block';
+        } else {
+          alert(msg);
+        }
+      }
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-arrow-90deg-left"></i> Return Product';
+          if (res && res.success) {
+            if (alertBox) {
+              alertBox.className = 'alert alert-success mt-2';
+              alertBox.textContent = res.message || 'Return processed.';
+              alertBox.style.display = 'block';
+            } else {
+              alert(res.message || 'Return processed.');
+            }
+            loadInventorySection(true);
+            const modalEl = document.getElementById('returnProductModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+          } else {
+            showReturnError(res && res.message ? res.message : 'Failed to process return.');
+          }
+        })
+        .withFailureHandler(function(error) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-arrow-90deg-left"></i> Return Product';
+          showReturnError(error && error.message ? error.message : 'Failed to process return.');
+        })
+        .processSupplierReturn(supplierId, [{ Item_ID: productId, Qty: qty }], reason, paymentMethod, localStorage.getItem('userName') || 'SYSTEM');
     }
 
     function resetEditSubmitButton() {
