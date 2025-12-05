@@ -234,9 +234,10 @@
                 <th>Item ID</th>
                 <th>Item Name</th>
                 <th>Category</th>
-                <th>Stock Qty</th>
+                <th>Stock Unit</th>
                 <th>Cost Price</th>
-                <th>Reorder Level</th>
+                <th>Selling Price</th>
+                <th>Supplier</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -506,18 +507,20 @@
           <td>${item.Item_ID || ''}</td>
           <td><strong>${item.Item_Name || ''}</strong></td>
           <td>${item.Category || ''}</td>
+          <td>${item.Category || ''}</td>
           <td class="${stockStatus}">${stockQty}</td>
           <td>$${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
-          <td>${item.Reorder_Level || 10}</td>
+          <td>$${parseFloat(item.Selling_Price || 0).toFixed(2)}</td>
+          <td>${item.Supplier || ''}</td>
           <td>
             ${statusBadge}
-            <button class="btn btn-link p-0 ms-2" style="font-size:12px;" onclick="openReturnToSupplier('${item.Item_ID}')">
-              <i class="bi bi-arrow-90deg-left text-danger"></i> Return
-            </button>
           </td>
           <td>
             <button class="btn btn-sm btn-primary" onclick="openEdit('${item.Item_ID}')">
               <i class="bi bi-pencil"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-outline-danger ms-1" title="Return to Supplier" onclick="openReturnToSupplier('${item.Item_ID}')">
+              <i class="bi bi-arrow-90deg-left"></i>
             </button>
           </td>
         `;
