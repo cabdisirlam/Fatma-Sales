@@ -6981,9 +6981,9 @@
         try { localStorage.removeItem('inventory_cache_all'); } catch (e) {}
 
         // Force full page refresh and redirect to login page
-        const scriptUrl = window.location.href.split('?')[0];
-        const loginUrl = scriptUrl.replace('mDashboard', 'nIndex');
-        window.location.replace(loginUrl);  // Replace (no back button) and force refresh
+        const baseUrl = window.location.origin + window.location.pathname; // defaults to login (nIndex) when no view param
+        const loginUrl = baseUrl + '?view=nIndex';
+        window.location.replace(loginUrl);  // Replace (no back button) and force refresh to login
       }
     }
 
