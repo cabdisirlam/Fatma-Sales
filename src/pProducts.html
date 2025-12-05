@@ -233,7 +233,6 @@
               <tr>
                 <th>Item ID</th>
                 <th>Item Name</th>
-                <th>Category</th>
                 <th>Stock Unit</th>
                 <th>Cost Price</th>
                 <th>Selling Price</th>
@@ -506,7 +505,6 @@
         row.innerHTML = `
           <td>${item.Item_ID || ''}</td>
           <td><strong>${item.Item_Name || ''}</strong></td>
-          <td>${item.Category || ''}</td>
           <td>${item.Category || ''}</td>
           <td class="${stockStatus}">${stockQty}</td>
           <td>$${parseFloat(item.Cost_Price || 0).toFixed(2)}</td>
