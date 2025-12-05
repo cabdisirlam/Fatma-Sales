@@ -1509,6 +1509,13 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
     let refundTxnId = null;
     let creditNoteTxnId = null;
 
+    // V3.1: Create negative sale entries for returns
+    const salesSheet = getSheet('Sales');
+    const returnId = generateId('Sales', 'Transaction_ID', 'SRET');
+    const dateTime = new Date();
+    const returnSaleRows = [];
+
+
     // Auto-determine refund type if not specified:
     // - Credit sales default to no cash (credit note)
     // - Cash sales default to cash refund
@@ -1547,7 +1554,47 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
         increaseStock(returnItem.Item_ID, returnQty, user);
         Logger.log('Returned ' + returnQty + ' units of ' + saleItem.Item_Name + ' (new batch created)');
       }
+
+      // V3.1: Prepare the negative sale row
+      const saleReturnRow = [
+        returnId,
+        dateTime,
+        'Sale_Return',
+        sale.Customer_ID,
+        sale.Customer_Name,
+        saleItem.Item_ID,
+        saleItem.Item_Name,
+        saleItem.Batch_ID || 'UNKNOWN',
+        -returnQty, // Negative Quantity
+        saleItem.Unit_Price,
+        -itemRefund, // Negative Line Total
+        -refundAmount, // Negative Subtotal (will be overwritten by last item)
+        0, // Delivery Charge
+        0, // Discount
+        -refundAmount, // Negative Grand Total (will be overwritten by last item)
+        refundCash ? 'Refund' : 'Credit',
+        user,
+        sale.Location,
+        sale.KRA_PIN,
+        'Returned', // Status
+        '',
+        saleId // Converted_Sale_ID becomes Original_Sale_ID
+      ];
+      returnSaleRows.push(saleReturnRow);
     }
+    
+    // V3.1: Finalize totals for the negative sale entry and write to sheet
+    if (returnSaleRows.length > 0) {
+      // Update the subtotal and grand total for all rows of this return transaction
+      for (const row of returnSaleRows) {
+        row[11] = -refundAmount; // Subtotal column
+        row[14] = -refundAmount; // Grand_Total column
+      }
+      // Batch write all return rows at once
+      salesSheet.getRange(salesSheet.getLastRow() + 1, 1, returnSaleRows.length, returnSaleRows[0].length).setValues(returnSaleRows);
+      Logger.log('Batch wrote ' + returnSaleRows.length + ' sale return rows for transaction ' + returnId);
+    }
+
 
     // ? FIX: Only record refund in Financials if revenue was actually recorded
     // Check if this sale had payments recorded (revenue recognition)
@@ -1582,7 +1629,7 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
           'Credit',
           sale.Customer_Name,
           saleId, // Receipt_No
-          saleId, // Reference
+          returnId, // Reference the new return transaction
           'Approved',
           user,
           user
@@ -1645,7 +1692,7 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
           canonicalAccount, // ?. FIX: Payment mode also canonicalized
           sale.Customer_Name,
           saleId, // Receipt_No
-          saleId, // Reference
+          returnId, // Reference the new return transaction
           'Approved',
           user,
           user
@@ -1682,7 +1729,7 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
         0,
         '',
         sale.Customer_Name,
-        saleId,
+        returnId,
         saleId,
         'Approved',
         user,
@@ -1703,7 +1750,7 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
         0,
         '',
         sale.Customer_Name,
-        saleId,
+        returnId,
         saleId,
         'Approved',
         user,
@@ -1743,7 +1790,7 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
       'Return processed for sale ' + saleId + ': ' + formatCurrency(refundAmount) + ' - Reason: ' + reason,
       '',
       '',
-      JSON.stringify({saleId, refundAmount, items, customerBalanceUpdated: sale.Customer_ID && sale.Customer_ID !== 'WALK-IN'})
+      JSON.stringify({saleId, returnId, refundAmount, items, customerBalanceUpdated: sale.Customer_ID && sale.Customer_ID !== 'WALK-IN'})
     );
 
     // ? Clear caches for immediate updates
@@ -1754,14 +1801,9 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
       refundAmount: refundAmount,
       refundTxnId: refundTxnId,
       creditNoteTxnId: creditNoteTxnId,
+      returnId: returnId,
       message: 'Return processed successfully. Stock restored and customer balance updated.'
     };
-
-  } catch (error) {
-    logError('processSaleReturn', error);
-    throw new Error('Error processing return: ' + error.message);
-  }
-}
 
 /**
  * Helper: Get cost price for returned item (prefers original batch cost)

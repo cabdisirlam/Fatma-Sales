@@ -12,7 +12,7 @@ function generateSalesReport(startDate, endDate, groupBy) {
 
     // Filter sales in date range
     let filtered = sales.filter(s => {
-      if (s.Type !== 'Sale') return false;
+      if (s.Type !== 'Sale' && s.Type !== 'Sale_Return') return false;
       const saleDate = new Date(s.DateTime);
       if (startDate && saleDate < new Date(startDate)) return false;
       if (endDate && saleDate > new Date(endDate)) return false;
@@ -415,7 +415,7 @@ function getCustomerStatement(customerId, startDate, endDate) {
     // Get all sales for this customer
     const sales = sheetToObjects('Sales');
     const customerSales = sales.filter(s =>
-      s.Customer_ID === customerId && s.Type === 'Sale'
+      s.Customer_ID === customerId && (s.Type === 'Sale' || s.Type === 'Sale_Return')
     );
 
     // Group sales by transaction ID
