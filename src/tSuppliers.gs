@@ -439,8 +439,7 @@ function getSupplierPaymentHistory(supplierId) {
         type === 'Supplier_Payment' ||
         type === 'Purchase_Payment' ||
         type === 'Supplier_Credit_Note' ||
-        type === 'Supplier_Refund' ||
-        type === 'Inventory_Return_To_Supplier'
+        type === 'Supplier_Refund'
       );
       if (!isSupplierType) return false;
 
