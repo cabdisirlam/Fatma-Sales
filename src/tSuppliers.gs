@@ -504,8 +504,8 @@ function recordSupplierPayment(supplierId, amount, paymentMethod, reference, not
       canonicalAccount, // ✅ FIX: Use canonical account name
       description,
       paymentAmount,
-      paymentAmount, // Debit (money out)
-      0, // Credit
+      0, // Debit
+      paymentAmount, // ✅ FIX: Credit cash (asset decreases when paying supplier)
       0, // Balance (calculated separately)
       canonicalAccount, // ✅ FIX: Payment method canonicalized
       supplierId, // Payee

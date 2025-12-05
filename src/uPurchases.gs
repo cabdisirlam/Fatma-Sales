@@ -291,8 +291,8 @@ function recordPurchasePayment(purchaseId, supplierId, amount, paymentMethod, us
       canonicalAccount, // ✅ FIX: Use canonical account name
       'Payment for purchase ' + purchaseId,
       parseFloat(amount),
-      parseFloat(amount), // Debit (money out)
-      0, // Credit
+      0, // Debit
+      parseFloat(amount), // ✅ FIX: Credit cash (asset decreases when paying for purchase)
       0, // Balance
       canonicalAccount, // ✅ FIX: Payment method canonicalized
       supplierId, // Payee

@@ -506,13 +506,13 @@ function recordCustomerPayment(paymentData) {
     const txnId = generateId('Financials', 'Transaction_ID', 'CPY');
     const sheet = getSheet('Financials');
 
-    const description = 'Payment from ' + customer.Customer_Name +
+    const description = 'Receipt from ' + customer.Customer_Name +
                        (paymentData.Reference ? ' [Ref: ' + paymentData.Reference + ']' : '');
 
     const txnRow = [
       txnId, new Date(), 'Customer_Payment', customerId, 'Sales',
       canonicalAccount, description, paymentAmount, // ✅ FIX: Use canonical account
-      0, paymentAmount, 0,
+      paymentAmount, 0, 0, // ✅ FIX: Debit cash (asset increases), Credit 0
       canonicalAccount, customer.Customer_Name, // ✅ FIX: Payment method canonicalized
       paymentData.Reference || '', 'Customer: ' + customerId,
       'Approved', paymentData.User, paymentData.User
