@@ -157,8 +157,8 @@ function createSale(saleData) {
         'Accounts Receivable', // Account (AR - not a payment method account)
         'Revenue for credit sale ' + transactionId,
         grandTotal,
-        0, // Debit
-        grandTotal, // Credit (revenue)
+        grandTotal, // ✅ FIX: Debit Accounts Receivable (asset increases for credit sale)
+        0, // Credit
         0, // Balance
         'Credit', // Payment_Method
         saleData.Customer_Name || '',
@@ -1076,8 +1076,8 @@ function recordSalePayment(transactionId, paymentMethod, amount, customerId, use
       canonicalAccount, // バ. FIX: Use canonical account name (Cash/M-Pesa/Equity Bank)
       'Payment for sale ' + transactionId,
       parseFloat(amount),
-      0, // Debit
-      parseFloat(amount), // Credit (money in)
+      parseFloat(amount), // ✅ FIX: Debit cash (asset increases when receiving sale payment)
+      0, // Credit
       0, // Balance (calculated separately)
       canonicalAccount, // バ. FIX: Payment method also canonicalized
       '', // Payee
@@ -1589,8 +1589,8 @@ function processSaleReturn(saleId, items, reason, user) {
           canonicalAccount, // ?. FIX: Use canonical account name
           'Refund for sale ' + saleId + ': ' + reason,
           parseFloat(refundAmount),
-          parseFloat(refundAmount), // Debit (money out)
-          0, // Credit
+          0, // Debit
+          parseFloat(refundAmount), // ✅ FIX: Credit cash (asset decreases when refunding)
           0, // Balance
           canonicalAccount, // ?. FIX: Payment mode also canonicalized
           sale.Customer_Name,
