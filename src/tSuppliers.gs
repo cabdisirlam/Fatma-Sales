@@ -437,9 +437,7 @@ function getSupplierPaymentHistory(supplierId) {
       const type = (txn.Type || '').toString();
       const isSupplierType = (
         type === 'Supplier_Payment' ||
-        type === 'Purchase_Payment' ||
-        type === 'Supplier_Credit_Note' ||
-        type === 'Supplier_Refund'
+        type === 'Purchase_Payment'
       );
       if (!isSupplierType) return false;
 

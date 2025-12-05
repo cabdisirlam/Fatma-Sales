@@ -145,10 +145,22 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
     }
 
     const supplier = getSupplierById(supplierId);
+    const date = new Date();
     let totalReturnCost = 0;
+    
+    // V3.1: Create negative purchase entries for returns
+    const purchasesSheet = getSheet('Purchases');
+    const returnId = generateId('Purchases', 'Purchase_ID', 'SRN');
+    const returnItemsForPurchaseSheet = [];
 
-    // Decrease stock using FIFO and sum the cost
-    items.forEach(item => {
+    // Step 1: Pre-fetch item details before stock levels change
+    for (const item of items) {
+      const inventoryItem = getInventoryItemById(item.Item_ID);
+      item.Item_Name = inventoryItem.Item_Name; // Add name to the item object for later use
+    }
+
+    // Step 2: Decrease stock using FIFO and prepare purchase sheet entries
+    for (const item of items) {
       const qty = parseFloat(item.Qty) || 0;
       if (!item.Item_ID || qty <= 0) {
         throw new Error('Invalid item/quantity for return');
@@ -158,7 +170,19 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
       if (!stockResult || !stockResult.success) {
         throw new Error('Failed to decrease stock for item ' + item.Item_ID);
       }
-      totalReturnCost += stockResult.totalCOGS || 0;
+      
+      const itemReturnCost = stockResult.totalCOGS || 0;
+      totalReturnCost += itemReturnCost;
+      const averageCost = itemReturnCost / qty;
+
+      // Prepare a line for the negative purchase entry
+      returnItemsForPurchaseSheet.push({
+        Item_ID: item.Item_ID,
+        Item_Name: item.Item_Name,
+        Qty: -qty,
+        Cost_Price: averageCost,
+        Line_Total: -itemReturnCost
+      });
 
       // Append audit trail entry for each item return
       logAudit(
@@ -168,20 +192,38 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
         'Returned ' + qty + ' of item ' + item.Item_ID + ' to supplier ' + supplierId,
         '',
         '',
-        JSON.stringify({ itemId: item.Item_ID, qty: qty, reason: reason })
+        JSON.stringify({ itemId: item.Item_ID, qty: qty, reason: reason, cost: itemReturnCost })
       );
+    }
+    
+    // Step 3: Write the negative purchase entries to the Purchases sheet
+    returnItemsForPurchaseSheet.forEach(returnLine => {
+      const purchaseRow = [
+        returnId,
+        date,
+        supplierId,
+        supplier.Supplier_Name,
+        returnLine.Item_ID,
+        returnLine.Item_Name,
+        returnLine.Qty,
+        returnLine.Cost_Price,
+        returnLine.Line_Total,
+        -totalReturnCost, // Total amount for the entire return transaction
+        'Returned',       // Payment_Status
+        'Credit Note',    // Payment_Method
+        0,                // Paid_Amount
+        0,                // Balance
+        user
+      ];
+      purchasesSheet.appendRow(purchaseRow);
     });
 
-    // Financial entries
+    // Step 4: Financial entries (existing logic)
     const financialSheet = getSheet('Financials');
-    const date = new Date();
     const canonicalPayment = canonicalizeAccountName(paymentMethod);
     const isCreditNote = (paymentMethod || '').toString().toLowerCase() === 'credit';
-
-    // Debit side: reduce AP (credit note) OR cash/bank in (refund)
     const debitAccount = isCreditNote ? 'Accounts Payable' : canonicalPayment || 'Cash';
 
-    // Debit entry (AP or cash/bank)
     const debitTxnId = generateId('Financials', 'Transaction_ID', isCreditNote ? 'SUPCRN' : 'SUPRF');
     const debitRow = [
       debitTxnId,
@@ -190,14 +232,14 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
       '', // Customer_ID
       'Purchases Return',
       debitAccount,
-      (isCreditNote ? 'Credit note ' : 'Refund ') + 'for supplier return: ' + reason,
+      (isCreditNote ? 'Credit note ' : 'Refund ') + 'for supplier return: ' + reason + ' [Ref: ' + returnId + ']',
       totalReturnCost,
       totalReturnCost, // Debit
       0, // Credit
       0,
       isCreditNote ? 'Credit' : canonicalPayment,
       supplier.Supplier_Name,
-      '', // Receipt_No
+      returnId, // Receipt_No
       supplierId,
       'Approved',
       user,
@@ -205,7 +247,6 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
     ];
     financialSheet.appendRow(debitRow);
 
-    // Credit Inventory Asset
     const creditTxnId = generateId('Financials', 'Transaction_ID', 'INVRET');
     const creditRow = [
       creditTxnId,
@@ -214,14 +255,14 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
       '', // Customer_ID
       'Inventory',
       'Inventory Asset',
-      'Inventory returned to supplier: ' + reason,
+      'Inventory returned to supplier: ' + reason + ' [Ref: ' + returnId + ']',
       totalReturnCost,
       0,
       totalReturnCost, // Credit (reduce asset)
       0,
       '',
       supplier.Supplier_Name,
-      '',
+      returnId, // Receipt_No
       supplierId,
       'Approved',
       user,
@@ -229,7 +270,7 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
     ];
     financialSheet.appendRow(creditRow);
 
-    // Update supplier balances (reduce purchases and balance)
+    // Step 5: Update supplier balances (reduce purchases and balance)
     const currentBalance = parseFloat(supplier.Current_Balance) || 0;
     const totalPurchased = parseFloat(supplier.Total_Purchased) || 0;
     const newBalance = Math.max(0, currentBalance - totalReturnCost);
@@ -247,7 +288,7 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
       'Returned goods to supplier ' + supplier.Supplier_Name + ' amount: ' + formatCurrency(totalReturnCost) + ' Reason: ' + reason,
       '',
       '',
-      JSON.stringify({ supplierId, items, totalReturnCost, paymentMethod })
+      JSON.stringify({ supplierId, items, totalReturnCost, paymentMethod, returnId })
     );
 
     // Clear caches that depend on inventory/suppliers
@@ -259,13 +300,9 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
       totalReturnCost: totalReturnCost,
       debitTxnId: debitTxnId,
       creditTxnId: creditTxnId,
+      returnId: returnId,
       message: 'Supplier return processed successfully'
     };
-  } catch (error) {
-    logError('processSupplierReturn', error);
-    throw new Error('Error processing supplier return: ' + error.message);
-  }
-}
 
 /**
  * Record purchase payment
