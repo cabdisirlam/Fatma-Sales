@@ -4504,8 +4504,6 @@
         const label = name ? `${id} - ${name} (Stock: ${stock})` : `${id} (Stock: ${stock})`;
         return `<option value="${id}">${label}</option>`;
       }).join('');
-      const supplierOptions = Array.from(new Set(data.map(item => item.Supplier).filter(Boolean)))
-        .map(s => `<option value="${s}">${s}</option>`).join('');
 
       let html = `
         <div class="d-flex flex-wrap gap-2 mb-3">
@@ -4619,8 +4617,7 @@
                 <div class="mb-3">
                   <label class="form-label">Supplier</label>
                   <select class="form-select" id="returnProductSupplier">
-                    <option value="">Select Supplier</option>
-                    ${supplierOptions}
+                    <option value="">Loading suppliers...</option>
                   </select>
                 </div>
                 <div class="row">
@@ -6340,6 +6337,8 @@
       const alertBox = document.getElementById('returnProductAlert');
       if (alertBox) alertBox.style.display = 'none';
 
+      loadReturnProductSuppliers();
+
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
       bringModalToFront(modalEl);
       modal.show();
@@ -6359,9 +6358,51 @@
       const stock = (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
       document.getElementById('returnProductName').textContent = `${item.Item_ID || ''} ${item.Item_Name ? ' - ' + item.Item_Name : ''}`.trim() || '-';
       document.getElementById('returnProductStock').textContent = stock;
-      if (item.Supplier && document.getElementById('returnProductSupplier')) {
-        document.getElementById('returnProductSupplier').value = item.Supplier;
+      if (item.Supplier) {
+        loadReturnProductSuppliers(item.Supplier);
+      } else {
+        loadReturnProductSuppliers();
       }
+    }
+
+    function loadReturnProductSuppliers(preselectId) {
+      const supplierSelect = document.getElementById('returnProductSupplier');
+      if (!supplierSelect) return;
+      supplierSelect.innerHTML = '<option value=\"\">Loading suppliers...</option>';
+
+      google.script.run
+        .withSuccessHandler(function(suppliers) {
+          supplierSelect.innerHTML = '<option value=\"\">Select Supplier</option>';
+          if (!Array.isArray(suppliers) || suppliers.length === 0) {
+            supplierSelect.innerHTML = '<option value=\"\">No suppliers found</option>';
+            return;
+          }
+
+          suppliers.forEach(function(supplier) {
+            const opt = document.createElement('option');
+            opt.value = supplier.Supplier_ID || supplier.Supplier_Name;
+            opt.textContent = (supplier.Supplier_Name || supplier.Supplier_ID || 'Supplier') +
+              (supplier.Supplier_ID ? ` (${supplier.Supplier_ID})` : '');
+            supplierSelect.appendChild(opt);
+          });
+
+          if (preselectId) {
+            supplierSelect.value = preselectId;
+            if (!supplierSelect.value) {
+              // If the supplier isn't in the list (e.g., name stored instead of ID), add it.
+              const fallback = document.createElement('option');
+              fallback.value = preselectId;
+              fallback.textContent = preselectId;
+              fallback.selected = true;
+              supplierSelect.appendChild(fallback);
+            }
+          }
+        })
+        .withFailureHandler(function(error) {
+          supplierSelect.innerHTML = '<option value=\"\">Error loading suppliers</option>';
+          console.error('Error loading suppliers for return modal:', error);
+        })
+        .getSuppliers();
     }
 
     function submitReturnProduct() {
