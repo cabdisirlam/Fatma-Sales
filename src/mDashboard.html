@@ -3735,9 +3735,10 @@
       localStorage.removeItem('token');
       localStorage.removeItem('loginTime');
 
-      // Redirect to login page
+      // Force full page refresh and redirect to login page
       const scriptUrl = window.location.href.split('?')[0];
-      window.location.href = scriptUrl.replace('mDashboard', 'nIndex');
+      const loginUrl = scriptUrl.replace('mDashboard', 'nIndex');
+      window.location.replace(loginUrl);  // Replace (no back button) and force refresh
     }
 
     // Offline banner handlers
@@ -6979,9 +6980,10 @@
         try { DATA_CACHE = {}; } catch (e) {}
         try { localStorage.removeItem('inventory_cache_all'); } catch (e) {}
 
-        // Redirect to login page
+        // Force full page refresh and redirect to login page
         const scriptUrl = window.location.href.split('?')[0];
-        window.location.href = scriptUrl.replace('mDashboard', 'nIndex');
+        const loginUrl = scriptUrl.replace('mDashboard', 'nIndex');
+        window.location.replace(loginUrl);  // Replace (no back button) and force refresh
       }
     }
 
