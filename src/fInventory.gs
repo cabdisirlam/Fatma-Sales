@@ -135,7 +135,8 @@ function getInventory(filters) {
 
   } catch (error) {
     logError('getInventory', error);
-    throw new Error('Error loading inventory: ' + error.message);
+    // Failsafe: return empty array so UI doesn't freeze when inventory read fails
+    return [];
   }
 }
 
