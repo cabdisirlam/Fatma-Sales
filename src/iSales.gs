@@ -1489,8 +1489,9 @@ function getQuotations(filters) {
  * @param {string} reason - Reason for return
  * @param {string} user - User processing the return
  * @param {boolean} refundCash - true = give cash back (refund), false = reduce balance only (return)
+ * @param {string} refundMethod - Payment method for refund (Cash/M-Pesa/Equity Bank). If not specified, uses original payment method
  */
-function processSaleReturn(saleId, items, reason, user, refundCash) {
+function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod) {
   try {
     const sale = getSaleById(saleId);
 
@@ -1591,7 +1592,43 @@ function processSaleReturn(saleId, items, reason, user, refundCash) {
       } else {
         // Refund with cash back -> reduce cash account
         refundTxnId = generateId('Financials', 'Transaction_ID', 'REF');
-        const canonicalAccount = canonicalizeAccountName(sale.Payment_Mode);
+
+        // Determine refund account:
+        // 1. Use specified refundMethod if provided
+        // 2. Otherwise, check if original sale was split payment
+        // 3. Otherwise, use original sale payment mode
+        let refundAccount = refundMethod || sale.Payment_Mode;
+
+        // For split payments, default to Cash unless specified
+        if (refundAccount === 'Split') {
+          // Try to find the dominant payment method from sale payments
+          const salePayments = financials.filter(f =>
+            f.Type === 'Sale_Payment' &&
+            (f.Receipt_No === saleId || f.Reference === saleId)
+          );
+
+          if (salePayments.length > 0) {
+            // Use the payment method with highest amount
+            const paymentsByMethod = {};
+            salePayments.forEach(p => {
+              const method = p.Account || p.Payment_Method || 'Cash';
+              paymentsByMethod[method] = (paymentsByMethod[method] || 0) + (parseFloat(p.Amount) || 0);
+            });
+
+            // Get method with highest amount
+            let maxAmount = 0;
+            for (const method in paymentsByMethod) {
+              if (paymentsByMethod[method] > maxAmount) {
+                maxAmount = paymentsByMethod[method];
+                refundAccount = method;
+              }
+            }
+          } else {
+            refundAccount = 'Cash'; // Default fallback
+          }
+        }
+
+        const canonicalAccount = canonicalizeAccountName(refundAccount);
 
         const refundRow = [
           refundTxnId,
