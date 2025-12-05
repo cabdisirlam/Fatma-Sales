@@ -27,6 +27,10 @@ function generateReceiptHTML(transactionId) {
     }
 
     const settings = getAllSettings();
+    const statusLabel = (sale.Status || sale.Delivery_Status || '').toString().trim();
+    const statusDisplay = statusLabel ? statusLabel.toUpperCase() : '';
+    const isReturned = statusDisplay === 'RETURNED';
+    const isCancelled = statusDisplay === 'CANCELLED';
     const dateStr = Utilities.formatDate(new Date(sale.DateTime), 'GMT+3', 'dd/MM/yyyy HH:mm');
     const currencySymbol = settings.Currency_Symbol || 'Ksh';
     const vatRate = 0.16;
@@ -99,10 +103,13 @@ function generateReceiptHTML(transactionId) {
         </div>
         
         <div class="divider"></div>
+        ${statusDisplay ? `<div style="text-align:center; font-weight:800; margin:4px 0; ${isReturned ? 'color:#d35400;' : isCancelled ? 'color:#c0392b;' : 'color:#2c3e50;'}">STATUS: ${statusDisplay}</div>` : ''}
+        <div class="divider"></div>
         
         <div>Receipt #: ${sale.Transaction_ID}</div>
         <div>Date: ${dateStr}</div>
         <div>Served By: ${sale.Sold_By}</div>
+        ${sale.Delivery_Status ? `<div>Delivery Status: ${sale.Delivery_Status}</div>` : ''}
         ${sale.Paybill_Number ? `<div>Paybill/Ref: ${sale.Paybill_Number}</div>` : ''}
 
         <div class="customer-info">
