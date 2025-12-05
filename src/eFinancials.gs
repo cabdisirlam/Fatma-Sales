@@ -495,10 +495,11 @@ function getFinancialSummary(startDate, endDate) {
       // Get account type to determine balance calculation logic
       let accountType = getAccountType(acc);
 
-      // ✅ SAFEGUARD: Ensure default cash accounts are always treated as Assets
+      // ✅ SAFEGUARD: Ensure default cash accounts are ALWAYS treated as Assets
+      // This overrides any misconfiguration in Chart of Accounts
       const defaultAssets = ['Cash', 'M-Pesa', 'Equity Bank'];
-      if (defaultAssets.indexOf(acc) !== -1 && !accountType) {
-        accountType = 'Asset';
+      if (defaultAssets.indexOf(acc) !== -1) {
+        accountType = 'Asset';  // Force asset type regardless of Chart of Accounts
       }
 
       let balance, inflow, outflow;
