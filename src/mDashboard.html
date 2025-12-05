@@ -4497,7 +4497,13 @@
       if (!container) return;
 
       const getStockQty = (item) => (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
-      const productOptions = data.map(item => `<option value="${item.Item_ID}">${item.Item_Name || item.Item_ID || 'Product'} - Stock: ${getStockQty(item)}</option>`).join('');
+      const productOptions = data.map(item => {
+        const stock = getStockQty(item);
+        const id = item.Item_ID || 'Item';
+        const name = item.Item_Name || '';
+        const label = name ? `${id} - ${name} (Stock: ${stock})` : `${id} (Stock: ${stock})`;
+        return `<option value="${id}">${label}</option>`;
+      }).join('');
       const supplierOptions = Array.from(new Set(data.map(item => item.Supplier).filter(Boolean)))
         .map(s => `<option value="${s}">${s}</option>`).join('');
 
@@ -4599,9 +4605,9 @@
                   Returning will decrease inventory and create a supplier credit/payment entry.
                 </div>
                 <div class="mb-3">
-                  <label class="form-label">Product</label>
+                  <label class="form-label">Item (Item_ID)</label>
                   <select class="form-select" id="returnProductSelect" onchange="updateReturnProductDetails()">
-                    <option value="">Select Product</option>
+                    <option value="">Select Item ID</option>
                     ${productOptions}
                   </select>
                 </div>
@@ -6351,7 +6357,7 @@
         return;
       }
       const stock = (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
-      document.getElementById('returnProductName').textContent = item.Item_Name || item.Item_ID || '-';
+      document.getElementById('returnProductName').textContent = `${item.Item_ID || ''} ${item.Item_Name ? ' - ' + item.Item_Name : ''}`.trim() || '-';
       document.getElementById('returnProductStock').textContent = stock;
       if (item.Supplier && document.getElementById('returnProductSupplier')) {
         document.getElementById('returnProductSupplier').value = item.Supplier;
