@@ -311,8 +311,8 @@
         function updateUI(data) {
             console.log("Received data:", data);
             if(data.success) {
-                updateSummaryCards(data.overview);
-                allItems = data.inventory;
+                allItems = data.inventory || [];
+                updateSummaryCards(data.overview, allItems);
                 applyFilters(); // Initial render
             } else {
                 showError({message: data.message});
@@ -320,7 +320,17 @@
             hideLoader();
         }
 
-        function updateSummaryCards(overview) {
+        function updateSummaryCards(overview, items) {
+            // Fallback: compute total value from items if overview missing/zero
+            const totalValueComputed = (items || []).reduce((sum, item) => {
+                const qty = Number(item.Current_Qty || item.Stock_Qty || item.Stock_Level || 0);
+                const cost = Number(item.Cost_Price || 0);
+                const stockVal = Number(item.Stock_Value || 0);
+                return sum + (stockVal || (qty * cost));
+            }, 0);
+
+            const totalValue = (overview && Number(overview.totalValue)) ? Number(overview.totalValue) : totalValueComputed;
+
             const container = document.getElementById('summary-cards');
             container.innerHTML = 
                 `<div class="col-md-3">
@@ -344,7 +354,7 @@
                 <div class="col-md-3">
                     <div class="summary-card bg-gradient-orange">
                         <div class="label">Total Value</div>
-                        <div class="value">Ksh ${overview.totalValue.toLocaleString()}</div>
+                        <div class="value">${formatCurrency(totalValue)}</div>
                     </div>
                 </div>
             `;
@@ -398,8 +408,8 @@
                         <td>${item.Category || ''}</td>
                         <td class="text-end">${item.Stock_Level}</td>
                         <td>${item.Unit || ''}</td>
-                        <td class="text-end">${(item.Cost_Price || 0).toLocaleString('en-US', { style: 'currency', currency: 'Ksh' })}</td>
-                        <td class="text-end">${(item.Selling_Price || 0).toLocaleString('en-US', { style: 'currency', currency: 'Ksh' })}</td>
+                        <td class="text-end">${formatCurrency(item.Cost_Price || 0)}</td>
+                        <td class="text-end">${formatCurrency(item.Selling_Price || 0)}</td>
                         <td class="text-center">${statusBadge}</td>
                         <td class="text-center">
                             <button class="btn btn-sm btn-outline-primary" onclick="returnInventory('${item.Item_ID}')" title="Return Inventory">
@@ -437,6 +447,11 @@ ${status}
 ${status}
 </span>`
             }
+        }
+
+        function formatCurrency(value) {
+            const num = Number(value) || 0;
+            return new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0 }).format(num);
         }
 
         function showLoader() {
