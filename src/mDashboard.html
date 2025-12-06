@@ -2083,10 +2083,10 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
-          <button type="button" class="btn btn-outline-primary" onclick="submitModalTransaction('Quotation')" style="border-radius: 8px; font-weight: 500;">
+          <button type="button" class="btn btn-outline-primary" id="saveQuotationBtn" onclick="submitModalTransaction('Quotation')" style="border-radius: 8px; font-weight: 500;">
             <i class="bi bi-file-text"></i> Save as Quotation
           </button>
-          <button type="button" class="btn" onclick="submitModalTransaction('Sale')" style="background: linear-gradient(135deg, #27ae60 0%, #10b981 100%); border: none; color: white; border-radius: 8px; font-weight: 600;">
+          <button type="button" class="btn" id="completeSaleBtn" onclick="submitModalTransaction('Sale')" style="background: linear-gradient(135deg, #27ae60 0%, #10b981 100%); border: none; color: white; border-radius: 8px; font-weight: 600;">
             <i class="bi bi-check-circle"></i> Complete Sale
           </button>
         </div>
@@ -2216,7 +2216,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-danger" onclick="submitReturn()">Confirm Return</button>
+          <button type="button" class="btn btn-danger" id="confirmReturnBtn" onclick="submitReturn()">Confirm Return</button>
         </div>
       </div>
     </div>
@@ -4030,6 +4030,7 @@
       const reason = document.getElementById('returnReason').value;
       const inputs = document.querySelectorAll('.return-qty');
       const itemsToReturn = [];
+      const btn = document.getElementById('confirmReturnBtn');
 
       inputs.forEach(function(input) {
         const qty = parseFloat(input.value);
@@ -4041,11 +4042,21 @@
       if (itemsToReturn.length === 0) return alert('Please select items to return.');
       if (!reason) return alert('Please enter a reason.');
 
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+
       google.script.run
         .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.innerHTML = 'Confirm Return';
           alert(res.message);
           bootstrap.Modal.getInstance(document.getElementById('returnSaleModal')).hide();
           loadSalesHistory(); // Refresh list
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.innerHTML = 'Confirm Return';
+          alert('Error processing return: ' + err.message);
         })
         .processSaleReturn(saleId, itemsToReturn, reason, localStorage.getItem('userName'));
     }
@@ -7799,8 +7810,17 @@
 
       const backendFunc = type === 'Quotation' ? 'createQuotation' : 'createSale';
 
+      const btn = type === 'Quotation' ? document.getElementById('saveQuotationBtn') : document.getElementById('completeSaleBtn');
+      const originalBtnText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+
+
       google.script.run
         .withSuccessHandler(function(result) {
+          btn.disabled = false;
+          btn.innerHTML = originalBtnText;
+
           if (result.success) {
             showModalAlert(type + ' created successfully! Ref: ' + (result.transactionId || result.quotationId), 'success');
 
@@ -7815,6 +7835,8 @@
           }
         })
         .withFailureHandler(function(error) {
+          btn.disabled = false;
+          btn.innerHTML = originalBtnText;
           showModalAlert('Error: ' + error.message, 'danger');
         })[backendFunc](saleData);
     }
