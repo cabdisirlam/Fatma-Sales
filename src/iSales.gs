@@ -1612,6 +1612,8 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
     if (!refundCash || !hasRecordedRevenue) {
       // Credit flow OR no cash received: reduce Accounts Receivable only (no cash movement)
       creditNoteTxnId = generateId('Financials', 'Transaction_ID', 'CRN');
+      const salesReturnTxnId = generateId('Financials', 'Transaction_ID', 'SLR');
+
       const creditNoteRow = [
         creditNoteTxnId,
         new Date(),
@@ -1632,8 +1634,31 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
         user,
         user
       ];
+      
+      const salesReturnRow = [
+        salesReturnTxnId,
+        new Date(),
+        'Sales_Return',
+        sale.Customer_ID || '',
+        'Sales Return',
+        'Sales Return',
+        'Sales return for sale ' + saleId + ': ' + reason,
+        parseFloat(refundAmount),
+        parseFloat(refundAmount), // Debit
+        0, // Credit
+        0, // Balance
+        'Credit',
+        sale.Customer_Name,
+        saleId, // Receipt_No
+        returnId, // Reference the new return transaction
+        'Approved',
+        user,
+        user
+      ];
+
       financialSheet.appendRow(creditNoteRow);
-      Logger.log('Credit_Note recorded for return (AR reduced, no cash movement): ' + refundAmount);
+      financialSheet.appendRow(salesReturnRow);
+      Logger.log('Credit_Note and Sales_Return recorded for return (AR reduced, no cash movement): ' + refundAmount);
     }
 
     if (refundCash && hasRecordedRevenue) {
