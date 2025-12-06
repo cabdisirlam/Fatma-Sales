@@ -171,6 +171,28 @@ function createSale(saleData) {
 
       financialSheet.appendRow(revenueTxnRow);
 
+      const salesRevenueRow = [
+        generateId('Financials', 'Transaction_ID', 'FIN'), // New TXN ID
+        dateTime,
+        'Sale_Revenue', // New Type
+        saleData.Customer_ID || '',
+        'Sales', // Category
+        'Sales Revenue', // Account
+        'Sales revenue for credit sale ' + transactionId,
+        grandTotal,
+        0, // Debit
+        grandTotal, // Credit
+        0, // Balance
+        'Credit',
+        saleData.Customer_Name || '',
+        transactionId,
+        transactionId,
+        'Approved',
+        saleData.User,
+        saleData.User
+      ];
+      financialSheet.appendRow(salesRevenueRow);
+
       // Do NOT update account balance (no cash received)
       // Customer balance will be updated later (line 322)
 
@@ -315,7 +337,7 @@ function createSale(saleData) {
         'COGS',                                       // Type
         saleData.Customer_ID || '',                   // Customer_ID
         'Cost of Goods Sold',                         // Category
-        'Inventory Asset',                            // Account
+        'Cost of Goods Sold',                         // Account
         'Cost of goods for Sale ' + transactionId,    // Description
         totalCOGS,                                    // Amount
         totalCOGS,                                    // Debit (Expense)
@@ -331,6 +353,28 @@ function createSale(saleData) {
       ];
 
       cogsSheet.appendRow(cogsRow);
+
+      const inventoryCreditRow = [
+        generateId('Financials', 'Transaction_ID', 'FIN'), // New TXN ID
+        dateTime,
+        'Inventory_Sale', // New Type
+        saleData.Customer_ID || '',
+        'Inventory', // Category
+        'Inventory Asset', // Account
+        'Inventory asset credit for Sale ' + transactionId,
+        totalCOGS,                                    // Amount
+        0,                                            // Debit
+        totalCOGS,                                    // Credit
+        0,                                            // Balance
+        '',                                           // Payment_Method
+        '',                                           // Payee
+        transactionId,                                // Receipt_No
+        transactionId,                                // Reference
+        'Approved',                                   // Status
+        saleData.User,                                // Approved_By
+        saleData.User                                 // User
+      ];
+      cogsSheet.appendRow(inventoryCreditRow);
 
       Logger.log('COGS recorded: ' + totalCOGS + ' for sale ' + transactionId);
     }
