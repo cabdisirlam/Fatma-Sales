@@ -3,9 +3,6 @@
  * Handles: Product catalog, stock tracking, stock adjustments, low stock alerts
  */
 
-// Cache key for inventory list (used when no filters are applied)
-const INVENTORY_CACHE_KEY = 'inventory_cache_all';
-
 // =====================================================
 // INVENTORY FUNCTIONS
 // =====================================================
@@ -17,27 +14,6 @@ const INVENTORY_CACHE_KEY = 'inventory_cache_all';
  */
 function getInventory(filters) {
   try {
-    const useCache = !filters || Object.keys(filters).length === 0;
-
-    if (useCache) {
-      try {
-        const cache = CacheService.getScriptCache();
-        const cached = cache.get(INVENTORY_CACHE_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) {
-            return parsed;
-          }
-
-          // Cache contained an unexpected payload (e.g., legacy null). Clear it
-          // so we can rebuild the value from the sheet below.
-          cache.remove(INVENTORY_CACHE_KEY);
-        }
-      } catch (cacheError) {
-        logError('getInventoryCache', cacheError);
-      }
-    }
-
     const sheet = getSheet('Inventory');
     const data = sheet.getDataRange().getValues();
 
@@ -121,14 +97,6 @@ function getInventory(filters) {
       item.stock_value = (item.Current_Qty || 0) * (item.Cost_Price || 0);
 
       items.push(item);
-    }
-
-    if (useCache) {
-      try {
-        CacheService.getScriptCache().put(INVENTORY_CACHE_KEY, JSON.stringify(items), 300);
-      } catch (cacheError) {
-        logError('setInventoryCache', cacheError);
-      }
     }
 
     return items;

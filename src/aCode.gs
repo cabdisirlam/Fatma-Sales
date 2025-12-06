@@ -411,32 +411,8 @@ function authenticate(email, pin) {
  * @returns {object} Lock status and minutes remaining
  */
 function checkAccountLock(email) {
-  try {
-    const cache = CacheService.getScriptCache();
-    const lockKey = 'account_lock_' + email.toLowerCase();
-    const lockData = cache.get(lockKey);
-
-    if (lockData) {
-      const lockInfo = JSON.parse(lockData);
-      const now = new Date().getTime();
-      const lockExpiry = lockInfo.lockedUntil;
-
-      if (now < lockExpiry) {
-        const minutesRemaining = Math.ceil((lockExpiry - now) / (1000 * 60));
-        return { isLocked: true, minutesRemaining: minutesRemaining };
-      } else {
-        // Lock expired, clear it
-        cache.remove(lockKey);
-        clearFailedAttempts(email);
-        return { isLocked: false };
-      }
-    }
-
-    return { isLocked: false };
-  } catch (error) {
-    logError('checkAccountLock', error);
-    return { isLocked: false }; // Fail open on error
-  }
+  // Cache disabled: always treat as not locked
+  return { isLocked: false };
 }
 
 /**
@@ -445,34 +421,8 @@ function checkAccountLock(email) {
  * @returns {object} Attempt count and lock status
  */
 function recordFailedAttempt(email) {
-  try {
-    const cache = CacheService.getScriptCache();
-    const attemptsKey = 'login_attempts_' + email.toLowerCase();
-    const lockKey = 'account_lock_' + email.toLowerCase();
-
-    // Get current attempt count
-    let attempts = 1;
-    const cached = cache.get(attemptsKey);
-    if (cached) {
-      attempts = parseInt(cached) + 1;
-    }
-
-    // Store updated attempt count (TTL: lockout duration)
-    const ttl = CONFIG.LOCKOUT_DURATION_MINUTES * 60;
-    cache.put(attemptsKey, attempts.toString(), ttl);
-
-    // Check if max attempts reached
-    if (attempts >= CONFIG.MAX_LOGIN_ATTEMPTS) {
-      const lockUntil = new Date().getTime() + (CONFIG.LOCKOUT_DURATION_MINUTES * 60 * 1000);
-      cache.put(lockKey, JSON.stringify({ lockedUntil: lockUntil }), ttl);
-      return { attempts: attempts, locked: true };
-    }
-
-    return { attempts: attempts, locked: false };
-  } catch (error) {
-    logError('recordFailedAttempt', error);
-    return { attempts: 0, locked: false };
-  }
+  // Cache disabled: no lock/attempt tracking
+  return { attempts: 0, locked: false };
 }
 
 /**
@@ -480,15 +430,7 @@ function recordFailedAttempt(email) {
  * @param {string} email - User email
  */
 function clearFailedAttempts(email) {
-  try {
-    const cache = CacheService.getScriptCache();
-    const attemptsKey = 'login_attempts_' + email.toLowerCase();
-    const lockKey = 'account_lock_' + email.toLowerCase();
-    cache.remove(attemptsKey);
-    cache.remove(lockKey);
-  } catch (error) {
-    logError('clearFailedAttempts', error);
-  }
+  // Cache disabled: no-op
 }
 
 

@@ -250,10 +250,6 @@ function refreshSystem() {
   try {
     const ui = SpreadsheetApp.getUi();
 
-    // Clear all caches
-    CacheService.getUserCache().removeAll([]);
-    CacheService.getScriptCache().removeAll([]);
-
     // Reconnect to spreadsheet
     const scriptProperties = PropertiesService.getScriptProperties();
     const spreadsheetId = scriptProperties.getProperty('SPREADSHEET_ID');
@@ -380,18 +376,11 @@ function checkSystemHealth() {
       issues.push('✗ Cannot access Script Properties: ' + e.message);
     }
 
-    // 5. Check cache service
     try {
-      const cache = CacheService.getUserCache();
-      cache.put('health_check_test', 'ok', 60);
-      const testValue = cache.get('health_check_test');
       if (testValue === 'ok') {
-        info.push('✓ Cache Service: Working correctly');
       } else {
-        warnings.push('⚠ Cache Service: Not responding as expected');
       }
     } catch (e) {
-      warnings.push('⚠ Cache Service: ' + e.message);
     }
 
     // 6. Check Audit Trail logging
