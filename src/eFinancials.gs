@@ -615,7 +615,7 @@ function computeNetWorthSnapshot(asOfDate) {
  * Ensure the Net_Worth_Log sheet exists with headers.
  */
 function ensureNetWorthLogSheet() {
-  const ss = SpreadsheetApp.getActive();
+  const ss = getSpreadsheet();
   let sheet = ss.getSheetByName('Net_Worth_Log');
   if (!sheet) {
     sheet = ss.insertSheet('Net_Worth_Log');
