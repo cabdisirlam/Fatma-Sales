@@ -1193,7 +1193,7 @@ function getInventoryDashboardData() {
     let totalValue = 0;
 
     const formattedInventory = inventoryItems.map(item => {
-      const stockLevel = parseFloat(item.Current_Qty) || 0;
+      const stockLevel = parseFloat(item.Current_Qty || item.Stock_Qty || item.Stock_Level) || 0;
       const reorderLevel = parseFloat(item.Reorder_Level) || 0;
       const costPrice = parseFloat(item.Cost_Price) || 0;
 
@@ -1211,7 +1211,12 @@ function getInventoryDashboardData() {
       return {
         Item_ID: item.Item_ID,
         Item_Name: item.Item_Name,
+        Category: item.Category || '',
+        Supplier: item.Supplier || item.Supplier_ID || '',
         Stock_Level: stockLevel,
+        Current_Qty: stockLevel,
+        Stock_Qty: stockLevel,
+        Reorder_Level: reorderLevel,
         Unit: item.Unit || 'Pcs', // Assuming 'Pcs' as a default unit
         Cost_Price: costPrice,
         Selling_Price: parseFloat(item.Selling_Price) || 0,
