@@ -551,8 +551,9 @@ function getCustomerStatement(customerId, startDate, endDate) {
     const customer = getCustomerById(customerId);
     const purchases = getCustomerPurchaseHistory(customerId);
     const payments = getCustomerPaymentHistory(customerId);
+    const returns = getCustomerReturnHistory(customerId);
 
-    // Combine and sort by date (debit = invoices, credit = payments)
+    // Combine and sort by date (debit = invoices, credit = payments/returns)
     const transactions = [];
     purchases.forEach(purchase => {
       transactions.push({
@@ -572,6 +573,16 @@ function getCustomerStatement(customerId, startDate, endDate) {
         debit: 0,
         credit: toNumber(payment.Amount), // Credit reduces what they owe
         reference: payment.Transaction_ID
+      });
+    });
+    returns.forEach(ret => {
+      transactions.push({
+        date: new Date(ret.DateTime),
+        type: 'Return',
+        description: 'Return for Sale #' + ret.Converted_Sale_ID,
+        debit: 0,
+        credit: -toNumber(ret.Grand_Total), // Credit, but the grand total is negative
+        reference: ret.Transaction_ID
       });
     });
 
@@ -944,3 +955,46 @@ function getCustomersList(customers) {
     }).sort((a, b) => a.Name.localeCompare(b.Name)); // Sort alphabetically by name
 }
 
+/**
+ * Get customer return history
+ */
+function getCustomerReturnHistory(customerId) {
+  try {
+    const sales = sheetToObjects('Sales');
+
+    // Filter for Sales only (not quotations)
+    const customerReturns = sales.filter(sale => {
+      return sale.Customer_ID === customerId && sale.Type === 'Sale_Return';
+    });
+
+    // Group by Transaction_ID to get unique transactions
+    const transactions = {};
+    customerReturns.forEach(ret => {
+      if (!transactions[ret.Transaction_ID]) {
+        transactions[ret.Transaction_ID] = {
+          Transaction_ID: ret.Transaction_ID,
+          DateTime: ret.DateTime,
+          Grand_Total: ret.Grand_Total,
+          Converted_Sale_ID: ret.Converted_Sale_ID,
+          items: []
+        };
+      }
+      transactions[ret.Transaction_ID].items.push({
+        Item_Name: ret.Item_Name,
+        Qty: ret.Qty,
+        Unit_Price: ret.Unit_Price,
+        Line_Total: ret.Line_Total
+      });
+    });
+
+    // Convert to array and sort by date descending
+    const history = Object.values(transactions);
+    history.sort((a, b) => new Date(b.DateTime) - new Date(a.DateTime));
+
+    return history;
+
+  } catch (error) {
+    logError('getCustomerReturnHistory', error);
+    return [];
+  }
+}
