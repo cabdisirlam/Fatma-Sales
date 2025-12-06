@@ -95,7 +95,8 @@ function initializeSystemSheets(ss) {
     [CONFIG.SHEETS.CHART_OF_ACCOUNTS]: ['Account_Code', 'Account_Name', 'Type', 'Category', 'Description', 'Balance'],
     [CONFIG.SHEETS.AUDIT_TRAIL]: ['Timestamp', 'User', 'Module', 'Action', 'Details', 'Session_ID', 'Before_Value', 'After_Value'],
     [CONFIG.SHEETS.SETTINGS]: ['Setting_Key', 'Setting_Value'],
-    [CONFIG.SHEETS.MASTER_DATA]: ['Master_ID', 'Item_Name', 'Category', 'Description', 'Status']
+    [CONFIG.SHEETS.MASTER_DATA]: ['Master_ID', 'Item_Name', 'Category', 'Description', 'Status'],
+    [CONFIG.SHEETS.NET_WORTH_LOG]: ['Date', 'Cash_Bank', 'Receivables', 'Inventory', 'Suppliers', 'Net_Worth', 'Change'] // Custom: preserve net worth log
   };
 
   for (const sheetName in v3Schema) {

@@ -30,7 +30,8 @@ const CONFIG = {
     CHART_OF_ACCOUNTS: 'Chart_of_Accounts',
     AUDIT_TRAIL: 'Audit_Trail',
     SETTINGS: 'Settings',
-    MASTER_DATA: 'Master_Data'
+    MASTER_DATA: 'Master_Data',
+    NET_WORTH_LOG: 'Net_Worth_Log' // Custom: net worth snapshots
   },
 
   // Colors (Brand Colors)
