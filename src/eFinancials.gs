@@ -560,6 +560,169 @@ function getFinancialDashboardData() {
   }
 }
 
+// =====================================================
+// NET WORTH SNAPSHOT + HISTORY
+// =====================================================
+
+/**
+ * Compute current net worth components.
+ * Net Worth = Cash/Bank + Receivables + Inventory - Supplier Balances
+ */
+function computeNetWorthSnapshot(asOfDate) {
+  try {
+    const date = asOfDate ? new Date(asOfDate) : new Date();
+    const summary = getFinancialSummary();
+    const accountBreakdown = summary.accountBreakdown || [];
+
+    // Treat any cash/bank/mpesa accounts as liquid funds
+    const bankCash = accountBreakdown
+      .filter(a => a && a.name && /cash|m-?pesa|bank/i.test(a.name))
+      .reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0);
+
+    const receivables = sheetToObjects('Customers')
+      .reduce((sum, c) => sum + (parseFloat(c.Current_Balance) || 0), 0);
+
+    const inventory = getInventory()
+      .reduce((sum, item) => {
+        // Prefer precomputed stock_value when available
+        const stockValue = parseFloat(item.stock_value);
+        if (!isNaN(stockValue)) return sum + stockValue;
+        const qty = parseFloat(item.Current_Qty) || 0;
+        const cost = parseFloat(item.Cost_Price) || 0;
+        return sum + (qty * cost);
+      }, 0);
+
+    const payables = sheetToObjects('Suppliers')
+      .reduce((sum, s) => sum + (parseFloat(s.Current_Balance) || 0), 0);
+
+    const netWorth = bankCash + receivables + inventory - payables;
+
+    return {
+      date: date.toISOString(),
+      bankCash: bankCash,
+      receivables: receivables,
+      inventory: inventory,
+      payables: payables,
+      netWorth: netWorth
+    };
+  } catch (error) {
+    logError('computeNetWorthSnapshot', error);
+    throw error;
+  }
+}
+
+/**
+ * Ensure the Net_Worth_Log sheet exists with headers.
+ */
+function ensureNetWorthLogSheet() {
+  const ss = SpreadsheetApp.getActive();
+  let sheet = ss.getSheetByName('Net_Worth_Log');
+  if (!sheet) {
+    sheet = ss.insertSheet('Net_Worth_Log');
+    sheet.appendRow(['Date', 'Cash_Bank', 'Receivables', 'Inventory', 'Suppliers', 'Net_Worth', 'Change']);
+  }
+  return sheet;
+}
+
+/**
+ * Record today's net worth snapshot (updates existing row for the day).
+ * Returns the snapshot plus calculated change vs previous day.
+ */
+function recordNetWorthSnapshot() {
+  const snap = computeNetWorthSnapshot();
+  const sheet = ensureNetWorthLogSheet();
+  const data = sheet.getDataRange().getValues(); // includes header
+  const snapDate = new Date(snap.date);
+  snapDate.setHours(0, 0, 0, 0);
+
+  let existingRowIndex = null; // zero-based within data array
+  let previousNet = 0;
+
+  // Walk from bottom to find existing row for today and previous distinct day net worth
+  for (let i = data.length - 1; i >= 1; i--) {
+    const rowDate = data[i][0];
+    if (!rowDate) continue;
+    const normalized = new Date(rowDate);
+    normalized.setHours(0, 0, 0, 0);
+    if (existingRowIndex === null && normalized.getTime() === snapDate.getTime()) {
+      existingRowIndex = i;
+      continue;
+    }
+    if (previousNet === 0 && normalized.getTime() !== snapDate.getTime()) {
+      previousNet = parseFloat(data[i][5]) || 0; // Net_Worth column
+      break;
+    }
+  }
+
+  const change = snap.netWorth - previousNet;
+  const rowValues = [
+    snapDate,
+    snap.bankCash,
+    snap.receivables,
+    snap.inventory,
+    snap.payables,
+    snap.netWorth,
+    change
+  ];
+
+  if (existingRowIndex !== null) {
+    const rowNumber = existingRowIndex + 1; // convert to 1-based
+    sheet.getRange(rowNumber, 1, 1, rowValues.length).setValues([rowValues]);
+  } else {
+    sheet.appendRow(rowValues);
+  }
+
+  return {
+    snapshot: snap,
+    change: change,
+    previousNetWorth: previousNet
+  };
+}
+
+/**
+ * Read net worth history (most recent first).
+ */
+function getNetWorthHistory(limit) {
+  const sheet = ensureNetWorthLogSheet();
+  const data = sheet.getDataRange().getValues();
+  if (!data || data.length <= 1) return [];
+
+  // Drop header, normalize ordering by date desc
+  const rows = data.slice(1).filter(r => r[0]);
+  rows.sort((a, b) => new Date(b[0]) - new Date(a[0]));
+
+  const trimmed = limit ? rows.slice(0, limit) : rows;
+
+  return trimmed.map(r => ({
+    date: r[0],
+    bankCash: parseFloat(r[1]) || 0,
+    receivables: parseFloat(r[2]) || 0,
+    inventory: parseFloat(r[3]) || 0,
+    payables: parseFloat(r[4]) || 0,
+    netWorth: parseFloat(r[5]) || 0,
+    change: parseFloat(r[6]) || 0
+  }));
+}
+
+/**
+ * Combined endpoint for Reports UI.
+ */
+function getNetWorthReport() {
+  try {
+    const result = recordNetWorthSnapshot();
+    const history = getNetWorthHistory();
+    return {
+      snapshot: result.snapshot,
+      change: result.change,
+      previousNetWorth: result.previousNetWorth,
+      history: history
+    };
+  } catch (error) {
+    logError('getNetWorthReport', error);
+    throw error;
+  }
+}
+
 /**
  * Get detailed account statement with running balance
  * Handles date filters and normalizes account naming
