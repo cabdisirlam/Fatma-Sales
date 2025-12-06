@@ -1234,7 +1234,7 @@ function getInventoryDashboardData() {
     return {
       success: true,
       overview: overview,
-      inventory: formattedInventory.sort((a,b) => a.Item_Name.localeCompare(b.Item_Name))
+      inventory: formattedInventory.sort((a,b) => (a.Item_ID || '').toString().localeCompare((b.Item_ID || '').toString()))
     };
 
   } catch (error) {
