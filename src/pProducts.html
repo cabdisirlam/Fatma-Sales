@@ -294,7 +294,7 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Supplier *</label>
-              <select class="form-select" name="Supplier" id="supplierSelect" required>
+              <select class="form-select" name="Supplier_ID" id="supplierSelect" required>
                 <option value="">Select Supplier</option>
               </select>
               <div class="form-text">Only active suppliers are shown</div>
@@ -368,6 +368,9 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title"><i class="bi bi-arrow-90deg-left"></i> Return to Supplier</h5>
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" onclick="refreshReturnModalData()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh Data
+          </button>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
       <div class="modal-body">
@@ -492,7 +495,7 @@
 
       document.getElementById('inventoryTableContainer').style.display = 'block';
 
-      data.forEach(function(item) {
+      data.forEach(function(item, index) {
         const row = document.createElement('tr');
 
         let stockStatus = '';
@@ -723,6 +726,10 @@
     }
 
     // ===== RETURN TO SUPPLIER =====
+    function refreshReturnModalData() {
+        loadInventory();
+        loadSuppliers();
+    }
     function buildReturnSelectOptions() {
       const selectContainer = document.getElementById('returnItemSelectContainer');
       const select = document.getElementById('returnItemSelect');
@@ -780,6 +787,9 @@
         return;
       }
 
+      const supplierSelect = document.getElementById('returnSupplier');
+      supplierSelect.value = ''; // Reset supplier
+
       // If the user picked from the dropdown, keep it visible; otherwise hide the chooser
       if (selectContainer && !fromSelect) {
         selectContainer.style.display = 'none';
@@ -792,9 +802,8 @@
       document.getElementById('returnReason').value = '';
       document.getElementById('returnPaymentMethod').value = 'Credit';
 
-      // Prefill supplier if available
-      const supplierSelect = document.getElementById('returnSupplier');
-      if (supplierSelect && item.Supplier) {
+      // Prefill supplier if available and selected from dropdown
+      if (fromSelect && supplierSelect && item.Supplier) {
         supplierSelect.value = item.Supplier;
       }
 

@@ -295,10 +295,17 @@ function getUniqueCategories() {
  */
 function addProduct(productData) {
   try {
-    const stockSource = (productData.Stock_Source || 'opening').toLowerCase();
-    const isPurchase = stockSource === 'purchase';
     const supplierId = productData.Supplier_ID || productData.Supplier || '';
-    const supplierName = productData.Supplier_Name || '';
+    const stockSource = (productData.Stock_Source || (supplierId ? 'purchase' : 'opening')).toLowerCase();
+    const isPurchase = stockSource === 'purchase';
+    
+    let supplierName = productData.Supplier_Name || '';
+    if (supplierId && !supplierName) {
+        const supplier = getSupplierById(supplierId);
+        if(supplier) {
+            supplierName = supplier.Supplier_Name;
+        }
+    }
 
     // 1. Validation (Matches your form inputs)
     const requiredFields = ['Item_Name', 'Cost_Price', 'Current_Qty'];
@@ -363,7 +370,13 @@ function addProduct(productData) {
       createPurchase({
         Supplier_ID: supplierId,
         Supplier_Name: supplierName || (supplier && supplier.Supplier_Name),
-        items: [{ Item_ID: itemId, Qty: purchaseQty, Cost_Price: costPrice }],
+        items: [{ 
+            Item_ID: itemId, 
+            Item_Name: productData.Item_Name,
+            Category: productData.Category,
+            Qty: purchaseQty, 
+            Cost_Price: costPrice 
+        }],
         Payment_Method: productData.Payment_Method || 'Credit',
         Paid_Amount: paidAmount,
         User: productData.User || 'SYSTEM'
