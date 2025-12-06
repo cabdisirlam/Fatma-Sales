@@ -171,25 +171,32 @@
       select.innerHTML = '<option value="">Loading...</option>';
       select.disabled = true;
 
-      google.script.run.withSuccessHandler(function(data) {
-        select.innerHTML = '<option value="">Select Item</option>';
-        data.forEach(i => {
-          const stockQty = (i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty) || 0;
-          const o = document.createElement('option');
-          o.value = i.Item_ID;
-          o.textContent = `${i.Item_Name} - Ksh ${i.Selling_Price}`;
-          o.dataset.price = i.Selling_Price; // Store price in data attribute
-          if(stockQty <= 0) o.disabled = true; // Optional: disable out of stock
-          select.appendChild(o);
-        });
-        
-        // Auto-fill price on change
-        select.onchange = function() {
-           const price = this.options[this.selectedIndex].dataset.price;
-           if(price) document.getElementById('unitPrice').value = price;
-        };
-        select.disabled = false;
-      }).getInventory({});
+      google.script.run
+        .withSuccessHandler(function(data) {
+          select.innerHTML = '<option value="">Select Item</option>';
+          data.forEach(i => {
+            const stockQty = (i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty) || 0;
+            const o = document.createElement('option');
+            o.value = i.Item_ID;
+            o.textContent = `${i.Item_Name} - Ksh ${i.Selling_Price}`;
+            o.dataset.price = i.Selling_Price; // Store price in data attribute
+            if(stockQty <= 0) o.disabled = true; // Optional: disable out of stock
+            select.appendChild(o);
+          });
+
+          // Auto-fill price on change
+          select.onchange = function() {
+            const price = this.options[this.selectedIndex].dataset.price;
+            if(price) document.getElementById('unitPrice').value = price;
+          };
+          select.disabled = false;
+        })
+        .withFailureHandler(function(error) {
+          select.innerHTML = '<option value="">Error loading inventory</option>';
+          select.disabled = true;
+          showError(error.message);
+        })
+        .getInventory({});
     }
 
     // Auto-fill KRA PIN when customer is selected

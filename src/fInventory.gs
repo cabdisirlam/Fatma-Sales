@@ -14,14 +14,18 @@
  */
 function getInventory(filters) {
   try {
+    Logger.log('getInventory called with filters: ' + JSON.stringify(filters));
     const sheet = getSheet('Inventory');
     const data = sheet.getDataRange().getValues();
+    Logger.log('Inventory sheet data length: ' + data.length);
 
     if (data.length <= 1) {
+      Logger.log('Inventory sheet has no data.');
       return [];
     }
 
     const headers = data[0];
+    Logger.log('Inventory headers: ' + JSON.stringify(headers));
     const batchesByItemId = {}; // Group batches by Item_ID
 
     // Step 1: Read all rows and group by Item_ID
@@ -42,6 +46,7 @@ function getInventory(filters) {
 
       batchesByItemId[itemId].push(batch);
     }
+    Logger.log('Grouped batches by Item_ID. Number of unique items: ' + Object.keys(batchesByItemId).length);
 
     // Step 2: Aggregate batches into single items
     const items = [];
@@ -98,6 +103,7 @@ function getInventory(filters) {
 
       items.push(item);
     }
+    Logger.log('Finished aggregating items. Total items returned: ' + items.length);
 
     return items;
 
