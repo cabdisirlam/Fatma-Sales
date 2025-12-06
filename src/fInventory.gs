@@ -1208,14 +1208,22 @@ function getInventoryDashboardData() {
     // getInventory() already aggregates batches, which is perfect.
     const inventoryItems = getInventory(); 
 
+    const toNumber = (val) => {
+      if (val === null || val === undefined) return 0;
+      const cleaned = val.toString().replace(/[^0-9.\-]/g, '');
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    };
+
     let lowStockCount = 0;
     let outOfStockCount = 0;
     let totalValue = 0;
 
     const formattedInventory = inventoryItems.map(item => {
-      const stockLevel = parseFloat(item.Current_Qty || item.Stock_Qty || item.Stock_Level) || 0;
-      const reorderLevel = parseFloat(item.Reorder_Level) || 0;
-      const costPrice = parseFloat(item.Cost_Price) || 0;
+      const stockLevel = toNumber(item.Current_Qty || item.Stock_Qty || item.Stock_Level);
+      const reorderLevel = toNumber(item.Reorder_Level);
+      const costPrice = toNumber(item.Cost_Price);
+      const stockValue = toNumber(item.stock_value) || (stockLevel * costPrice);
 
       let status = 'In Stock';
       if (stockLevel <= 0) {
@@ -1226,7 +1234,7 @@ function getInventoryDashboardData() {
         lowStockCount++;
       }
       
-      totalValue += stockLevel * costPrice;
+      totalValue += stockValue;
 
       return {
         Item_ID: item.Item_ID,
@@ -1239,6 +1247,7 @@ function getInventoryDashboardData() {
         Reorder_Level: reorderLevel,
         Unit: item.Unit || 'Pcs', // Assuming 'Pcs' as a default unit
         Cost_Price: costPrice,
+        Stock_Value: stockValue,
         Selling_Price: parseFloat(item.Selling_Price) || 0,
         Status: status
       };
