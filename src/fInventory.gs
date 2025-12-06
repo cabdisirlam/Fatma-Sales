@@ -1214,16 +1214,25 @@ function getInventoryDashboardData() {
       const num = parseFloat(cleaned);
       return isNaN(num) ? 0 : num;
     };
+    const pickCost = (item) => {
+      return toNumber(
+        item.Cost_Price ||
+        item.Unit_Cost ||
+        item.Purchase_Price ||
+        item.Cost ||
+        item.UnitPrice
+      );
+    };
 
     let lowStockCount = 0;
     let outOfStockCount = 0;
     let totalValue = 0;
 
     const formattedInventory = inventoryItems.map(item => {
-      const stockLevel = toNumber(item.Current_Qty || item.Stock_Qty || item.Stock_Level);
+      const stockLevel = toNumber(item.Current_Qty || item.Stock_Qty || item.Stock_Level || item.Qty || item.Quantity);
       const reorderLevel = toNumber(item.Reorder_Level);
-      const costPrice = toNumber(item.Cost_Price);
-      const stockValue = toNumber(item.stock_value) || (stockLevel * costPrice);
+      const costPrice = pickCost(item);
+      const stockValue = toNumber(item.stock_value || item.Stock_Value || item.Inventory_Value) || (stockLevel * costPrice);
 
       let status = 'In Stock';
       if (stockLevel <= 0) {
