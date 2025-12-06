@@ -124,10 +124,10 @@ function addSupplier(supplierData) {
       supplierData.Phone.trim(),                           // 4. Phone
       supplierData.Email ? supplierData.Email.trim() : '', // 5. Email
       supplierData.Address || '',                          // 6. Address
-      openingBalance,                                      // 7. Opening_Balance
-      openingBalance,                                      // 8. Total_Purchased (starts with opening balance)
+      openingBalance,                                      // 7. Opening_Balance (for reference)
+      0,                                                   // 8. Total_Purchased (do not inflate with opening)
       0,                                                   // 9. Total_Paid
-      openingBalance,                                      // 10. Current_Balance (starts with opening balance)
+      openingBalance,                                      // 10. Current_Balance (amount we owe supplier)
       supplierData.Payment_Terms || 'Cash',                // 11. Payment_Terms
       'Active'                                             // 12. Status
     ];
@@ -177,15 +177,13 @@ function updateSupplier(supplierId, supplierData) {
       const headers = sheet.getDataRange().getValues()[0];
       const hasOpeningColumn = headers.indexOf('Opening_Balance') !== -1;
 
-      const newOpening = parseFloat(openingBalanceInput) || 0;
-      const existingOpening = parseFloat(currentSupplier.Opening_Balance !== undefined ? currentSupplier.Opening_Balance : currentSupplier.Current_Balance) || 0;
-      const delta = newOpening - existingOpening;
+      const newOpening = Math.max(0, parseFloat(openingBalanceInput) || 0);
 
       if (hasOpeningColumn) {
         updates.Opening_Balance = newOpening;
       }
-      updates.Total_Purchased = (parseFloat(currentSupplier.Total_Purchased) || 0) + delta;
-      updates.Current_Balance = (parseFloat(currentSupplier.Current_Balance) || 0) + delta;
+      // Direct debt balance goes to Current_Balance; do not inflate Total_Purchased
+      updates.Current_Balance = newOpening;
     }
     if (supplierData.Payment_Terms !== undefined) updates.Payment_Terms = supplierData.Payment_Terms;
     if (supplierData.Status !== undefined) updates.Status = supplierData.Status;

@@ -261,6 +261,15 @@ function updateCustomer(customerId, customerData) {
     if (customerData.Customer_Type !== undefined) updates.Customer_Type = customerData.Customer_Type;
     if (customerData.Credit_Limit !== undefined) updates.Credit_Limit = parseFloat(customerData.Credit_Limit);
     if (customerData.Advance_Credit !== undefined) updates.Advance_Credit = Math.max(0, parseFloat(customerData.Advance_Credit) || 0);
+    // If Opening_Balance is provided, treat it as a direct debt balance and sync Current_Balance
+    if (customerData.Opening_Balance !== undefined) {
+      const opening = Math.max(0, parseFloat(customerData.Opening_Balance) || 0);
+      updates.Opening_Balance = opening;
+      updates.Current_Balance = opening;
+    } else if (customerData.Current_Balance !== undefined) {
+      // Direct current balance override (positive = customer owes us)
+      updates.Current_Balance = Math.max(0, parseFloat(customerData.Current_Balance) || 0);
+    }
     if (customerData.Status !== undefined) updates.Status = customerData.Status;
 
     const result = updateRowById('Customers', 'Customer_ID', customerId, updates);
