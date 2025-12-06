@@ -430,21 +430,34 @@ function getSupplierPaymentHistory(supplierId) {
       return isNaN(num) ? 0 : num;
     };
 
+    const supplier = getSupplierById(supplierId) || {};
+    const supplierKey = (supplierId || '').toString().toLowerCase();
+    const supplierName = (supplier.Supplier_Name || '').toString().toLowerCase();
+    const supplierTxnTypes = [
+      'Supplier_Payment',
+      'Purchase_Payment',
+      'Supplier_Credit_Note',
+      'Supplier_Refund',
+      'Inventory_Return_To_Supplier'
+    ];
+
     const financials = sheetToObjects('Financials');
 
     // Include normal payments and supplier returns/credit notes
     const payments = financials.filter(txn => {
       const type = (txn.Type || '').toString();
-      const isSupplierType = (
-        type === 'Supplier_Payment' ||
-        type === 'Purchase_Payment'
-      );
-      if (!isSupplierType) return false;
+      if (supplierTxnTypes.indexOf(type) === -1) return false;
 
-      const desc = (txn.Description || '').toString();
-      const payee = (txn.Payee || '').toString();
-      const reference = (txn.Reference || '').toString();
-      return desc.indexOf(supplierId) !== -1 || payee.indexOf(supplierId) !== -1 || reference.indexOf(supplierId) !== -1;
+      const desc = (txn.Description || '').toString().toLowerCase();
+      const payee = (txn.Payee || '').toString().toLowerCase();
+      const reference = (txn.Reference || '').toString().toLowerCase();
+
+      return (
+        desc.indexOf(supplierKey) !== -1 ||
+        payee.indexOf(supplierKey) !== -1 ||
+        payee.indexOf(supplierName) !== -1 ||
+        reference.indexOf(supplierKey) !== -1
+      );
     }).map(txn => {
       // Normalize amount so credit notes/refunds reduce balance (treat as payment)
       const debit = toNumber(txn.Debit);
@@ -611,10 +624,16 @@ function getSupplierStatement(supplierId, startDate, endDate) {
     });
 
     payments.forEach(payment => {
+      const returnTypes = [
+        'Supplier_Credit_Note',
+        'Supplier_Refund',
+        'Inventory_Return_To_Supplier'
+      ];
+      const isReturn = returnTypes.indexOf((payment.Type || '').toString()) !== -1;
       transactions.push({
         date: new Date(payment.DateTime),
-        type: 'Payment',
-        description: payment.Description || 'Payment',
+        type: isReturn ? 'Return/Credit' : 'Payment',
+        description: payment.Description || (isReturn ? 'Supplier return/credit' : 'Payment'),
         debit: 0,
         credit: toNumber(payment.Amount),
         reference: payment.Transaction_ID
