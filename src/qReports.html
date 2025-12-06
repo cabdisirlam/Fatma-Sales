@@ -189,6 +189,14 @@
   <div class="header-section">
     <h2><i class="bi bi-cash-coin"></i> Net Worth Report</h2>
     <p>Run performance reports, analytics, and exports</p>
+    <div class="d-flex gap-2 mt-3">
+      <button class="btn btn-light btn-sm" style="color:#0f766e; border:1px solid rgba(255,255,255,0.4);" onclick="triggerNetWorthSnapshot()">
+        <i class="bi bi-cloud-check"></i> Record today & refresh
+      </button>
+      <button class="btn btn-outline-light btn-sm" onclick="loadNetWorthReport()">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+    </div>
   </div>
 
   <!-- Net Worth History Table -->
@@ -256,6 +264,20 @@
       document.getElementById('loadingIndicator').style.display = isLoading ? 'block' : 'none';
       document.getElementById('historyTableContainer').style.display = isLoading ? 'none' : 'block';
       document.getElementById('noDataMessage').style.display = 'none';
+    }
+
+    function triggerNetWorthSnapshot() {
+      toggleLoading(true);
+      google.script.run
+        .withSuccessHandler(function() {
+          loadNetWorthReport();
+        })
+        .withFailureHandler(function(error) {
+          toggleLoading(false);
+          document.getElementById('noDataMessage').style.display = 'block';
+          console.error('Error recording net worth snapshot:', error);
+        })
+        .recordNetWorthSnapshot();
     }
 
     function renderHistory(history) {
