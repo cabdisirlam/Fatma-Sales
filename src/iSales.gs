@@ -1584,20 +1584,21 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
     }
     
     // V3.1: Finalize totals for the negative sale entry and write to sheet
-    if (returnSaleRows.length > 0) {
-      // Update the subtotal and grand total for all rows of this return transaction
-      for (const row of returnSaleRows) {
-        row[11] = -refundAmount; // Subtotal column
-        row[14] = -refundAmount; // Grand_Total column
-      }
-      // Batch write all return rows at once
-      salesSheet.getRange(salesSheet.getLastRow() + 1, 1, returnSaleRows.length, returnSaleRows[0].length).setValues(returnSaleRows);
-      Logger.log('Batch wrote ' + returnSaleRows.length + ' sale return rows for transaction ' + returnId);
+    if (returnSaleRows.length === 0) {
+      throw new Error('No return rows generated for sale return ' + saleId);
     }
+    // Update the subtotal and grand total for all rows of this return transaction
+    for (const row of returnSaleRows) {
+      row[11] = -refundAmount; // Subtotal column
+      row[14] = -refundAmount; // Grand_Total column
+    }
+    // Batch write all return rows at once (negative quantities/amounts)
+    salesSheet.getRange(salesSheet.getLastRow() + 1, 1, returnSaleRows.length, returnSaleRows[0].length).setValues(returnSaleRows);
+    Logger.log('Batch wrote ' + returnSaleRows.length + ' sale return rows for transaction ' + returnId);
 
 
-    // ? FIX: Only record refund in Financials if revenue was actually recorded
-    // Check if this sale had payments recorded (revenue recognition)
+    // Record refund/credit note in Financials
+    // Check if this sale had payments recorded (cash actually received)
     const financials = sheetToObjects('Financials');
     const salePayments = financials.filter(f =>
       f.Type === 'Sale_Payment' &&
@@ -1606,6 +1607,106 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
 
     const totalPaid = salePayments.reduce((sum, p) => sum + (parseFloat(p.Amount) || 0), 0);
     const hasRecordedRevenue = totalPaid > 0;
+    const financialSheet = getSheet('Financials');
+
+    if (!refundCash || !hasRecordedRevenue) {
+      // Credit flow OR no cash received: reduce Accounts Receivable only (no cash movement)
+      creditNoteTxnId = generateId('Financials', 'Transaction_ID', 'CRN');
+      const creditNoteRow = [
+        creditNoteTxnId,
+        new Date(),
+        'Credit_Note',
+        sale.Customer_ID || '',
+        'Sales Return',
+        'Accounts Receivable',
+        'Credit note for sale ' + saleId + ': ' + reason,
+        parseFloat(refundAmount),
+        0, // Debit
+        parseFloat(refundAmount), // Credit (reduce AR)
+        0, // Balance
+        'Credit',
+        sale.Customer_Name,
+        saleId, // Receipt_No
+        returnId, // Reference the new return transaction
+        'Approved',
+        user,
+        user
+      ];
+      financialSheet.appendRow(creditNoteRow);
+      Logger.log('Credit_Note recorded for return (AR reduced, no cash movement): ' + refundAmount);
+    }
+
+    if (refundCash && hasRecordedRevenue) {
+      // Cash refund only when cash was actually received
+      refundTxnId = generateId('Financials', 'Transaction_ID', 'REF');
+
+      // Determine refund account:
+      // 1. Use specified refundMethod if provided
+      // 2. Otherwise, check if original sale was split payment
+      // 3. Otherwise, use original sale payment mode
+      let refundAccount = refundMethod || sale.Payment_Mode;
+
+      // For split payments, default to Cash unless specified
+      if (refundAccount === 'Split') {
+        // Try to find the dominant payment method from sale payments
+        const salePaymentsSplit = financials.filter(f =>
+          f.Type === 'Sale_Payment' &&
+          (f.Receipt_No === saleId || f.Reference === saleId)
+        );
+
+        if (salePaymentsSplit.length > 0) {
+          // Use the payment method with highest amount
+          const paymentsByMethod = {};
+          salePaymentsSplit.forEach(p => {
+            const method = p.Account || p.Payment_Method || 'Cash';
+            paymentsByMethod[method] = (paymentsByMethod[method] || 0) + (parseFloat(p.Amount) || 0);
+          });
+
+          // Get method with highest amount
+          let maxAmount = 0;
+          for (const method in paymentsByMethod) {
+            if (paymentsByMethod[method] > maxAmount) {
+              maxAmount = paymentsByMethod[method];
+              refundAccount = method;
+            }
+          }
+        } else {
+          refundAccount = 'Cash'; // Default fallback
+        }
+      }
+
+      const canonicalAccount = canonicalizeAccountName(refundAccount);
+
+      const refundRow = [
+        refundTxnId,
+        new Date(),
+        'Sale_Refund',
+        sale.Customer_ID || '',
+        'Sales',
+        canonicalAccount, // ?. FIX: Use canonical account name
+        'Refund for sale ' + saleId + ': ' + reason,
+        parseFloat(refundAmount),
+        0, // Debit
+        parseFloat(refundAmount), // ? FIX: Credit cash (asset decreases when refunding)
+        0, // Balance
+        canonicalAccount, // ?. FIX: Payment mode also canonicalized
+        sale.Customer_Name,
+        saleId, // Receipt_No
+        returnId, // Reference the new return transaction
+        'Approved',
+        user,
+        user
+      ];
+
+      financialSheet.appendRow(refundRow);
+
+      // Update account balance (decrease)
+      updateAccountBalance(canonicalAccount, -parseFloat(refundAmount), user); // ?. FIX: Use canonical account
+
+      Logger.log('Sale_Refund recorded in Financials (cash out): ' + refundAmount);
+    }
+
+    /* Legacy block (disabled)
 
     // Only create Sale_Refund financial transaction if revenue was recorded
     if (hasRecordedRevenue) {
@@ -1708,6 +1809,8 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
     } else {
       Logger.log('Sale_Refund NOT recorded in Financials (no revenue was recorded for this credit sale)');
     }
+
+    */ // end legacy block
 
     // Reverse COGS: debit Inventory Asset, credit Cost of Goods Sold
     if (totalCOGSReversal > 0) {
