@@ -75,10 +75,15 @@
       <div class="row mb-3">
         <div class="col-md-5">
           <label class="form-label">Item/Product *</label>
-          <select class="form-select" name="itemId" id="itemSelect" required>
-            <option value="">Select Item</option>
+          <div class="input-group">
+            <select class="form-select" name="itemId" id="itemSelect" required>
+              <option value="">Select Item</option>
             </select>
+            <button class="btn btn-outline-secondary" type="button" onclick="loadInventory()">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
           </div>
+        </div>
         <div class="col-md-2">
           <label class="form-label">Qty *</label>
           <input type="number" class="form-control" name="quantity" id="qtyInput" min="1" value="1" required>
@@ -162,8 +167,11 @@
     }
 
     function loadInventory() {
+      const select = document.getElementById('itemSelect');
+      select.innerHTML = '<option value="">Loading...</option>';
+      select.disabled = true;
+
       google.script.run.withSuccessHandler(function(data) {
-        const select = document.getElementById('itemSelect');
         select.innerHTML = '<option value="">Select Item</option>';
         data.forEach(i => {
           const stockQty = (i.Current_Qty !== undefined ? i.Current_Qty : i.Stock_Qty) || 0;
@@ -180,6 +188,7 @@
            const price = this.options[this.selectedIndex].dataset.price;
            if(price) document.getElementById('unitPrice').value = price;
         };
+        select.disabled = false;
       }).getInventory({});
     }
 

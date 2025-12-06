@@ -2027,27 +2027,16 @@ function getSalesReport(startDate, endDate) {
 function clearSaleRelatedCaches() {
   try {
     // Clear sales-related caches
-    if (typeof clearCachedData === 'function') {
-      clearCachedData('cache_sales_recent');
-      clearCachedData('cache_dashboard_data');
-      clearCachedData('cache_sales_overview');
-    }
+    
 
     // Clear inventory cache (quantities changed)
-    if (typeof clearInventoryCache === 'function') {
-      clearInventoryCache();
-    }
+    
 
     // Clear customer cache (if customer balance updated)
-    if (typeof clearCachedData === 'function') {
-      clearCachedData('cache_customers_all');
-      clearCachedData('cache_customer_debt');
-    }
+    
 
     // Clear financial cache (new transaction recorded)
-    if (typeof clearCachedData === 'function') {
-      clearCachedData('cache_financials_summary');
-    }
+    
 
     Logger.log('✅ Cleared all sale-related caches for immediate updates');
   } catch (error) {

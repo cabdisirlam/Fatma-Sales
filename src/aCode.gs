@@ -993,22 +993,15 @@ function forceRefreshData(dataType) {
         return getInventory();
 
       case 'customers':
-        if (typeof clearCachedData === 'function') {
-          clearCachedData('cache_customers_all');
-        }
+        
         return getCustomers();
 
       case 'sales':
-        if (typeof clearCachedData === 'function') {
-          clearCachedData('cache_sales_recent');
-          clearCachedData('cache_dashboard_data');
-        }
+        
         return getSalesOverview();
 
       case 'dashboard':
-        if (typeof clearCachedData === 'function') {
-          clearCachedData('cache_dashboard_data');
-        }
+        
         return getDashboardStats();
 
       case 'all':
