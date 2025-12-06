@@ -19,22 +19,30 @@ function getSalesOverview() {
     today.setHours(0, 0, 0, 0);
 
     sales.forEach(row => {
-      if (row.Type !== 'Sale') return;
-      if (seenIds.has(row.Transaction_ID)) return;
-      seenIds.add(row.Transaction_ID);
+      const type = (row.Type || '').toString().trim().toLowerCase();
+      if (type !== 'sale') return; // only count actual sales
+
+      const txnId = row.Transaction_ID || '';
+      if (txnId && seenIds.has(txnId)) return;
+      if (txnId) seenIds.add(txnId);
 
       const total = parseFloat(row.Grand_Total) || 0;
+      if (total <= 0) return;
+
       totalRevenue += total;
       saleCount += 1;
 
-      if (row.Payment_Mode === 'Credit') {
+      const payMode = (row.Payment_Mode || '').toString().toLowerCase();
+      if (payMode.includes('credit')) {
         creditCount += 1;
       }
 
-      const saleDate = new Date(row.DateTime);
-      saleDate.setHours(0, 0, 0, 0);
-      if (saleDate.getTime() === today.getTime()) {
-        todayRevenue += total;
+      const saleDate = row.DateTime ? new Date(row.DateTime) : null;
+      if (saleDate && !isNaN(saleDate.getTime())) {
+        saleDate.setHours(0, 0, 0, 0);
+        if (saleDate.getTime() === today.getTime()) {
+          todayRevenue += total;
+        }
       }
     });
 
