@@ -3589,22 +3589,28 @@
             if (response.success) {
               showQuickAddAlert(alertBox, 'success', 'Customer added successfully! ID: ' + response.customerId);
               form.reset();
-              setTimeout(() => {
-                loadCustomersSection(true);
-                const modalEl = ensureCustomerModal();
-                if (modalEl) {
+              const modalEl = ensureCustomerModal();
+              if (modalEl) {
                   const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
                   modal.hide();
-                }
-              }, 400);
+              }
+              loadCustomersSection(true);
             } else {
               showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add customer'));
             }
             resetSubmitButton(submitBtn, 'customer');
           })
           .withFailureHandler(function(error) {
+            console.error('Error adding customer:', error);
             showQuickAddAlert(alertBox, 'danger', 'Error: ' + error.message);
             resetSubmitButton(submitBtn, 'customer');
+            const modalEl = ensureCustomerModal();
+            if (modalEl) {
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) {
+                    modal.hide();
+                }
+            }
           })
           .addCustomer(customerData);
       } else {
