@@ -470,22 +470,8 @@ ${status}
             document.getElementById('return-item-static-container').style.display = 'none';
             document.getElementById('return-stock-container').style.display = 'none';
 
-            // Load items into dropdown
-            const select = document.getElementById('return-item-select');
-            select.innerHTML = '<option value="">Select item...</option>';
-
-            if (allItems && allItems.length > 0) {
-                allItems.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.Item_ID;
-                    option.textContent = `${item.Item_Name} (Stock: ${item.Stock_Level} ${item.Unit || 'units'})`;
-                    select.appendChild(option);
-                });
-            }
-
-            // Load items and suppliers list
-            populateReturnItemSelect();
-            loadSuppliersForReturn();
+            // Auto-refresh data on modal open
+            refreshReturnModalData();
 
             // Show modal
             const modal = new bootstrap.Modal(document.getElementById('returnInventoryModal'));
@@ -534,7 +520,7 @@ ${status}
             document.getElementById('return-item-name').textContent = item.Item_Name;
             document.getElementById('return-current-stock').textContent = item.Stock_Level + ' ' + (item.Unit || 'units');
 
-            // Load suppliers list (preselect item's supplier if available)
+            // Refresh suppliers (preselect item's supplier if available)
             loadSuppliersForReturn(item.Supplier || item.Supplier_ID);
 
             // Show modal
