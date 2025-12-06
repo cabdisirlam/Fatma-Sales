@@ -1916,6 +1916,14 @@ function processSaleReturn(saleId, items, reason, user, refundCash, refundMethod
       returnId: returnId,
       message: 'Return processed successfully. Stock restored and customer balance updated.'
     };
+  } catch (error) {
+    logError('processSaleReturn', error);
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+}
 
 /**
  * Helper: Get cost price for returned item (prefers original batch cost)
