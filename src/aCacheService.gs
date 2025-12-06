@@ -39,27 +39,8 @@ const CACHE_CONFIG = {
  * @returns {*} Cached data or null if not found/expired
  */
 function getCachedData(key) {
-  try {
-    const cache = CacheService.getScriptCache();
-    const cached = cache.get(key);
-
-    if (!cached) {
-      return null;
-    }
-
-    // Parse and validate
-    try {
-      const parsed = JSON.parse(cached);
-      return parsed;
-    } catch (parseError) {
-      // Invalid cache data, remove it
-      cache.remove(key);
-      return null;
-    }
-  } catch (error) {
-    logError('getCachedData', error);
-    return null;
-  }
+  // Cache disabled: always force a fetch
+  return null;
 }
 
 /**
@@ -70,23 +51,8 @@ function getCachedData(key) {
  * @returns {boolean} Success status
  */
 function setCachedData(key, data, ttl) {
-  try {
-    const cache = CacheService.getScriptCache();
-    const ttlSeconds = ttl || CACHE_CONFIG.DEFAULT_TTL;
-
-    // Validate data is serializable
-    if (data === undefined || data === null) {
-      return false;
-    }
-
-    const serialized = JSON.stringify(data);
-    cache.put(key, serialized, ttlSeconds);
-
-    return true;
-  } catch (error) {
-    logError('setCachedData', error);
-    return false;
-  }
+  // Cache disabled: do nothing
+  return false;
 }
 
 /**
@@ -94,12 +60,7 @@ function setCachedData(key, data, ttl) {
  * @param {string} key - Cache key to remove
  */
 function clearCachedData(key) {
-  try {
-    const cache = CacheService.getScriptCache();
-    cache.remove(key);
-  } catch (error) {
-    logError('clearCachedData', error);
-  }
+  // Cache disabled: no-op
 }
 
 /**
@@ -107,29 +68,14 @@ function clearCachedData(key) {
  * @param {Array<string>} keys - Array of cache keys to remove
  */
 function clearMultipleCaches(keys) {
-  try {
-    const cache = CacheService.getScriptCache();
-    cache.removeAll(keys);
-  } catch (error) {
-    logError('clearMultipleCaches', error);
-  }
+  // Cache disabled: no-op
 }
 
 /**
  * Clear all caches (use sparingly)
  */
 function clearAllCaches() {
-  try {
-    const cache = CacheService.getScriptCache();
-
-    // Clear all known cache keys
-    const allKeys = Object.values(CACHE_CONFIG.KEYS);
-    cache.removeAll(allKeys);
-
-    Logger.log('All caches cleared: ' + allKeys.length + ' keys');
-  } catch (error) {
-    logError('clearAllCaches', error);
-  }
+  // Cache disabled: no-op
 }
 
 // =====================================================
@@ -143,25 +89,10 @@ function clearAllCaches() {
  */
 function getInventoryWithCache(fetchFunction) {
   try {
-    // Try cache first
-    let data = getCachedData(CACHE_CONFIG.KEYS.INVENTORY_ALL);
-
-    if (data && Array.isArray(data)) {
-      return data;
-    }
-
-    // Cache miss - fetch fresh data
-    data = fetchFunction();
-
-    // Cache it
-    if (data && Array.isArray(data)) {
-      setCachedData(CACHE_CONFIG.KEYS.INVENTORY_ALL, data, CACHE_CONFIG.INVENTORY_TTL);
-    }
-
-    return data;
+    // Cache disabled: always fetch fresh
+    return fetchFunction();
   } catch (error) {
     logError('getInventoryWithCache', error);
-    // Fallback to direct fetch
     return fetchFunction();
   }
 }
@@ -173,22 +104,8 @@ function getInventoryWithCache(fetchFunction) {
  */
 function getCustomersWithCache(fetchFunction) {
   try {
-    // Try cache first
-    let data = getCachedData(CACHE_CONFIG.KEYS.CUSTOMERS_ALL);
-
-    if (data && Array.isArray(data)) {
-      return data;
-    }
-
-    // Cache miss - fetch fresh data
-    data = fetchFunction();
-
-    // Cache it
-    if (data && Array.isArray(data)) {
-      setCachedData(CACHE_CONFIG.KEYS.CUSTOMERS_ALL, data, CACHE_CONFIG.CUSTOMERS_TTL);
-    }
-
-    return data;
+    // Cache disabled: always fetch fresh
+    return fetchFunction();
   } catch (error) {
     logError('getCustomersWithCache', error);
     return fetchFunction();
@@ -202,22 +119,8 @@ function getCustomersWithCache(fetchFunction) {
  */
 function getSuppliersWithCache(fetchFunction) {
   try {
-    // Try cache first
-    let data = getCachedData(CACHE_CONFIG.KEYS.SUPPLIERS_ALL);
-
-    if (data && Array.isArray(data)) {
-      return data;
-    }
-
-    // Cache miss - fetch fresh data
-    data = fetchFunction();
-
-    // Cache it
-    if (data && Array.isArray(data)) {
-      setCachedData(CACHE_CONFIG.KEYS.SUPPLIERS_ALL, data, CACHE_CONFIG.SUPPLIERS_TTL);
-    }
-
-    return data;
+    // Cache disabled: always fetch fresh
+    return fetchFunction();
   } catch (error) {
     logError('getSuppliersWithCache', error);
     return fetchFunction();
@@ -231,22 +134,8 @@ function getSuppliersWithCache(fetchFunction) {
  */
 function getRecentSalesWithCache(fetchFunction) {
   try {
-    // Try cache first
-    let data = getCachedData(CACHE_CONFIG.KEYS.SALES_RECENT);
-
-    if (data && Array.isArray(data)) {
-      return data;
-    }
-
-    // Cache miss - fetch fresh data
-    data = fetchFunction();
-
-    // Cache it
-    if (data && Array.isArray(data)) {
-      setCachedData(CACHE_CONFIG.KEYS.SALES_RECENT, data, CACHE_CONFIG.SALES_TTL);
-    }
-
-    return data;
+    // Cache disabled: always fetch fresh
+    return fetchFunction();
   } catch (error) {
     logError('getRecentSalesWithCache', error);
     return fetchFunction();
@@ -260,22 +149,8 @@ function getRecentSalesWithCache(fetchFunction) {
  */
 function getDashboardDataWithCache(fetchFunction) {
   try {
-    // Try cache first
-    let data = getCachedData(CACHE_CONFIG.KEYS.DASHBOARD_DATA);
-
-    if (data && typeof data === 'object') {
-      return data;
-    }
-
-    // Cache miss - fetch fresh data
-    data = fetchFunction();
-
-    // Cache it
-    if (data && typeof data === 'object') {
-      setCachedData(CACHE_CONFIG.KEYS.DASHBOARD_DATA, data, CACHE_CONFIG.SALES_TTL);
-    }
-
-    return data;
+    // Cache disabled: always fetch fresh
+    return fetchFunction();
   } catch (error) {
     logError('getDashboardDataWithCache', error);
     return fetchFunction();
@@ -291,11 +166,7 @@ function getDashboardDataWithCache(fetchFunction) {
  * Call this after any inventory modification
  */
 function invalidateInventoryCaches() {
-  clearMultipleCaches([
-    CACHE_CONFIG.KEYS.INVENTORY_ALL,
-    CACHE_CONFIG.KEYS.LOW_STOCK,
-    CACHE_CONFIG.KEYS.DASHBOARD_DATA
-  ]);
+  // Cache disabled: no-op
 }
 
 /**
@@ -303,11 +174,7 @@ function invalidateInventoryCaches() {
  * Call this after any customer modification
  */
 function invalidateCustomerCaches() {
-  clearMultipleCaches([
-    CACHE_CONFIG.KEYS.CUSTOMERS_ALL,
-    CACHE_CONFIG.KEYS.CUSTOMER_DEBT,
-    CACHE_CONFIG.KEYS.DASHBOARD_DATA
-  ]);
+  // Cache disabled: no-op
 }
 
 /**
@@ -315,10 +182,7 @@ function invalidateCustomerCaches() {
  * Call this after any supplier modification
  */
 function invalidateSupplierCaches() {
-  clearMultipleCaches([
-    CACHE_CONFIG.KEYS.SUPPLIERS_ALL,
-    CACHE_CONFIG.KEYS.DASHBOARD_DATA
-  ]);
+  // Cache disabled: no-op
 }
 
 /**
@@ -326,11 +190,7 @@ function invalidateSupplierCaches() {
  * Call this after any sale/quotation modification
  */
 function invalidateSalesCaches() {
-  clearMultipleCaches([
-    CACHE_CONFIG.KEYS.SALES_RECENT,
-    CACHE_CONFIG.KEYS.DASHBOARD_DATA,
-    CACHE_CONFIG.KEYS.INVENTORY_ALL
-  ]);
+  // Cache disabled: no-op
 }
 
 /**
@@ -338,10 +198,7 @@ function invalidateSalesCaches() {
  * Call this after any financial transaction
  */
 function invalidateFinancialCaches() {
-  clearMultipleCaches([
-    CACHE_CONFIG.KEYS.DASHBOARD_DATA,
-    CACHE_CONFIG.KEYS.CUSTOMER_DEBT
-  ]);
+  // Cache disabled: no-op
 }
 
 // =====================================================
@@ -353,29 +210,8 @@ function invalidateFinancialCaches() {
  * @returns {Object} Cache status information
  */
 function getCacheStats() {
-  try {
-    const stats = {
-      timestamp: new Date().toISOString(),
-      caches: {}
-    };
-
-    // Check each cache key
-    Object.entries(CACHE_CONFIG.KEYS).forEach(([name, key]) => {
-      const cached = getCachedData(key);
-      stats.caches[name] = {
-        key: key,
-        status: cached ? 'HIT' : 'MISS',
-        size: cached ? JSON.stringify(cached).length : 0,
-        type: cached ? (Array.isArray(cached) ? 'Array' : typeof cached) : 'N/A',
-        count: Array.isArray(cached) ? cached.length : 'N/A'
-      };
-    });
-
-    return stats;
-  } catch (error) {
-    logError('getCacheStats', error);
-    return { error: error.message };
-  }
+  // Cache disabled: return static info
+  return { disabled: true, timestamp: new Date().toISOString() };
 }
 
 /**
@@ -383,56 +219,6 @@ function getCacheStats() {
  * Run this periodically or after system restart
  */
 function warmUpCaches() {
-  try {
-    Logger.log('Starting cache warm-up...');
-
-    // Inventory
-    try {
-      const inventory = getInventory();
-      setCachedData(CACHE_CONFIG.KEYS.INVENTORY_ALL, inventory, CACHE_CONFIG.INVENTORY_TTL);
-      Logger.log('Cached ' + inventory.length + ' inventory items');
-    } catch (e) {
-      Logger.log('Failed to cache inventory: ' + e.message);
-    }
-
-    // Customers
-    try {
-      const customers = getCustomers();
-      setCachedData(CACHE_CONFIG.KEYS.CUSTOMERS_ALL, customers, CACHE_CONFIG.CUSTOMERS_TTL);
-      Logger.log('Cached ' + customers.length + ' customers');
-    } catch (e) {
-      Logger.log('Failed to cache customers: ' + e.message);
-    }
-
-    // Suppliers
-    try {
-      const suppliers = getSuppliers();
-      setCachedData(CACHE_CONFIG.KEYS.SUPPLIERS_ALL, suppliers, CACHE_CONFIG.SUPPLIERS_TTL);
-      Logger.log('Cached ' + suppliers.length + ' suppliers');
-    } catch (e) {
-      Logger.log('Failed to cache suppliers: ' + e.message);
-    }
-
-    // Recent Sales
-    try {
-      const recentSales = getRecentSales(20);
-      setCachedData(CACHE_CONFIG.KEYS.SALES_RECENT, recentSales, CACHE_CONFIG.SALES_TTL);
-      Logger.log('Cached ' + recentSales.length + ' recent sales');
-    } catch (e) {
-      Logger.log('Failed to cache recent sales: ' + e.message);
-    }
-
-    Logger.log('Cache warm-up completed');
-
-    return {
-      success: true,
-      message: 'Caches warmed up successfully'
-    };
-  } catch (error) {
-    logError('warmUpCaches', error);
-    return {
-      success: false,
-      message: 'Cache warm-up failed: ' + error.message
-    };
-  }
+  // Cache disabled: no-op
+  return { success: true, message: 'Cache disabled; warm-up skipped' };
 }

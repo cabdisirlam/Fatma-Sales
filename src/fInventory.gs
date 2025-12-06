@@ -144,11 +144,7 @@ function getInventory(filters) {
  * Clear cached inventory data
  */
 function clearInventoryCache() {
-  try {
-    CacheService.getScriptCache().remove(INVENTORY_CACHE_KEY);
-  } catch (error) {
-    logError('clearInventoryCache', error);
-  }
+  // Cache disabled: no-op
 }
 
 /**
