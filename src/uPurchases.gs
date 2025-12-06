@@ -310,6 +310,15 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
       message: 'Supplier return processed successfully'
     };
 
+  } catch (error) {
+    logError('processSupplierReturn', error);
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+}
+
 /**
  * Record purchase payment
  * V3.0: Validates payment method against Chart of Accounts
