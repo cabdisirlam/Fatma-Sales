@@ -230,9 +230,10 @@
 
                         <div class="mb-3">
                             <label for="return-supplier" class="form-label">Return to Supplier <span class="text-danger">*</span></label>
-                            <select class="form-select" id="return-supplier" required>
+                            <select class="form-select" id="return-supplier" required disabled>
                                 <option value="">Select supplier...</option>
                             </select>
+                            <div class="form-text text-muted">Supplier is locked to the selected item.</div>
                         </div>
 
                         <div class="mb-3">
@@ -589,6 +590,7 @@ ${status}
             if (preferred) {
                 select.value = preferred;
             }
+            select.disabled = true; // lock supplier to item
         }
 
         // Show/hide "Other" reason input
