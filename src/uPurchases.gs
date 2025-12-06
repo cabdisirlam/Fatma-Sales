@@ -197,26 +197,32 @@ function processSupplierReturn(supplierId, items, reason, paymentMethod, user) {
     }
     
     // Step 3: Write the negative purchase entries to the Purchases sheet
-    returnItemsForPurchaseSheet.forEach(returnLine => {
-      const purchaseRow = [
-        returnId,
-        date,
-        supplierId,
-        supplier.Supplier_Name,
-        returnLine.Item_ID,
-        returnLine.Item_Name,
-        returnLine.Qty,
-        returnLine.Cost_Price,
-        returnLine.Line_Total,
-        -totalReturnCost, // Total amount for the entire return transaction
-        'Returned',       // Payment_Status
-        'Credit Note',    // Payment_Method
-        0,                // Paid_Amount
-        0,                // Balance
-        user
-      ];
-      purchasesSheet.appendRow(purchaseRow);
-    });
+    const purchaseRows = returnItemsForPurchaseSheet.map(returnLine => ([
+      returnId,
+      date,
+      supplierId,
+      supplier.Supplier_Name,
+      returnLine.Item_ID,
+      returnLine.Item_Name,
+      returnLine.Qty,
+      returnLine.Cost_Price,
+      returnLine.Line_Total,
+      -totalReturnCost, // Total amount for the entire return transaction
+      'Returned',       // Payment_Status
+      'Credit Note',    // Payment_Method
+      0,                // Paid_Amount
+      0,                // Balance
+      user || 'SYSTEM'
+    ]));
+
+    if (purchaseRows.length === 0) {
+      throw new Error('No return lines generated for Purchases sheet.');
+    }
+
+    const startRow = purchasesSheet.getLastRow() + 1;
+    purchasesSheet
+      .getRange(startRow, 1, purchaseRows.length, purchaseRows[0].length)
+      .setValues(purchaseRows);
 
     // Step 4: Financial entries (existing logic)
     const financialSheet = getSheet('Financials');
