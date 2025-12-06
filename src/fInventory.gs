@@ -72,15 +72,16 @@ function getInventory(filters) {
       const item = {
         Item_ID: mostRecentBatch.Item_ID,
         Item_Name: mostRecentBatch.Item_Name,
-        Category: mostRecentBatch.Category,
-        Cost_Price: mostRecentBatch.Cost_Price,
         Selling_Price: mostRecentBatch.Selling_Price,
         Current_Qty: totalQty,
-        Reorder_Level: mostRecentBatch.Reorder_Level,
-        Supplier: mostRecentBatch.Supplier,
-        Last_Updated: mostRecentBatch.Last_Updated,
-        Updated_By: mostRecentBatch.Updated_By
+        // Category: mostRecentBatch.Category,
+        // Cost_Price: mostRecentBatch.Cost_Price,
+        // Reorder_Level: mostRecentBatch.Reorder_Level,
+        // Supplier: mostRecentBatch.Supplier,
+        // Last_Updated: mostRecentBatch.Last_Updated,
+        // Updated_By: mostRecentBatch.Updated_By
       };
+      Logger.log('Simplified item: ' + JSON.stringify(item));
 
       // Backwards compatibility: expose Stock_Qty for UIs expecting this field
       item.Stock_Qty = item.Current_Qty;
