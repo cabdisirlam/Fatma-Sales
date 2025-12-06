@@ -388,10 +388,13 @@
                             <th>Item ID</th>
                             <th>Item Name</th>
                             <th>Category</th>
+                            <th>Supplier</th>
                             <th class="text-end">Stock</th>
+                            <th class="text-end">Reorder</th>
                             <th>Unit</th>
                             <th class="text-end">Cost Price</th>
                             <th class="text-end">Selling Price</th>
+                            <th class="text-end">Stock Value</th>
                             <th class="text-center">Status</th>
                             <th class="text-center">Actions</th>
                         </tr>
@@ -406,10 +409,13 @@
                         <td>${item.Item_ID || ''}</td>
                         <td>${item.Item_Name || ''}</td>
                         <td>${item.Category || ''}</td>
+                        <td>${item.Supplier || ''}</td>
                         <td class="text-end">${item.Stock_Level}</td>
+                        <td class="text-end">${item.Reorder_Level || 0}</td>
                         <td>${item.Unit || ''}</td>
                         <td class="text-end">${formatCurrency(item.Cost_Price || 0)}</td>
                         <td class="text-end">${formatCurrency(item.Selling_Price || 0)}</td>
+                        <td class="text-end">${formatCurrency(item.Stock_Value || 0)}</td>
                         <td class="text-center">${statusBadge}</td>
                         <td class="text-center">
                             <button class="btn btn-sm btn-outline-primary" onclick="returnInventory('${item.Item_ID}')" title="Return Inventory">
