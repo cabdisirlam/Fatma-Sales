@@ -7539,55 +7539,78 @@
 
       // Show loading state
       select.innerHTML = '<option value="">Loading customers...</option>';
+      select.disabled = true;
 
       google.script.run
         .withSuccessHandler(function(data) {
-          modalCustomersData = data || [];
-          select.innerHTML = '<option value="">-- Select Customer --</option>';
+          try {
+            modalCustomersData = data || [];
+            select.innerHTML = '<option value="">-- Select Customer --</option>';
 
-          if (modalCustomersData.length === 0) {
-            select.innerHTML = '<option value="">No customers found</option>';
-            console.warn('No customers returned from backend');
-            return;
+            if (modalCustomersData.length === 0) {
+              select.innerHTML = '<option value="">No customers found</option>';
+              console.warn('No customers returned from backend');
+              return;
+            }
+
+            modalCustomersData.forEach(c => {
+              const option = document.createElement('option');
+              option.value = c.Customer_ID || c.ID;
+              option.textContent = c.Customer_Name || c.Name || 'Unnamed Customer';
+              select.appendChild(option);
+            });
+            console.log(`Successfully loaded ${modalCustomersData.length} customers`);
+          } catch (e) {
+            console.error('Error rendering modal customers:', e);
+            showModalAlert('Error rendering customers: ' + e.message, 'danger');
+          } finally {
+            select.disabled = false;
           }
-
-          modalCustomersData.forEach(c => {
-            const option = document.createElement('option');
-            option.value = c.Customer_ID || c.ID;
-            option.textContent = c.Customer_Name || c.Name || 'Unnamed Customer';
-            select.appendChild(option);
-          });
-          console.log(`Successfully loaded ${modalCustomersData.length} customers`);
         })
         .withFailureHandler(function(err) {
           console.error('Error loading customers:', err);
           select.innerHTML = '<option value="">Error loading customers</option>';
+          select.disabled = true;
           alert('Failed to load customers. Please try refreshing the page.');
         })
         .getCustomers();
     }
 
     function loadModalInventory() {
+      const select = document.getElementById('modalSaleProduct');
+      select.innerHTML = '<option value="">Loading inventory...</option>';
+      select.disabled = true;
       google.script.run
         .withSuccessHandler(function(data) {
-          modalInventoryData = data || [];
-          const select = document.getElementById('modalSaleProduct');
-          select.innerHTML = '<option value="">-- Choose Product --</option>';
-          modalInventoryData.forEach(item => {
-            const stockQty = item.Current_Qty || item.Stock_Qty || 0;
-            const isService = (item.Type || '').toString().toLowerCase() === 'service';
-            if (stockQty > 0 || isService) {
-              const option = document.createElement('option');
-              option.value = item.Item_ID;
-              option.textContent = `${item.Item_Name} - Ksh ${item.Selling_Price} (Stock: ${stockQty})`;
-              option.dataset.price = item.Selling_Price;
-              option.dataset.name = item.Item_Name;
-              option.dataset.type = item.Type || '';
-              select.appendChild(option);
-            }
-          });
+          try {
+            modalInventoryData = data || [];
+            select.innerHTML = '<option value="">-- Choose Product --</option>';
+            modalInventoryData.forEach(item => {
+              const stockQty = item.Current_Qty || item.Stock_Qty || 0;
+              const isService = (item.Type || '').toString().toLowerCase() === 'service';
+              if (stockQty > 0 || isService) {
+                const option = document.createElement('option');
+                option.value = item.Item_ID;
+                option.textContent = `${item.Item_Name} - Ksh ${item.Selling_Price} (Stock: ${stockQty})`;
+                option.dataset.price = item.Selling_Price;
+                option.dataset.name = item.Item_Name;
+                option.dataset.type = item.Type || '';
+                select.appendChild(option);
+              }
+            });
+          } catch (e) {
+            console.error('Error rendering modal inventory:', e);
+            showModalAlert('Error rendering inventory: ' + e.message, 'danger');
+          } finally {
+            select.disabled = false;
+          }
         })
-        .withFailureHandler(err => console.error('Error loading inventory:', err))
+        .withFailureHandler(err => {
+          console.error('Error loading inventory:', err);
+          select.innerHTML = '<option value="">Error loading inventory</option>';
+          select.disabled = true;
+          showModalAlert('Error loading inventory: ' + err.message, 'danger');
+        })
         .getInventory({});
     }
 
@@ -7810,23 +7833,10 @@
     }
 
     function refreshModalSaleData() {
-      // ✅ UPDATED: Force refresh with cache clearing
-      google.script.run
-        .withSuccessHandler(function(data) {
-          if (data.customers) {
-            modalCustomers = data.customers;
-            populateModalCustomerSelect();
-          }
-          if (data.inventory) {
-            modalProducts = data.inventory;
-            populateModalProductSelect();
-          }
-          showModalAlert('Data refreshed with latest from database', 'success');
-        })
-        .withFailureHandler(function(error) {
-          showModalAlert('Refresh failed: ' + error.message, 'danger');
-        })
-        .forceRefreshData('all'); // ✅ NEW: Force fresh data for both
+      showModalAlert('Refreshing data...', 'info');
+      loadModalCustomers();
+      loadModalInventory();
+      showModalAlert('Data refreshed', 'success');
     }
 
     function openReturnModal() {
