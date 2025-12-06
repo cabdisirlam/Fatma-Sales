@@ -53,10 +53,7 @@ function getCustomers(filters) {
           value = "";
         }
 
-        // Normalize balances to non-negative numbers
-        if (header === 'Current_Balance' || header === 'Opening_Balance') {
-          value = Math.max(0, parseFloat(value) || 0);
-        }
+
 
         customer[header] = value;
       });
