@@ -153,7 +153,7 @@ function searchCustomers(query) {
 /**
  * Add new customer
  * V3.0: Complete validation and column mapping
- * Headers: Customer_ID, Customer_Name, Phone, Email, Location, KRA_PIN, Customer_Type, Credit_Limit, Current_Balance, Total_Purchases, Last_Purchase_Date, Loyalty_Points, Status, Created_Date, Created_By
+ * Headers: Customer_ID, Customer_Name, Phone, Email, Location, KRA_PIN, Customer_Type, Credit_Limit, Current_Balance, Opening_Balance, Total_Paid, Total_Purchases, Last_Purchase_Date, Loyalty_Points, Advance_Credit, Status, Created_Date, Created_By
  */
 function addCustomer(customerData) {
   try {

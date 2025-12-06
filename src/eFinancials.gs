@@ -570,6 +570,13 @@ function getFinancialDashboardData() {
  */
 function computeNetWorthSnapshot(asOfDate) {
   try {
+    const toNumber = (val) => {
+      if (val === null || val === undefined) return 0;
+      const cleaned = val.toString().replace(/[^0-9.\-]/g, '');
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    };
+
     const date = asOfDate ? new Date(asOfDate) : new Date();
     const summary = getFinancialSummary();
     const accountBreakdown = summary.accountBreakdown || [];
@@ -577,23 +584,23 @@ function computeNetWorthSnapshot(asOfDate) {
     // Treat any cash/bank/mpesa accounts as liquid funds
     const bankCash = accountBreakdown
       .filter(a => a && a.name && /cash|m-?pesa|bank/i.test(a.name))
-      .reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0);
+      .reduce((sum, a) => sum + toNumber(a.balance), 0);
 
     const receivables = sheetToObjects('Customers')
-      .reduce((sum, c) => sum + (parseFloat(c.Current_Balance) || 0), 0);
+      .reduce((sum, c) => sum + toNumber(c.Current_Balance), 0);
 
     const inventory = getInventory()
       .reduce((sum, item) => {
         // Prefer precomputed stock_value when available
-        const stockValue = parseFloat(item.stock_value);
-        if (!isNaN(stockValue)) return sum + stockValue;
-        const qty = parseFloat(item.Current_Qty) || 0;
-        const cost = parseFloat(item.Cost_Price) || 0;
+        const stockValue = toNumber(item.stock_value);
+        if (stockValue) return sum + stockValue;
+        const qty = toNumber(item.Current_Qty);
+        const cost = toNumber(item.Cost_Price);
         return sum + (qty * cost);
       }, 0);
 
     const payables = sheetToObjects('Suppliers')
-      .reduce((sum, s) => sum + (parseFloat(s.Current_Balance) || 0), 0);
+      .reduce((sum, s) => sum + toNumber(s.Current_Balance), 0);
 
     const netWorth = bankCash + receivables + inventory - payables;
 
