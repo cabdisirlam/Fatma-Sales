@@ -204,6 +204,13 @@
                     <form id="returnInventoryForm">
                         <input type="hidden" id="return-item-id" />
 
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">Return Data</label>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshReturnModalData()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh lists
+                            </button>
+                        </div>
+
                         <div class="mb-3" id="return-item-dropdown-container">
                             <label for="return-item-select" class="form-label">Select Item to Return <span class="text-danger">*</span></label>
                             <select class="form-select" id="return-item-select" onchange="onReturnItemSelected()" required>
@@ -476,7 +483,8 @@ ${status}
                 });
             }
 
-            // Load suppliers list
+            // Load items and suppliers list
+            populateReturnItemSelect();
             loadSuppliersForReturn();
 
             // Show modal
@@ -498,6 +506,7 @@ ${status}
                 document.getElementById('return-item-id').value = item.Item_ID;
                 document.getElementById('return-current-stock').textContent = item.Stock_Level + ' ' + (item.Unit || 'units');
                 document.getElementById('return-stock-container').style.display = 'block';
+                preselectSupplierForItem(item);
             }
         }
 
@@ -525,33 +534,75 @@ ${status}
             document.getElementById('return-item-name').textContent = item.Item_Name;
             document.getElementById('return-current-stock').textContent = item.Stock_Level + ' ' + (item.Unit || 'units');
 
-            // Load suppliers list
-            loadSuppliersForReturn();
+            // Load suppliers list (preselect item's supplier if available)
+            loadSuppliersForReturn(item.Supplier || item.Supplier_ID);
 
             // Show modal
             const modal = new bootstrap.Modal(document.getElementById('returnInventoryModal'));
             modal.show();
         }
 
-        function loadSuppliersForReturn() {
+        function populateReturnItemSelect() {
+            const select = document.getElementById('return-item-select');
+            if (!select) return;
+            select.innerHTML = '<option value="">Select item...</option>';
+            if (allItems && allItems.length > 0) {
+                allItems.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.Item_ID;
+                    option.textContent = `${item.Item_Name} (Stock: ${item.Stock_Level} ${item.Unit || 'units'})`;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        function loadSuppliersForReturn(preselectId) {
             google.script.run
                 .withSuccessHandler(function(suppliers) {
                     const select = document.getElementById('return-supplier');
                     select.innerHTML = '<option value="">Select supplier...</option>';
 
                     if (suppliers && suppliers.length > 0) {
+                        const seen = {};
                         suppliers.forEach(supplier => {
+                            const id = supplier.Supplier_ID || supplier.Supplier || '';
+                            const name = (supplier.Supplier_Name || '').trim();
+                            if (!id || seen[id]) return;
+                            if (!name || name.toLowerCase() === 'supplier') return;
+                            seen[id] = true;
                             const option = document.createElement('option');
-                            option.value = supplier.Supplier_ID;
-                            option.textContent = supplier.Supplier_Name + ' (' + supplier.Supplier_ID + ')';
+                            option.value = id;
+                            option.textContent = name + ' (' + id + ')';
                             select.appendChild(option);
                         });
+                    }
+
+                    // Preselect supplier if provided
+                    if (preselectId) {
+                        select.value = preselectId;
                     }
                 })
                 .withFailureHandler(function(error) {
                     console.error('Error loading suppliers:', error);
                 })
                 .getSuppliers();
+        }
+
+        function refreshReturnModalData() {
+            // Reload inventory data and suppliers for the return modal
+            loadDashboardData();
+            populateReturnItemSelect();
+            loadSuppliersForReturn();
+        }
+
+        function preselectSupplierForItem(item) {
+            if (!item) return;
+            const select = document.getElementById('return-supplier');
+            if (!select) return;
+            const preferred = item.Supplier || item.Supplier_ID || '';
+            if (preferred) {
+                select.value = preferred;
+            }
         }
 
         // Show/hide "Other" reason input
@@ -635,7 +686,7 @@ ${status}
                         modal.hide();
 
                         // Show success message
-                        alert('Supplier return processed successfully!\n\nReturned: ' + quantity + ' units\nTotal Cost: Ksh ' + (result.totalReturnCost || 0).toLocaleString() + '\n\nSupplier balance and inventory have been updated.');
+                        alert('Supplier return processed successfully!\n\nReturn ID: ' + (result.returnId || 'N/A') + '\nReturned: ' + quantity + ' units\nTotal Cost: Ksh ' + (result.totalReturnCost || 0).toLocaleString() + '\n\nSupplier balance and inventory have been updated.');
 
                         // Refresh data
                         loadDashboardData();
