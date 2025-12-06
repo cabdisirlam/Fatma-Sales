@@ -548,6 +548,7 @@ ${status}
                 .withSuccessHandler(function(suppliers) {
                     const select = document.getElementById('return-supplier');
                     select.innerHTML = '<option value="">Select supplier...</option>';
+                    select.disabled = true; // lock supplier field
 
                     if (suppliers && suppliers.length > 0) {
                         const seen = {};

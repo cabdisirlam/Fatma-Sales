@@ -4457,30 +4457,29 @@
         loadMasterData();
       }
 
-      // 1. Check Cache: If we have data and aren't forcing a refresh, use it!
-      if (!forceRefresh && DATA_CACHE['inventory']) {
-        console.log("Loading Inventory from Cache (Fast!)");
-        displayInventory(DATA_CACHE['inventory']);
-        return;
-      }
-
-      // 2. Show loading spinner only if fetching from server
+      // Show loading spinner while fetching from server
       const contentDiv = container.querySelector('.placeholder-content') || container;
       contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading inventory...</p></div>';
 
       google.script.run
         .withSuccessHandler(function(data) {
           try {
-            // 3. Save to Cache
-            const normalized = Array.isArray(data)
-              ? data
-              : (data && Array.isArray(data.inventory) ? data.inventory : []);
-
-            if (!Array.isArray(data) && !(data && Array.isArray(data.inventory))) {
-              console.error('Unexpected inventory payload received in dashboard', data);
+            const payload = (data && typeof data === 'object' && data.success !== undefined) ? data : { success: true, inventory: data };
+            if (payload.success === false) {
+              contentDiv.innerHTML = '<div class="alert alert-danger">Error loading inventory: ' + (payload.message || 'Unknown error') + '</div>';
+              return;
             }
 
-            DATA_CACHE['inventory'] = normalized;
+            const normalized = Array.isArray(payload.inventory)
+              ? payload.inventory
+              : (Array.isArray(payload) ? payload : []);
+
+            if (!Array.isArray(normalized)) {
+              console.error('Unexpected inventory payload received in dashboard', data);
+              contentDiv.innerHTML = '<div class="alert alert-danger">Error loading inventory data. Please try again.</div>';
+              return;
+            }
+
             displayInventory(normalized);
             loadSuppliersOverview();
           } catch (renderError) {
@@ -4491,7 +4490,7 @@
         .withFailureHandler(function(error) {
           contentDiv.innerHTML = '<div class="alert alert-danger">Error loading inventory: ' + error.message + '</div>';
         })
-        .getInventory({});
+        .getInventoryDashboardData();
     }
 
     function displayInventory(data) {
