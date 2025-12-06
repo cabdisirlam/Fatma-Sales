@@ -4472,9 +4472,11 @@
         .withSuccessHandler(function(data) {
           try {
             // 3. Save to Cache
-            const normalized = Array.isArray(data) ? data : [];
+            const normalized = Array.isArray(data)
+              ? data
+              : (data && Array.isArray(data.inventory) ? data.inventory : []);
 
-            if (!Array.isArray(data)) {
+            if (!Array.isArray(data) && !(data && Array.isArray(data.inventory))) {
               console.error('Unexpected inventory payload received in dashboard', data);
             }
 
