@@ -4723,6 +4723,7 @@
         data.slice(0, 50).forEach(function(item) {
           let statusBadge = '';
           const stockQty = getStockQty(item);
+          const supplierDisplay = item.Supplier || item.Supplier_Name || item.Supplier_ID || '';
 
           if (stockQty <= 0) {
             statusBadge = '<span class="badge bg-danger">Out of Stock</span>';
@@ -4740,7 +4741,7 @@
               <td>${item.Unit || ''}</td>
               <td>${formatCurrency(item.Cost_Price)}</td>
               <td>${formatCurrency(item.Selling_Price)}</td>
-              <td>${item.Supplier || ''}</td>
+              <td>${supplierDisplay}</td>
               <td>${statusBadge}</td>
             </tr>
           `;
