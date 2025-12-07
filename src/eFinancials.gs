@@ -717,15 +717,19 @@ function getNetWorthHistory(limit) {
   const trimmed = limit ? rows.slice(0, limit) : rows;
   Logger.log('getNetWorthHistory - Final rows to return: ' + trimmed.length);
 
-  return trimmed.map(r => ({
-    date: r[0],
-    bankCash: parseFloat(r[1]) || 0,
-    receivables: parseFloat(r[2]) || 0,
-    inventory: parseFloat(r[3]) || 0,
-    payables: parseFloat(r[4]) || 0,
-    netWorth: parseFloat(r[5]) || 0,
-    change: parseFloat(r[6]) || 0
-  }));
+  return trimmed.map(r => {
+    // Convert date to ISO string for proper serialization to frontend
+    const dateValue = r[0] instanceof Date ? r[0].toISOString() : r[0];
+    return {
+      date: dateValue,
+      bankCash: parseFloat(r[1]) || 0,
+      receivables: parseFloat(r[2]) || 0,
+      inventory: parseFloat(r[3]) || 0,
+      payables: parseFloat(r[4]) || 0,
+      netWorth: parseFloat(r[5]) || 0,
+      change: parseFloat(r[6]) || 0
+    };
+  });
 }
 
 /**
