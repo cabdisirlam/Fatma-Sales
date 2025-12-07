@@ -4524,7 +4524,7 @@
         const supplierVal = (item.Supplier_ID || item.Supplier || '').toString().trim();
         const supplierName = (item.Supplier_Name || '').toString().trim();
         const label = name ? `${id} - ${name} (Stock: ${stock})` : `${id} (Stock: ${stock})`;
-        return `<option value="${id}" data-supplier="${supplierVal}" data-supplier-name="${supplierName}">${label}</option>`;
+        return `<option value="${id}" data-supplier="${supplierVal}" data-supplier-name="${supplierName}" data-stock="${stock}">${label}</option>`;
       }).join('');
 
       let html = `
@@ -4751,7 +4751,11 @@
               <td>${formatCurrency(priceValue)}</td>
               <td>${supplierDisplay}</td>
               <td>
-                <button class="btn btn-sm btn-outline-danger" onclick="openReturnProductModal('${item.Item_ID || ''}')">
+                <button class="btn btn-sm btn-outline-danger"
+                        data-item-id="${item.Item_ID || ''}"
+                        data-supplier="${(item.Supplier_ID || item.Supplier || '').toString().replace(/"/g, '&quot;')}"
+                        data-stock="${stockQty}"
+                        onclick="handleInventoryReturnClick(this)">
                   <i class="bi bi-arrow-90deg-left"></i> Return
                 </button>
               </td>
@@ -6354,14 +6358,22 @@
       initInventoryDraft();
     }
 
-    function openReturnProductModal(itemId) {
+    function handleInventoryReturnClick(btn) {
+      if (!btn || !btn.dataset) return;
+      const itemId = btn.dataset.itemId || '';
+      const supplierId = (btn.dataset.supplier || '').trim();
+      const stockQty = parseFloat(btn.dataset.stock) || 0;
+      openReturnProductModal(itemId, supplierId, stockQty);
+    }
+
+    function openReturnProductModal(itemId, supplierId = '', stockQty = null) {
       const modalEl = document.getElementById('returnProductModal');
       if (!modalEl) return;
 
       const select = document.getElementById('returnProductSelect');
       if (select) select.value = '';
       document.getElementById('returnProductName').textContent = '-';
-      document.getElementById('returnProductStock').textContent = '0';
+      document.getElementById('returnProductStock').textContent = stockQty !== null ? stockQty : '0';
       const supplierSelect = document.getElementById('returnProductSupplier');
       if (supplierSelect) {
         supplierSelect.value = '';
@@ -6373,7 +6385,7 @@
       const alertBox = document.getElementById('returnProductAlert');
       if (alertBox) alertBox.style.display = 'none';
 
-      loadReturnProductSuppliers();
+      loadReturnProductSuppliers(supplierId);
 
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
       bringModalToFront(modalEl);
@@ -6393,21 +6405,21 @@
       const selectedOption = select.selectedOptions && select.selectedOptions[0];
       if (!item) {
         document.getElementById('returnProductName').textContent = selectedOption ? selectedOption.textContent : '-';
-        document.getElementById('returnProductStock').textContent = '0';
+        document.getElementById('returnProductStock').textContent = selectedOption && selectedOption.dataset && selectedOption.dataset.stock ? selectedOption.dataset.stock : '0';
         // Still try to set supplier from option dataset even if cache is empty
         const optSupplier = selectedOption ? (selectedOption.dataset.supplier || '').trim() : '';
         if (optSupplier) {
-          const supplierSelect = document.getElementById('returnProductSupplier');
-          if (supplierSelect) {
-            supplierSelect.value = optSupplier;
-            supplierSelect.disabled = true;
-          }
-          loadReturnProductSuppliers(optSupplier);
-        } else {
-          loadReturnProductSuppliers();
+        const supplierSelect = document.getElementById('returnProductSupplier');
+        if (supplierSelect) {
+          supplierSelect.value = optSupplier;
+          supplierSelect.disabled = true;
         }
-        return;
+        loadReturnProductSuppliers(optSupplier);
+      } else {
+        loadReturnProductSuppliers();
       }
+      return;
+    }
       const stock = (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
       document.getElementById('returnProductName').textContent = `${item.Item_ID || ''} ${item.Item_Name ? ' - ' + item.Item_Name : ''}`.trim() || '-';
       document.getElementById('returnProductStock').textContent = stock;
