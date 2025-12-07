@@ -6003,7 +6003,7 @@
         .withFailureHandler(function(error) {
           container.innerHTML = '<div class="alert alert-danger">Error loading net worth report: ' + error.message + '</div>';
         })
-        .getNetWorthHistoryOnly();
+        .getNetWorthReport();
     }
 
     function displayNetWorthReport(data) {
