@@ -731,6 +731,20 @@ function getNetWorthReport() {
 }
 
 /**
+ * Install a daily trigger to record net worth snapshot at 10 PM Africa/Nairobi (19:00 UTC).
+ */
+function ensureNetWorthDailyTrigger() {
+  const triggers = ScriptApp.getProjectTriggers();
+  const hasTrigger = triggers.some(t => t.getHandlerFunction && t.getHandlerFunction() === 'recordNetWorthSnapshot');
+  if (hasTrigger) return;
+  ScriptApp.newTrigger('recordNetWorthSnapshot')
+    .timeBased()
+    .everyDays(1)
+    .atHour(19) // 19:00 UTC ~= 22:00 Africa/Nairobi
+    .create();
+}
+
+/**
  * Get detailed account statement with running balance
  * Handles date filters and normalizes account naming
  */
