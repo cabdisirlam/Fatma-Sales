@@ -6424,6 +6424,17 @@
       const supplierId = ((item.Supplier_ID || item.Supplier || (selectedOption ? selectedOption.dataset.supplier : '')) || '').toString().trim();
       const supplierName = (item.Supplier_Name || (selectedOption ? selectedOption.dataset.supplierName : '')) || '';
       setReturnSupplier(supplierId, supplierName);
+
+      // Warn if trying to return when there is no stock left
+      const alertBox = document.getElementById('returnProductAlert');
+      if (stock <= 0 && alertBox) {
+        alertBox.className = 'alert alert-warning mt-2';
+        alertBox.style.display = 'block';
+        alertBox.textContent = 'This item is already out of stock. You cannot return more than available.';
+      } else if (alertBox) {
+        alertBox.style.display = 'none';
+        alertBox.textContent = '';
+      }
     }
 
     function submitReturnProduct() {
@@ -6443,6 +6454,9 @@
       if (!productId) return showReturnError('Select a product to return.');
       if (!supplierId) return showReturnError('Supplier is required on the item before processing a return.');
       if (qty <= 0) return showReturnError('Quantity must be greater than zero.');
+      if (qty > parseFloat(document.getElementById('returnProductStock').textContent || '0')) {
+        return showReturnError('Cannot return more than available stock.');
+      }
       if (!reason) return showReturnError('Reason is required.');
 
       const btn = document.getElementById('returnProductSubmit');
