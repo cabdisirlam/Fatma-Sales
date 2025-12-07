@@ -651,12 +651,19 @@ function recordNetWorthSnapshot() {
     if (!rowDate) continue;
     const normalized = new Date(rowDate);
     normalized.setHours(0, 0, 0, 0);
-    if (existingRowIndex === null && normalized.getTime() === snapDate.getTime()) {
-      existingRowIndex = i;
-      continue;
+
+    if (normalized.getTime() === snapDate.getTime()) {
+      if (existingRowIndex === null) { // Only take the first match for today
+        existingRowIndex = i;
+      }
+    } else {
+      if (previousNet === 0) { // Take the most recent previous day's net worth
+        previousNet = parseFloat(data[i][5]) || 0; // Net_Worth column
+      }
     }
-    if (previousNet === 0 && normalized.getTime() !== snapDate.getTime()) {
-      previousNet = parseFloat(data[i][5]) || 0; // Net_Worth column
+
+    // If both are found, we can stop searching
+    if (existingRowIndex !== null && previousNet !== 0) {
       break;
     }
   }
