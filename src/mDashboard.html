@@ -4521,8 +4521,10 @@
         const stock = getStockQty(item);
         const id = item.Item_ID || 'Item';
         const name = item.Item_Name || '';
+        const supplierVal = (item.Supplier_ID || item.Supplier || '').toString().trim();
+        const supplierName = (item.Supplier_Name || '').toString().trim();
         const label = name ? `${id} - ${name} (Stock: ${stock})` : `${id} (Stock: ${stock})`;
-        return `<option value="${id}">${label}</option>`;
+        return `<option value="${id}" data-supplier="${supplierVal}" data-supplier-name="${supplierName}">${label}</option>`;
       }).join('');
 
       let html = `
@@ -6381,15 +6383,28 @@
       const itemId = select.value;
       const inventory = DATA_CACHE && DATA_CACHE['inventory'] ? DATA_CACHE['inventory'] : [];
       const item = inventory.find(i => i.Item_ID === itemId);
+      const selectedOption = select.selectedOptions && select.selectedOptions[0];
       if (!item) {
-        document.getElementById('returnProductName').textContent = '-';
+        document.getElementById('returnProductName').textContent = selectedOption ? selectedOption.textContent : '-';
         document.getElementById('returnProductStock').textContent = '0';
+        // Still try to set supplier from option dataset even if cache is empty
+        const optSupplier = selectedOption ? (selectedOption.dataset.supplier || '').trim() : '';
+        if (optSupplier) {
+          const supplierSelect = document.getElementById('returnProductSupplier');
+          if (supplierSelect) {
+            supplierSelect.value = optSupplier;
+            supplierSelect.disabled = true;
+          }
+          loadReturnProductSuppliers(optSupplier);
+        } else {
+          loadReturnProductSuppliers();
+        }
         return;
       }
       const stock = (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
       document.getElementById('returnProductName').textContent = `${item.Item_ID || ''} ${item.Item_Name ? ' - ' + item.Item_Name : ''}`.trim() || '-';
       document.getElementById('returnProductStock').textContent = stock;
-      const supplierId = item.Supplier_ID || item.Supplier || '';
+      const supplierId = ((item.Supplier_ID || item.Supplier || (selectedOption ? selectedOption.dataset.supplier : '')) || '').toString().trim();
       const supplierSelect = document.getElementById('returnProductSupplier');
       // If supplier options are already present, pre-select immediately; also pass through to loader
       if (supplierId && supplierSelect) {
@@ -6405,6 +6420,7 @@
       if (!supplierSelect) return;
       supplierSelect.innerHTML = '<option value=\"\">Loading suppliers...</option>';
       supplierSelect.disabled = true;
+      const desiredId = (preselectId || '').toString().trim();
 
       google.script.run
         .withSuccessHandler(function(suppliers) {
@@ -6422,13 +6438,13 @@
             supplierSelect.appendChild(opt);
           });
 
-          if (preselectId) {
-            supplierSelect.value = preselectId;
+          if (desiredId) {
+            supplierSelect.value = desiredId;
             if (!supplierSelect.value) {
               // If the supplier isn't in the list (e.g., name stored instead of ID), add it.
               const fallback = document.createElement('option');
-              fallback.value = preselectId;
-              fallback.textContent = preselectId;
+              fallback.value = desiredId;
+              fallback.textContent = desiredId;
               fallback.selected = true;
               supplierSelect.appendChild(fallback);
             }
