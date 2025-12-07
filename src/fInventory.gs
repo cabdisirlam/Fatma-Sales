@@ -80,7 +80,7 @@ function getInventory(filters) {
         Supplier_ID: mostRecentBatch.Supplier_ID || '',
         Supplier: mostRecentBatch.Supplier || mostRecentBatch.Supplier_ID || '',
         Unit: mostRecentBatch.Unit,
-        Last_Updated: mostRecentBatch.Last_Updated,
+        Last_Updated: mostRecentBatch.Last_Updated instanceof Date ? mostRecentBatch.Last_Updated.toISOString() : mostRecentBatch.Last_Updated,
         Updated_By: mostRecentBatch.Updated_By
       };
       Logger.log('Simplified item: ' + JSON.stringify(item));

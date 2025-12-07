@@ -2866,10 +2866,17 @@
       // Load inventory count
       google.script.run
         .withSuccessHandler(function(inventory) {
-          document.getElementById('totalProducts').textContent = inventory.length || 0;
+          console.log('Received inventory data:', inventory);
+          console.log('Inventory array length:', inventory ? inventory.length : 'null/undefined');
+          console.log('Inventory type:', typeof inventory);
+
+          const count = inventory && Array.isArray(inventory) ? inventory.length : 0;
+          document.getElementById('totalProducts').textContent = count;
+          console.log('Set totalProducts to:', count);
         })
         .withFailureHandler(function(error) {
           console.error('Error loading inventory count:', error);
+          document.getElementById('totalProducts').textContent = '0';
         })
         .getInventory({});
 
@@ -3199,8 +3206,9 @@
       }
     }
 
-    // Auto-refresh interval tracker
+    // Auto-refresh interval trackers
     let salesAutoRefreshInterval = null;
+    let dashboardAutoRefreshInterval = null;
 
     // Centralized Data Loader (Called only when needed)
     function loadSectionData(sectionName) {
@@ -3211,8 +3219,20 @@
         clearInterval(salesAutoRefreshInterval);
         salesAutoRefreshInterval = null;
       }
+      if (dashboardAutoRefreshInterval) {
+        clearInterval(dashboardAutoRefreshInterval);
+        dashboardAutoRefreshInterval = null;
+      }
 
-      if (sectionName === 'sales') {
+      if (sectionName === 'dashboard') {
+        loadDashboardStats();
+
+        // Set up auto-refresh for dashboard stats every 30 seconds
+        dashboardAutoRefreshInterval = setInterval(function() {
+          loadDashboardStats();
+          console.log('Auto-refreshed dashboard stats');
+        }, 30000); // 30 seconds
+      } else if (sectionName === 'sales') {
         loadSalesOverview();
         loadSalesSection();
 
