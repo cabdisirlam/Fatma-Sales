@@ -623,7 +623,7 @@ function computeNetWorthSnapshot(asOfDate) {
  */
 function ensureNetWorthLogSheet() {
   const ss = getSpreadsheet();
-  let sheet = ss.getSheetByName('Net_Worth_Log');
+  let sheet = ss.getSheetByName('Net_Worth_Log') || ss.getSheetByName(CONFIG.SHEETS.NET_WORTH_LOG);
   if (!sheet) {
     sheet = ss.insertSheet('Net_Worth_Log');
     sheet.appendRow(['Date', 'Cash_Bank', 'Receivables', 'Inventory', 'Suppliers', 'Net_Worth', 'Change']);
@@ -695,7 +695,7 @@ function getNetWorthHistory(limit) {
   if (!data || data.length <= 1) return [];
 
   // Drop header, normalize ordering by date desc
-  const rows = data.slice(1).filter(r => r[0]);
+  const rows = data.slice(1).filter(r => r && r.length && r[0]);
   rows.sort((a, b) => new Date(b[0]) - new Date(a[0]));
 
   const trimmed = limit ? rows.slice(0, limit) : rows;
