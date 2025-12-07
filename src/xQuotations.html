@@ -158,6 +158,30 @@
       display: flex;
       gap: 5px;
     }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 767.98px) {
+      body { padding: 10px; }
+      .header-section { padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+      .header-section h2 { font-size: 1.5rem; }
+      .header-section p { font-size: 0.9rem; }
+      .stat-card { padding: 15px; margin-bottom: 10px; }
+      .stat-value { font-size: 1.8rem; }
+      .stat-label { font-size: 0.75rem; }
+      .filter-section { padding: 15px; border-radius: 8px; }
+      .card { border-radius: 10px; margin-bottom: 15px; }
+      .card-header { padding: 15px; border-radius: 10px 10px 0 0 !important; }
+      .table { font-size: 0.8rem; min-width: 700px; }
+      .table th, .table td { padding: 0.5rem 0.3rem; white-space: nowrap; }
+      .btn { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+      .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+      .action-buttons { flex-wrap: wrap; }
+    }
+
+    @media (min-width: 768px) and (max-width: 991.98px) {
+      body { padding: 15px; }
+      .header-section { padding: 20px; }
+    }
   </style>
 </head>
 <body>

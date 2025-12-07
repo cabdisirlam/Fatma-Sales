@@ -121,6 +121,86 @@
         .action-buttons .btn {
             margin-right: 5px;
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 767.98px) {
+            .container-fluid { padding: 1rem !important; }
+
+            .header-banner {
+                padding: 1rem;
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .header-banner .icon {
+                font-size: 2rem;
+                margin-right: 0;
+                margin-bottom: 0.5rem;
+            }
+
+            .header-banner h1 { font-size: 1.5rem; }
+            .header-banner p { font-size: 0.9rem; }
+
+            .summary-card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .summary-card .value { font-size: 1.5rem; }
+            .summary-card .label { font-size: 0.8rem; }
+
+            .action-bar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+
+            .action-bar > div {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .action-bar .btn {
+                width: 100%;
+                margin: 0 !important;
+            }
+
+            .card-table {
+                padding: 1rem;
+                border-radius: 0.5rem;
+            }
+
+            .card-table .table-title { font-size: 1.1rem; }
+
+            /* Make table scroll horizontally on mobile */
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Improve table readability on mobile */
+            .table {
+                font-size: 0.85rem;
+                min-width: 600px;
+            }
+
+            .table th, .table td {
+                padding: 0.5rem;
+                white-space: nowrap;
+            }
+
+            /* Make action buttons stack better */
+            .action-buttons .btn {
+                margin-bottom: 0.25rem;
+                padding: 0.25rem 0.5rem;
+            }
+        }
+
+        /* Tablet Responsive Styles */
+        @media (min-width: 768px) and (max-width: 991.98px) {
+            .container-fluid { padding: 1.5rem !important; }
+            .header-banner { padding: 1.5rem; }
+        }
     </style>
 </head>
 <body>
@@ -196,25 +276,25 @@
         function updateSummaryCards(overview) {
             const container = document.getElementById('summary-cards');
             container.innerHTML = `
-                <div class="col-md-3">
+                <div class="col-12 col-sm-6 col-md-3">
                     <div class="summary-card bg-gradient-purple">
                         <div class="label">Total Customers</div>
                         <div class="value">${overview.totalCustomers}</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-sm-6 col-md-3">
                     <div class="summary-card bg-gradient-pink">
                         <div class="label">New This Month</div>
                         <div class="value">${overview.newThisMonth}</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-sm-6 col-md-3">
                     <div class="summary-card bg-gradient-cyan">
                         <div class="label">Active Credit</div>
                         <div class="value">${overview.activeCredit}</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-sm-6 col-md-3">
                     <div class="summary-card bg-gradient-orange">
                         <div class="label">Outstanding</div>
                         <div class="value">Ksh ${overview.outstanding.toLocaleString()}</div>

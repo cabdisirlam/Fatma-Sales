@@ -147,6 +147,79 @@
       border-radius: 4px;
       font-size: 12px;
     }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 767.98px) {
+      body { padding: 10px; }
+
+      .header-section {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+      }
+
+      .header-section h2 { font-size: 1.5rem; }
+      .header-section p { font-size: 0.9rem; }
+
+      .stat-card {
+        padding: 15px;
+        margin-bottom: 10px;
+      }
+
+      .stat-value { font-size: 1.8rem; }
+      .stat-label { font-size: 0.75rem; }
+
+      .filter-section {
+        padding: 15px;
+        border-radius: 8px;
+      }
+
+      .filter-section .row {
+        gap: 0.5rem;
+      }
+
+      .card {
+        border-radius: 10px;
+        margin-bottom: 15px;
+      }
+
+      .card-header {
+        padding: 15px;
+        border-radius: 10px 10px 0 0 !important;
+      }
+
+      /* Make table scroll horizontally */
+      .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .table {
+        font-size: 0.8rem;
+        min-width: 700px;
+      }
+
+      .table th, .table td {
+        padding: 0.5rem 0.3rem;
+        white-space: nowrap;
+      }
+
+      .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+      }
+
+      .btn-sm {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.75rem;
+      }
+    }
+
+    /* Tablet Responsive Styles */
+    @media (min-width: 768px) and (max-width: 991.98px) {
+      body { padding: 15px; }
+      .header-section { padding: 20px; }
+    }
   </style>
 </head>
 <body>
@@ -157,25 +230,25 @@
 
   <!-- Statistics Cards -->
   <div class="row" id="statsSection">
-    <div class="col-md-3">
+    <div class="col-12 col-sm-6 col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Items</div>
         <div class="stat-value" id="totalItems">0</div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-12 col-sm-6 col-md-3">
       <div class="stat-card">
         <div class="stat-label">Low Stock</div>
         <div class="stat-value stock-low" id="lowStock">0</div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-12 col-sm-6 col-md-3">
       <div class="stat-card">
         <div class="stat-label">Out of Stock</div>
         <div class="stat-value stock-out" id="outOfStock" style="background: none; color: #e74c3c;">0</div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-12 col-sm-6 col-md-3">
       <div class="stat-card">
         <div class="stat-label">Total Value</div>
         <div class="stat-value" id="totalValue">$0</div>
@@ -186,15 +259,15 @@
   <!-- Filter Section -->
   <div class="filter-section">
     <div class="row g-2 align-items-center">
-      <div class="col-md-4">
+      <div class="col-12 col-md-4">
         <input type="text" class="form-control" id="searchInput" placeholder="Search by item name or ID...">
       </div>
-      <div class="col-md-3">
+      <div class="col-12 col-sm-6 col-md-3">
         <select class="form-select" id="categoryFilter">
           <option value="">All Categories</option>
         </select>
       </div>
-      <div class="col-md-3">
+      <div class="col-12 col-sm-6 col-md-3">
         <select class="form-select" id="stockFilter">
           <option value="">All Stock Levels</option>
           <option value="low">Low Stock</option>

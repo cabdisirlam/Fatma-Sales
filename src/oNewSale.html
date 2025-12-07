@@ -13,6 +13,42 @@
     .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; }
     /* Hidden area for receipt printing iframe */
     #printFrame { display: none; }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 767.98px) {
+      body { padding: 10px; }
+      .header-section { padding: 15px; border-radius: 10px; }
+      .header-section h2 { font-size: 1.5rem; }
+      .header-section p { font-size: 0.9rem; }
+      .card { border-radius: 10px; }
+      .card-body { padding: 15px; }
+
+      /* Stack form inputs vertically on mobile */
+      .row.mb-3 { margin-bottom: 1rem !important; }
+      .form-label { margin-bottom: 0.3rem; font-size: 0.9rem; }
+      .form-control, .form-select { font-size: 0.95rem; padding: 0.5rem; }
+
+      /* Increase touch target size for buttons */
+      .btn { min-height: 48px; font-size: 1rem; }
+      .btn-lg { font-size: 1.1rem; }
+
+      /* Improve button group wrapping */
+      .d-flex.gap-2 { flex-wrap: wrap; }
+      .d-flex.gap-2 .btn { flex: 1 1 auto; min-width: 140px; }
+
+      /* Make input groups stack better */
+      .input-group .btn { min-width: 48px; }
+
+      /* Improve alert spacing */
+      .alert { padding: 12px; font-size: 0.9rem; }
+      .alert h4 { font-size: 1.2rem; }
+    }
+
+    /* Tablet Responsive Styles */
+    @media (min-width: 768px) and (max-width: 991.98px) {
+      body { padding: 15px; }
+      .header-section { padding: 20px; }
+    }
   </style>
 </head>
 <body>
@@ -25,18 +61,18 @@
     <div class="card-body">
       <form id="saleForm">
         <div class="row mb-3">
-          <div class="col-md-4">
+          <div class="col-12 col-sm-6 col-md-4 mb-3 mb-md-0">
             <label class="form-label fw-bold">Transaction Type</label>
             <select class="form-select" name="type" id="txnType" required onchange="toggleReturnMode()">
               <option value="Sale">Sale</option>
               <option value="Return">Return (Credit Note)</option>
             </select>
           </div>
-          <div class="col-md-4">
+          <div class="col-12 col-sm-6 col-md-4 mb-3 mb-md-0">
             <label class="form-label fw-bold">Date</label>
             <input type="date" class="form-control" name="saleDate" id="saleDate" required>
           </div>
-          <div class="col-md-4">
+          <div class="col-12 col-sm-6 col-md-4">
             <label class="form-label fw-bold">Processed By</label>
             <input type="text" class="form-control" id="displayUser" readonly>
           </div>
@@ -45,35 +81,35 @@
         <hr>
 
       <div class="row mb-3">
-        <div class="col-md-6">
+        <div class="col-12 col-md-6 mb-3 mb-md-0">
           <label class="form-label">Customer</label>
           <select class="form-select" name="customerId" id="customerSelect" onchange="fillCustomerDetails()">
             <option value="">Walk-in Customer</option>
           </select>
         </div>
-        <div class="col-md-6">
+        <div class="col-12 col-md-6">
           <label class="form-label">KRA PIN</label>
           <input type="text" class="form-control" name="kraPin" id="kraPin" placeholder="A00..." >
         </div>
       </div>
 
       <div class="row mb-3">
-        <div class="col-md-4">
+        <div class="col-12 col-sm-6 col-md-4 mb-3 mb-md-0">
           <label class="form-label">Location</label>
           <input type="text" class="form-control" name="location" id="customerLocation" placeholder="e.g. Nairobi">
         </div>
-        <div class="col-md-4">
+        <div class="col-12 col-sm-6 col-md-4 mb-3 mb-md-0">
           <label class="form-label">Loyalty Points</label>
           <input type="number" class="form-control" id="loyaltyPoints" placeholder="0" readonly>
         </div>
-        <div class="col-md-4">
+        <div class="col-12 col-sm-6 col-md-4">
           <label class="form-label">Paybill / Ref</label>
           <input type="text" class="form-control" name="paybillNumber" id="paybillNumber" placeholder="Enter paybill/ref">
         </div>
       </div>
 
       <div class="row mb-3">
-        <div class="col-md-5">
+        <div class="col-12 col-md-5 mb-3 mb-md-0">
           <label class="form-label">Item/Product *</label>
           <div class="input-group">
             <select class="form-select" name="itemId" id="itemSelect" required>
@@ -84,15 +120,15 @@
             </button>
           </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-6 col-sm-4 col-md-2 mb-3 mb-md-0">
           <label class="form-label">Qty *</label>
           <input type="number" class="form-control" name="quantity" id="qtyInput" min="1" value="1" required>
         </div>
-        <div class="col-md-2">
+        <div class="col-6 col-sm-4 col-md-2 mb-3 mb-md-0">
           <label class="form-label">Unit Price</label>
           <input type="number" class="form-control" name="unitPrice" id="unitPrice" step="0.01">
         </div>
-        <div class="col-md-3">
+        <div class="col-12 col-sm-4 col-md-3 mb-3 mb-md-0">
           <label class="form-label">Payment Mode</label>
           <select class="form-select" name="paymentMode" id="paymentMode" required>
             <option value="Credit" selected>Credit/Debt</option>
@@ -101,7 +137,7 @@
             <option value="Equity Bank">Bank</option>
           </select>
         </div>
-        <div class="col-md-2">
+        <div class="col-12 col-md-2">
           <label class="form-label">Delivery Charge</label>
           <input type="number" class="form-control" name="deliveryCharge" id="deliveryCharge" step="0.01" value="0">
         </div>

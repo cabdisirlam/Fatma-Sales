@@ -127,6 +127,116 @@
             background-color: #fee2e2;
             color: #991b1b;
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 767.98px) {
+            .container-fluid { padding: 1rem !important; }
+
+            .header-banner {
+                padding: 1rem;
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .header-banner .icon {
+                font-size: 2rem;
+                margin-right: 0;
+                margin-bottom: 0.5rem;
+            }
+
+            .header-banner h1 { font-size: 1.5rem; }
+            .header-banner p { font-size: 0.9rem; }
+
+            .summary-card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .summary-card .value { font-size: 1.5rem; }
+            .summary-card .label { font-size: 0.8rem; }
+
+            /* Make action bar stack on mobile */
+            .action-bar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.75rem;
+            }
+
+            .action-bar .d-flex {
+                flex-direction: column !important;
+                width: 100%;
+            }
+
+            .action-bar .form-control,
+            .action-bar .form-select {
+                width: 100% !important;
+                margin: 0 0 0.5rem 0 !important;
+            }
+
+            .action-bar .btn {
+                width: 100%;
+                margin: 0 0 0.5rem 0 !important;
+            }
+
+            .card-table {
+                padding: 1rem;
+                border-radius: 0.5rem;
+            }
+
+            .card-table .table-title { font-size: 1.1rem; }
+
+            /* Make table scroll horizontally on mobile */
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .table {
+                font-size: 0.75rem;
+                min-width: 800px;
+            }
+
+            .table th, .table td {
+                padding: 0.4rem 0.3rem;
+                white-space: nowrap;
+            }
+
+            /* Make modal full width on mobile */
+            .modal-dialog {
+                margin: 0.5rem;
+                max-width: calc(100% - 1rem);
+            }
+
+            .modal-body {
+                padding: 1rem;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .modal-footer .btn {
+                width: 100%;
+                margin: 0;
+            }
+
+            /* Badge spacing */
+            .badge-status {
+                font-size: 0.7rem;
+                padding: 0.3em 0.5em;
+            }
+        }
+
+        /* Tablet Responsive Styles */
+        @media (min-width: 768px) and (max-width: 991.98px) {
+            .container-fluid { padding: 1.5rem !important; }
+            .header-banner { padding: 1.5rem; }
+
+            .action-bar .d-flex {
+                flex-wrap: wrap;
+            }
+        }
     </style>
 </head>
 <body>
@@ -332,26 +442,26 @@
             const totalValue = (overview && Number(overview.totalValue)) ? Number(overview.totalValue) : totalValueComputed;
 
             const container = document.getElementById('summary-cards');
-            container.innerHTML = 
-                `<div class="col-md-3">
+            container.innerHTML =
+                `<div class="col-12 col-sm-6 col-md-3">
                     <div class="summary-card bg-gradient-purple">
                         <div class="label">Total Items</div>
                         <div class="value">${overview.totalItems}</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-sm-6 col-md-3">
                     <div class="summary-card bg-gradient-pink">
                         <div class="label">Low Stock</div>
                         <div class="value">${overview.lowStock}</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-sm-6 col-md-3">
                     <div class="summary-card bg-gradient-cyan">
                         <div class="label">Out of Stock</div>
                         <div class="value">${overview.outOfStock}</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-sm-6 col-md-3">
                     <div class="summary-card bg-gradient-orange">
                         <div class="label">Total Value</div>
                         <div class="value">${formatCurrency(totalValue)}</div>

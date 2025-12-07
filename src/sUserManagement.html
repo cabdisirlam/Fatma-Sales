@@ -14,6 +14,89 @@
     .user-avatar { width: 35px; height: 35px; background: #667eea; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; }
     .status-active { color: #198754; font-weight: 600; }
     .status-inactive { color: #dc3545; font-weight: 600; }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 767.98px) {
+      body { padding: 10px; }
+
+      .header-section {
+        padding: 15px;
+        border-radius: 10px;
+      }
+
+      .header-section h2 { font-size: 1.5rem; }
+      .header-section p { font-size: 0.9rem; }
+
+      .card {
+        border-radius: 10px;
+      }
+
+      .card-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem;
+      }
+
+      .card-header .btn {
+        width: 100%;
+      }
+
+      /* Make table scroll horizontally on mobile */
+      .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .table {
+        font-size: 0.85rem;
+        min-width: 600px;
+      }
+
+      .table th, .table td {
+        padding: 0.5rem 0.3rem;
+      }
+
+      .user-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+        margin-right: 5px;
+      }
+
+      .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+      }
+
+      /* Make modals full width on mobile */
+      .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+      }
+
+      .modal-body {
+        padding: 1rem;
+      }
+
+      .modal-header {
+        padding: 1rem;
+      }
+
+      .modal-header .modal-title {
+        font-size: 1.1rem;
+      }
+
+      /* Stack form fields on mobile */
+      .modal-body .row > [class*="col-"] {
+        margin-bottom: 0.75rem;
+      }
+    }
+
+    /* Tablet Responsive Styles */
+    @media (min-width: 768px) and (max-width: 991.98px) {
+      body { padding: 15px; }
+      .header-section { padding: 20px; }
+    }
   </style>
 </head>
 <body>
@@ -69,11 +152,11 @@
               <input type="email" class="form-control" id="newEmail" required>
             </div>
             <div class="row">
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">PIN (4 Digits) *</label>
                 <input type="password" class="form-control" id="newPin" pattern="[0-9]{4}" maxlength="4" required>
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">Role *</label>
                 <select class="form-select" id="newRole" required>
                   <option value="">Select Role</option>
@@ -119,7 +202,7 @@
               <input type="email" class="form-control" id="editEmail" required>
             </div>
             <div class="row">
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">Role</label>
                 <select class="form-select" id="editRole" required>
                   <option value="Admin">Admin</option>
@@ -128,7 +211,7 @@
                   <option value="Cashier">Cashier</option>
                 </select>
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">Status</label>
                 <select class="form-select" id="editStatus">
                   <option value="Active">Active</option>
