@@ -698,14 +698,24 @@ function recordNetWorthSnapshot() {
  */
 function getNetWorthHistory(limit) {
   const sheet = ensureNetWorthLogSheet();
+  Logger.log('getNetWorthHistory - Sheet name: ' + sheet.getName());
+
   const data = sheet.getDataRange().getValues();
-  if (!data || data.length <= 1) return [];
+  Logger.log('getNetWorthHistory - Total rows (including header): ' + data.length);
+
+  if (!data || data.length <= 1) {
+    Logger.log('getNetWorthHistory - No data found (only header or empty)');
+    return [];
+  }
 
   // Drop header, normalize ordering by date desc
   const rows = data.slice(1).filter(r => r && r.length && r[0]);
+  Logger.log('getNetWorthHistory - Rows after filtering (has date): ' + rows.length);
+
   rows.sort((a, b) => new Date(b[0]) - new Date(a[0]));
 
   const trimmed = limit ? rows.slice(0, limit) : rows;
+  Logger.log('getNetWorthHistory - Final rows to return: ' + trimmed.length);
 
   return trimmed.map(r => ({
     date: r[0],
@@ -720,15 +730,22 @@ function getNetWorthHistory(limit) {
 
 /**
  * Combined endpoint for Reports UI.
+ * Just reads existing data without creating new snapshots.
  */
 function getNetWorthReport() {
   try {
-    const result = recordNetWorthSnapshot();
     const history = getNetWorthHistory();
+    Logger.log('getNetWorthReport - history length: ' + (history ? history.length : 0));
+
+    // Get the latest snapshot for display
+    const latest = history && history.length > 0 ? history[0] : null;
+    const previous = history && history.length > 1 ? history[1] : null;
+    const change = (latest && previous) ? (latest.netWorth - previous.netWorth) : 0;
+
     return {
-      snapshot: result.snapshot,
-      change: result.change,
-      previousNetWorth: result.previousNetWorth,
+      snapshot: latest ? latest.netWorth : 0,
+      change: change,
+      previousNetWorth: previous ? previous.netWorth : 0,
       history: history
     };
   } catch (error) {

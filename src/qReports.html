@@ -271,6 +271,9 @@
       toggleLoading(true);
       google.script.run
         .withSuccessHandler(function(data) {
+          console.log('Received data from getNetWorthReport:', data);
+          console.log('History array:', data.history);
+          console.log('History length:', data.history ? data.history.length : 'null/undefined');
           renderHistory(data.history || []);
           toggleLoading(false);
         })
