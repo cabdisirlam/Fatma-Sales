@@ -5996,6 +5996,11 @@
       if (!container) return;
       container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading net worth report...</p></div>';
 
+      // Ensure the daily trigger exists (no-op if already installed)
+      if (google && google.script && google.script.run && google.script.run.ensureNetWorthDailyTrigger) {
+        google.script.run.ensureNetWorthDailyTrigger();
+      }
+
       google.script.run
         .withSuccessHandler(function(data) {
           displayNetWorthReport(data);
@@ -6016,7 +6021,21 @@
       };
 
       const history = (data && data.history) ? data.history : [];
-      const rows = Array.isArray(history) ? history : [];
+      const rows = Array.isArray(history) ? history.slice() : [];
+
+      // If no history yet, show the current snapshot so the table isn't blank
+      if ((!rows || rows.length === 0) && data && data.snapshot) {
+        const snap = data.snapshot;
+        rows.push({
+          date: snap.date,
+          bankCash: snap.bankCash,
+          receivables: snap.receivables,
+          inventory: snap.inventory,
+          payables: snap.payables,
+          netWorth: snap.netWorth,
+          change: data.change || 0
+        });
+      }
 
       let tableBody = '';
       if (!rows.length) {
