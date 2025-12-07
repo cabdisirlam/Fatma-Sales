@@ -745,6 +745,18 @@ function ensureNetWorthDailyTrigger() {
 }
 
 /**
+ * Read net worth history only (no new snapshot). Useful for UI refresh.
+ */
+function getNetWorthHistoryOnly() {
+  try {
+    return { history: getNetWorthHistory() };
+  } catch (error) {
+    logError('getNetWorthHistoryOnly', error);
+    throw error;
+  }
+}
+
+/**
  * Get detailed account statement with running balance
  * Handles date filters and normalizes account naming
  */
