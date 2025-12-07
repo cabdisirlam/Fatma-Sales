@@ -1167,7 +1167,7 @@
           <div class="col-md-3">
             <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(250, 112, 154, 0.4); height: 100%;">
               <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Average Order</div>
-              <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesAverage">Ksh 0</div>
+              <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesAverageOrder">Ksh 0</div>
             </div>
           </div>
         </div>
@@ -3199,12 +3199,28 @@
       }
     }
 
+    // Auto-refresh interval tracker
+    let salesAutoRefreshInterval = null;
+
     // Centralized Data Loader (Called only when needed)
     function loadSectionData(sectionName) {
       sectionName = normalizeSectionName(sectionName);
+
+      // Clear any existing auto-refresh intervals when switching sections
+      if (salesAutoRefreshInterval) {
+        clearInterval(salesAutoRefreshInterval);
+        salesAutoRefreshInterval = null;
+      }
+
       if (sectionName === 'sales') {
         loadSalesOverview();
         loadSalesSection();
+
+        // Set up auto-refresh for sales overview every 30 seconds
+        salesAutoRefreshInterval = setInterval(function() {
+          loadSalesOverview();
+          console.log('Auto-refreshed sales overview');
+        }, 30000); // 30 seconds
       } else if (sectionName === 'sales-new') {
         loadNewSaleInDashboard();
       } else if (sectionName === 'sales-history') {
