@@ -3769,18 +3769,33 @@
     }
 
     function logout() {
-      // ✅ UPDATED: Clear user session from localStorage (keep draft data)
+      // Clear all auto-refresh intervals
+      try {
+        if (salesAutoRefreshInterval) {
+          clearInterval(salesAutoRefreshInterval);
+          salesAutoRefreshInterval = null;
+        }
+        if (dashboardAutoRefreshInterval) {
+          clearInterval(dashboardAutoRefreshInterval);
+          dashboardAutoRefreshInterval = null;
+        }
+      } catch (e) {
+        console.log('Error clearing intervals:', e);
+      }
+
+      // Clear user session from localStorage (keep draft data)
       localStorage.removeItem('userEmail');
       localStorage.removeItem('userName');
       localStorage.removeItem('userRole');
       localStorage.removeItem('sessionId');
       localStorage.removeItem('token');
       localStorage.removeItem('loginTime');
+      sessionStorage.clear();
 
-      // Force full page refresh and redirect to login page
-      const scriptUrl = window.location.href.split('?')[0];
-      const loginUrl = scriptUrl.replace('mDashboard', 'nIndex');
-      window.location.replace(loginUrl);  // Replace (no back button) and force refresh
+      // Force full browser refresh to login page
+      const baseUrl = window.location.origin + window.location.pathname;
+      const loginUrl = baseUrl + '?view=nIndex&t=' + new Date().getTime(); // Add timestamp to force hard refresh
+      window.location.href = loginUrl;  // Force full page reload
     }
 
     // Offline banner handlers
@@ -7274,6 +7289,20 @@
     // Logout function
     function logout() {
       if (confirm('Are you sure you want to logout?')) {
+        // Clear all auto-refresh intervals
+        try {
+          if (salesAutoRefreshInterval) {
+            clearInterval(salesAutoRefreshInterval);
+            salesAutoRefreshInterval = null;
+          }
+          if (dashboardAutoRefreshInterval) {
+            clearInterval(dashboardAutoRefreshInterval);
+            dashboardAutoRefreshInterval = null;
+          }
+        } catch (e) {
+          console.log('Error clearing intervals:', e);
+        }
+
         // Clear auth/session data
         localStorage.removeItem('userEmail');
         localStorage.removeItem('userName');
@@ -7287,10 +7316,10 @@
         try { DATA_CACHE = {}; } catch (e) {}
         try { localStorage.removeItem('inventory_cache_all'); } catch (e) {}
 
-        // Force full page refresh and redirect to login page
-        const baseUrl = window.location.origin + window.location.pathname; // defaults to login (nIndex) when no view param
-        const loginUrl = baseUrl + '?view=nIndex';
-        window.location.replace(loginUrl);  // Replace (no back button) and force refresh to login
+        // Force full browser refresh to login page
+        const baseUrl = window.location.origin + window.location.pathname;
+        const loginUrl = baseUrl + '?view=nIndex&t=' + new Date().getTime(); // Add timestamp to force hard refresh
+        window.location.href = loginUrl;  // Force full page reload
       }
     }
 
