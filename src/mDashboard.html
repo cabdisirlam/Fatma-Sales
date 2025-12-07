@@ -4532,9 +4532,6 @@
           <button class="btn btn-primary" type="button" onclick="openInventoryAddModal()">
             <i class="bi bi-plus-circle"></i> Add Product
           </button>
-          <button class="btn btn-warning" type="button" onclick="openReturnProductModal()">
-            <i class="bi bi-arrow-90deg-left"></i> Return Product
-          </button>
           <button class="btn btn-outline-secondary" onclick="loadInventorySection(true)">
             <i class="bi bi-arrow-clockwise"></i> Refresh
           </button>
@@ -4714,6 +4711,7 @@
                     <th>Cost Price</th>
                     <th>Selling Price</th>
                     <th>Supplier</th>
+                    <th>Actions</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -4752,6 +4750,11 @@
               <td>${formatCurrency(costValue)}</td>
               <td>${formatCurrency(priceValue)}</td>
               <td>${supplierDisplay}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-danger" onclick="openReturnProductModal('${item.Item_ID || ''}')">
+                  <i class="bi bi-arrow-90deg-left"></i> Return
+                </button>
+              </td>
               <td>${statusBadge}</td>
             </tr>
           `;
@@ -6351,7 +6354,7 @@
       initInventoryDraft();
     }
 
-    function openReturnProductModal() {
+    function openReturnProductModal(itemId) {
       const modalEl = document.getElementById('returnProductModal');
       if (!modalEl) return;
 
@@ -6374,6 +6377,10 @@
 
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
       bringModalToFront(modalEl);
+      if (select && itemId) {
+        select.value = itemId;
+        updateReturnProductDetails();
+      }
       modal.show();
     }
 
