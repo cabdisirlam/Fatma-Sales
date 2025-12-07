@@ -4497,6 +4497,8 @@
               return;
             }
 
+            // Cache inventory so item -> supplier lookups work in return modal
+            DATA_CACHE['inventory'] = normalized;
             displayInventory(normalized);
             loadSuppliersOverview();
           } catch (renderError) {
@@ -6376,11 +6378,11 @@
       const stock = (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
       document.getElementById('returnProductName').textContent = `${item.Item_ID || ''} ${item.Item_Name ? ' - ' + item.Item_Name : ''}`.trim() || '-';
       document.getElementById('returnProductStock').textContent = stock;
-      if (item.Supplier) {
-        loadReturnProductSuppliers(item.Supplier);
-      } else {
-        loadReturnProductSuppliers();
-      }
+      const supplierId = item.Supplier_ID || item.Supplier || '';
+      const supplierSelect = document.getElementById('returnProductSupplier');
+      // If supplier options are already present, pre-select immediately; also pass through to loader
+      if (supplierId && supplierSelect) supplierSelect.value = supplierId;
+      loadReturnProductSuppliers(supplierId);
     }
 
     function loadReturnProductSuppliers(preselectId) {
