@@ -6010,42 +6010,78 @@
       const container = document.getElementById('reportsContainer');
       if (!container) return;
 
+      const safe = (val, fallback = 0) => (val === null || val === undefined || isNaN(val) ? fallback : val);
       const overview = data || {};
       const html = `
         <div class="stats-overview mb-3">
           <div class="stat-card">
             <div class="stat-icon sales"><i class="bi bi-currency-dollar"></i></div>
             <div class="stat-content">
-              <div class="stat-number">${formatCurrency(overview.totalSalesAmount)}</div>
+              <div class="stat-number">${formatCurrency(safe(overview.totalSalesAmount))}</div>
               <div class="stat-text">Total Sales</div>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-icon products"><i class="bi bi-cart-check"></i></div>
             <div class="stat-content">
-              <div class="stat-number">${overview.totalSalesCount || 0}</div>
+              <div class="stat-number">${safe(overview.totalSalesCount)}</div>
               <div class="stat-text">Transactions</div>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-icon customers"><i class="bi bi-people"></i></div>
             <div class="stat-content">
-              <div class="stat-number">${overview.totalCustomers || 0}</div>
+              <div class="stat-number">${safe(overview.totalCustomers)}</div>
               <div class="stat-text">Customers</div>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-icon products"><i class="bi bi-building"></i></div>
             <div class="stat-content">
-              <div class="stat-number">${overview.totalSuppliers || 0}</div>
+              <div class="stat-number">${safe(overview.totalSuppliers)}</div>
               <div class="stat-text">Suppliers</div>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-icon products"><i class="bi bi-box-seam"></i></div>
             <div class="stat-content">
-              <div class="stat-number">${overview.totalInventoryItems || 0}</div>
+              <div class="stat-number">${safe(overview.totalInventoryItems)}</div>
               <div class="stat-text">Inventory Items</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><i class="bi bi-graph-up"></i> Overview Details</div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Total Sales Amount
+                    <span class="fw-bold">${formatCurrency(safe(overview.totalSalesAmount))}</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Sales Transactions
+                    <span class="fw-bold">${safe(overview.totalSalesCount)}</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Customers
+                    <span class="fw-bold">${safe(overview.totalCustomers)}</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Suppliers
+                    <span class="fw-bold">${safe(overview.totalSuppliers)}</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Inventory Items
+                    <span class="fw-bold">${safe(overview.totalInventoryItems)}</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>

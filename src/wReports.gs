@@ -174,14 +174,13 @@ function generateUserPerformanceReport(startDate, endDate) {
  */
 function getReportsOverview() {
   try {
-    const sales = sheetToObjects('Sales').filter(s => s.Type === 'Sale');
-    const customers = sheetToObjects('Customers');
-    const suppliers = sheetToObjects('Suppliers');
+    const salesRaw = sheetToObjects('Sales') || [];
+    const customers = sheetToObjects('Customers') || [];
+    const suppliers = sheetToObjects('Suppliers') || [];
+    const sales = Array.isArray(salesRaw) ? salesRaw.filter(s => s && s.Type === 'Sale') : [];
 
     let totalSales = 0;
-    sales.forEach(s => {
-      totalSales += parseFloat(s.Grand_Total) || 0;
-    });
+    sales.forEach(s => totalSales += parseFloat(s.Grand_Total) || 0);
 
     let inventoryItems = 0;
     try {
