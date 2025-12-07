@@ -72,14 +72,16 @@ function getInventory(filters) {
       const item = {
         Item_ID: mostRecentBatch.Item_ID,
         Item_Name: mostRecentBatch.Item_Name,
-        Selling_Price: mostRecentBatch.Selling_Price,
+        Category: mostRecentBatch.Category,
+        Cost_Price: parseFloat(mostRecentBatch.Cost_Price) || 0,
+        Selling_Price: parseFloat(mostRecentBatch.Selling_Price) || 0,
         Current_Qty: totalQty,
-        // Category: mostRecentBatch.Category,
-        // Cost_Price: mostRecentBatch.Cost_Price,
-        // Reorder_Level: mostRecentBatch.Reorder_Level,
-        // Supplier: mostRecentBatch.Supplier,
-        // Last_Updated: mostRecentBatch.Last_Updated,
-        // Updated_By: mostRecentBatch.Updated_By
+        Reorder_Level: parseFloat(mostRecentBatch.Reorder_Level) || 0,
+        Supplier_ID: mostRecentBatch.Supplier_ID || '',
+        Supplier: mostRecentBatch.Supplier || mostRecentBatch.Supplier_ID || '',
+        Unit: mostRecentBatch.Unit,
+        Last_Updated: mostRecentBatch.Last_Updated,
+        Updated_By: mostRecentBatch.Updated_By
       };
       Logger.log('Simplified item: ' + JSON.stringify(item));
 
