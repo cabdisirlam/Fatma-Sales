@@ -4635,10 +4635,9 @@
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Supplier</label>
-                  <select class="form-select" id="returnProductSupplier" disabled style="background-color: #e9ecef; cursor: not-allowed;">
-                    <option value="">Loading suppliers...</option>
-                  </select>
-                  <div class="form-text">Auto-selected from the item (returns go to the same supplier).</div>
+                  <input type="text" class="form-control" id="returnProductSupplierDisplay" readonly style="background-color: #e9ecef; cursor: not-allowed;" placeholder="Auto-selected supplier">
+                  <input type="hidden" id="returnProductSupplierId">
+                  <div class="form-text">Auto-selected from the item (returns go to the same supplier). Set the supplier on the item if this is empty.</div>
                 </div>
                 <div class="row">
                   <div class="col-md-6 mb-3">
@@ -4753,7 +4752,8 @@
               <td>
                 <button class="btn btn-sm btn-outline-danger"
                         data-item-id="${item.Item_ID || ''}"
-                        data-supplier="${(item.Supplier_ID || item.Supplier || '').toString().replace(/"/g, '&quot;')}"
+                        data-supplier="${(item.Supplier_ID || item.Supplier || '').toString().replace(/\"/g, '&quot;')}"
+                        data-supplier-name="${(item.Supplier_Name || '').toString().replace(/\"/g, '&quot;')}"
                         data-stock="${stockQty}"
                         onclick="handleInventoryReturnClick(this)">
                   <i class="bi bi-arrow-90deg-left"></i> Return
@@ -6362,11 +6362,20 @@
       if (!btn || !btn.dataset) return;
       const itemId = btn.dataset.itemId || '';
       const supplierId = (btn.dataset.supplier || '').trim();
+      const supplierName = (btn.dataset.supplierName || '').trim();
       const stockQty = parseFloat(btn.dataset.stock) || 0;
-      openReturnProductModal(itemId, supplierId, stockQty);
+      openReturnProductModal(itemId, supplierId, stockQty, supplierName);
     }
 
-    function openReturnProductModal(itemId, supplierId = '', stockQty = null) {
+    function setReturnSupplier(supplierId, supplierName) {
+      const display = document.getElementById('returnProductSupplierDisplay');
+      const hidden = document.getElementById('returnProductSupplierId');
+      const nameOrId = supplierName || supplierId || '';
+      if (display) display.value = nameOrId || 'Supplier not set for this item';
+      if (hidden) hidden.value = supplierId || '';
+    }
+
+    function openReturnProductModal(itemId, supplierId = '', stockQty = null, supplierName = '') {
       const modalEl = document.getElementById('returnProductModal');
       if (!modalEl) return;
 
@@ -6374,18 +6383,15 @@
       if (select) select.value = '';
       document.getElementById('returnProductName').textContent = '-';
       document.getElementById('returnProductStock').textContent = stockQty !== null ? stockQty : '0';
-      const supplierSelect = document.getElementById('returnProductSupplier');
-      if (supplierSelect) {
-        supplierSelect.value = '';
-        supplierSelect.disabled = true; // keep supplier fixed/auto-set
-      }
+      setReturnSupplier('', '');
       document.getElementById('returnProductQty').value = '';
       document.getElementById('returnProductReason').value = '';
       document.getElementById('returnProductPayment').value = 'Credit';
       const alertBox = document.getElementById('returnProductAlert');
       if (alertBox) alertBox.style.display = 'none';
 
-      loadReturnProductSuppliers(supplierId);
+      // Prefill supplier immediately
+      setReturnSupplier(supplierId, supplierName);
 
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
       bringModalToFront(modalEl);
@@ -6408,78 +6414,21 @@
         document.getElementById('returnProductStock').textContent = selectedOption && selectedOption.dataset && selectedOption.dataset.stock ? selectedOption.dataset.stock : '0';
         // Still try to set supplier from option dataset even if cache is empty
         const optSupplier = selectedOption ? (selectedOption.dataset.supplier || '').trim() : '';
-        if (optSupplier) {
-        const supplierSelect = document.getElementById('returnProductSupplier');
-        if (supplierSelect) {
-          supplierSelect.value = optSupplier;
-          supplierSelect.disabled = true;
-        }
-        loadReturnProductSuppliers(optSupplier);
-      } else {
-        loadReturnProductSuppliers();
+        const optSupplierName = selectedOption ? (selectedOption.dataset.supplierName || '').trim() : '';
+        setReturnSupplier(optSupplier, optSupplierName);
+        return;
       }
-      return;
-    }
       const stock = (item.Current_Qty !== undefined ? item.Current_Qty : item.Stock_Qty) || 0;
       document.getElementById('returnProductName').textContent = `${item.Item_ID || ''} ${item.Item_Name ? ' - ' + item.Item_Name : ''}`.trim() || '-';
       document.getElementById('returnProductStock').textContent = stock;
       const supplierId = ((item.Supplier_ID || item.Supplier || (selectedOption ? selectedOption.dataset.supplier : '')) || '').toString().trim();
-      const supplierSelect = document.getElementById('returnProductSupplier');
-      // If supplier options are already present, pre-select immediately; also pass through to loader
-      if (supplierId && supplierSelect) {
-        supplierSelect.value = supplierId;
-        supplierSelect.disabled = true;
-      }
-      // Always reload to ensure the supplier option exists, but keep the field locked
-      loadReturnProductSuppliers(supplierId || supplierSelect ? supplierSelect.value : '');
-    }
-
-    function loadReturnProductSuppliers(preselectId) {
-      const supplierSelect = document.getElementById('returnProductSupplier');
-      if (!supplierSelect) return;
-      supplierSelect.innerHTML = '<option value=\"\">Loading suppliers...</option>';
-      supplierSelect.disabled = true;
-      const desiredId = (preselectId || '').toString().trim();
-
-      google.script.run
-        .withSuccessHandler(function(suppliers) {
-          supplierSelect.innerHTML = '<option value=\"\">Select Supplier</option>';
-          if (!Array.isArray(suppliers) || suppliers.length === 0) {
-            supplierSelect.innerHTML = '<option value=\"\">No suppliers found</option>';
-            return;
-          }
-
-          suppliers.forEach(function(supplier) {
-            const opt = document.createElement('option');
-            opt.value = supplier.Supplier_ID || supplier.Supplier_Name;
-            opt.textContent = (supplier.Supplier_Name || supplier.Supplier_ID || 'Supplier') +
-              (supplier.Supplier_ID ? ` (${supplier.Supplier_ID})` : '');
-            supplierSelect.appendChild(opt);
-          });
-
-          if (desiredId) {
-            supplierSelect.value = desiredId;
-            if (!supplierSelect.value) {
-              // If the supplier isn't in the list (e.g., name stored instead of ID), add it.
-              const fallback = document.createElement('option');
-              fallback.value = desiredId;
-              fallback.textContent = desiredId;
-              fallback.selected = true;
-              supplierSelect.appendChild(fallback);
-            }
-          }
-          supplierSelect.disabled = true; // keep locked to the item's supplier
-        })
-        .withFailureHandler(function(error) {
-          supplierSelect.innerHTML = '<option value=\"\">Error loading suppliers</option>';
-          console.error('Error loading suppliers for return modal:', error);
-        })
-        .getSuppliers();
+      const supplierName = (item.Supplier_Name || (selectedOption ? selectedOption.dataset.supplierName : '')) || '';
+      setReturnSupplier(supplierId, supplierName);
     }
 
     function submitReturnProduct() {
       const productId = document.getElementById('returnProductSelect').value;
-      const supplierId = document.getElementById('returnProductSupplier').value;
+      const supplierId = (document.getElementById('returnProductSupplierId').value || '').trim();
       const qty = parseFloat(document.getElementById('returnProductQty').value) || 0;
       const reason = (document.getElementById('returnProductReason').value || '').trim();
       const paymentMethod = document.getElementById('returnProductPayment').value;
@@ -6492,7 +6441,7 @@
       }
 
       if (!productId) return showReturnError('Select a product to return.');
-      if (!supplierId) return showReturnError('Select a supplier.');
+      if (!supplierId) return showReturnError('Supplier is required on the item before processing a return.');
       if (qty <= 0) return showReturnError('Quantity must be greater than zero.');
       if (!reason) return showReturnError('Reason is required.');
 
