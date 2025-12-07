@@ -4723,7 +4723,14 @@
         data.slice(0, 50).forEach(function(item) {
           let statusBadge = '';
           const stockQty = getStockQty(item);
-          const supplierDisplay = item.Supplier || item.Supplier_Name || item.Supplier_ID || '';
+          const supplierDisplay = item.Supplier
+            || item.Supplier_Name
+            || item['Supplier Name']
+            || item.Supplier_ID
+            || item['Supplier_ID']
+            || '';
+          const costValue = (item.Cost_Price !== undefined ? item.Cost_Price : item['Cost Price']);
+          const priceValue = (item.Selling_Price !== undefined ? item.Selling_Price : item['Selling Price']);
 
           if (stockQty <= 0) {
             statusBadge = '<span class="badge bg-danger">Out of Stock</span>';
@@ -4739,8 +4746,8 @@
               <td><strong>${item.Item_Name || ''}</strong></td>
               <td>${stockQty}</td>
               <td>${item.Unit || ''}</td>
-              <td>${formatCurrency(item.Cost_Price)}</td>
-              <td>${formatCurrency(item.Selling_Price)}</td>
+              <td>${formatCurrency(costValue)}</td>
+              <td>${formatCurrency(priceValue)}</td>
               <td>${supplierDisplay}</td>
               <td>${statusBadge}</td>
             </tr>
