@@ -5994,100 +5994,84 @@
     function loadReportsSection() {
       const container = document.getElementById('reportsContainer');
       if (!container) return;
-      container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading reports...</p></div>';
+      container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Loading net worth report...</p></div>';
 
       google.script.run
         .withSuccessHandler(function(data) {
-          displayReportsOverview(data);
+          displayNetWorthReport(data);
         })
         .withFailureHandler(function(error) {
-          container.innerHTML = '<div class="alert alert-danger">Error loading reports: ' + error.message + '</div>';
+          container.innerHTML = '<div class="alert alert-danger">Error loading net worth report: ' + error.message + '</div>';
         })
-        .getReportsOverview();
+        .getNetWorthReport();
     }
 
-    function displayReportsOverview(data) {
+    function displayNetWorthReport(data) {
       const container = document.getElementById('reportsContainer');
       if (!container) return;
 
-      const safe = (val, fallback = 0) => (val === null || val === undefined || isNaN(val) ? fallback : val);
-      const overview = data || {};
-      const html = `
-        <div class="stats-overview mb-3">
-          <div class="stat-card">
-            <div class="stat-icon sales"><i class="bi bi-currency-dollar"></i></div>
-            <div class="stat-content">
-              <div class="stat-number">${formatCurrency(safe(overview.totalSalesAmount))}</div>
-              <div class="stat-text">Total Sales</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon products"><i class="bi bi-cart-check"></i></div>
-            <div class="stat-content">
-              <div class="stat-number">${safe(overview.totalSalesCount)}</div>
-              <div class="stat-text">Transactions</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon customers"><i class="bi bi-people"></i></div>
-            <div class="stat-content">
-              <div class="stat-number">${safe(overview.totalCustomers)}</div>
-              <div class="stat-text">Customers</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon products"><i class="bi bi-building"></i></div>
-            <div class="stat-content">
-              <div class="stat-number">${safe(overview.totalSuppliers)}</div>
-              <div class="stat-text">Suppliers</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon products"><i class="bi bi-box-seam"></i></div>
-            <div class="stat-content">
-              <div class="stat-number">${safe(overview.totalInventoryItems)}</div>
-              <div class="stat-text">Inventory Items</div>
-            </div>
-          </div>
+      const safeNum = (val) => {
+        const n = parseFloat(val);
+        return isNaN(n) ? 0 : n;
+      };
+
+      const history = (data && data.history) ? data.history : [];
+      const rows = Array.isArray(history) ? history : [];
+
+      let tableBody = '';
+      if (!rows.length) {
+        tableBody = '<tr><td colspan="7" class="text-center text-muted py-3">No net worth records yet</td></tr>';
+      } else {
+        tableBody = rows.map(r => {
+          const date = r.date ? new Date(r.date).toLocaleDateString() : '-';
+          const bank = formatCurrency(safeNum(r.bankCash));
+          const recv = formatCurrency(safeNum(r.receivables));
+          const inv = formatCurrency(safeNum(r.inventory));
+          const supp = formatCurrency(safeNum(r.payables));
+          const net = formatCurrency(safeNum(r.netWorth));
+          const changeVal = safeNum(r.change);
+          const change = formatCurrency(changeVal);
+          const changeClass = changeVal > 0 ? 'text-success' : (changeVal < 0 ? 'text-danger' : 'text-muted');
+          return `
+            <tr>
+              <td>${date}</td>
+              <td>${bank}</td>
+              <td>${recv}</td>
+              <td>${inv}</td>
+              <td>${supp}</td>
+              <td>${net}</td>
+              <td class="${changeClass}">${change}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      container.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="mb-0"><i class="bi bi-cash-coin"></i> Net Worth</h5>
+          <button class="btn btn-outline-secondary btn-sm" onclick="loadReportsSection()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
         </div>
-        <div class="card">
-          <div class="card-header"><i class="bi bi-graph-up"></i> Overview Details</div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Total Sales Amount
-                    <span class="fw-bold">${formatCurrency(safe(overview.totalSalesAmount))}</span>
-                  </li>
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Sales Transactions
-                    <span class="fw-bold">${safe(overview.totalSalesCount)}</span>
-                  </li>
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Customers
-                    <span class="fw-bold">${safe(overview.totalCustomers)}</span>
-                  </li>
-                </ul>
-              </div>
-              <div class="col-md-6">
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Suppliers
-                    <span class="fw-bold">${safe(overview.totalSuppliers)}</span>
-                  </li>
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Inventory Items
-                    <span class="fw-bold">${safe(overview.totalInventoryItems)}</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Cash_Bank</th>
+                <th>Receivables</th>
+                <th>Inventory</th>
+                <th>Suppliers</th>
+                <th>Net_Worth</th>
+                <th>Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableBody}
+            </tbody>
+          </table>
         </div>
       `;
-
-      container.innerHTML = html;
     }
 
     // Suppliers List Section
