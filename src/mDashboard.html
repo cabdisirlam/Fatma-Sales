@@ -6010,6 +6010,11 @@
       const container = document.getElementById('reportsContainer');
       if (!container) return;
 
+      if (data && data.error) {
+        container.innerHTML = '<div class="alert alert-danger">Error loading net worth report: ' + data.error + '</div>';
+        return;
+      }
+
       const safeNum = (val) => {
         const n = parseFloat(val);
         return isNaN(n) ? 0 : n;

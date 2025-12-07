@@ -752,7 +752,7 @@ function getNetWorthHistoryOnly() {
     return { history: getNetWorthHistory() };
   } catch (error) {
     logError('getNetWorthHistoryOnly', error);
-    throw error;
+    return { history: [], error: error && error.message ? error.message : 'Unknown error loading net worth history' };
   }
 }
 
