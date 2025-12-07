@@ -6003,7 +6003,7 @@
         .withFailureHandler(function(error) {
           container.innerHTML = '<div class="alert alert-danger">Error loading net worth report: ' + error.message + '</div>';
         })
-        .getNetWorthReport();
+        .getNetWorthHistoryOnly();
     }
 
     function displayNetWorthReport(data) {
@@ -6018,23 +6018,9 @@
       const history = (data && data.history) ? data.history : [];
       const rows = Array.isArray(history) ? history.slice() : [];
 
-      // If no history yet, show the current snapshot so the table isn't blank
-      if ((!rows || rows.length === 0) && data && data.snapshot) {
-        const snap = data.snapshot;
-        rows.push({
-          date: snap.date,
-          bankCash: snap.bankCash,
-          receivables: snap.receivables,
-          inventory: snap.inventory,
-          payables: snap.payables,
-          netWorth: snap.netWorth,
-          change: data.change || 0
-        });
-      }
-
       let tableBody = '';
       if (!rows.length) {
-        tableBody = '<tr><td colspan="7" class="text-center text-muted py-3">No net worth records yet</td></tr>';
+        tableBody = '<tr><td colspan="7" class="text-center text-muted py-3">No net worth records found in Net_Worth_Log. Ensure the sheet exists and the daily snapshot trigger is running.</td></tr>';
       } else {
         tableBody = rows.map(r => {
           const date = r.date ? new Date(r.date).toLocaleDateString() : '-';
