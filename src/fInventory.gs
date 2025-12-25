@@ -431,7 +431,8 @@ function addProduct(productData) {
             Item_Name: productData.Item_Name,
             Category: productData.Category,
             Qty: purchaseQty, 
-            Cost_Price: costPrice 
+            Cost_Price: costPrice,
+            Reorder_Level: reorderLevel
         }],
         Payment_Method: productData.Payment_Method || 'Credit',
         Paid_Amount: paidAmount,
@@ -831,6 +832,7 @@ function increaseStock(itemId, qty, user, unitCost, baseItem) {
 
     // Append NEW BATCH ROW
     // Headers: Item_ID, Item_Name, Category, Cost_Price, Selling_Price, Current_Qty, Reorder_Level, Supplier, Last_Updated, Updated_By, Batch_ID, Date_Received
+    const itemReorderLevel = item.Reorder_Level !== undefined && item.Reorder_Level !== '' ? parseFloat(item.Reorder_Level) : 0;
     const newBatchRow = [
       itemId,
       item.Item_Name,
@@ -838,7 +840,7 @@ function increaseStock(itemId, qty, user, unitCost, baseItem) {
       costPrice,
       item.Selling_Price,
       parseFloat(qty),
-      item.Reorder_Level,
+      itemReorderLevel,
       item.Supplier,
       new Date(),
       user || 'SYSTEM',

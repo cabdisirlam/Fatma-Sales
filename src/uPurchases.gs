@@ -23,7 +23,7 @@ function ensurePurchaseItem(item, user) {
       Category: item.Category || 'Manual',
       Cost_Price: cost,
       Selling_Price: selling,
-      Reorder_Level: item.Reorder_Level || 10,
+      Reorder_Level: item.Reorder_Level !== undefined && item.Reorder_Level !== '' ? parseFloat(item.Reorder_Level) : 0,
       Supplier: item.Supplier || item.Supplier_ID || '',
       Current_Qty: 0,
       Stock_Qty: 0
@@ -51,13 +51,17 @@ function createPurchase(purchaseData) {
       const costPrice = item.Cost_Price || product.Cost_Price;
       const lineTotal = parseFloat(item.Qty) * parseFloat(costPrice);
 
+      const reorderLevelVal = item.Reorder_Level !== undefined && item.Reorder_Level !== ''
+        ? parseFloat(item.Reorder_Level)
+        : (product.Reorder_Level !== undefined && product.Reorder_Level !== '' ? parseFloat(product.Reorder_Level) : 0);
+
       items.push({
         Item_ID: item.Item_ID,
         Item_Name: product.Item_Name,
         Category: item.Category || product.Category || '',
         Supplier_ID: purchaseData.Supplier_ID,
         Supplier: purchaseData.Supplier_Name || purchaseData.Supplier_ID || '',
-        Reorder_Level: item.Reorder_Level !== undefined && item.Reorder_Level !== '' ? parseFloat(item.Reorder_Level) : undefined,
+        Reorder_Level: reorderLevelVal,
         Qty: parseFloat(item.Qty),
         Cost_Price: parseFloat(costPrice),
         Line_Total: lineTotal
