@@ -57,7 +57,7 @@ function createPurchase(purchaseData) {
         Category: item.Category || product.Category || '',
         Supplier_ID: purchaseData.Supplier_ID,
         Supplier: purchaseData.Supplier_Name || purchaseData.Supplier_ID || '',
-        Reorder_Level: item.Reorder_Level !== undefined ? item.Reorder_Level : product.Reorder_Level,
+        Reorder_Level: item.Reorder_Level !== undefined && item.Reorder_Level !== '' ? parseFloat(item.Reorder_Level) : undefined,
         Qty: parseFloat(item.Qty),
         Cost_Price: parseFloat(costPrice),
         Line_Total: lineTotal
@@ -70,7 +70,7 @@ function createPurchase(purchaseData) {
     const balance = totalAmount - paidAmount;
     const paymentStatus = balance === 0 ? 'Paid' : (paidAmount === 0 ? 'Unpaid' : 'Partial');
 
-    // Add each line item to Purchases sheet
+    // Add each line item to Purchases sheet (preserve original columns)
     items.forEach(item => {
       const purchaseRow = [
         purchaseId,
@@ -82,7 +82,6 @@ function createPurchase(purchaseData) {
         item.Qty,
         item.Cost_Price,
         item.Line_Total,
-        item.Reorder_Level !== undefined ? item.Reorder_Level : '',
         totalAmount,
         paymentStatus,
         purchaseData.Payment_Method || 'Cash',
