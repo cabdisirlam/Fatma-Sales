@@ -3524,9 +3524,13 @@
           ? (form.customItemName ? form.customItemName.value.trim() : '')
           : form.itemName.value.trim();
 
+        // If category not entered, attempt to auto-fill from master data by item name
+        const matchedMaster = masterDataCache.find(i => i.Item_Name === itemName);
+        const categoryValue = form.category.value.trim() || (matchedMaster ? matchedMaster.Category : '');
+
         const productData = {
           Item_Name: itemName,
-          Category: form.category.value.trim() || 'General',
+          Category: categoryValue || 'General',
           Cost_Price: parseFloat(form.cost.value) || 0,
           Selling_Price: 0,
           Current_Qty: parseFloat(form.qty.value) || 0,
