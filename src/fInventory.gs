@@ -362,7 +362,7 @@ function addProduct(productData) {
     category = category || 'General';
 
     // 1. Validation (Matches your form inputs)
-    const requiredFields = ['Item_Name', 'Cost_Price', 'Current_Qty', 'Category'];
+    const requiredFields = ['Item_Name', 'Cost_Price', 'Current_Qty', 'Category', 'Reorder_Level'];
     if (isPurchase) {
       requiredFields.push('Supplier_ID');
     }

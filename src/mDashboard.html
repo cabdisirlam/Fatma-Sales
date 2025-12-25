@@ -3539,7 +3539,7 @@
           Cost_Price: parseFloat(form.cost.value) || 0,
           Selling_Price: 0,
           Current_Qty: parseFloat(form.qty.value) || 0,
-          Reorder_Level: form.reorderLevel.value === '' ? null : (parseFloat(form.reorderLevel.value) || 0),
+          Reorder_Level: form.Reorder_Level.value === '' ? null : (parseFloat(form.Reorder_Level.value) || 0),
           Supplier_ID: form.supplier.value.trim(),
           Supplier_Name: form.supplier.options && form.supplier.selectedIndex >= 0 ? form.supplier.options[form.supplier.selectedIndex].text : '',
           Stock_Source: 'purchase',
@@ -4651,7 +4651,7 @@
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Reorder Level</label>
-                      <input type="number" class="form-control" name="reorderLevel" min="0" placeholder="0">
+                      <input type="number" class="form-control" name="Reorder_Level" min="0" placeholder="0">
                     </div>
                     <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
                       <button class="btn btn-outline-secondary" type="button" onclick="clearInventoryDraft()">
