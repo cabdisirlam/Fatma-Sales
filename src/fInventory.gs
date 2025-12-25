@@ -382,14 +382,13 @@ function addProduct(productData) {
     const costPrice = parseFloat(productData.Cost_Price) || 0;
     const timestamp = new Date().getTime();
     const batchId = 'BATCH-' + itemId + '-' + timestamp;
-
-    // V3.0: Create FIRST BATCH ROW (only if NOT a purchase, because createPurchase will handle that)
-    if (!isPurchase && purchaseQty > 0) {
-      // Headers: Item_ID, Item_Name, Category, Cost_Price, Selling_Price, Current_Qty, Reorder_Level, Supplier, Last_Updated, Updated_By, Batch_ID, Date_Received
     const reorderLevel = productData.Reorder_Level !== undefined && productData.Reorder_Level !== ''
       ? parseFloat(productData.Reorder_Level)
       : 0;
 
+    // V3.0: Create FIRST BATCH ROW (only if NOT a purchase, because createPurchase will handle that)
+    if (!isPurchase && purchaseQty > 0) {
+      // Headers: Item_ID, Item_Name, Category, Cost_Price, Selling_Price, Current_Qty, Reorder_Level, Supplier, Last_Updated, Updated_By, Batch_ID, Date_Received
     const newProduct = [
       itemId,                                  // 1. Item_ID
       productData.Item_Name || '',             // 2. Item_Name
