@@ -386,6 +386,10 @@ function addProduct(productData) {
     // V3.0: Create FIRST BATCH ROW (only if NOT a purchase, because createPurchase will handle that)
     if (!isPurchase && purchaseQty > 0) {
       // Headers: Item_ID, Item_Name, Category, Cost_Price, Selling_Price, Current_Qty, Reorder_Level, Supplier, Last_Updated, Updated_By, Batch_ID, Date_Received
+    const reorderLevel = productData.Reorder_Level !== undefined && productData.Reorder_Level !== ''
+      ? parseFloat(productData.Reorder_Level)
+      : 0;
+
     const newProduct = [
       itemId,                                  // 1. Item_ID
       productData.Item_Name || '',             // 2. Item_Name
@@ -393,7 +397,7 @@ function addProduct(productData) {
       costPrice,                               // 4. Cost_Price
       sellingPrice,                            // 5. Selling_Price
       purchaseQty,                             // 6. Current_Qty (opening stock)
-      parseFloat(productData.Reorder_Level)||10,// 7. Reorder_Level
+      reorderLevel,                            // 7. Reorder_Level
       supplierName,                            // 8. Supplier
       new Date(),                              // 9. Last_Updated
       productData.User || 'SYSTEM',            // 10. Updated_By

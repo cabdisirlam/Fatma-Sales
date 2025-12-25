@@ -3539,7 +3539,7 @@
           Cost_Price: parseFloat(form.cost.value) || 0,
           Selling_Price: 0,
           Current_Qty: parseFloat(form.qty.value) || 0,
-          Reorder_Level: parseFloat(form.reorderLevel.value) || 10,
+          Reorder_Level: form.reorderLevel.value === '' ? null : (parseFloat(form.reorderLevel.value) || 0),
           Supplier_ID: form.supplier.value.trim(),
           Supplier_Name: form.supplier.options && form.supplier.selectedIndex >= 0 ? form.supplier.options[form.supplier.selectedIndex].text : '',
           Stock_Source: 'purchase',
