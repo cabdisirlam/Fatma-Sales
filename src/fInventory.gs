@@ -124,6 +124,20 @@ function clearInventoryCache() {
   // Cache disabled: no-op
 }
 
+// Helper: get category from Master_Data by item name
+function getCategoryForItemName(itemName) {
+  try {
+    if (!itemName) return '';
+    const rows = sheetToObjects('Master_Data');
+    const nameLc = itemName.toString().trim().toLowerCase();
+    const match = rows.find(r => (r.Item_Name || r.Item || '').toString().trim().toLowerCase() === nameLc);
+    return match && match.Category ? match.Category : '';
+  } catch (err) {
+    Logger.log('getCategoryForItemName error: ' + err);
+    return '';
+  }
+}
+
 /**
  * Get inventory item by ID
  * V3.0: Aggregates all batches for the item and returns consolidated quantity
@@ -316,7 +330,14 @@ function addProduct(productData) {
         }
     }
     // Keep actual name when available; fall back to ID to avoid blanks
-    supplierName = supplierName || supplierId || '';
+    supplierName = supplierName || supplierId || 'Unknown Supplier';
+
+    // Resolve category: prefer provided, otherwise look up from Master_Data
+    let category = productData.Category || '';
+    if (!category) {
+      category = getCategoryForItemName(productData.Item_Name);
+    }
+    category = category || 'General';
 
     // 1. Validation (Matches your form inputs)
     const requiredFields = ['Item_Name', 'Cost_Price', 'Current_Qty'];
@@ -346,7 +367,7 @@ function addProduct(productData) {
       const newProduct = [
         itemId,                                  // 1. Item_ID
         productData.Item_Name || '',             // 2. Item_Name
-        productData.Category || 'General',       // 3. Category
+        category,                                // 3. Category
         costPrice,                               // 4. Cost_Price
         sellingPrice,                            // 5. Selling_Price
         purchaseQty,                             // 6. Current_Qty (opening stock)
