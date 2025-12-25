@@ -54,6 +54,9 @@ function createPurchase(purchaseData) {
       items.push({
         Item_ID: item.Item_ID,
         Item_Name: product.Item_Name,
+        Category: item.Category || product.Category || '',
+        Supplier_ID: purchaseData.Supplier_ID,
+        Supplier: purchaseData.Supplier_Name || purchaseData.Supplier_ID || '',
         Qty: parseFloat(item.Qty),
         Cost_Price: parseFloat(costPrice),
         Line_Total: lineTotal
