@@ -813,7 +813,7 @@ function increaseStock(itemId, qty, user, unitCost, baseItem) {
         Category: baseItem.Category || getCategoryForItemName(baseItem.Item_Name) || 'General',
         Cost_Price: baseItem.Cost_Price || baseItem.unitCost || 0,
         Selling_Price: baseItem.Selling_Price || baseItem.Price || baseItem.Cost_Price || 0,
-        Reorder_Level: baseItem.Reorder_Level || 10,
+        Reorder_Level: baseItem.Reorder_Level !== undefined && baseItem.Reorder_Level !== '' ? baseItem.Reorder_Level : 0,
         Supplier: baseItem.Supplier || baseItem.Supplier_ID || resolveSupplierName(baseItem.Supplier_ID) || '',
         Last_Updated: new Date(),
         Updated_By: user || 'SYSTEM'
