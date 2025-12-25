@@ -1926,7 +1926,7 @@
 
   <!-- New Sale Modal -->
   <div class="modal fade" id="newSaleModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
           <h5 class="modal-title"><i class="bi bi-cart-plus"></i> Create New Sale</h5>
@@ -2985,7 +2985,7 @@
       if (!modalEl) {
         const template = `
         <div class="modal fade" id="customerAddModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-sm-down">
             <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-stars"></i> Add Customer</h5>
@@ -3528,7 +3528,7 @@
           Item_Name: itemName,
           Category: form.category.value.trim() || 'General',
           Cost_Price: parseFloat(form.cost.value) || 0,
-          Selling_Price: parseFloat(form.price.value) || 0,
+          Selling_Price: 0,
           Current_Qty: parseFloat(form.qty.value) || 0,
           Reorder_Level: parseFloat(form.reorderLevel.value) || 10,
           Supplier_ID: form.supplier.value.trim(),
@@ -3566,15 +3566,15 @@
               showQuickAddAlert(alertBox, 'success', 'Product added successfully! Item ID: ' + response.itemId);
               form.reset();
               if (window.localStorage) localStorage.removeItem('draft.inventory.add');
-              // Reload inventory section after 2 seconds
-              setTimeout(() => {
+              // Refresh immediately so new inventory/product is visible without manual reload
+              if (typeof loadInventorySection === 'function') {
                 loadInventorySection(true);
-                const modalEl = document.getElementById('inventoryAddModal');
-                if (modalEl) {
-                  const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                  modal.hide();
-                }
-              }, 400);
+              }
+              const modalEl = document.getElementById('inventoryAddModal');
+              if (modalEl) {
+                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modal.hide();
+              }
             } else {
               showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add product'));
             }
@@ -3630,7 +3630,10 @@
                   const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
                   modal.hide();
               }
-              loadCustomersSection(true);
+              // Refresh customer views immediately so new entries appear without manual reload
+              if (typeof loadCustomersSection === 'function') loadCustomersSection(true);
+              if (typeof loadModalCustomers === 'function') loadModalCustomers();
+              if (typeof updateCustomersCount === 'function') updateCustomersCount();
             } else {
               showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add customer'));
             }
@@ -4589,7 +4592,7 @@
         </div>
 
         <div class="modal fade" id="inventoryAddModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-sm-down">
             <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-box-seam"></i> Add Product</h5>
@@ -4616,13 +4619,9 @@
                       <label class="form-label">Category</label>
                       <input type="text" class="form-control" name="category" id="quickAddCategory" placeholder="Auto-filled" ${masterDataCache.length ? 'readonly style="background-color: #e9ecef;"' : ''}>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-4">
                       <label class="form-label">Cost</label>
                       <input type="number" class="form-control" name="cost" min="0" step="1" required>
-                    </div>
-                    <div class="col-md-2">
-                      <label class="form-label">Price</label>
-                      <input type="number" class="form-control" name="price" min="0" step="1">
                     </div>
                   </div>
                   <div class="row g-2 mt-2">
@@ -4918,62 +4917,6 @@
           <button class="btn btn-outline-secondary btn-sm" onclick="loadCustomersSection(true)">
             <i class="bi bi-arrow-clockwise"></i> Refresh
           </button>
-        </div>
-
-        <div class="modal fade" id="customerAddModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-stars"></i> Add Customer</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <form class="mt-2" id="quickAddCustomerForm" onsubmit="handleQuickAdd(event, 'customer')">
-                  <div class="row g-2">
-                    <div class="col-md-4">
-                      <label class="form-label">Full Name *</label>
-                      <input type="text" class="form-control" name="name" placeholder="Jane Doe" required>
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Phone *</label>
-                      <input type="tel" class="form-control" name="phone" placeholder="07xx xxx xxx" required>
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Email</label>
-                      <input type="email" class="form-control" name="email" placeholder="name@example.com">
-                    </div>
-                  </div>
-                  <div class="row g-2 mt-2">
-                    <div class="col-md-4">
-                      <label class="form-label">KRA PIN</label>
-                      <input type="text" class="form-control" name="kra_pin" placeholder="A00...">
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Location</label>
-                      <input type="text" class="form-control" name="location" placeholder="e.g. Nairobi">
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Initial Loyalty Points</label>
-                      <input type="number" class="form-control" name="loyalty_points" value="0">
-                    </div>
-                  </div>
-                  
-                  <div class="row g-2 mt-2">
-                    <div class="col-md-4">
-                      <label class="form-label">Opening Balance</label>
-                      <input type="number" class="form-control" name="Opening_Balance" step="1">
-                    </div>
-                    <div class="col-md-8 d-flex align-items-end justify-content-end">
-                      <button class="btn btn-success" type="submit" id="quickAddCustomerBtn">
-                        <i class="bi bi-check-circle"></i> Save Customer
-                      </button>
-                    </div>
-                  </div>
-                  <div id="quickAddCustomerAlert" class="alert alert-success mt-3 d-none"></div>
-                </form>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div class="row mb-4">
@@ -6186,7 +6129,10 @@
               const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
               modal.hide();
             }
+            // Refresh supplier views/dropdowns immediately
             loadSuppliersList();
+            if (typeof loadSuppliersOverview === 'function') loadSuppliersOverview();
+            if (typeof loadSuppliersForDropdown === 'function') loadSuppliersForDropdown();
           } else {
             alertDiv.className = 'alert alert-danger mt-3';
             alertDiv.textContent = 'Error: ' + result.message;
@@ -6342,7 +6288,7 @@
       if (!modalEl) {
         const modalTemplate = `
         <div class="modal fade" id="supplierAddModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-sm-down">
             <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Supplier</h5>
@@ -7935,11 +7881,12 @@
             showModalAlert(type + ' created successfully! Ref: ' + (result.transactionId || result.quotationId), 'success');
 
             // Reload sales history
-            setTimeout(() => {
-              loadSalesHistory();
-              refreshSalesOverview();
-              bootstrap.Modal.getInstance(document.getElementById('newSaleModal')).hide();
-            }, 1500);
+            if (typeof loadSalesHistory === 'function') loadSalesHistory();
+            if (typeof refreshSalesOverview === 'function') refreshSalesOverview();
+            // Also refresh inventory/sales sections if available so stock and metrics update
+            if (typeof loadInventorySection === 'function') loadInventorySection(true);
+            const modalInstance = bootstrap.Modal.getInstance(document.getElementById('newSaleModal')) || new bootstrap.Modal(document.getElementById('newSaleModal'));
+            modalInstance.hide();
           } else {
             showModalAlert('Error: ' + result.message, 'danger');
           }

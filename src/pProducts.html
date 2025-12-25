@@ -772,10 +772,10 @@
             alertDiv.textContent = 'Product added successfully! ID: ' + result.itemId;
             alertDiv.style.display = 'block';
             form.reset();
-            setTimeout(function() {
-              bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
-              loadInventory();
-            }, 1200);
+            const modalInstance = bootstrap.Modal.getInstance(document.getElementById('addProductModal')) || new bootstrap.Modal(document.getElementById('addProductModal'));
+            modalInstance.hide();
+            // Refresh inventory immediately so the new product shows without manual reload
+            loadInventory();
           } else {
             alertDiv.className = 'alert alert-danger mt-3';
             alertDiv.textContent = 'Error: ' + result.message;

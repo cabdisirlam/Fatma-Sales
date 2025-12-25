@@ -331,10 +331,8 @@ function addProduct(productData) {
 
     // 2. HARD-CODED MAPPING (Matches your Header String Exactly)
     // V3.0: We'll create the first batch row directly (only for opening stock)
-    const sellingPrice =
-      productData.Selling_Price !== undefined && productData.Selling_Price !== ''
-        ? parseFloat(productData.Selling_Price)
-        : parseFloat(productData.Cost_Price) || 0;
+    // Selling price is not captured on creation; default to 0 for sheet purposes
+    const sellingPrice = 0;
 
     const costPrice = parseFloat(productData.Cost_Price) || 0;
     const timestamp = new Date().getTime();
