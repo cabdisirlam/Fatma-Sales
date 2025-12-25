@@ -3525,7 +3525,7 @@
           : form.itemName.value.trim();
 
         // If category not entered, attempt to auto-fill from master data by item name
-        const matchedMaster = masterDataCache.find(i => i.Item_Name === itemName);
+        const matchedMaster = findMasterItemByName(itemName);
         const categoryValue = form.category.value.trim() || (matchedMaster ? matchedMaster.Category : '');
 
         const productData = {
@@ -7273,6 +7273,12 @@
       }
     }
 
+    function findMasterItemByName(name) {
+      if (!name || !masterDataCache || !masterDataCache.length) return null;
+      const target = name.trim().toLowerCase();
+      return masterDataCache.find(i => (i.Item_Name || '').toString().trim().toLowerCase() === target) || null;
+    }
+
     // Helper to handle master item dropdown selection
     function onMasterItemSelect(selectEl) {
       const selectedName = selectEl.value;
@@ -7295,10 +7301,16 @@
       }
 
       if (categoryInput) {
-        categoryInput.readOnly = true;
-        categoryInput.style.backgroundColor = '#e9ecef';
-        const item = masterDataCache.find(i => i.Item_Name === selectedName);
-        categoryInput.value = item ? item.Category : '';
+        const item = findMasterItemByName(selectedName);
+        if (item && item.Category) {
+          categoryInput.readOnly = true;
+          categoryInput.style.backgroundColor = '#e9ecef';
+          categoryInput.value = item.Category;
+        } else {
+          categoryInput.readOnly = false;
+          categoryInput.style.backgroundColor = '';
+          categoryInput.value = '';
+        }
 
         // Optional usability: focus cost for faster data entry
         const form = selectEl.closest('form');
