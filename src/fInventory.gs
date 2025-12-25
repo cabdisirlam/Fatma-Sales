@@ -83,6 +83,10 @@ function getInventory(filters) {
         Last_Updated: mostRecentBatch.Last_Updated instanceof Date ? mostRecentBatch.Last_Updated.toISOString() : mostRecentBatch.Last_Updated,
         Updated_By: mostRecentBatch.Updated_By
       };
+      if (!item.Supplier && item.Supplier_ID) {
+        const supplierName = resolveSupplierName(item.Supplier_ID);
+        if (supplierName) item.Supplier = supplierName;
+      }
       Logger.log('Simplified item: ' + JSON.stringify(item));
 
       // Backwards compatibility: expose Stock_Qty for UIs expecting this field
@@ -134,6 +138,17 @@ function getCategoryForItemName(itemName) {
     return match && match.Category ? match.Category : '';
   } catch (err) {
     Logger.log('getCategoryForItemName error: ' + err);
+    return '';
+  }
+}
+
+function resolveSupplierName(supplierId) {
+  try {
+    if (!supplierId) return '';
+    const s = getSupplierById(supplierId);
+    return (s && s.Supplier_Name) ? s.Supplier_Name : '';
+  } catch (e) {
+    Logger.log('resolveSupplierName error: ' + e);
     return '';
   }
 }
@@ -199,6 +214,10 @@ function getInventoryItemById(itemId) {
       Last_Updated: mostRecentBatch.Last_Updated,
       Updated_By: mostRecentBatch.Updated_By
     };
+    if (!item.Supplier && mostRecentBatch.Supplier_ID) {
+      const supplierName = resolveSupplierName(mostRecentBatch.Supplier_ID);
+      if (supplierName) item.Supplier = supplierName;
+    }
 
     // Backwards compatibility: expose Stock_Qty for UIs expecting this field
     item.Stock_Qty = item.Current_Qty;
@@ -329,6 +348,9 @@ function addProduct(productData) {
             supplierName = supplier.Supplier_Name;
         }
     }
+    if (!supplierName && supplierId) {
+      supplierName = resolveSupplierName(supplierId);
+    }
     // Keep actual name when available; fall back to ID to avoid blanks
     supplierName = supplierName || supplierId || 'Unknown Supplier';
 
@@ -364,20 +386,20 @@ function addProduct(productData) {
     // V3.0: Create FIRST BATCH ROW (only if NOT a purchase, because createPurchase will handle that)
     if (!isPurchase && purchaseQty > 0) {
       // Headers: Item_ID, Item_Name, Category, Cost_Price, Selling_Price, Current_Qty, Reorder_Level, Supplier, Last_Updated, Updated_By, Batch_ID, Date_Received
-      const newProduct = [
-        itemId,                                  // 1. Item_ID
-        productData.Item_Name || '',             // 2. Item_Name
-        category,                                // 3. Category
-        costPrice,                               // 4. Cost_Price
-        sellingPrice,                            // 5. Selling_Price
-        purchaseQty,                             // 6. Current_Qty (opening stock)
-        parseFloat(productData.Reorder_Level)||10,// 7. Reorder_Level
-        supplierName,                            // 8. Supplier
-        new Date(),                              // 9. Last_Updated
-        productData.User || 'SYSTEM',            // 10. Updated_By
-        batchId,                                 // 11. Batch_ID (V3.0)
-        new Date()                               // 12. Date_Received (V3.0)
-      ];
+    const newProduct = [
+      itemId,                                  // 1. Item_ID
+      productData.Item_Name || '',             // 2. Item_Name
+      category,                                // 3. Category
+      costPrice,                               // 4. Cost_Price
+      sellingPrice,                            // 5. Selling_Price
+      purchaseQty,                             // 6. Current_Qty (opening stock)
+      parseFloat(productData.Reorder_Level)||10,// 7. Reorder_Level
+      supplierName,                            // 8. Supplier
+      new Date(),                              // 9. Last_Updated
+      productData.User || 'SYSTEM',            // 10. Updated_By
+      batchId,                                 // 11. Batch_ID (V3.0)
+      new Date()                               // 12. Date_Received (V3.0)
+    ];
 
       sheet.appendRow(newProduct);
 
@@ -784,11 +806,11 @@ function increaseStock(itemId, qty, user, unitCost, baseItem) {
       item = {
         Item_ID: itemId,
         Item_Name: baseItem.Item_Name || 'New Item',
-        Category: baseItem.Category || 'General',
+        Category: baseItem.Category || getCategoryForItemName(baseItem.Item_Name) || 'General',
         Cost_Price: baseItem.Cost_Price || baseItem.unitCost || 0,
         Selling_Price: baseItem.Selling_Price || baseItem.Price || baseItem.Cost_Price || 0,
         Reorder_Level: baseItem.Reorder_Level || 10,
-        Supplier: baseItem.Supplier_ID || baseItem.Supplier || '',
+        Supplier: baseItem.Supplier || baseItem.Supplier_ID || resolveSupplierName(baseItem.Supplier_ID) || '',
         Last_Updated: new Date(),
         Updated_By: user || 'SYSTEM'
       };
