@@ -3524,9 +3524,14 @@
           ? (form.customItemName ? form.customItemName.value.trim() : '')
           : form.itemName.value.trim();
 
-        // If category not entered, attempt to auto-fill from master data by item name
+        // Category must come from master data; error if none
         const matchedMaster = findMasterItemByName(itemName);
-        const categoryValue = form.category.value.trim() || (matchedMaster ? matchedMaster.Category : '');
+        if (!matchedMaster || !matchedMaster.Category) {
+          showQuickAddAlert(alertBox, 'danger', 'Category is missing for this item in master data.');
+          resetSubmitButton(submitBtn, 'product');
+          return;
+        }
+        const categoryValue = matchedMaster.Category;
 
         const productData = {
           Item_Name: itemName,
@@ -4621,7 +4626,7 @@
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Category</label>
-                      <input type="text" class="form-control" name="category" id="quickAddCategory" placeholder="Auto-filled" ${masterDataCache.length ? 'readonly style="background-color: #e9ecef;"' : ''}>
+                      <input type="text" class="form-control" name="category" id="quickAddCategory" placeholder="Auto-filled from master data" readonly style="background-color: #e9ecef;">
                     </div>
                     <div class="col-md-4">
                       <label class="form-label">Cost</label>
@@ -7286,15 +7291,13 @@
       const customInput = document.getElementById('customItemName');
 
       if (selectedName === '__custom' || !masterDataCache.length) {
-        openMasterItemModal();
+        showQuickAddAlert(document.getElementById('quickAddProductAlert'), 'danger', 'Select an item from master data to auto-fill category.');
         selectEl.value = '';
         if (customInput) {
           customInput.classList.add('d-none');
           customInput.value = '';
         }
         if (categoryInput) {
-          categoryInput.readOnly = true;
-          categoryInput.style.backgroundColor = '#e9ecef';
           categoryInput.value = '';
         }
         return;
@@ -7303,13 +7306,10 @@
       if (categoryInput) {
         const item = findMasterItemByName(selectedName);
         if (item && item.Category) {
-          categoryInput.readOnly = true;
-          categoryInput.style.backgroundColor = '#e9ecef';
           categoryInput.value = item.Category;
         } else {
-          categoryInput.readOnly = true;
-          categoryInput.style.backgroundColor = '#e9ecef';
           categoryInput.value = '';
+          showQuickAddAlert(document.getElementById('quickAddProductAlert'), 'danger', 'Category missing in master data for this item.');
         }
 
         // Optional usability: focus cost for faster data entry
