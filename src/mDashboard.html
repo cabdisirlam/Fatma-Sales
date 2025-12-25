@@ -4576,7 +4576,7 @@
         const id = item.Item_ID || 'Item';
         const name = item.Item_Name || '';
         const supplierVal = (item.Supplier_ID || item.Supplier || '').toString().trim();
-        const supplierName = (item.Supplier_Name || item.Supplier || supplierVal || 'Supplier').toString().trim();
+        const supplierName = (item.Supplier_Name || item.Supplier || supplierVal || '').toString().trim();
         const label = name ? `${id} - ${name} (Stock: ${stock})` : `${id} (Stock: ${stock})`;
         return `<option value="${id}" data-supplier="${supplierVal}" data-supplier-name="${supplierName}" data-stock="${stock}">${label}</option>`;
       }).join('');

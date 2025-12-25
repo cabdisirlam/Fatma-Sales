@@ -78,7 +78,7 @@ function getInventory(filters) {
         Current_Qty: totalQty,
         Reorder_Level: parseFloat(mostRecentBatch.Reorder_Level) || 0,
         Supplier_ID: mostRecentBatch.Supplier_ID || mostRecentBatch.Supplier || '',
-        Supplier: mostRecentBatch.Supplier || mostRecentBatch.Supplier_ID || 'Supplier',
+        Supplier: mostRecentBatch.Supplier || mostRecentBatch.Supplier_ID || '',
         Unit: mostRecentBatch.Unit,
         Last_Updated: mostRecentBatch.Last_Updated instanceof Date ? mostRecentBatch.Last_Updated.toISOString() : mostRecentBatch.Last_Updated,
         Updated_By: mostRecentBatch.Updated_By
@@ -308,15 +308,15 @@ function addProduct(productData) {
     const stockSource = (productData.Stock_Source || (supplierId ? 'purchase' : 'opening')).toLowerCase();
     const isPurchase = stockSource === 'purchase';
     
-    let supplierName = productData.Supplier_Name || '';
+    let supplierName = productData.Supplier_Name || productData.Supplier || '';
     if (supplierId && !supplierName) {
         const supplier = getSupplierById(supplierId);
         if(supplier) {
             supplierName = supplier.Supplier_Name;
         }
     }
-    // Fallbacks so supplier never saves empty (needed for returns/UI)
-    supplierName = supplierName || supplierId || 'Supplier';
+    // Keep actual name when available; fall back to ID to avoid blanks
+    supplierName = supplierName || supplierId || '';
 
     // 1. Validation (Matches your form inputs)
     const requiredFields = ['Item_Name', 'Cost_Price', 'Current_Qty'];
