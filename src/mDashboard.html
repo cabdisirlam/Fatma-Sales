@@ -6122,6 +6122,13 @@
       const alertDiv = document.getElementById('supplierFormAlert');
       alertDiv.style.display = 'none';
 
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+      }
+
       if (window.__savingSupplier) return;
       window.__savingSupplier = true;
 
@@ -6147,12 +6154,20 @@
             alertDiv.textContent = 'Error: ' + result.message;
             alertDiv.style.display = 'block';
           }
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+          }
           window.__savingSupplier = false;
         })
         .withFailureHandler(function(error) {
           alertDiv.className = 'alert alert-danger mt-3';
           alertDiv.textContent = 'Error: ' + error.message;
           alertDiv.style.display = 'block';
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+          }
           window.__savingSupplier = false;
         })
         .addSupplier(supplierData);
