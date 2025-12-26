@@ -4942,10 +4942,13 @@
               if (modalEl) {
                   safeHideModal(modalEl);
               }
-              // Refresh customer views immediately so new entries appear without manual reload
-              if (typeof loadCustomersSection === 'function') loadCustomersSection(true);
-              if (typeof loadModalCustomers === 'function') loadModalCustomers();
-              if (typeof updateCustomersCount === 'function') updateCustomersCount();
+              // Refresh customer views AFTER modal closes to prevent race condition
+              // Delay must be longer than safeHideModal's 50ms delay
+              setTimeout(function() {
+                if (typeof loadCustomersSection === 'function') loadCustomersSection(true);
+                if (typeof loadModalCustomers === 'function') loadModalCustomers();
+                if (typeof updateCustomersCount === 'function') updateCustomersCount();
+              }, 600);
             } else {
               showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add customer'));
             }
@@ -8718,8 +8721,6 @@
         .withSuccessHandler(function(newItem) {
           lastAddedMasterItemName = newItem && newItem.Item_Name ? newItem.Item_Name : name;
           setMasterModalAlert('success', 'Item saved to Master_Data.');
-          // Refresh dropdown and inventory
-          loadMasterData();
           const modalEl = document.getElementById('masterItemModal');
           if (modalEl) {
             safeHideModal(modalEl);
@@ -8728,6 +8729,11 @@
             saveBtn.disabled = false;
             saveBtn.innerHTML = 'Save Item';
           }
+          // Refresh dropdown and inventory AFTER modal closes to prevent race condition
+          // Delay must be longer than safeHideModal's 50ms delay
+          setTimeout(function() {
+            loadMasterData();
+          }, 600);
         })
         .withFailureHandler(function(error) {
           setMasterModalAlert('danger', error.message || 'Failed to save item.');
