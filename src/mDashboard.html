@@ -5372,7 +5372,10 @@
           btn.disabled = false;
           btn.innerHTML = 'Confirm Return';
           alert(res.message);
-          bootstrap.Modal.getInstance(document.getElementById('returnSaleModal')).hide();
+          const modalEl = document.getElementById('returnSaleModal');
+          if (modalEl) {
+            safeHideModal(modalEl);
+          }
           loadSalesHistory(); // Refresh list
         })
         .withFailureHandler(function(err) {
@@ -6325,7 +6328,10 @@
 
         google.script.run.withSuccessHandler(() => {
             btn.disabled = false; btn.innerText = 'Update';
-            bootstrap.Modal.getInstance(document.getElementById('dashboardCustomerEditModal')).hide();
+            const modalEl = document.getElementById('dashboardCustomerEditModal');
+            if (modalEl) {
+              safeHideModal(modalEl);
+            }
             loadCustomersSection(true);
             alert('Customer updated');
         }).withFailureHandler(e => {
@@ -6347,7 +6353,10 @@
 
         google.script.run.withSuccessHandler(() => {
             btn.disabled = false; btn.innerText = 'Confirm Payment';
-            bootstrap.Modal.getInstance(document.getElementById('dashboardCustomerPayModal')).hide();
+            const modalEl = document.getElementById('dashboardCustomerPayModal');
+            if (modalEl) {
+              safeHideModal(modalEl);
+            }
             loadCustomersSection(true);
             alert('Payment Received');
         }).withFailureHandler(e => {
@@ -7941,7 +7950,10 @@
 
           if (result.success) {
             alert('Supplier updated successfully!');
-            bootstrap.Modal.getInstance(document.getElementById('supplierEditModal')).hide();
+            const modalEl = document.getElementById('supplierEditModal');
+            if (modalEl) {
+              safeHideModal(modalEl);
+            }
             loadSuppliersList();
           } else {
             alert('Error: ' + result.message);
@@ -8006,7 +8018,10 @@
 
           if (result.success) {
             alert('Payment of ' + formatCurrency(amount) + ' recorded successfully!');
-            bootstrap.Modal.getInstance(document.getElementById('supplierPaymentModal')).hide();
+            const modalEl = document.getElementById('supplierPaymentModal');
+            if (modalEl) {
+              safeHideModal(modalEl);
+            }
             loadSuppliersList();
           } else {
             alert('Error: ' + result.message);
@@ -9187,8 +9202,10 @@
             if (typeof refreshSalesOverview === 'function') refreshSalesOverview();
             // Also refresh inventory/sales sections if available so stock and metrics update
             if (typeof loadInventorySection === 'function') loadInventorySection(true);
-            const modalInstance = bootstrap.Modal.getInstance(document.getElementById('newSaleModal')) || new bootstrap.Modal(document.getElementById('newSaleModal'));
-            modalInstance.hide();
+            const modalEl = document.getElementById('newSaleModal');
+            if (modalEl) {
+              safeHideModal(modalEl);
+            }
           } else {
             showModalAlert('Error: ' + result.message, 'danger');
           }
