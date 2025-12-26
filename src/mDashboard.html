@@ -4799,7 +4799,7 @@
               <div class="modal-body">
                 <form id="quickAddProductForm" class="mt-2" onsubmit="handleQuickAdd(event, 'product')">
                   <div class="row g-2">
-                    <div class="col-md-5">
+                    <div class="col-12 col-sm-6 col-md-5">
                       <label class="form-label">Item Name</label>
                       <div class="input-group">
                         <select class="form-select" name="itemName" id="masterDataSelect" onchange="onMasterItemSelect(this)" required>
@@ -4813,17 +4813,17 @@
                       </div>
                       <input type="text" class="form-control mt-2 d-none" name="customItemName" id="customItemName" placeholder="Enter new item name">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-12 col-sm-6 col-md-3">
                       <label class="form-label">Category</label>
                       <input type="text" class="form-control" name="category" id="quickAddCategory" placeholder="Auto-filled from master data" readonly style="background-color: #e9ecef;">
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                       <label class="form-label">Cost</label>
                       <input type="number" class="form-control" name="cost" min="0" step="1" required>
                     </div>
                   </div>
                   <div class="row g-2 mt-2">
-                    <div class="col-md-4">
+                    <div class="col-12 col-sm-6 col-md-4">
                       <label class="form-label">Supplier</label>
                       <div class="input-group">
                         <select class="form-select" name="supplier" id="inventorySupplierDropdown" required>
@@ -4834,15 +4834,15 @@
                         </button>
                       </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-6 col-sm-3 col-md-2">
                       <label class="form-label">Quantity</label>
                       <input type="number" class="form-control" name="qty" min="0" value="0" required>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-sm-3 col-md-3">
                       <label class="form-label">Reorder Level</label>
                       <input type="number" class="form-control" name="Reorder_Level" min="0" placeholder="0">
                     </div>
-                    <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
+                    <div class="col-12 col-md-3 d-flex align-items-end justify-content-end gap-2 mt-2 mt-md-0">
                       <button class="btn btn-outline-secondary" type="button" onclick="clearInventoryDraft()">
                         Clear
                       </button>
