@@ -482,6 +482,25 @@
       height: 100%;
     }
 
+    .sales-stat-card {
+      color: white;
+      border: none;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .sales-stat-revenue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .sales-stat-transactions { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .sales-stat-credit { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .sales-stat-average { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+
+    .sales-stat-card .stat-label {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .sales-stat-card .stat-value {
+      color: white;
+    }
+
     .stat-card:hover {
       transform: translateY(-4px);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
@@ -1973,25 +1992,25 @@
           <!-- Statistics Cards -->
           <div class="row mb-4 g-3">
             <div class="col-6 col-md-3">
-              <div class="stat-card h-100">
+              <div class="stat-card sales-stat-card sales-stat-revenue h-100">
                 <div class="stat-label">Total Revenue</div>
                 <div class="stat-value" id="salesTotalRevenue">Ksh 0</div>
               </div>
             </div>
             <div class="col-6 col-md-3">
-              <div class="stat-card h-100">
+              <div class="stat-card sales-stat-card sales-stat-transactions h-100">
                 <div class="stat-label">Transactions</div>
                 <div class="stat-value" id="salesTransactionCount">0</div>
               </div>
             </div>
             <div class="col-6 col-md-3">
-              <div class="stat-card h-100">
+              <div class="stat-card sales-stat-card sales-stat-credit h-100">
                 <div class="stat-label">Credit Sales</div>
                 <div class="stat-value" id="salesCreditCount">0</div>
               </div>
             </div>
             <div class="col-6 col-md-3">
-              <div class="stat-card h-100">
+              <div class="stat-card sales-stat-card sales-stat-average h-100">
                 <div class="stat-label">Average Order</div>
                 <div class="stat-value" id="salesAverageOrder">Ksh 0</div>
               </div>
