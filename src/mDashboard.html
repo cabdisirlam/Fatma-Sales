@@ -720,6 +720,18 @@
 
       .top-bar {
         padding: 12px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .top-bar-left {
+        flex: 1 1 100%;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .brand-name {
+        display: none;
       }
 
       /* Main content padding - ensures spacing from screen edges */
@@ -796,6 +808,17 @@
         display: none;
       }
 
+      .user-profile {
+        padding: 6px 8px;
+      }
+
+      .top-bar .btn.btn-outline-danger {
+        margin-left: 0;
+        padding: 6px 10px;
+        font-size: 0.8125rem;
+        border-radius: 8px;
+      }
+
       .back-btn span {
         display: none;
       }
@@ -845,7 +868,18 @@
 
       /* Modal spacing from screen edges - minimal margin */
       .modal-dialog {
-        margin: 0.25rem !important;
+        margin: 0.5rem !important;
+        max-width: calc(100% - 1rem);
+      }
+
+      .modal-fullscreen-sm-down {
+        width: calc(100% - 1rem);
+        height: calc(100% - 1rem);
+        margin: 0.5rem;
+      }
+
+      .modal-fullscreen-sm-down .modal-content {
+        height: calc(100vh - 1rem);
       }
 
       /* Fullscreen modals: moderate padding, not excessive */
@@ -868,6 +902,7 @@
       /* Modal body: comfortable but not excessive padding */
       .modal-body {
         padding: 1rem !important;
+        overflow-y: auto;
       }
 
       .modal-header {
@@ -2740,7 +2775,7 @@
 
   <!-- Return Sale Modal -->
   <div class="modal fade" id="returnSaleModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header bg-danger text-white">
           <h5 class="modal-title"><i class="bi bi-arrow-return-left"></i> Return Items</h5>
@@ -2768,7 +2803,7 @@
 
   <!-- Supplier Payment Modal -->
   <div class="modal fade" id="supplierPaymentModal" tabindex="-1" aria-labelledby="supplierPaymentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header bg-success text-white">
           <h5 class="modal-title" id="supplierPaymentModalLabel">
@@ -3366,9 +3401,31 @@
       }
     }
 
+    let dialogResizeTimer;
+
+    function resizeDialogToViewport() {
+      if (typeof google === 'undefined' || !google.script || !google.script.host || !google.script.host.setWidth) {
+        return;
+      }
+
+      const padding = 16;
+      const width = Math.min(1200, Math.max(320, window.innerWidth - padding * 2));
+      const height = Math.min(900, Math.max(480, window.innerHeight - padding * 2));
+      google.script.host.setWidth(width);
+      google.script.host.setHeight(height);
+    }
+
+    function scheduleDialogResize() {
+      clearTimeout(dialogResizeTimer);
+      dialogResizeTimer = setTimeout(resizeDialogToViewport, 150);
+    }
+
     // ==================== INITIALIZATION ====================
     // ==================== MAIN INITIALIZATION ====================
     document.addEventListener('DOMContentLoaded', function() {
+      resizeDialogToViewport();
+      window.addEventListener('resize', scheduleDialogResize);
+
       // Make sidebar links always call showSection with preventDefault
       document.querySelectorAll('.menu-item a[data-section]').forEach(link => {
         link.addEventListener('click', function(e) {
@@ -3703,7 +3760,7 @@
       if (!modalEl) {
         const template = `
         <div class="modal fade" id="customerAddModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-sm-down">
+          <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-stars"></i> Add Customer</h5>
@@ -5340,7 +5397,7 @@
         </div>
 
         <div class="modal fade" id="inventoryAddModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-sm-down">
+          <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-box-seam"></i> Add Product</h5>
@@ -5409,7 +5466,7 @@
         </div>
 
         <div class="modal fade" id="returnProductModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog">
+          <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content">
               <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title"><i class="bi bi-arrow-90deg-left"></i> Return Product</h5>
@@ -7057,7 +7114,7 @@
       if (!modalEl) {
         const modalTemplate = `
         <div class="modal fade" id="supplierAddModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-sm-down">
+          <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Supplier</h5>

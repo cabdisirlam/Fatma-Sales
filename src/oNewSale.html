@@ -177,7 +177,29 @@
     let globalCustomers = []; // Store customers locally to pull details
     let lastTransactionId = null;
 
+    let dialogResizeTimer;
+
+    function resizeDialogToViewport() {
+      if (typeof google === 'undefined' || !google.script || !google.script.host || !google.script.host.setWidth) {
+        return;
+      }
+
+      const padding = 16;
+      const width = Math.min(1000, Math.max(320, window.innerWidth - padding * 2));
+      const height = Math.min(800, Math.max(480, window.innerHeight - padding * 2));
+      google.script.host.setWidth(width);
+      google.script.host.setHeight(height);
+    }
+
+    function scheduleDialogResize() {
+      clearTimeout(dialogResizeTimer);
+      dialogResizeTimer = setTimeout(resizeDialogToViewport, 150);
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+      resizeDialogToViewport();
+      window.addEventListener('resize', scheduleDialogResize);
+
       // Set Today's Date
       document.getElementById('saleDate').valueAsDate = new Date();
       document.getElementById('displayUser').value = currentUser;
