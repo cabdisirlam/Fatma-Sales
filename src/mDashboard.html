@@ -6298,13 +6298,13 @@
           const changeClass = changeVal > 0 ? 'text-success' : (changeVal < 0 ? 'text-danger' : 'text-muted');
           return `
             <tr>
-              <td>${date}</td>
-              <td>${bank}</td>
-              <td>${recv}</td>
-              <td>${inv}</td>
-              <td>${supp}</td>
-              <td>${net}</td>
-              <td class="${changeClass}">${change}</td>
+              <td data-label="Date">${date}</td>
+              <td data-label="Cash_Bank">${bank}</td>
+              <td data-label="Receivables">${recv}</td>
+              <td data-label="Inventory">${inv}</td>
+              <td data-label="Suppliers">${supp}</td>
+              <td data-label="Net_Worth">${net}</td>
+              <td data-label="Change" class="${changeClass}">${change}</td>
             </tr>
           `;
         }).join('');
@@ -6315,7 +6315,7 @@
           <h5 class="mb-0"><i class="bi bi-cash-coin"></i> Net Worth</h5>
         </div>
         <div class="table-responsive">
-          <table class="table table-sm table-bordered align-middle">
+          <table class="table table-sm table-bordered align-middle mobile-stack-table">
             <thead class="table-light">
               <tr>
                 <th>Date</th>
