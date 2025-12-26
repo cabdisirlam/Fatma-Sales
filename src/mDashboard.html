@@ -6413,12 +6413,12 @@
 
         google.script.run.withSuccessHandler(() => {
             btn.disabled = false; btn.innerText = 'Confirm Payment';
+            alert('Payment Received');
             const modalEl = document.getElementById('dashboardCustomerPayModal');
             if (modalEl) {
               safeHideModal(modalEl);
             }
             loadCustomersSection(true);
-            alert('Payment Received');
         }).withFailureHandler(e => {
             btn.disabled = false; btn.innerText = 'Confirm Payment';
             alert(e.message);
@@ -6989,8 +6989,7 @@
             loadFinancialsSection();
             const modalEl = document.getElementById('finPayModal');
             if (modalEl) {
-              const modal = bootstrap.Modal.getInstance(modalEl);
-              if (modal) modal.hide();
+              safeHideModal(modalEl);
             }
           } else {
             showFinancialAlert(res && res.message ? res.message : 'Unable to record expense.', 'danger');
@@ -7038,8 +7037,7 @@
             loadFinancialsSection();
             const modalEl = document.getElementById('finInflowModal');
             if (modalEl) {
-              const modal = bootstrap.Modal.getInstance(modalEl);
-              if (modal) modal.hide();
+              safeHideModal(modalEl);
             }
           } else {
             showFinancialAlert(res && res.message ? res.message : 'Unable to record opening.', 'danger');
