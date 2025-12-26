@@ -636,6 +636,11 @@
     }
 
     @media (max-width: 768px) {
+      /* === MOBILE: Prevent content from touching screen edges === */
+      body {
+        padding: 0 !important;
+      }
+
       .sidebar {
         transform: translateX(-100%);
       }
@@ -646,6 +651,7 @@
 
       .main-content {
         margin-left: 0;
+        padding: 0;
       }
 
       .sidebar.collapsed + .main-content {
@@ -657,12 +663,25 @@
       }
 
       .top-bar {
-        padding: 12px 20px;
+        padding: 12px 16px;
       }
 
+      /* Main content padding - ensures spacing from screen edges */
       .content-wrapper {
         padding: 20px 16px;
         max-width: 100%;
+      }
+
+      /* All content sections get proper side padding */
+      .content-section {
+        padding: 0 !important;
+      }
+
+      .content-section > div,
+      .content-section > .card,
+      .content-section > .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
       }
 
       .mobile-stack-table thead {
@@ -756,17 +775,35 @@
         margin-bottom: 1rem;
       }
 
-      /* === MOBILE: Modals === */
-      .modal-body {
+      /* Ensure cards don't touch edges */
+      .card {
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      .card-body {
         padding: 1rem;
       }
 
+      /* === MOBILE: Modals === */
+      .modal-dialog {
+        margin: 0.5rem;
+      }
+
+      .modal-content {
+        border-radius: 12px;
+      }
+
+      .modal-body {
+        padding: 1.25rem;
+      }
+
       .modal-header {
-        padding: 0.75rem 1rem;
+        padding: 1rem 1.25rem;
       }
 
       .modal-footer {
-        padding: 0.75rem 1rem;
+        padding: 1rem 1.25rem;
         flex-wrap: wrap;
         gap: 0.5rem;
       }
@@ -815,23 +852,110 @@
         width: 100%;
         margin-bottom: 0.5rem;
       }
+
+      /* === MOBILE: Comprehensive Edge Spacing (16px from screen edges) === */
+
+      /* Rows and containers */
+      .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+
+      /* Welcome sections */
+      .welcome-section {
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      /* Bootstrap containers */
+      .container, .container-fluid {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+
+      /* Specific dashboard elements */
+      .stats-overview,
+      .dashboard-grid {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      /* Tables with responsive wrapper */
+      .table-responsive {
+        padding-left: 0;
+        padding-right: 0;
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      /* Alert boxes */
+      .alert {
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      /* Section headers */
+      .section-header,
+      .page-header {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      /* Gradient headers and hero sections */
+      [style*="background: linear-gradient"],
+      [style*="background:linear-gradient"] {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        border-radius: 12px !important;
+      }
+
+      /* Filter sections and toolbars */
+      .filter-section,
+      .toolbar,
+      .actions-toolbar {
+        margin-left: 0;
+        margin-right: 0;
+      }
     }
 
     /* ==================== EXTRA SMALL DEVICES (<576px) ==================== */
     @media (max-width: 575.98px) {
+      /* Extra padding for very small phones */
+      .content-wrapper {
+        padding: 16px 12px !important;
+      }
+
+      .top-bar {
+        padding: 10px 12px !important;
+      }
+
+      /* Ensure modals don't touch edges on small screens */
+      .modal-dialog {
+        margin: 0.5rem !important;
+      }
+
+      .modal-body,
+      .modal-header,
+      .modal-footer {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+      }
+
       /* Make all col-md-* full width on extra small screens */
       [class*="col-md-"] {
         flex: 0 0 100%;
         max-width: 100%;
       }
 
-      /* Reduce padding further */
-      .content-wrapper {
-        padding: 12px 8px;
+      /* Reduce card padding slightly on very small screens to fit more content */
+      .card-body {
+        padding: 0.875rem !important;
       }
 
-      .modal-body {
-        padding: 0.75rem;
+      /* Tables get a bit more compact but keep spacing from edges */
+      .mobile-stack-table tr {
+        padding: 10px !important;
+        margin-bottom: 10px !important;
       }
 
       /* Stack all button groups */
