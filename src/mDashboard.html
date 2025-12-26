@@ -1298,25 +1298,25 @@
 
         <!-- Statistics Cards -->
         <div class="row mb-4">
-          <div class="col-md-3">
+          <div class="col-6 col-md-3 mb-3 mb-md-0">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); height: 100%;">
               <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total Revenue</div>
               <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesTotalRevenue">Ksh 0</div>
             </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-6 col-md-3 mb-3 mb-md-0">
             <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4); height: 100%;">
               <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Transactions</div>
               <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesTransactionCount">0</div>
             </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-6 col-md-3 mb-3 mb-md-0">
             <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4); height: 100%;">
               <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Credit Sales</div>
               <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesCreditCount">0</div>
             </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-6 col-md-3 mb-3 mb-md-0">
             <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(250, 112, 154, 0.4); height: 100%;">
               <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Average Order</div>
               <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesAverageOrder">Ksh 0</div>
@@ -1347,25 +1347,25 @@
         <!-- Filter Section -->
         <div style="background: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
           <div class="row g-2 align-items-end">
-            <div class="col-md-2">
+            <div class="col-12 col-md-2">
               <label for="salesFilterStartDate" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Start Date</label>
               <input type="date" class="form-control form-control-sm" id="salesFilterStartDate" style="border-radius: 4px; font-size: 13px;">
             </div>
-            <div class="col-md-2">
+            <div class="col-12 col-md-2">
               <label for="salesFilterEndDate" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">End Date</label>
               <input type="date" class="form-control form-control-sm" id="salesFilterEndDate" style="border-radius: 4px; font-size: 13px;">
             </div>
-            <div class="col-md-4">
+            <div class="col-12 col-md-4">
               <label for="salesFilterCustomer" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Customer</label>
               <input type="text" class="form-control form-control-sm" id="salesFilterCustomer" placeholder="Search..." style="border-radius: 4px; font-size: 13px;">
             </div>
-            <div class="col-md-auto">
-              <button class="btn btn-sm" onclick="applySalesFilter()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 16px; font-size: 13px;">
+            <div class="col-6 col-md-auto">
+              <button class="btn btn-sm w-100" onclick="applySalesFilter()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 16px; font-size: 13px;">
                 <i class="bi bi-search" style="font-size: 14px;"></i> Search
               </button>
             </div>
-            <div class="col-md-auto">
-              <button class="btn btn-sm btn-outline-secondary" onclick="clearSalesFilter()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
+            <div class="col-6 col-md-auto">
+              <button class="btn btn-sm btn-outline-secondary w-100" onclick="clearSalesFilter()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
                 <i class="bi bi-x-circle" style="font-size: 14px;"></i> Clear
               </button>
             </div>
