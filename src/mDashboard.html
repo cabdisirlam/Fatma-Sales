@@ -3719,37 +3719,77 @@
     function safeHideModal(modalEl) {
       if (!modalEl) return;
 
-      // Move focus away from the modal entirely to prevent aria-hidden warning
+      // Prevent duplicate close attempts on the same modal
+      if (modalEl.dataset.isClosing === 'true') {
+        return;
+      }
+      modalEl.dataset.isClosing = 'true';
+
+      // Clean up any existing temp focus elements from previous operations
+      const existingTempFocus = document.querySelectorAll('button[data-temp-focus="true"]');
+      existingTempFocus.forEach(el => {
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      });
+
+      // Force blur on all inputs/textareas to dismiss mobile keyboard
+      const inputs = modalEl.querySelectorAll('input, textarea, select');
+      inputs.forEach(input => {
+        if (typeof input.blur === 'function') {
+          input.blur();
+        }
+      });
+
+      // Move focus away from modal using temporary focus element
       const activeElement = document.activeElement;
       if (activeElement && modalEl.contains(activeElement)) {
-        // Check if this is a nested modal - if so, move focus to parent modal
-        const parentId = modalEl.dataset.parentModalId;
-        if (parentId) {
-          const parentModal = document.getElementById(parentId);
-          if (parentModal) {
-            // Focus on parent modal to prepare for its re-show
-            const focusTarget = parentModal.querySelector('.modal-content') || parentModal;
-            if (focusTarget && typeof focusTarget.focus === 'function') {
-              focusTarget.focus();
+        // Create temporary focusable element outside modal
+        const tempFocus = document.createElement('button');
+        tempFocus.style.position = 'fixed';
+        tempFocus.style.top = '-9999px';
+        tempFocus.style.left = '-9999px';
+        tempFocus.setAttribute('aria-hidden', 'true');
+        tempFocus.setAttribute('tabindex', '-1');
+        tempFocus.setAttribute('data-temp-focus', 'true');
+        document.body.appendChild(tempFocus);
+
+        // Blur current element and immediately focus temp element
+        if (typeof activeElement.blur === 'function') {
+          activeElement.blur();
+        }
+        tempFocus.focus();
+
+        // Clean up temp element and restore focus to parent if nested
+        setTimeout(() => {
+          if (tempFocus && tempFocus.parentNode) {
+            tempFocus.parentNode.removeChild(tempFocus);
+          }
+
+          const parentId = modalEl.dataset.parentModalId;
+          if (parentId) {
+            const parentModal = document.getElementById(parentId);
+            if (parentModal) {
+              const focusable = parentModal.querySelector('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+              if (focusable && typeof focusable.focus === 'function') {
+                focusable.focus();
+              }
             }
           }
-        } else {
-          // No parent modal, move focus to body to clear it completely
-          if (typeof activeElement.blur === 'function') {
-            activeElement.blur();
-          }
-          // Explicitly move focus to body
-          if (document.body && typeof document.body.focus === 'function') {
-            document.body.focus();
-          }
-        }
+        }, 100);
       }
 
-      // Get modal instance and hide it
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) {
-        modal.hide();
-      }
+      // Small delay to ensure keyboard dismissal on mobile before hiding modal
+      setTimeout(() => {
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) {
+          modal.hide();
+        }
+        // Reset closing flag after modal hide completes
+        setTimeout(() => {
+          delete modalEl.dataset.isClosing;
+        }, 500);
+      }, 50);
     }
 
     function forceModalViewportTop() {
@@ -3777,6 +3817,22 @@
 
       // Handle focus BEFORE modal starts hiding (prevents aria-hidden warning)
       modalEl.addEventListener('hide.bs.modal', (e) => {
+        // Clean up any existing temp focus elements from previous operations
+        const existingTempFocus = document.querySelectorAll('button[data-temp-focus="true"]');
+        existingTempFocus.forEach(el => {
+          if (el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        });
+
+        // Force blur on all inputs/textareas to dismiss mobile keyboard
+        const inputs = modalEl.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+          if (typeof input.blur === 'function') {
+            input.blur();
+          }
+        });
+
         // Move focus away from modal IMMEDIATELY to prevent aria-hidden conflicts
         const activeElement = document.activeElement;
         if (activeElement && modalEl.contains(activeElement)) {
@@ -3786,6 +3842,7 @@
           tempFocus.style.top = '-9999px';
           tempFocus.style.left = '-9999px';
           tempFocus.setAttribute('aria-hidden', 'true');
+          tempFocus.setAttribute('data-temp-focus', 'true');
           document.body.appendChild(tempFocus);
 
           // Blur the current element and immediately focus the temp element
