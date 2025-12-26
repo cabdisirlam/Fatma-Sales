@@ -5213,7 +5213,7 @@
           <div class="card-header"><i class="bi bi-people"></i> Customers List</div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-hover table-sm" style="font-size: 13px;">
+              <table class="table table-hover table-sm mobile-stack-table" style="font-size: 13px;">
                 <thead>
                   <tr>
                     <th>#</th>
@@ -5242,13 +5242,13 @@
 
           html += `
             <tr>
-              <td>${idx + 1}</td>
-              <td><strong>${customer.Customer_Name || customer.Name || ''}</strong><br><small class="text-muted">${customer.Customer_ID || ''}</small></td>
-              <td class="text-end">${formatCurrency(totalPurchase)}</td>
-              <td class="text-end">${formatCurrency(totalPaid)}</td>
-              <td class="text-end ${balanceClass}">${formatCurrency(balance)}</td>
-              <td>
-                <div class="d-flex gap-1">
+              <td data-label="#">${idx + 1}</td>
+              <td data-label="Name"><strong>${customer.Customer_Name || customer.Name || ''}</strong><br><small class="text-muted">${customer.Customer_ID || ''}</small></td>
+              <td data-label="Total Purchase" class="text-end">${formatCurrency(totalPurchase)}</td>
+              <td data-label="Total Paid" class="text-end">${formatCurrency(totalPaid)}</td>
+              <td data-label="Balance" class="text-end ${balanceClass}">${formatCurrency(balance)}</td>
+              <td data-label="Actions">
+                <div class="d-flex gap-1 flex-wrap">
                   ${statementBtn}
                   ${payBtn}
                   ${advanceBtn}
@@ -6496,7 +6496,7 @@
           <div class="card-header"><i class="bi bi-building"></i> Suppliers List</div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-hover table-sm" style="font-size: 13px;">
+              <table class="table table-hover table-sm mobile-stack-table" style="font-size: 13px;">
                 <thead>
                   <tr>
                     <th>#</th>
@@ -6524,13 +6524,13 @@
 
           html += `
             <tr>
-              <td>${idx + 1}</td>
-              <td><strong>${supplier.Supplier_Name || supplier.Name || ''}</strong><br><small class="text-muted">${supplier.Supplier_ID || ''}</small></td>
-              <td class="text-end">${formatCurrency(totalPurchased)}</td>
-              <td class="text-end">${formatCurrency(totalPaid)}</td>
-              <td class="text-end ${balanceClass}">${formatCurrency(balance)}</td>
-              <td>
-                <div class="d-flex gap-1">
+              <td data-label="#">${idx + 1}</td>
+              <td data-label="Name"><strong>${supplier.Supplier_Name || supplier.Name || ''}</strong><br><small class="text-muted">${supplier.Supplier_ID || ''}</small></td>
+              <td data-label="Total Cost" class="text-end">${formatCurrency(totalPurchased)}</td>
+              <td data-label="Total Payment" class="text-end">${formatCurrency(totalPaid)}</td>
+              <td data-label="Balance" class="text-end ${balanceClass}">${formatCurrency(balance)}</td>
+              <td data-label="Actions">
+                <div class="d-flex gap-1 flex-wrap">
                   ${statementBtn}
                   ${payBtn}
                   ${editBtn}
