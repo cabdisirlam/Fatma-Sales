@@ -2913,6 +2913,67 @@
       // Initialize History API
       history.replaceState({section: 'dashboard'}, 'Dashboard', '#dashboard');
 
+      // ==================== PULL-TO-REFRESH ====================
+      let pullStartY = 0;
+      let pullMoveY = 0;
+      let isPulling = false;
+      const pullThreshold = 80; // pixels needed to trigger refresh
+
+      const mainContent = document.querySelector('.main-content');
+      if (mainContent) {
+        mainContent.addEventListener('touchstart', function(e) {
+          if (mainContent.scrollTop === 0) {
+            pullStartY = e.touches[0].clientY;
+            isPulling = true;
+          }
+        }, {passive: true});
+
+        mainContent.addEventListener('touchmove', function(e) {
+          if (!isPulling) return;
+          pullMoveY = e.touches[0].clientY - pullStartY;
+
+          if (pullMoveY > 0 && pullMoveY < pullThreshold * 2) {
+            // Visual feedback - subtle pull indicator
+            mainContent.style.transform = `translateY(${Math.min(pullMoveY / 3, 40)}px)`;
+            mainContent.style.transition = 'transform 0.1s ease-out';
+          }
+        }, {passive: true});
+
+        mainContent.addEventListener('touchend', function(e) {
+          if (!isPulling) return;
+          isPulling = false;
+
+          mainContent.style.transform = '';
+          mainContent.style.transition = 'transform 0.3s ease-out';
+
+          if (pullMoveY > pullThreshold) {
+            // Trigger refresh based on current section
+            const activeSection = document.querySelector('.content-section:not(.hidden)');
+            if (activeSection) {
+              const sectionId = activeSection.id;
+
+              // Show brief loading indicator
+              const refreshMsg = document.createElement('div');
+              refreshMsg.style.cssText = 'position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 9999; font-weight: 500; animation: slideDown 0.3s ease-out;';
+              refreshMsg.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Refreshing...';
+              document.body.appendChild(refreshMsg);
+              setTimeout(() => refreshMsg.remove(), 2000);
+
+              // Refresh based on section
+              if (sectionId.includes('inventory') && typeof loadInventorySection === 'function') {
+                loadInventorySection(true);
+              } else if (sectionId.includes('sales') && typeof loadSalesHistory === 'function') {
+                loadSalesHistory();
+              } else if (sectionId === 'section-dashboard' && typeof loadDashboardStats === 'function') {
+                loadDashboardStats();
+              }
+            }
+          }
+
+          pullMoveY = 0;
+        }, {passive: true});
+      }
+
       // Initialize sales date field if exists
       const dateInput = document.getElementById('dashSaleDate');
       if (dateInput) {
