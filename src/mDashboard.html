@@ -3776,34 +3776,43 @@
       if (!modalEl) return;
 
       // Handle focus BEFORE modal starts hiding (prevents aria-hidden warning)
-      modalEl.addEventListener('hide.bs.modal', () => {
-        // Move focus away from modal to prevent aria-hidden conflicts
+      modalEl.addEventListener('hide.bs.modal', (e) => {
+        // Move focus away from modal IMMEDIATELY to prevent aria-hidden conflicts
         const activeElement = document.activeElement;
         if (activeElement && modalEl.contains(activeElement)) {
-          // Check if this is a nested modal
-          const parentId = modalEl.dataset.parentModalId;
-          if (parentId) {
-            const parentModal = document.getElementById(parentId);
-            if (parentModal) {
-              // Move focus to parent modal content
-              const focusTarget = parentModal.querySelector('.modal-content') || parentModal;
-              if (focusTarget && typeof focusTarget.focus === 'function') {
-                focusTarget.focus();
-              }
-            } else {
-              // Parent not found, blur to body
-              if (typeof activeElement.blur === 'function') {
-                activeElement.blur();
-              }
-              document.body.focus();
-            }
-          } else {
-            // Not a nested modal, blur to body
-            if (typeof activeElement.blur === 'function') {
-              activeElement.blur();
-            }
-            document.body.focus();
+          // Create a temporary focusable element outside the modal as a focus target
+          const tempFocus = document.createElement('button');
+          tempFocus.style.position = 'fixed';
+          tempFocus.style.top = '-9999px';
+          tempFocus.style.left = '-9999px';
+          tempFocus.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(tempFocus);
+
+          // Blur the current element and immediately focus the temp element
+          if (typeof activeElement.blur === 'function') {
+            activeElement.blur();
           }
+          tempFocus.focus();
+
+          // Clean up temp element after a short delay
+          setTimeout(() => {
+            if (tempFocus && tempFocus.parentNode) {
+              tempFocus.parentNode.removeChild(tempFocus);
+            }
+
+            // Now try to restore focus to parent modal if this is nested
+            const parentId = modalEl.dataset.parentModalId;
+            if (parentId) {
+              const parentModal = document.getElementById(parentId);
+              if (parentModal) {
+                // Focus on parent modal's first focusable element
+                const focusable = parentModal.querySelector('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+                if (focusable && typeof focusable.focus === 'function') {
+                  focusable.focus();
+                }
+              }
+            }
+          }, 100);
         }
       });
 
