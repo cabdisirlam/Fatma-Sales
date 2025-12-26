@@ -2087,7 +2087,7 @@
         <div class="modal-body">
           <form id="newSaleModalForm">
             <div class="row mb-3">
-              <div class="col-md-6">
+              <div class="col-12 col-md-6">
                 <label class="form-label fw-bold" style="color: #2c3e50;">Customer *</label>
                 <div class="d-flex gap-2 mb-2">
                   <button class="btn btn-sm" type="button" onclick="refreshModalSaleData()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; border-radius: 8px; font-weight: 500;">
@@ -2102,25 +2102,25 @@
                 </select>
 
                 <div class="row g-2 mt-2" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                  <div class="col-md-6">
+                  <div class="col-12 col-sm-6">
                     <label class="form-label small mb-0" style="color: #64748b;">Phone</label>
                     <input type="text" class="form-control form-control-sm" id="modalCustPhone" readonly style="border-radius: 6px; background: white;">
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-12 col-sm-6">
                     <label class="form-label small mb-0" style="color: #64748b;">Email</label>
                     <input type="text" class="form-control form-control-sm" id="modalCustEmail" readonly style="border-radius: 6px; background: white;">
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-12 col-sm-6">
                     <label class="form-label small mb-0" style="color: #64748b;">KRA PIN</label>
                     <input type="text" class="form-control form-control-sm" id="modalCustKra" readonly style="border-radius: 6px; background: white;">
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-12 col-sm-6">
                     <label class="form-label small mb-0" style="color: #64748b;">Location</label>
                     <input type="text" class="form-control form-control-sm" id="modalCustLocation" readonly style="border-radius: 6px; background: white;">
                   </div>
                 </div>
               </div>
-              <div class="col-md-6">
+              <div class="col-12 col-md-6">
                 <label class="form-label fw-bold" style="color: #2c3e50;">Date *</label>
                 <input type="date" class="form-control" id="modalSaleDate" required style="border-radius: 8px;">
 
@@ -2134,21 +2134,21 @@
             <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px;"><i class="bi bi-bag-plus"></i> Add Products</h6>
 
             <div class="row align-items-end mb-3">
-              <div class="col-md-5">
+              <div class="col-12 col-sm-6 col-md-5 mb-2 mb-md-0">
                 <label class="form-label small" style="color: #64748b; font-weight: 600;">Product *</label>
                 <select class="form-select" id="modalSaleProduct" onchange="updateModalProductPrice()" style="border-radius: 8px;">
                   <option value="">-- Choose Product --</option>
                 </select>
               </div>
-              <div class="col-md-2">
+              <div class="col-6 col-sm-4 col-md-2 mb-2 mb-md-0">
                 <label class="form-label small" style="color: #64748b; font-weight: 600;">Quantity *</label>
                 <input type="number" class="form-control" id="modalSaleQty" value="1" min="1" style="border-radius: 8px;">
               </div>
-              <div class="col-md-3">
+              <div class="col-6 col-sm-8 col-md-3 mb-2 mb-md-0">
                 <label class="form-label small" style="color: #64748b; font-weight: 600;">Unit Price *</label>
                 <input type="number" class="form-control" id="modalSalePrice" min="0" step="0.01" style="border-radius: 8px;">
               </div>
-              <div class="col-md-2">
+              <div class="col-12 col-md-2">
                 <button type="button" class="btn w-100" onclick="addModalCartItem()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; border-radius: 8px; font-weight: 500; padding: 10px;">
                   <i class="bi bi-plus-lg"></i> Add
                 </button>
@@ -2207,15 +2207,15 @@
               </div>
 
               <div class="row g-2">
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                   <label class="form-label small mb-1" style="color: #64748b;">Discount</label>
                   <input type="number" class="form-control" id="modalSaleDiscount" value="0" min="0" step="1" oninput="renderModalCart()" style="border-radius: 8px;">
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                   <label class="form-label small mb-1" style="color: #64748b;">Delivery Charge</label>
                   <input type="number" class="form-control" id="modalDeliveryCharge" value="0" min="0" step="1" oninput="renderModalCart()" style="border-radius: 8px;">
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-sm-6 col-md-3">
                   <label class="form-label small mb-1" style="color: #64748b;">Payment Mode *</label>
                   <select class="form-select" id="modalSalePayment" required style="border-radius: 8px;">
                     <option value="Credit">Credit (Debt)</option>
@@ -2224,7 +2224,7 @@
                     <option value="Equity Bank">Bank</option>
                   </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-sm-6 col-md-3">
                   <label class="form-label small mb-1" style="color: #64748b;">Paybill/Ref</label>
                   <input type="text" class="form-control" id="modalPaybillNumber" placeholder="Optional" style="border-radius: 8px;">
                 </div>
