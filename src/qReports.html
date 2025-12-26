@@ -205,7 +205,76 @@
       body { padding: 15px; }
       .header-section { padding: 20px; }
     }
-  </style>
+  
+    /* Mobile performance tweaks */
+    @media (max-width: 767.98px) {
+      .card,
+      .stat-card,
+      .dashboard-card,
+      .module-card,
+      .header-section,
+      .welcome-section,
+      .btn,
+      .btn-action,
+      .table-responsive,
+      .menu-item a,
+      .toggle-btn,
+      .sidebar,
+      .top-bar {
+        transition: none !important;
+      }
+
+      .card,
+      .stat-card,
+      .dashboard-card,
+      .module-card,
+      .header-section,
+      .welcome-section {
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
+      }
+    }
+
+    /* Mobile simplicity mode */
+    @media (max-width: 767.98px) {
+      [style*="linear-gradient"],
+      [style*="background-image"],
+      .header-section,
+      .welcome-section,
+      .module-card,
+      .card-header,
+      .btn-primary,
+      .btn-action {
+        background: #ffffff !important;
+        background-image: none !important;
+      }
+
+      .header-section,
+      .welcome-section,
+      .module-card,
+      .card,
+      .stat-card,
+      .dashboard-card,
+      .btn,
+      .btn-action,
+      .badge,
+      .table-responsive,
+      .modal-content {
+        box-shadow: none !important;
+      }
+
+      .header-section,
+      .welcome-section,
+      .module-card,
+      .card,
+      .stat-card,
+      .dashboard-card,
+      .btn,
+      .btn-action,
+      .modal-content {
+        border-radius: 8px !important;
+      }
+    }
+</style>
 </head>
 <body>
   <div class="header-section">
@@ -352,3 +421,6 @@
   </script>
 </body>
 </html>
+
+
+
