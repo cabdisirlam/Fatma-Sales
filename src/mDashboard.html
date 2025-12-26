@@ -3679,14 +3679,6 @@
       if (body) body.scrollTop = 0;
     }
 
-    function blurActiveInModal(modalEl) {
-      if (!modalEl) return;
-      const active = document.activeElement;
-      if (active && modalEl.contains(active) && typeof active.blur === 'function') {
-        active.blur();
-      }
-    }
-
     function getActiveModalId(excludeId) {
       const modals = Array.from(document.querySelectorAll('.modal.show'));
       const filtered = excludeId ? modals.filter(m => m.id !== excludeId) : modals;
@@ -8522,10 +8514,6 @@
       document.getElementById('masterItemDescription').value = '';
       document.getElementById('masterItemStatus').value = 'Active';
       const modalEl = document.getElementById('masterItemModal');
-      if (modalEl && !modalEl.dataset.blurHandlerAttached) {
-        modalEl.addEventListener('hide.bs.modal', () => blurActiveInModal(modalEl));
-        modalEl.dataset.blurHandlerAttached = 'true';
-      }
       const parentId = getActiveModalId(modalEl.id);
       if (parentId) modalEl.dataset.parentModalId = parentId;
       const modal = bootstrap.Modal.getOrCreateInstance(modalEl, {backdrop: true});
@@ -8565,7 +8553,6 @@
           // Refresh dropdown and inventory
           loadMasterData();
           const modalEl = document.getElementById('masterItemModal');
-          blurActiveInModal(modalEl);
           const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
           modal.hide();
           if (saveBtn) {
