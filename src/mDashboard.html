@@ -3645,6 +3645,25 @@
       if (body) body.scrollTop = 0;
     }
 
+    function getActiveModalId(excludeId) {
+      const modals = Array.from(document.querySelectorAll('.modal.show'));
+      const filtered = excludeId ? modals.filter(m => m.id !== excludeId) : modals;
+      const last = filtered[filtered.length - 1];
+      return last ? last.id : '';
+    }
+
+    function ensureModalOpenState() {
+      const openModal = document.querySelector('.modal.show');
+      if (!openModal) return;
+      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+      if (!document.querySelector('.modal-backdrop')) {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        document.body.appendChild(backdrop);
+      }
+    }
+
     function forceModalViewportTop() {
       if (window.innerWidth > 768) return;
       document.documentElement.scrollTop = 0;
@@ -3673,6 +3692,17 @@
       });
       modalEl.addEventListener('hidden.bs.modal', () => {
         normalizeSidebarAfterModal();
+        const parentId = modalEl.dataset.parentModalId;
+        if (parentId) {
+          const parentModal = document.getElementById(parentId);
+          if (parentModal) {
+            bringModalToFront(parentModal);
+            forceModalViewportTop();
+            resetModalPosition(parentModal);
+          }
+          delete modalEl.dataset.parentModalId;
+        }
+        ensureModalOpenState();
       });
     }
 
@@ -4100,6 +4130,8 @@
     function openCustomerQuickAdd() {
       const modalEl = ensureCustomerModal();
       if (!modalEl) return;
+      const parentId = getActiveModalId(modalEl.id);
+      if (parentId) modalEl.dataset.parentModalId = parentId;
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
       bringModalToFront(modalEl);
       modal.show();
@@ -7469,6 +7501,8 @@
     function openSupplierModal() {
       const modalEl = ensureSupplierModal();
       if (!modalEl) return;
+      const parentId = getActiveModalId(modalEl.id);
+      if (parentId) modalEl.dataset.parentModalId = parentId;
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
       bringModalToFront(modalEl);
       modal.show();
