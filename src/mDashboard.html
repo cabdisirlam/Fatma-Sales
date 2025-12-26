@@ -925,6 +925,17 @@
         max-height: calc(100vh - 1rem);
       }
 
+      /* Prevent transformed parents from offsetting fixed modals */
+      body.modal-open {
+        transform: none !important;
+      }
+
+      body.modal-open .main-content,
+      body.modal-open .content-wrapper,
+      body.modal-open .content-section {
+        transform: none !important;
+      }
+
       .modal-header {
         padding: 0.875rem 1rem !important;
       }
