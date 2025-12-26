@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, maximum-scale=1.0, user-scalable=no">
   <title>Smatika Kenya System</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -105,7 +105,7 @@
       list-style: none;
       padding: 16px 0;
       flex-grow: 1;
-      overflow-y: auto;
+      overflow-y: hidden;
       overflow-x: hidden;
     }
 
@@ -326,6 +326,12 @@
       padding: 32px;
       max-width: 100%;
       margin: 0 auto;
+    }
+
+    .section-shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px;
     }
 
     .content-section {
@@ -740,6 +746,10 @@
         max-width: 100%;
       }
 
+      .section-shell {
+        padding: 0 12px;
+      }
+
       /* All content sections get proper side padding */
       .content-section {
         padding: 0 !important;
@@ -870,6 +880,10 @@
       .modal-dialog {
         margin: 0.5rem !important;
         max-width: calc(100% - 1rem);
+      }
+
+      .modal-dialog-centered {
+        align-items: flex-start;
       }
 
       .modal-fullscreen-sm-down {
@@ -1715,7 +1729,7 @@
 
       <!-- Sales Section -->
       <div class="content-section" id="section-sales">
-        <div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
+        <div class="section-shell">
           <!-- Header Section -->
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
             <h2 style="margin: 0; font-size: 28px; font-weight: 700;"><i class="bi bi-cart-check"></i> Sales Dashboard</h2>
@@ -1842,6 +1856,7 @@
 
       <!-- Sales New Section -->
       <div class="content-section" id="section-sales-new">
+        <div class="section-shell">
         <!-- Header Section -->
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
           <h2 style="margin: 0; font-size: 28px; font-weight: 700;"><i class="bi bi-cart-plus"></i> Create New Sale</h2>
@@ -1896,9 +1911,10 @@
                           <div class="col-md-6">
                             <label class="form-label small mb-0" style="color: #64748b;">Loyalty Points</label>
                             <input type="number" class="form-control form-control-sm" id="custLoyaltyVal" name="customerLoyalty" value="1" step="1" min="0" style="border-radius: 6px; background: white;">
-                          </div>
-                        </div>
-                      </div>
+            </div>
+        </div>
+        </div>
+      </div>
                       <div class="col-md-6">
                         <label class="form-label fw-bold" style="color: #2c3e50;">Date</label>
                         <input type="date" class="form-control" id="dashSaleDate" style="border-radius: 8px;">
@@ -2044,6 +2060,7 @@
 
       <!-- Sales History Section -->
       <div class="content-section" id="section-sales-history">
+        <div class="section-shell">
         <!-- Header Section -->
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
           <h2 style="margin: 0; font-size: 28px; font-weight: 700;"><i class="bi bi-clock-history"></i> Sales History</h2>
@@ -2145,10 +2162,12 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       <!-- Sales Returns Section -->
       <div class="content-section" id="section-sales-returns">
+        <div class="section-shell">
         <!-- Header Section -->
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
           <h2 style="margin: 0; font-size: 28px; font-weight: 700;"><i class="bi bi-arrow-return-left"></i> Sales Returns</h2>
@@ -2210,6 +2229,7 @@
               <p class="text-muted">All sales are final - no returns recorded</p>
             </div>
           </div>
+        </div>
         </div>
         </div>
       </div>
@@ -3403,6 +3423,20 @@
 
     let dialogResizeTimer;
 
+    function resetModalPosition(modalEl) {
+      if (!modalEl) return;
+      modalEl.scrollTop = 0;
+      const content = modalEl.querySelector('.modal-content');
+      if (content) content.scrollTop = 0;
+      const body = modalEl.querySelector('.modal-body');
+      if (body) body.scrollTop = 0;
+    }
+
+    function attachModalReset(modalEl) {
+      if (!modalEl) return;
+      modalEl.addEventListener('shown.bs.modal', () => resetModalPosition(modalEl));
+    }
+
     function resizeDialogToViewport() {
       if (typeof google === 'undefined' || !google.script || !google.script.host || !google.script.host.setWidth) {
         return;
@@ -3425,6 +3459,8 @@
     document.addEventListener('DOMContentLoaded', function() {
       resizeDialogToViewport();
       window.addEventListener('resize', scheduleDialogResize);
+
+      document.querySelectorAll('.modal').forEach(attachModalReset);
 
       // Make sidebar links always call showSection with preventDefault
       document.querySelectorAll('.menu-item a[data-section]').forEach(link => {
@@ -3816,6 +3852,7 @@
         </div>`;
         document.body.insertAdjacentHTML('beforeend', template);
         modalEl = document.getElementById('customerAddModal');
+        attachModalReset(modalEl);
         initCustomerDraft();
       }
       return modalEl;
@@ -7098,6 +7135,8 @@
       `;
 
       container.innerHTML = html;
+      attachModalReset(document.getElementById('inventoryAddModal'));
+      attachModalReset(document.getElementById('returnProductModal'));
     }
 
     // Helper Functions
@@ -7180,6 +7219,7 @@
         </div>`;
         document.body.insertAdjacentHTML('beforeend', modalTemplate);
         modalEl = document.getElementById('supplierAddModal');
+        attachModalReset(modalEl);
         initSupplierDraft();
       }
       return modalEl;
@@ -7199,6 +7239,7 @@
       if (!modalEl) return;
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
       bringModalToFront(modalEl);
+      resetModalPosition(modalEl);
       modal.show();
       initInventoryDraft();
     }

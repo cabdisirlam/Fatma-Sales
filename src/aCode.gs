@@ -32,7 +32,7 @@ function doGet(e) {
     // Only allow embedding from same origin (prevents malicious iframe embedding)
     const output = HtmlService.createHtmlOutputFromFile(htmlFile)
       .setTitle(title)
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
 
     // Set X-Frame-Options based on configuration
     if (CONFIG.ALLOW_IFRAME_EMBEDDING) {

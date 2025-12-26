@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Products Management</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -217,6 +217,10 @@
       .modal-dialog {
         margin: 0.5rem;
         max-width: calc(100% - 1rem);
+      }
+
+      .modal-dialog-centered {
+        align-items: flex-start;
       }
 
       .modal-fullscreen-sm-down {
@@ -526,6 +530,20 @@
   <script>
     let dialogResizeTimer;
 
+    function resetModalPosition(modalEl) {
+      if (!modalEl) return;
+      modalEl.scrollTop = 0;
+      const content = modalEl.querySelector('.modal-content');
+      if (content) content.scrollTop = 0;
+      const body = modalEl.querySelector('.modal-body');
+      if (body) body.scrollTop = 0;
+    }
+
+    function attachModalReset(modalEl) {
+      if (!modalEl) return;
+      modalEl.addEventListener('shown.bs.modal', () => resetModalPosition(modalEl));
+    }
+
     function resizeDialogToViewport() {
       if (typeof google === 'undefined' || !google.script || !google.script.host || !google.script.host.setWidth) {
         return;
@@ -547,6 +565,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       resizeDialogToViewport();
       window.addEventListener('resize', scheduleDialogResize);
+      document.querySelectorAll('.modal').forEach(attachModalReset);
 
       loadInventory();
       loadCategories();
