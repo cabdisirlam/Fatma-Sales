@@ -785,27 +785,38 @@
         padding: 1rem;
       }
 
-      /* === MOBILE: Modals === */
+      /* === MOBILE: Modals (Critical for phones under 8 inches) === */
+
+      /* Modal spacing from screen edges */
       .modal-dialog {
-        margin: 0.5rem;
+        margin: 0.5rem !important;
+      }
+
+      /* Fullscreen modals get proper padding */
+      .modal-fullscreen-sm-down .modal-body,
+      .modal-fullscreen-sm-down .modal-header,
+      .modal-fullscreen-sm-down .modal-footer {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
       }
 
       .modal-content {
         border-radius: 12px;
       }
 
+      /* Generous padding inside all modals */
       .modal-body {
-        padding: 1.25rem;
+        padding: 1.5rem !important;
       }
 
       .modal-header {
-        padding: 1rem 1.25rem;
+        padding: 1.25rem 1.5rem !important;
       }
 
       .modal-footer {
-        padding: 1rem 1.25rem;
+        padding: 1.25rem 1.5rem !important;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.75rem;
       }
 
       .modal-footer .btn {
@@ -813,14 +824,114 @@
         min-width: 120px;
       }
 
+      /* Form elements inside modals get extra spacing */
+      .modal-body .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+
+      .modal-body .col,
+      .modal-body [class*="col-"] {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+      }
+
+      /* Form groups in modals */
+      .modal-body .mb-3,
+      .modal-body .mb-2 {
+        margin-bottom: 1.25rem !important;
+      }
+
+      /* Tables in modals (like cart) */
+      .modal-body table {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        margin-bottom: 1.5rem !important;
+      }
+
+      .modal-body table thead {
+        font-size: 0.8125rem;
+      }
+
+      .modal-body table tbody {
+        font-size: 0.875rem;
+      }
+
+      .modal-body table td,
+      .modal-body table th {
+        padding: 0.75rem 0.5rem !important;
+      }
+
+      /* Cart/product list in New Sale modal */
+      #modalCartBody {
+        max-height: 300px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Summary sections (totals) in modals */
+      .modal-body .text-end.fw-bold,
+      .modal-body [style*="font-weight: bold"] {
+        padding: 0.75rem 0 !important;
+      }
+
+      /* Bordered sections in modals */
+      .modal-body [style*="border"],
+      .modal-body .border {
+        padding: 1rem !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+
+      /* Customer/Product info boxes in modals */
+      .modal-body [style*="background: #f8f9fa"] {
+        padding: 1rem !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+
       /* === MOBILE: Form Controls === */
       .form-label {
         font-size: 0.875rem;
-        margin-bottom: 0.375rem;
+        margin-bottom: 0.5rem !important;
+        font-weight: 600;
       }
 
       .form-control, .form-select {
         font-size: 0.875rem;
+        padding: 0.625rem 0.75rem !important;
+        border-radius: 8px !important;
+      }
+
+      /* Input groups in modals */
+      .modal-body .input-group {
+        margin-bottom: 0.75rem;
+      }
+
+      /* Form rows spacing */
+      .modal-body .row.g-2 {
+        margin-bottom: 1rem !important;
+      }
+
+      /* Horizontal rules in modals */
+      .modal-body hr {
+        margin: 1.5rem 0 !important;
+      }
+
+      /* Buttons in modals */
+      .modal-body .btn,
+      .modal-footer .btn {
+        padding: 0.625rem 1.25rem !important;
+        font-size: 0.875rem !important;
+        border-radius: 8px !important;
+      }
+
+      /* Section headings in modals */
+      .modal-body h6,
+      .modal-body .h6 {
+        margin-top: 1.5rem !important;
+        margin-bottom: 1rem !important;
+        font-size: 1rem !important;
       }
 
       /* === MOBILE: Button Groups === */
@@ -929,16 +1040,38 @@
         padding: 10px 12px !important;
       }
 
-      /* Ensure modals don't touch edges on small screens */
+      /* Ensure modals have generous padding on small phones */
       .modal-dialog {
-        margin: 0.5rem !important;
+        margin: 0.25rem !important;
       }
 
-      .modal-body,
+      .modal-body {
+        padding: 1.25rem !important;
+      }
+
       .modal-header,
       .modal-footer {
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+        padding: 1rem 1.25rem !important;
+      }
+
+      /* Fullscreen modals on small phones get even more padding */
+      .modal-fullscreen-sm-down .modal-body {
+        padding: 1.5rem 1.25rem !important;
+      }
+
+      .modal-fullscreen-sm-down .modal-header,
+      .modal-fullscreen-sm-down .modal-footer {
+        padding: 1.25rem !important;
+      }
+
+      /* Extra spacing for form elements */
+      .modal-body .form-control,
+      .modal-body .form-select {
+        margin-bottom: 1rem !important;
+      }
+
+      .modal-body .row.g-2 > * {
+        margin-bottom: 1rem !important;
       }
 
       /* Make all col-md-* full width on extra small screens */
