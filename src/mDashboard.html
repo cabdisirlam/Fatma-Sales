@@ -3774,6 +3774,39 @@
 
     function attachModalReset(modalEl) {
       if (!modalEl) return;
+
+      // Handle focus BEFORE modal starts hiding (prevents aria-hidden warning)
+      modalEl.addEventListener('hide.bs.modal', () => {
+        // Move focus away from modal to prevent aria-hidden conflicts
+        const activeElement = document.activeElement;
+        if (activeElement && modalEl.contains(activeElement)) {
+          // Check if this is a nested modal
+          const parentId = modalEl.dataset.parentModalId;
+          if (parentId) {
+            const parentModal = document.getElementById(parentId);
+            if (parentModal) {
+              // Move focus to parent modal content
+              const focusTarget = parentModal.querySelector('.modal-content') || parentModal;
+              if (focusTarget && typeof focusTarget.focus === 'function') {
+                focusTarget.focus();
+              }
+            } else {
+              // Parent not found, blur to body
+              if (typeof activeElement.blur === 'function') {
+                activeElement.blur();
+              }
+              document.body.focus();
+            }
+          } else {
+            // Not a nested modal, blur to body
+            if (typeof activeElement.blur === 'function') {
+              activeElement.blur();
+            }
+            document.body.focus();
+          }
+        }
+      });
+
       modalEl.addEventListener('shown.bs.modal', () => {
         forceModalViewportTop();
         resetModalPosition(modalEl);
