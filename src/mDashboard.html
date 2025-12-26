@@ -2055,19 +2055,19 @@
 
             <div id="salesDashboardTableContainer">
               <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle" style="margin: 0; font-size: 13px;">
-                  <thead style="background: #f7fafc; border-bottom: 2px solid #e2e8f0;">
+                <table class="table table-hover table-sm mobile-stack-table" style="font-size: 13px;">
+                  <thead>
                     <tr>
-                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Date</th>
-                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Transaction</th>
-                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Customer</th>
-                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">Cost</th>
-                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Status</th>
-                      <th style="padding: 10px 12px; font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">Actions</th>
+                      <th>Date</th>
+                      <th>Transaction</th>
+                      <th>Customer</th>
+                      <th class="text-end">Cost</th>
+                      <th>Status</th>
+                      <th class="text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="salesDashboardBody" style="border-top: none;">
-                    <tr><td colspan="6" class="text-center text-muted py-4" style="font-size: 13px;">Loading sales history...</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-4">Loading sales history...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -8497,6 +8497,8 @@
       document.getElementById('masterItemDescription').value = '';
       document.getElementById('masterItemStatus').value = 'Active';
       const modalEl = document.getElementById('masterItemModal');
+      const parentId = getActiveModalId(modalEl.id);
+      if (parentId) modalEl.dataset.parentModalId = parentId;
       const modal = bootstrap.Modal.getOrCreateInstance(modalEl, {backdrop: true});
       bringModalToFront(modalEl);
       modal.show();
@@ -9394,12 +9396,12 @@
 
         row.className = isReturned ? 'returned-row' : '';
         row.innerHTML = `
-          <td style="font-size: 13px;">${saleDate}</td>
-          <td style="font-size: 13px;">${sale.Transaction_ID || ''}</td>
-          <td style="font-size: 13px;">${sale.Customer_Name || 'Walk-in'}</td>
-          <td style="font-size: 13px; text-align: right; font-weight: 600;">${formatCurrency(cost)}</td>
-          <td style="font-size: 13px;">${statusBadge}</td>
-          <td style="text-align: center; font-size: 13px;">
+          <td data-label="Date">${saleDate}</td>
+          <td data-label="Transaction">${sale.Transaction_ID || ''}</td>
+          <td data-label="Customer">${sale.Customer_Name || 'Walk-in'}</td>
+          <td data-label="Cost" class="text-end fw-semibold">${formatCurrency(cost)}</td>
+          <td data-label="Status">${statusBadge}</td>
+          <td data-label="Actions" class="text-center">
             <button class="btn btn-sm btn-outline-secondary sale-print-receipt-btn" data-id="${sale.Transaction_ID}" style="padding: 2px 8px; font-size: 12px; border-radius: 3px;" title="Print Receipt">
               <i class="bi bi-printer"></i>
             </button>
