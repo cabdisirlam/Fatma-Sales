@@ -196,6 +196,29 @@
       .stat-title { font-size: 0.75rem; }
       .table-card { border-radius: 10px; }
       .table-card .card-header { padding: 12px 15px; border-radius: 10px 10px 0 0; }
+      .mobile-stack-table thead { display: none; }
+      .mobile-stack-table tr {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px;
+        background: white;
+      }
+      .mobile-stack-table td {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border: none !important;
+      }
+      .mobile-stack-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #64748b;
+        margin-right: 8px;
+      }
+      .mobile-stack-table td:last-child { padding-bottom: 0; }
+      .mobile-stack-table td:first-child { padding-top: 0; }
       .table { font-size: 0.8rem; min-width: 600px; }
       .table th, .table td { padding: 0.5rem 0.3rem; white-space: nowrap; }
       .btn { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
@@ -399,7 +422,7 @@
 
       <div id="historyTableContainer" style="display: none;">
         <div class="table-responsive">
-          <table class="table table-hover align-middle">
+          <table class="table table-hover align-middle mobile-stack-table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -488,13 +511,13 @@
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${formatDate(row.date)}</td>
-          <td>${formatCurrency(row.bankCash)}</td>
-          <td>${formatCurrency(row.receivables)}</td>
-          <td>${formatCurrency(row.inventory)}</td>
-          <td>${formatCurrency(row.payables)}</td>
-          <td><strong>${formatCurrency(row.netWorth)}</strong></td>
-          <td class="${changeClass}">${changeLabel}</td>
+          <td data-label="Date">${formatDate(row.date)}</td>
+          <td data-label="Cash & Bank">${formatCurrency(row.bankCash)}</td>
+          <td data-label="Receivables">${formatCurrency(row.receivables)}</td>
+          <td data-label="Inventory">${formatCurrency(row.inventory)}</td>
+          <td data-label="Suppliers">${formatCurrency(row.payables)}</td>
+          <td data-label="Net Worth"><strong>${formatCurrency(row.netWorth)}</strong></td>
+          <td data-label="Change" class="${changeClass}">${changeLabel}</td>
         `;
         tbody.appendChild(tr);
       });
