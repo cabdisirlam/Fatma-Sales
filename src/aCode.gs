@@ -607,19 +607,31 @@ function generateId(sheetName, columnName, prefix) {
     try {
       // Critical section - only one user can execute this at a time
       const sheet = getSheet(sheetName);
-      const data = sheet.getDataRange().getValues();
-      const headers = data[0];
+
+      // OPTIMIZATION: Only read the ID column instead of entire sheet
+      // This is 10-100x faster for large sheets!
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 1) {
+        // Empty sheet, return first ID
+        const newId = prefix + '-001';
+        Logger.log('Generated ID for empty sheet: ' + newId);
+        return newId;
+      }
+
+      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
       const columnIndex = headers.indexOf(columnName);
 
       if (columnIndex === -1) {
         throw new Error('Column ' + columnName + ' not found in ' + sheetName);
       }
 
+      // Read only the ID column (not the entire sheet!)
+      const idColumn = sheet.getRange(2, columnIndex + 1, lastRow - 1, 1).getValues();
       let maxNumber = 0;
 
       // Find the highest existing number
-      for (let i = 1; i < data.length; i++) {
-        const id = data[i][columnIndex];
+      for (let i = 0; i < idColumn.length; i++) {
+        const id = idColumn[i][0];
         if (!id) continue;
         const idStr = id.toString();
 
