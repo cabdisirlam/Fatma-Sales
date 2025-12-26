@@ -1976,7 +1976,7 @@
 
             <!-- Users Table -->
             <div class="table-responsive">
-              <table class="table table-hover">
+              <table class="table table-hover mobile-stack-table">
                 <thead>
                   <tr>
                     <th>User</th>
@@ -2587,7 +2587,7 @@
 
   <!-- Add User Modal -->
   <div class="modal fade" id="dashboardAddUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title"><i class="bi bi-person-plus"></i> Add New User</h5>
@@ -2600,22 +2600,22 @@
               <input type="text" class="form-control" id="newUsername" required>
             </div>
             <div class="row">
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">Email *</label>
                 <input type="email" class="form-control" id="newEmail" required>
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">Phone</label>
                 <input type="text" class="form-control" id="newPhone">
               </div>
             </div>
             <div class="row">
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">PIN (4 Digits) *</label>
                 <input type="password" class="form-control" id="newPin" maxlength="4" pattern="[0-9]{4}" required>
                 <div class="form-text">Must be 4 numbers.</div>
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">Role *</label>
                 <select class="form-select" id="newRole" required>
                   <option value="Admin">Admin</option>
@@ -2643,7 +2643,7 @@
 
   <!-- Edit User Modal -->
   <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit User</h5>
@@ -2657,17 +2657,17 @@
               <input type="text" class="form-control" id="editUsername" required>
             </div>
             <div class="row">
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">Email *</label>
                 <input type="email" class="form-control" id="userEditEmail" required>
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">Phone</label>
                 <input type="text" class="form-control" id="userEditPhone">
               </div>
             </div>
             <div class="row">
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">Role *</label>
                 <select class="form-select" id="editRole" required>
                   <option value="Admin">Admin</option>
@@ -2676,7 +2676,7 @@
                   <option value="Cashier">Cashier</option>
                 </select>
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="col-12 col-md-6 mb-3">
                 <label class="form-label">Status</label>
                 <select class="form-select" id="editStatus">
                   <option value="Active">Active</option>
@@ -3557,7 +3557,7 @@
           
           return `
             <tr>
-              <td>
+              <td data-label="User">
                 <div class="d-flex align-items-center">
                   <div class="user-avatar me-2" style="width:35px;height:35px;background:#667eea;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">
                     ${initial}
@@ -3565,11 +3565,11 @@
                   <strong>${user.Username || 'Unknown'}</strong>
                 </div>
               </td>
-              <td>${user.Email || '-'}</td>
-              <td>${user.Phone || '-'}</td>
-              <td><span class="badge ${roleClass}">${user.Role || 'User'}</span></td>
-              <td>${statusBadge}</td>
-              <td class="actions-cell">
+              <td data-label="Email">${user.Email || '-'}</td>
+              <td data-label="Phone">${user.Phone || '-'}</td>
+              <td data-label="Role"><span class="badge ${roleClass}">${user.Role || 'User'}</span></td>
+              <td data-label="Status">${statusBadge}</td>
+              <td data-label="Actions" class="actions-cell">
                 <button class="btn btn-sm btn-outline-primary" onclick="editUser('${user.User_ID}')"><i class="bi bi-pencil"></i></button>
                 <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user.User_ID}', '${user.Username}')"><i class="bi bi-trash"></i></button>
               </td>
