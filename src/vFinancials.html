@@ -60,8 +60,12 @@
       .table { font-size: 0.8rem; min-width: 600px; }
       .table th, .table td { padding: 0.5rem 0.3rem; white-space: nowrap; }
 
-      .modal-dialog { margin: 0.5rem; max-width: calc(100% - 1rem); }
-      .modal-body { padding: 1rem; }
+      .modal-dialog { margin: 0.5rem; max-width: calc(100% - 1rem); width: calc(100% - 1rem); }
+      .modal-dialog-centered { align-items: flex-start; }
+      .modal-fullscreen-sm-down { width: calc(100% - 1rem); height: calc(100% - 1rem); margin: 0.5rem; }
+      .modal-fullscreen-sm-down .modal-content { height: calc(100vh - 1rem); max-height: calc(100vh - 1rem); }
+      .modal-dialog-scrollable .modal-content { max-height: calc(100vh - 1rem); }
+      .modal-body { padding: 1rem; overflow-y: auto; }
     }
 
     @media (min-width: 768px) and (max-width: 991.98px) {
@@ -159,7 +163,7 @@
   </div>
 
   <div class="modal fade" id="modalReceivePayment" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header bg-success text-white">
           <h5 class="modal-title"><i class="bi bi-cash"></i> Receive from Client</h5>
@@ -197,7 +201,7 @@
   </div>
 
   <div class="modal fade" id="modalRecordExpense" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header bg-danger text-white">
           <h5 class="modal-title"><i class="bi bi-receipt"></i> Record Expense</h5>
@@ -234,7 +238,7 @@
   </div>
 
   <div class="modal fade" id="modalBankTxn" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
           <h5 class="modal-title"><i class="bi bi-bank"></i> Bank / Cash Transaction</h5>
@@ -273,7 +277,7 @@
   </div>
 
   <div class="modal fade" id="modalAddAccount" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header bg-purple text-white" style="background-color: #8e44ad;">
           <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Account</h5>
@@ -311,10 +315,40 @@
     document.addEventListener('DOMContentLoaded', function() {
       loadFinancialData();
       loadDropdownData();
+      document.querySelectorAll('.modal').forEach(attachModalReset);
     });
 
+    function resetModalPosition(modalEl) {
+      if (!modalEl) return;
+      modalEl.scrollTop = 0;
+      const content = modalEl.querySelector('.modal-content');
+      if (content) content.scrollTop = 0;
+      const body = modalEl.querySelector('.modal-body');
+      if (body) body.scrollTop = 0;
+    }
+
+    function forceModalViewportTop() {
+      if (window.innerWidth > 768) return;
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      window.scrollTo(0, 0);
+    }
+
+    function attachModalReset(modalEl) {
+      if (!modalEl) return;
+      modalEl.addEventListener('shown.bs.modal', () => {
+        forceModalViewportTop();
+        resetModalPosition(modalEl);
+      });
+    }
+
     function openModal(id) {
-      new bootstrap.Modal(document.getElementById(id)).show();
+      const modalEl = document.getElementById(id);
+      if (!modalEl) return;
+      forceModalViewportTop();
+      resetModalPosition(modalEl);
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      modal.show();
     }
 
     function showLoading(show) {

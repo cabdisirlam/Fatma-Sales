@@ -3460,9 +3460,19 @@
       if (body) body.scrollTop = 0;
     }
 
+    function forceModalViewportTop() {
+      if (window.innerWidth > 768) return;
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      window.scrollTo(0, 0);
+    }
+
     function attachModalReset(modalEl) {
       if (!modalEl) return;
-      modalEl.addEventListener('shown.bs.modal', () => resetModalPosition(modalEl));
+      modalEl.addEventListener('shown.bs.modal', () => {
+        forceModalViewportTop();
+        resetModalPosition(modalEl);
+      });
     }
 
     function resizeDialogToViewport() {
