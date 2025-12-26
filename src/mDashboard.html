@@ -9260,15 +9260,21 @@
           if (result.success) {
             showModalAlert(type + ' created successfully! Ref: ' + (result.transactionId || result.quotationId), 'success');
 
-            // Reload sales history
-            if (typeof loadSalesHistory === 'function') loadSalesHistory();
-            if (typeof refreshSalesOverview === 'function') refreshSalesOverview();
-            // Also refresh inventory/sales sections if available so stock and metrics update
-            if (typeof loadInventorySection === 'function') loadInventorySection(true);
             const modalEl = document.getElementById('newSaleModal');
             if (modalEl) {
               safeHideModal(modalEl);
             }
+
+            // Reload sales history and inventory AFTER modal closes to prevent race condition
+            // Delay must be longer than safeHideModal's 50ms delay + modal hide animation
+            setTimeout(function() {
+              if (typeof loadSalesHistory === 'function') loadSalesHistory();
+              if (typeof refreshSalesOverview === 'function') refreshSalesOverview();
+              // loadInventorySection rebuilds DOM, must happen after modal fully closes
+              if (typeof loadInventorySection === 'function') loadInventorySection(true);
+              // Explicit backdrop cleanup to prevent stuck backdrops
+              cleanupModalBackdrops();
+            }, 600);
           } else {
             showModalAlert('Error: ' + result.message, 'danger');
           }
