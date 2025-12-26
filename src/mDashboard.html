@@ -3691,32 +3691,27 @@
       if (!openModal) return;
       document.body.classList.add('modal-open');
       document.body.style.overflow = 'hidden';
-      const backdrops = document.querySelectorAll('.modal-backdrop');
-      if (!backdrops.length) {
-        const backdrop = document.createElement('div');
-        backdrop.className = 'modal-backdrop fade show';
-        document.body.appendChild(backdrop);
-      } else if (backdrops.length > 1) {
-        backdrops.forEach((el, idx) => {
-          if (idx < backdrops.length - 1) el.remove();
-        });
-      }
+      cleanupModalBackdrops();
     }
 
     function cleanupModalBackdrops() {
       const openModal = document.querySelector('.modal.show');
       const backdrops = document.querySelectorAll('.modal-backdrop');
+      backdrops.forEach(el => el.remove());
       if (!openModal) {
-        backdrops.forEach(el => el.remove());
         document.body.classList.remove('modal-open');
         document.body.style.removeProperty('overflow');
         return;
       }
-      if (backdrops.length > 1) {
-        backdrops.forEach((el, idx) => {
-          if (idx < backdrops.length - 1) el.remove();
-        });
+      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+      const backdrop = document.createElement('div');
+      backdrop.className = 'modal-backdrop fade show';
+      const modalZ = parseInt(openModal.style.zIndex || '', 10);
+      if (!Number.isNaN(modalZ)) {
+        backdrop.style.zIndex = modalZ - 1;
       }
+      document.body.appendChild(backdrop);
     }
 
     function forceModalViewportTop() {
@@ -3760,7 +3755,6 @@
             }
             delete modalEl.dataset.parentModalId;
           }
-          ensureModalOpenState();
           cleanupModalBackdrops();
         }, 150);
       });
