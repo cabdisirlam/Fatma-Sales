@@ -5595,7 +5595,7 @@
         <div id="financialAlert" class="alert d-none"></div>
         <div class="row g-3 mb-4">
           ${focusedBreakdown.map(acc => `
-            <div class="col-md-4">
+            <div class="col-12 col-md-4">
               <div class="stat-card h-100" style="background: linear-gradient(135deg, ${acc.name === 'M-Pesa' ? '#00c6ff 0%, #0072ff 100%' : acc.name === 'Cash' ? '#f6d365 0%, #fda085 100%' : '#89f7fe 0%, #66a6ff 100%'}); color: white;">
                 <div class="d-flex justify-content-between align-items-start">
                   <div>
@@ -5648,11 +5648,11 @@
                     </select>
                   </div>
                   <div class="row g-2 mb-3">
-                    <div class="col-md-6">
+                    <div class="col-12 col-md-6">
                       <label class="form-label">Amount (Ksh)</label>
                       <input type="number" class="form-control" name="amount" min="0" step="0.01" required>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-12 col-md-6">
                       <label class="form-label">Reference</label>
                       <input type="text" class="form-control" name="reference" placeholder="Receipt / M-Pesa code">
                     </div>
@@ -5717,11 +5717,11 @@
                     <input type="text" class="form-control" name="payee" placeholder="Who are you paying?" required>
                   </div>
                   <div class="row g-2 mb-3">
-                    <div class="col-md-6">
+                    <div class="col-12 col-md-6">
                       <label class="form-label">Amount (Ksh)</label>
                       <input type="number" class="form-control" name="amount" min="0" step="0.01" required>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-12 col-md-6">
                       <label class="form-label">Notes</label>
                       <input type="text" class="form-control" name="notes" placeholder="Purpose or reference">
                     </div>
@@ -5755,11 +5755,11 @@
                     </select>
                   </div>
                   <div class="row g-2 mb-3">
-                    <div class="col-md-6">
+                    <div class="col-12 col-md-6">
                       <label class="form-label">Amount (Ksh)</label>
                       <input type="number" class="form-control" name="amount" min="0" step="0.01" required>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-12 col-md-6">
                       <label class="form-label">Notes</label>
                       <input type="text" class="form-control" name="notes" placeholder="Opening balance / adjustment">
                     </div>
@@ -5777,23 +5777,25 @@
         </div>
 
         <div class="card mb-4">
-              <div class="card-header d-flex justify-content-between align-items-center">
-                <div><i class="bi bi-file-earmark-text"></i> Account Statement</div>
-                <div class="d-flex gap-2">
-                  <select class="form-select form-select-sm" id="finStatementAccount">
-                    ${statementAccountOptions}
-                  </select>
-              <input type="date" class="form-control form-control-sm" id="finStatementStart">
-              <input type="date" class="form-control form-control-sm" id="finStatementEnd">
-              <button class="btn btn-sm btn-primary" onclick="loadFinancialStatement()">
-                <i class="bi bi-search"></i> Load
-              </button>
-            </div>
-          </div>
+              <div class="card-header">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                  <div><i class="bi bi-file-earmark-text"></i> Account Statement</div>
+                  <div class="d-flex flex-wrap gap-2 w-100 w-md-auto">
+                    <select class="form-select form-select-sm flex-grow-1 flex-md-grow-0" id="finStatementAccount" style="min-width: 120px;">
+                      ${statementAccountOptions}
+                    </select>
+                    <input type="date" class="form-control form-control-sm flex-grow-1 flex-md-grow-0" id="finStatementStart">
+                    <input type="date" class="form-control form-control-sm flex-grow-1 flex-md-grow-0" id="finStatementEnd">
+                    <button class="btn btn-sm btn-primary" onclick="loadFinancialStatement()">
+                      <i class="bi bi-search"></i> Load
+                    </button>
+                  </div>
+                </div>
+              </div>
           <div class="card-body">
             <div id="finStatementSummary" class="row gy-2 mb-3"></div>
             <div class="table-responsive">
-              <table class="table table-sm table-hover align-middle mb-0">
+              <table class="table table-sm table-hover align-middle mb-0 mobile-stack-table">
                 <thead class="table-light">
                   <tr>
                     <th>Date</th>
@@ -6204,12 +6206,12 @@
               totalCr += cr;
               return `
               <tr>
-                <td>${new Date(t.date).toLocaleDateString()}</td>
-                <td>${t.type}</td>
-                <td>${t.description || ''}</td>
-                <td class="text-end text-success">${dr > 0 ? formatCurrency(dr) : '-'}</td>
-                <td class="text-end text-danger">${cr > 0 ? formatCurrency(cr) : '-'}</td>
-                <td class="text-end">${formatCurrency(running)}</td>
+                <td data-label="Date">${new Date(t.date).toLocaleDateString()}</td>
+                <td data-label="Type">${t.type}</td>
+                <td data-label="Description">${t.description || ''}</td>
+                <td data-label="Debit (DR)" class="text-end text-success">${dr > 0 ? formatCurrency(dr) : '-'}</td>
+                <td data-label="Credit (CR)" class="text-end text-danger">${cr > 0 ? formatCurrency(cr) : '-'}</td>
+                <td data-label="Balance" class="text-end">${formatCurrency(running)}</td>
               </tr>`;
             }).join('');
 
