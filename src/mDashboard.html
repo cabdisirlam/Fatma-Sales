@@ -3752,6 +3752,8 @@
           if (parentId) {
             const parentModal = document.getElementById(parentId);
             if (parentModal) {
+              const parentInstance = bootstrap.Modal.getInstance(parentModal) || new bootstrap.Modal(parentModal, {backdrop: true});
+              parentInstance.show();
               bringModalToFront(parentModal);
               forceModalViewportTop();
               resetModalPosition(parentModal);
@@ -3760,7 +3762,7 @@
           }
           ensureModalOpenState();
           cleanupModalBackdrops();
-        }, 0);
+        }, 150);
       });
     }
 
