@@ -1088,6 +1088,17 @@
         border-radius: 8px !important;
       }
     }
+
+    /* Mobile stability and no-zoom */
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    @media (max-width: 767.98px) {
+      body {
+        touch-action: manipulation;
+      }
+    }
 </style>
 </head>
 <body>
@@ -1760,6 +1771,7 @@
     </script>
 </body>
 </html>
+
 
 
 
