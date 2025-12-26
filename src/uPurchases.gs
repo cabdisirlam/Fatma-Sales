@@ -6,12 +6,40 @@
 /**
  * Ensure an inventory item exists for a purchase line.
  * If not found, auto-create a placeholder item so the purchase can proceed.
+ *
+ * OPTIMIZED: Skip expensive getInventoryItemById() call if item already has all required fields.
+ * This prevents redundant full-sheet reads when adding new products.
  */
 function ensurePurchaseItem(item, user) {
+  // OPTIMIZATION: If item already has all required fields (new product from addProduct()),
+  // skip the expensive getInventoryItemById() call that reads the entire Inventory sheet
+  const hasRequiredFields = item.Item_ID && item.Item_Name && item.Cost_Price !== undefined;
+
+  if (hasRequiredFields) {
+    // Return item details directly without querying the sheet
+    const cost = parseFloat(item.Cost_Price) || 0;
+    const selling = (item.Selling_Price !== undefined && item.Selling_Price !== null && item.Selling_Price !== '')
+      ? (parseFloat(item.Selling_Price) || cost)
+      : cost;
+
+    return {
+      Item_ID: item.Item_ID,
+      Item_Name: item.Item_Name,
+      Category: item.Category || 'General',
+      Cost_Price: cost,
+      Selling_Price: selling,
+      Reorder_Level: item.Reorder_Level !== undefined && item.Reorder_Level !== '' ? parseFloat(item.Reorder_Level) : 0,
+      Supplier: item.Supplier || item.Supplier_ID || '',
+      Current_Qty: 0,
+      Stock_Qty: 0
+    };
+  }
+
+  // Fallback: Try to fetch from sheet (for manual purchases of existing items)
   try {
     return getInventoryItemById(item.Item_ID);
   } catch (e) {
-    // Do NOT auto-append placeholder row; just return a stub so increaseStock can create the first batch
+    // Item doesn't exist - return stub
     const itemId = (item.Item_ID && item.Item_ID.toString().trim() !== '') ? item.Item_ID : generateId('Inventory', 'Item_ID', 'ITEM');
     const cost = parseFloat(item.Cost_Price) || 0;
     const selling = (item.Selling_Price !== undefined && item.Selling_Price !== null && item.Selling_Price !== '')

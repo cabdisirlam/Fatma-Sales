@@ -798,26 +798,47 @@ function increaseStockSpecificBatch(itemId, batchId, qty, user) {
  * Update stock after purchase (increase)
  * V3.0: Creates a NEW BATCH ROW instead of updating existing row
  * FIFO Architecture: Each purchase creates a separate batch for accurate cost tracking
+ *
+ * OPTIMIZED: Skip expensive getInventoryItemById() if baseItem is provided (new products).
  */
 function increaseStock(itemId, qty, user, unitCost, baseItem) {
   try {
     let item;
-    try {
-      item = getInventoryItemById(itemId);
-    } catch (e) {
-      // If item doesn't exist, fall back to provided baseItem (used for first-time purchases)
-      if (!baseItem) throw e;
+
+    // OPTIMIZATION: If baseItem is provided (new product from purchase), use it directly
+    // This avoids reading the entire Inventory sheet when we already have all the data
+    if (baseItem && baseItem.Item_Name) {
       item = {
         Item_ID: itemId,
-        Item_Name: baseItem.Item_Name || 'New Item',
+        Item_Name: baseItem.Item_Name,
         Category: baseItem.Category || getCategoryForItemName(baseItem.Item_Name) || 'General',
         Cost_Price: baseItem.Cost_Price || baseItem.unitCost || 0,
         Selling_Price: baseItem.Selling_Price || baseItem.Price || baseItem.Cost_Price || 0,
         Reorder_Level: baseItem.Reorder_Level !== undefined && baseItem.Reorder_Level !== '' ? baseItem.Reorder_Level : 0,
-        Supplier: baseItem.Supplier || baseItem.Supplier_ID || resolveSupplierName(baseItem.Supplier_ID) || '',
+        Supplier: baseItem.Supplier || baseItem.Supplier_ID || '',
         Last_Updated: new Date(),
         Updated_By: user || 'SYSTEM'
       };
+    } else {
+      // Fallback: Try to fetch existing item from sheet
+      try {
+        item = getInventoryItemById(itemId);
+      } catch (e) {
+        // If item doesn't exist and no baseItem provided, throw error
+        if (!baseItem) throw e;
+        // Create item from baseItem
+        item = {
+          Item_ID: itemId,
+          Item_Name: baseItem.Item_Name || 'New Item',
+          Category: baseItem.Category || getCategoryForItemName(baseItem.Item_Name) || 'General',
+          Cost_Price: baseItem.Cost_Price || baseItem.unitCost || 0,
+          Selling_Price: baseItem.Selling_Price || baseItem.Price || baseItem.Cost_Price || 0,
+          Reorder_Level: baseItem.Reorder_Level !== undefined && baseItem.Reorder_Level !== '' ? baseItem.Reorder_Level : 0,
+          Supplier: baseItem.Supplier || baseItem.Supplier_ID || resolveSupplierName(baseItem.Supplier_ID) || '',
+          Last_Updated: new Date(),
+          Updated_By: user || 'SYSTEM'
+        };
+      }
     }
 
     // Generate unique Batch_ID
