@@ -8720,7 +8720,6 @@
       google.script.run
         .withSuccessHandler(function(newItem) {
           lastAddedMasterItemName = newItem && newItem.Item_Name ? newItem.Item_Name : name;
-          setMasterModalAlert('success', 'Item saved to Master_Data.');
           const modalEl = document.getElementById('masterItemModal');
           if (modalEl) {
             safeHideModal(modalEl);
@@ -8733,6 +8732,10 @@
           // Delay must be longer than safeHideModal's 50ms delay
           setTimeout(function() {
             loadMasterData();
+            // Explicit backdrop cleanup to prevent stuck backdrops on mobile
+            cleanupModalBackdrops();
+            // Show success message after modal fully closes
+            setMasterModalAlert('success', 'Item saved to Master_Data.');
           }, 600);
         })
         .withFailureHandler(function(error) {
