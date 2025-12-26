@@ -3747,18 +3747,20 @@
       });
       modalEl.addEventListener('hidden.bs.modal', () => {
         normalizeSidebarAfterModal();
-        const parentId = modalEl.dataset.parentModalId;
-        if (parentId) {
-          const parentModal = document.getElementById(parentId);
-          if (parentModal) {
-            bringModalToFront(parentModal);
-            forceModalViewportTop();
-            resetModalPosition(parentModal);
+        setTimeout(() => {
+          const parentId = modalEl.dataset.parentModalId;
+          if (parentId) {
+            const parentModal = document.getElementById(parentId);
+            if (parentModal) {
+              bringModalToFront(parentModal);
+              forceModalViewportTop();
+              resetModalPosition(parentModal);
+            }
+            delete modalEl.dataset.parentModalId;
           }
-          delete modalEl.dataset.parentModalId;
-        }
-        ensureModalOpenState();
-        cleanupModalBackdrops();
+          ensureModalOpenState();
+          cleanupModalBackdrops();
+        }, 0);
       });
     }
 
