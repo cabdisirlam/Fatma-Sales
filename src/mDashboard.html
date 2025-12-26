@@ -43,6 +43,10 @@
       line-height: 1.6;
     }
 
+    body.menu-open {
+      overflow: hidden;
+    }
+
     /* Stacked modals (e.g., convert inside quotations modal) */
     .modal.modal-foreground { z-index: 2000; }
     .modal-backdrop.modal-foreground-backdrop { z-index: 1995; }
@@ -705,6 +709,7 @@
 
       .sidebar {
         transform: translateX(-100%);
+        overflow: hidden;
       }
 
       .sidebar.show {
@@ -1446,14 +1451,39 @@
       .header-section,
       .welcome-section,
       .module-card,
-      .card-header,
-      .btn-primary,
-      .btn-action {
+      .card-header {
         background: #ffffff !important;
         background-image: none !important;
       }
 
       .header-section,
+      .welcome-section,
+      .module-card,
+      .card,
+      .stat-card,
+      .dashboard-card,
+      .badge,
+      .table-responsive,
+      .modal-content {
+        box-shadow: none !important;
+      }
+
+      .header-section,
+      .welcome-section,
+      .module-card,
+      .card,
+      .stat-card,
+      .dashboard-card,
+      .modal-content {
+        border-radius: 8px !important;
+      }
+
+      .btn,
+      .btn-action {
+        box-shadow: none !important;
+      }
+    }
+.header-section,
       .welcome-section,
       .module-card,
       .card,
@@ -4786,6 +4816,7 @@
       const sidebar = document.getElementById('sidebar');
       if (sidebar) {
         sidebar.classList.toggle('show');
+        document.body.classList.toggle('menu-open', sidebar.classList.contains('show'));
       }
     }
 
@@ -4793,6 +4824,7 @@
       const sidebar = document.getElementById('sidebar');
       if (sidebar) {
         sidebar.classList.remove('show');
+        document.body.classList.remove('menu-open');
       }
     }
 
@@ -9299,6 +9331,7 @@
   </script>
 </body>
 </html>
+
 
 
 
