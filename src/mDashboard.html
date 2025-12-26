@@ -1965,93 +1965,87 @@
       <div class="content-section" id="section-sales">
         <div class="section-shell">
           <!-- Header Section -->
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-            <h2 style="margin: 0; font-size: 28px; font-weight: 700;"><i class="bi bi-cart-check"></i> Sales Dashboard</h2>
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+            <h2 style="margin: 0; font-size: 26px; font-weight: 700;"><i class="bi bi-cart-check"></i> Sales Dashboard</h2>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">Manage sales transactions, view history, and track revenue</p>
           </div>
 
           <!-- Statistics Cards -->
           <div class="row mb-4 g-3">
-          <div class="col-6 col-md-3">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); height: 100%;">
-              <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total Revenue</div>
-              <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesTotalRevenue">Ksh 0</div>
+            <div class="col-6 col-md-3">
+              <div class="stat-card h-100">
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value" id="salesTotalRevenue">Ksh 0</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="stat-card h-100">
+                <div class="stat-label">Transactions</div>
+                <div class="stat-value" id="salesTransactionCount">0</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="stat-card h-100">
+                <div class="stat-label">Credit Sales</div>
+                <div class="stat-value" id="salesCreditCount">0</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="stat-card h-100">
+                <div class="stat-label">Average Order</div>
+                <div class="stat-value" id="salesAverageOrder">Ksh 0</div>
+              </div>
             </div>
           </div>
-          <div class="col-6 col-md-3">
-            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4); height: 100%;">
-              <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Transactions</div>
-              <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesTransactionCount">0</div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4); height: 100%;">
-              <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Credit Sales</div>
-              <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesCreditCount">0</div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(250, 112, 154, 0.4); height: 100%;">
-              <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Average Order</div>
-              <div style="font-size: 20px; font-weight: 700; color: white; line-height: 1.2; word-break: break-word;" id="salesAverageOrder">Ksh 0</div>
-            </div>
-          </div>
-        </div>
 
         <!-- Actions Toolbar -->
-        <div style="background: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
-          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-sm" onclick="openNewSaleModal()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px;">
-                <i class="bi bi-plus-circle" style="font-size: 14px;"></i> New Sale
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="openQuotationsModal()" style="border-radius: 4px; font-weight: 500; padding: 6px 14px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
-                <i class="bi bi-journal-text" style="font-size: 14px;"></i> Quotations
-              </button>
-            </div>
-            <div class="d-flex gap-2 align-items-center">
-              <span style="font-size: 12px; color: #718096; font-weight: 500;">Quick Actions</span>
-              <button class="btn btn-sm btn-outline-secondary" onclick="loadSalesDashboard()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
-                <i class="bi bi-arrow-clockwise" style="font-size: 14px;"></i> Refresh
-              </button>
-            </div>
-          </div>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button class="btn btn-primary btn-sm" onclick="openNewSaleModal()">
+            <i class="bi bi-plus-circle"></i> New Sale
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="openQuotationsModal()">
+            <i class="bi bi-journal-text"></i> Quotations
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="loadSalesDashboard()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
         </div>
 
         <!-- Filter Section -->
-        <div style="background: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+        <div class="card">
+          <div class="card-header"><i class="bi bi-funnel"></i> Filter Sales</div>
+          <div class="card-body">
           <div class="row g-2 align-items-end">
             <div class="col-12 col-md-2">
-              <label for="salesFilterStartDate" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Start Date</label>
-              <input type="date" class="form-control form-control-sm" id="salesFilterStartDate" style="border-radius: 4px; font-size: 13px;">
+              <label for="salesFilterStartDate" class="form-label">Start Date</label>
+              <input type="date" class="form-control form-control-sm" id="salesFilterStartDate">
             </div>
             <div class="col-12 col-md-2">
-              <label for="salesFilterEndDate" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">End Date</label>
-              <input type="date" class="form-control form-control-sm" id="salesFilterEndDate" style="border-radius: 4px; font-size: 13px;">
+              <label for="salesFilterEndDate" class="form-label">End Date</label>
+              <input type="date" class="form-control form-control-sm" id="salesFilterEndDate">
             </div>
             <div class="col-12 col-md-4">
-              <label for="salesFilterCustomer" class="form-label" style="color: #4a5568; font-weight: 500; font-size: 12px; margin-bottom: 4px;">Customer</label>
-              <input type="text" class="form-control form-control-sm" id="salesFilterCustomer" placeholder="Search..." style="border-radius: 4px; font-size: 13px;">
+              <label for="salesFilterCustomer" class="form-label">Customer</label>
+              <input type="text" class="form-control form-control-sm" id="salesFilterCustomer" placeholder="Search...">
             </div>
             <div class="col-6 col-md-auto">
-              <button class="btn btn-sm w-100" onclick="applySalesFilter()" style="background: #667eea; border: none; color: white; border-radius: 4px; font-weight: 500; padding: 6px 16px; font-size: 13px;">
-                <i class="bi bi-search" style="font-size: 14px;"></i> Search
+              <button class="btn btn-primary btn-sm w-100" onclick="applySalesFilter()">
+                <i class="bi bi-search"></i> Search
               </button>
             </div>
             <div class="col-6 col-md-auto">
-              <button class="btn btn-sm btn-outline-secondary w-100" onclick="clearSalesFilter()" style="border-radius: 4px; padding: 6px 12px; font-size: 13px; border-color: #cbd5e0; color: #4a5568;">
-                <i class="bi bi-x-circle" style="font-size: 14px;"></i> Clear
+              <button class="btn btn-sm btn-outline-secondary w-100" onclick="clearSalesFilter()">
+                <i class="bi bi-x-circle"></i> Clear
               </button>
             </div>
+          </div>
           </div>
         </div>
 
         <!-- Sales History Table -->
-        <div style="border: none; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); background: white; overflow: hidden; border: 1px solid #e2e8f0;">
-          <div style="background: #f7fafc; padding: 12px 20px; font-weight: 600; border-bottom: 1px solid #e2e8f0; color: #2d3748; font-size: 14px;">
-            <i class="bi bi-table" style="color: #667eea;"></i> Sales Transactions
-          </div>
-          <div style="padding: 20px;">
+        <div class="card">
+          <div class="card-header"><i class="bi bi-table"></i> Sales Transactions</div>
+          <div class="card-body">
             <div id="salesDashboardLoading" class="text-center py-5" style="display: none;">
               <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Loading...</span>
@@ -2073,7 +2067,7 @@
                     </tr>
                   </thead>
                   <tbody id="salesDashboardBody" style="border-top: none;">
-                    <tr><td colspan="5" class="text-center text-muted py-4" style="font-size: 13px;">Loading sales history...</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-4" style="font-size: 13px;">Loading sales history...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -3678,10 +3672,31 @@
       if (!openModal) return;
       document.body.classList.add('modal-open');
       document.body.style.overflow = 'hidden';
-      if (!document.querySelector('.modal-backdrop')) {
+      const backdrops = document.querySelectorAll('.modal-backdrop');
+      if (!backdrops.length) {
         const backdrop = document.createElement('div');
         backdrop.className = 'modal-backdrop fade show';
         document.body.appendChild(backdrop);
+      } else if (backdrops.length > 1) {
+        backdrops.forEach((el, idx) => {
+          if (idx < backdrops.length - 1) el.remove();
+        });
+      }
+    }
+
+    function cleanupModalBackdrops() {
+      const openModal = document.querySelector('.modal.show');
+      const backdrops = document.querySelectorAll('.modal-backdrop');
+      if (!openModal) {
+        backdrops.forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        return;
+      }
+      if (backdrops.length > 1) {
+        backdrops.forEach((el, idx) => {
+          if (idx < backdrops.length - 1) el.remove();
+        });
       }
     }
 
@@ -3724,6 +3739,7 @@
           delete modalEl.dataset.parentModalId;
         }
         ensureModalOpenState();
+        cleanupModalBackdrops();
       });
     }
 
