@@ -3679,6 +3679,21 @@
       if (body) body.scrollTop = 0;
     }
 
+    function blurActiveInModal(modalEl) {
+      if (!modalEl) return;
+      const active = document.activeElement;
+      if (active && modalEl.contains(active) && typeof active.blur === 'function') {
+        active.blur();
+      }
+    }
+
+    function safeHideModal(modalEl) {
+      if (!modalEl) return;
+      blurActiveInModal(modalEl);
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      modal.hide();
+    }
+
     function getActiveModalId(excludeId) {
       const modals = Array.from(document.querySelectorAll('.modal.show'));
       const filtered = excludeId ? modals.filter(m => m.id !== excludeId) : modals;
@@ -3736,6 +3751,9 @@
 
     function attachModalReset(modalEl) {
       if (!modalEl) return;
+      modalEl.addEventListener('hide.bs.modal', () => {
+        blurActiveInModal(modalEl);
+      });
       modalEl.addEventListener('shown.bs.modal', () => {
         forceModalViewportTop();
         resetModalPosition(modalEl);
@@ -4712,10 +4730,7 @@
               // IMPORTANT: Close modal BEFORE refreshing inventory (which rebuilds HTML and destroys the modal)
               const modalEl = document.getElementById('inventoryAddModal');
               if (modalEl) {
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                if (modal) {
-                  modal.hide();
-                }
+                safeHideModal(modalEl);
               }
 
               // Show success message and reset form
@@ -4782,8 +4797,7 @@
               form.reset();
               const modalEl = ensureCustomerModal();
               if (modalEl) {
-                  const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                  modal.hide();
+                  safeHideModal(modalEl);
               }
               // Refresh customer views immediately so new entries appear without manual reload
               if (typeof loadCustomersSection === 'function') loadCustomersSection(true);
@@ -7308,8 +7322,7 @@
             if (window.localStorage) localStorage.removeItem('draft.supplier.add');
             const modalEl = ensureSupplierModal();
             if (modalEl) {
-              const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-              modal.hide();
+              safeHideModal(modalEl);
             }
             // Refresh supplier views/dropdowns immediately
             loadSuppliersList();
@@ -8553,8 +8566,7 @@
           // Refresh dropdown and inventory
           loadMasterData();
           const modalEl = document.getElementById('masterItemModal');
-          const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-          modal.hide();
+          safeHideModal(modalEl);
           if (saveBtn) {
             saveBtn.disabled = false;
             saveBtn.innerHTML = 'Save Item';
