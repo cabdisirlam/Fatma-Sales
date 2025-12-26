@@ -3100,8 +3100,8 @@
             <input type="text" class="form-control" id="customerEditCustomerName" placeholder="e.g. Jane Doe">
           </div>
           <div class="mb-3">
-            <label class="form-label">Phone (10 digits)</label>
-            <input type="tel" class="form-control" id="customerEditCustomerPhone" placeholder="e.g. 0712345678" pattern="^0\d{9}$" minlength="10" maxlength="10" title="Phone must be 10 digits starting with 0">
+            <label class="form-label">Phone (10 digits recommended)</label>
+            <input type="tel" class="form-control" id="customerEditCustomerPhone" placeholder="e.g. 0712345678" maxlength="15" title="Enter phone number (recommended: 10 digits)">
           </div>
           <div class="mb-3">
             <label class="form-label">Email</label>
@@ -3717,8 +3717,8 @@
                       <input type="text" class="form-control" name="name" placeholder="e.g. Jane Doe" required>
                     </div>
                     <div class="col-md-4">
-                      <label class="form-label">Phone (10 digits) *</label>
-                      <input type="tel" class="form-control" name="phone" placeholder="e.g. 0712345678" pattern="^0\d{9}$" minlength="10" maxlength="10" title="Phone must be 10 digits starting with 0" required>
+                      <label class="form-label">Phone (10 digits recommended)</label>
+                      <input type="tel" class="form-control" name="phone" placeholder="e.g. 0712345678" maxlength="15" title="Enter phone number (recommended: 10 digits)">
                     </div>
                     <div class="col-md-4">
                       <label class="form-label">Email</label>
@@ -3727,8 +3727,8 @@
                   </div>
                   <div class="row g-2 mt-2">
                     <div class="col-md-4">
-                      <label class="form-label">KRA PIN (11 characters)</label>
-                      <input type="text" class="form-control" name="kra_pin" placeholder="e.g. A001234567Z" pattern="^[A-Z]\d{9}[A-Z]$" minlength="11" maxlength="11" title="KRA PIN must be 11 characters: Letter + 9 digits + Letter" style="text-transform: uppercase;">
+                      <label class="form-label">KRA PIN (11 characters recommended)</label>
+                      <input type="text" class="form-control" name="kra_pin" placeholder="e.g. A001234567Z" maxlength="15" title="Enter KRA PIN (recommended: Letter + 9 digits + Letter)" style="text-transform: uppercase;">
                     </div>
                     <div class="col-md-4">
                       <label class="form-label">Location</label>
