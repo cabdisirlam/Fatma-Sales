@@ -6413,12 +6413,19 @@
 
         google.script.run.withSuccessHandler(() => {
             btn.disabled = false; btn.innerText = 'Confirm Payment';
-            alert('Payment Received');
             const modalEl = document.getElementById('dashboardCustomerPayModal');
             if (modalEl) {
               safeHideModal(modalEl);
             }
-            loadCustomersSection(true);
+
+            // Reload customers AFTER modal closes to prevent race condition
+            // Delay must be longer than safeHideModal's 50ms delay + modal hide animation
+            setTimeout(function() {
+              loadCustomersSection(true);
+              // Explicit backdrop cleanup to prevent stuck backdrops
+              cleanupModalBackdrops();
+              alert('Payment Received');
+            }, 600);
         }).withFailureHandler(e => {
             btn.disabled = false; btn.innerText = 'Confirm Payment';
             alert(e.message);
@@ -6984,13 +6991,20 @@
           toggleFinancialButton(btn, false, 'Pay Supplier');
           if (res && res.success) {
             form.reset();
-            showFinancialAlert(res.message || 'Expense recorded.', 'success');
             draftStorage.clear('draft.fin.expense');
-            loadFinancialsSection();
             const modalEl = document.getElementById('finPayModal');
             if (modalEl) {
               safeHideModal(modalEl);
             }
+
+            // Reload financials AFTER modal closes to prevent race condition
+            // Delay must be longer than safeHideModal's 50ms delay + modal hide animation
+            setTimeout(function() {
+              loadFinancialsSection();
+              // Explicit backdrop cleanup to prevent stuck backdrops
+              cleanupModalBackdrops();
+              showFinancialAlert(res.message || 'Expense recorded.', 'success');
+            }, 600);
           } else {
             showFinancialAlert(res && res.message ? res.message : 'Unable to record expense.', 'danger');
           }
@@ -7032,13 +7046,20 @@
           toggleFinancialButton(btn, false, 'Record Inflow');
           if (res && res.success) {
             form.reset();
-            showFinancialAlert(res.message || 'Opening/Adjustment recorded.', 'success');
             draftStorage.clear('draft.fin.opening');
-            loadFinancialsSection();
             const modalEl = document.getElementById('finInflowModal');
             if (modalEl) {
               safeHideModal(modalEl);
             }
+
+            // Reload financials AFTER modal closes to prevent race condition
+            // Delay must be longer than safeHideModal's 50ms delay + modal hide animation
+            setTimeout(function() {
+              loadFinancialsSection();
+              // Explicit backdrop cleanup to prevent stuck backdrops
+              cleanupModalBackdrops();
+              showFinancialAlert(res.message || 'Opening/Adjustment recorded.', 'success');
+            }, 600);
           } else {
             showFinancialAlert(res && res.message ? res.message : 'Unable to record opening.', 'danger');
           }
@@ -8075,12 +8096,19 @@
           resetPaymentSubmitButton();
 
           if (result.success) {
-            alert('Payment of ' + formatCurrency(amount) + ' recorded successfully!');
             const modalEl = document.getElementById('supplierPaymentModal');
             if (modalEl) {
               safeHideModal(modalEl);
             }
-            loadSuppliersList();
+
+            // Reload suppliers AFTER modal closes to prevent race condition
+            // Delay must be longer than safeHideModal's 50ms delay + modal hide animation
+            setTimeout(function() {
+              loadSuppliersList();
+              // Explicit backdrop cleanup to prevent stuck backdrops
+              cleanupModalBackdrops();
+              alert('Payment of ' + formatCurrency(amount) + ' recorded successfully!');
+            }, 600);
           } else {
             alert('Error: ' + result.message);
           }
