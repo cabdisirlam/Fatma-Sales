@@ -841,109 +841,132 @@
         padding: 1rem;
       }
 
-      /* === MOBILE: Modals (Critical for phones under 8 inches) === */
+      /* === MOBILE: Modals (Optimized for phones) === */
 
-      /* Modal spacing from screen edges */
+      /* Modal spacing from screen edges - minimal margin */
       .modal-dialog {
-        margin: 0.5rem !important;
+        margin: 0.25rem !important;
       }
 
-      /* Fullscreen modals get proper padding */
-      .modal-fullscreen-sm-down .modal-body,
-      .modal-fullscreen-sm-down .modal-header,
+      /* Fullscreen modals: moderate padding, not excessive */
+      .modal-fullscreen-sm-down .modal-body {
+        padding: 1rem !important;
+      }
+
+      .modal-fullscreen-sm-down .modal-header {
+        padding: 0.875rem 1rem !important;
+      }
+
       .modal-fullscreen-sm-down .modal-footer {
-        padding-left: 1.5rem !important;
-        padding-right: 1.5rem !important;
+        padding: 0.875rem 1rem !important;
       }
 
       .modal-content {
         border-radius: 12px;
       }
 
-      /* Generous padding inside all modals */
+      /* Modal body: comfortable but not excessive padding */
       .modal-body {
-        padding: 1.5rem !important;
+        padding: 1rem !important;
       }
 
       .modal-header {
-        padding: 1.25rem 1.5rem !important;
+        padding: 0.875rem 1rem !important;
       }
 
       .modal-footer {
-        padding: 1.25rem 1.5rem !important;
+        padding: 0.875rem 1rem !important;
         flex-wrap: wrap;
-        gap: 0.75rem;
+        gap: 0.5rem;
       }
 
       .modal-footer .btn {
         flex: 1 1 auto;
-        min-width: 120px;
+        min-width: 100px;
+        padding: 0.625rem 1rem;
+        font-size: 0.9375rem;
       }
 
-      /* Form elements inside modals get extra spacing */
+      /* Form elements: use Bootstrap's default gutter system */
       .modal-body .row {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
+        margin-left: -0.375rem !important;
+        margin-right: -0.375rem !important;
       }
 
       .modal-body .col,
       .modal-body [class*="col-"] {
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+        padding-left: 0.375rem !important;
+        padding-right: 0.375rem !important;
       }
 
-      /* Form groups in modals */
-      .modal-body .mb-3,
-      .modal-body .mb-2 {
-        margin-bottom: 1.25rem !important;
+      /* NEW SALE MODAL SPECIFIC OPTIMIZATIONS */
+
+      /* Product selection row */
+      #newSaleModal .row.align-items-end {
+        margin-bottom: 0.75rem;
       }
 
-      /* Tables in modals (like cart) */
-      .modal-body table {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        margin-bottom: 1.5rem !important;
+      /* Form controls in New Sale modal */
+      #newSaleModal .form-control,
+      #newSaleModal .form-select {
+        font-size: 0.9375rem;
+        padding: 0.5rem 0.75rem;
       }
 
-      .modal-body table thead {
-        font-size: 0.8125rem;
+      /* Customer info section - reduce padding */
+      #newSaleModal [style*="background: #f8f9fa"] {
+        padding: 0.75rem !important;
+        margin-top: 0.5rem !important;
       }
 
-      .modal-body table tbody {
+      /* Service/Manual item section */
+      #newSaleModal [style*="border: 2px dashed"] {
+        padding: 0.875rem !important;
+        margin-bottom: 0.875rem !important;
+      }
+
+      /* Cart table container */
+      #newSaleModal .table-responsive {
+        max-height: 200px !important;
+        margin-bottom: 0.875rem !important;
         font-size: 0.875rem;
       }
 
-      .modal-body table td,
-      .modal-body table th {
-        padding: 0.75rem 0.5rem !important;
+      #newSaleModal .table th,
+      #newSaleModal .table td {
+        padding: 0.5rem 0.25rem !important;
+        font-size: 0.8125rem;
       }
 
-      /* Cart/product list in New Sale modal */
-      #modalCartBody {
-        max-height: 300px;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+      /* Total section */
+      #newSaleModal [style*="linear-gradient"][style*="#f8f9fa"] {
+        padding: 0.875rem !important;
+        margin-top: 0.75rem;
       }
 
-      /* Summary sections (totals) in modals */
-      .modal-body .text-end.fw-bold,
-      .modal-body [style*="font-weight: bold"] {
-        padding: 0.75rem 0 !important;
+      /* Reduce spacing between form groups */
+      #newSaleModal .mb-3 {
+        margin-bottom: 0.875rem !important;
       }
 
-      /* Bordered sections in modals */
-      .modal-body [style*="border"],
-      .modal-body .border {
-        padding: 1rem !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
+      #newSaleModal .mb-2 {
+        margin-bottom: 0.5rem !important;
       }
 
-      /* Customer/Product info boxes in modals */
-      .modal-body [style*="background: #f8f9fa"] {
-        padding: 1rem !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
+      /* Labels */
+      #newSaleModal .form-label {
+        margin-bottom: 0.25rem !important;
+        font-size: 0.875rem;
+      }
+
+      #newSaleModal .form-label.small {
+        font-size: 0.8125rem !important;
+      }
+
+      /* Buttons in New Sale modal */
+      #newSaleModal .btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
       }
 
       /* === MOBILE: Form Controls === */
@@ -1096,34 +1119,24 @@
         padding: 10px 12px !important;
       }
 
-      /* Ensure modals have generous padding on small phones */
+      /* Keep modal padding minimal on small phones */
       .modal-dialog {
-        margin: 0.25rem !important;
+        margin: 0.125rem !important;
       }
 
-      .modal-body {
-        padding: 1.25rem !important;
+      /* Don't add extra padding - use the 768px rules */
+      #newSaleModal .table-responsive {
+        max-height: 180px !important;
       }
 
-      .modal-header,
+      /* Stack footer buttons vertically on very small screens */
       .modal-footer {
-        padding: 1rem 1.25rem !important;
+        flex-direction: column;
       }
 
-      /* Fullscreen modals on small phones get even more padding */
-      .modal-fullscreen-sm-down .modal-body {
-        padding: 1.5rem 1.25rem !important;
-      }
-
-      .modal-fullscreen-sm-down .modal-header,
-      .modal-fullscreen-sm-down .modal-footer {
-        padding: 1.25rem !important;
-      }
-
-      /* Extra spacing for form elements */
-      .modal-body .form-control,
-      .modal-body .form-select {
-        margin-bottom: 1rem !important;
+      .modal-footer .btn {
+        width: 100%;
+        min-width: 0;
       }
 
       .modal-body .row.g-2 > * {
