@@ -4563,7 +4563,11 @@
             // Cache inventory so item -> supplier lookups work in return modal
             DATA_CACHE['inventory'] = normalized;
             displayInventory(normalized);
-            loadSuppliersOverview();
+            // OPTIMIZATION: Only load suppliers overview if we're on dashboard/home page
+            // Skip this redundant call when just refreshing inventory after adding product
+            if (!forceRefresh) {
+              loadSuppliersOverview();
+            }
           } catch (renderError) {
             console.error('Error rendering dashboard inventory', renderError);
             contentDiv.innerHTML = '<div class="alert alert-danger">Error rendering inventory. Please try again.</div>';
@@ -4834,8 +4838,12 @@
 
       container.innerHTML = html;
 
-      // Load suppliers into the dropdown
-      loadSuppliersForDropdown();
+      // Load suppliers into the dropdown - but only if dropdown exists and is empty
+      // OPTIMIZATION: Avoid redundant supplier loads when refreshing inventory
+      const dropdown = document.getElementById('inventorySupplierDropdown');
+      if (dropdown && (!dropdown.options || dropdown.options.length <= 1)) {
+        loadSuppliersForDropdown();
+      }
     }
 
     // Load suppliers and populate the supplier dropdown
