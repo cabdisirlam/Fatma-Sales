@@ -611,10 +611,10 @@ function generateId(sheetName, columnName, prefix) {
       // OPTIMIZATION: Only read the ID column instead of entire sheet
       // This is 10-100x faster for large sheets!
       const lastRow = sheet.getLastRow();
-      if (lastRow < 1) {
-        // Empty sheet, return first ID
+      if (lastRow <= 1) {
+        // Empty sheet or only headers, return first ID
         const newId = prefix + '-001';
-        Logger.log('Generated ID for empty sheet: ' + newId);
+        Logger.log('Generated ID for empty/header-only sheet: ' + newId);
         return newId;
       }
 
