@@ -969,6 +969,70 @@
         font-size: 0.875rem;
       }
 
+      /* ADD PRODUCT / INVENTORY MODAL OPTIMIZATIONS */
+
+      /* Form controls in Add Product modal */
+      #inventoryAddModal .form-control,
+      #inventoryAddModal .form-select {
+        font-size: 0.9375rem;
+        padding: 0.5rem 0.75rem;
+      }
+
+      /* Labels in Add Product modal */
+      #inventoryAddModal .form-label {
+        margin-bottom: 0.25rem !important;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      /* Input groups (with + buttons) */
+      #inventoryAddModal .input-group .btn {
+        padding: 0.5rem 0.75rem;
+      }
+
+      /* Button row at bottom */
+      #inventoryAddModal .d-flex.align-items-end {
+        margin-top: 0.5rem !important;
+      }
+
+      #inventoryAddModal .btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.9375rem;
+      }
+
+      /* Reduce spacing between rows */
+      #inventoryAddModal .row.g-2 {
+        margin-bottom: 0.5rem;
+      }
+
+      #inventoryAddModal .row.g-2.mt-2 {
+        margin-top: 0.75rem !important;
+      }
+
+      /* Alert message */
+      #inventoryAddModal .alert {
+        margin-top: 0.75rem !important;
+        padding: 0.75rem !important;
+        font-size: 0.875rem;
+      }
+
+      /* Extra small phones: Stack buttons vertically */
+      @media (max-width: 400px) {
+        #inventoryAddModal .d-flex.align-items-end {
+          flex-direction: column !important;
+          align-items: stretch !important;
+        }
+
+        #inventoryAddModal .d-flex.align-items-end .btn {
+          width: 100% !important;
+          margin-bottom: 0.375rem;
+        }
+
+        #inventoryAddModal .d-flex.align-items-end .btn:last-child {
+          margin-bottom: 0;
+        }
+      }
+
       /* === MOBILE: Form Controls === */
       .form-label {
         font-size: 0.875rem;
