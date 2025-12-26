@@ -47,6 +47,11 @@
       overflow: hidden;
     }
 
+    body.menu-open .main-content {
+      height: 100vh;
+      overflow: hidden;
+    }
+
     /* Stacked modals (e.g., convert inside quotations modal) */
     .modal.modal-foreground { z-index: 2000; }
     .modal-backdrop.modal-foreground-backdrop { z-index: 1995; }
@@ -111,6 +116,7 @@
       flex-grow: 1;
       overflow-y: hidden;
       overflow-x: hidden;
+      overscroll-behavior: none;
     }
 
     .menu-items::-webkit-scrollbar {
@@ -710,10 +716,33 @@
       .sidebar {
         transform: translateX(-100%);
         overflow: hidden;
+        overscroll-behavior: none;
       }
 
       .sidebar.show {
         transform: translateX(0);
+      }
+
+      .sidebar-header {
+        padding: 16px 16px;
+      }
+
+      .sidebar-header h3 {
+        font-size: 1rem;
+      }
+
+      .menu-item a {
+        padding: 10px 14px;
+        margin: 4px 10px;
+      }
+
+      .menu-item i {
+        font-size: 1.1rem;
+      }
+
+      .menu-item span {
+        margin-left: 12px;
+        font-size: 0.8rem;
       }
 
       .main-content {
@@ -1415,7 +1444,7 @@
       font-size: 0.9rem;
       z-index: 2000;
     }
-  
+
     /* Mobile performance tweaks */
     @media (max-width: 767.98px) {
       .card,
@@ -1435,6 +1464,38 @@
       }
 
       .card,
+      .stat-card,
+      .dashboard-card,
+      .module-card,
+      .header-section,
+      .welcome-section {
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
+      }
+
+      .modal-title {
+        font-size: 1rem;
+      }
+
+      .modal-body {
+        font-size: 0.875rem;
+      }
+
+      .modal-body .form-label {
+        font-size: 0.8125rem;
+      }
+
+      .modal-body .form-control,
+      .modal-body .form-select {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.65rem;
+      }
+
+      .modal-footer .btn {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+      }
+    }
+.card,
       .stat-card,
       .dashboard-card,
       .module-card,
@@ -3553,11 +3614,27 @@
       window.scrollTo(0, 0);
     }
 
+    function normalizeSidebarAfterModal() {
+      const sidebar = document.getElementById('sidebar');
+      if (!sidebar) return;
+      if (!sidebar.classList.contains('show')) {
+        document.body.classList.remove('menu-open');
+        return;
+      }
+
+      const menu = sidebar.querySelector('.menu-items');
+      if (menu) menu.scrollTop = 0;
+      sidebar.scrollTop = 0;
+    }
+
     function attachModalReset(modalEl) {
       if (!modalEl) return;
       modalEl.addEventListener('shown.bs.modal', () => {
         forceModalViewportTop();
         resetModalPosition(modalEl);
+      });
+      modalEl.addEventListener('hidden.bs.modal', () => {
+        normalizeSidebarAfterModal();
       });
     }
 
@@ -9318,6 +9395,7 @@
   </script>
 </body>
 </html>
+
 
 
 

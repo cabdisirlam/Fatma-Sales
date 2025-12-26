@@ -73,7 +73,7 @@
       .action-btn-group { gap: 10px; }
       .btn-action { flex: 1 1 calc(50% - 10px); min-width: 150px; }
     }
-  
+
     /* Mobile performance tweaks */
     @media (max-width: 767.98px) {
       .card,
@@ -93,6 +93,38 @@
       }
 
       .card,
+      .stat-card,
+      .dashboard-card,
+      .module-card,
+      .header-section,
+      .welcome-section {
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
+      }
+
+      .modal-title {
+        font-size: 1rem;
+      }
+
+      .modal-body {
+        font-size: 0.875rem;
+      }
+
+      .modal-body .form-label {
+        font-size: 0.8125rem;
+      }
+
+      .modal-body .form-control,
+      .modal-body .form-select {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.65rem;
+      }
+
+      .modal-footer .btn {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+      }
+    }
+.card,
       .stat-card,
       .dashboard-card,
       .module-card,
@@ -421,6 +453,12 @@
         forceModalViewportTop();
         resetModalPosition(modalEl);
       });
+      modalEl.addEventListener('hidden.bs.modal', () => {
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+      });
     }
 
     function openModal(id) {
@@ -428,7 +466,7 @@
       if (!modalEl) return;
       forceModalViewportTop();
       resetModalPosition(modalEl);
-      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, {backdrop: true});
       modal.show();
     }
 
@@ -604,6 +642,7 @@
   </script>
 </body>
 </html>
+
 
 
 

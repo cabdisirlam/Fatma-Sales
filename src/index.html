@@ -937,7 +937,7 @@
                 page-break-inside: avoid;
             }
         }
-    
+
     /* Mobile performance tweaks */
     @media (max-width: 767.98px) {
       .card,
@@ -957,6 +957,38 @@
       }
 
       .card,
+      .stat-card,
+      .dashboard-card,
+      .module-card,
+      .header-section,
+      .welcome-section {
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
+      }
+
+      .modal-title {
+        font-size: 1rem;
+      }
+
+      .modal-body {
+        font-size: 0.875rem;
+      }
+
+      .modal-body .form-label {
+        font-size: 0.8125rem;
+      }
+
+      .modal-body .form-control,
+      .modal-body .form-select {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.65rem;
+      }
+
+      .modal-footer .btn {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+      }
+    }
+.card,
       .stat-card,
       .dashboard-card,
       .module-card,
@@ -1690,6 +1722,7 @@
     </script>
 </body>
 </html>
+
 
 
 
