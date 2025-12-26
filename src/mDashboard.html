@@ -636,10 +636,66 @@
     }
 
     @media (max-width: 768px) {
-      /* === MOBILE: Prevent content from touching screen edges === */
+      /* === MOBILE: SCROLL PERFORMANCE OPTIMIZATIONS === */
+
+      /* Enable hardware acceleration for smooth scrolling */
       body {
         padding: 0 !important;
+        -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
+        transform: translateZ(0); /* Force GPU acceleration */
+        backface-visibility: hidden; /* Prevent flickering */
       }
+
+      /* Optimize scrollable containers */
+      .content-wrapper,
+      .main-content,
+      .content-section,
+      .modal-body,
+      .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        transform: translateZ(0);
+        will-change: scroll-position;
+      }
+
+      /* Reduce expensive CSS during scroll */
+      .stat-card,
+      .card,
+      .dashboard-card,
+      .mobile-stack-table tr {
+        will-change: transform;
+        backface-visibility: hidden;
+        transform: translateZ(0);
+      }
+
+      /* Optimize box shadows for better performance */
+      .card,
+      .stat-card,
+      .mobile-stack-table tr,
+      [style*="box-shadow"] {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; /* Lighter shadows */
+      }
+
+      /* Simplify gradients on mobile for better scroll */
+      [style*="linear-gradient"] {
+        /* Gradients are kept but GPU accelerated */
+        transform: translateZ(0);
+        backface-visibility: hidden;
+      }
+
+      /* Fast touch response */
+      * {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+        touch-action: manipulation; /* Prevent zoom lag */
+      }
+
+      /* Optimize table scrolling */
+      .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+      }
+
+      /* === MOBILE: Prevent content from touching screen edges === */
 
       .sidebar {
         transform: translateX(-100%);
@@ -3140,6 +3196,99 @@
       return false;
     }
 
+    // ==================== SCROLL PERFORMANCE UTILITIES ====================
+
+    /**
+     * Debounce function - delays execution until after wait time has passed
+     * Useful for resize, scroll events that fire rapidly
+     */
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    /**
+     * Throttle function - limits execution to once per wait time
+     * Better for scroll events that need regular updates
+     */
+    function throttle(func, wait) {
+      let inThrottle;
+      return function(...args) {
+        if (!inThrottle) {
+          func.apply(this, args);
+          inThrottle = true;
+          setTimeout(() => inThrottle = false, wait);
+        }
+      };
+    }
+
+    /**
+     * Passive event listener support detection
+     */
+    let supportsPassive = false;
+    try {
+      const opts = Object.defineProperty({}, 'passive', {
+        get: function() { supportsPassive = true; }
+      });
+      window.addEventListener('testPassive', null, opts);
+      window.removeEventListener('testPassive', null, opts);
+    } catch (e) {}
+
+    /**
+     * Add passive event listener for better scroll performance
+     */
+    function addPassiveListener(element, event, handler) {
+      element.addEventListener(event, handler, supportsPassive ? { passive: true } : false);
+    }
+
+    /**
+     * Request idle callback for non-critical work
+     */
+    const requestIdleCallbackShim = window.requestIdleCallback || function(cb) {
+      const start = Date.now();
+      return setTimeout(function() {
+        cb({
+          didTimeout: false,
+          timeRemaining: function() {
+            return Math.max(0, 50 - (Date.now() - start));
+          }
+        });
+      }, 1);
+    };
+
+    /**
+     * Optimize images for mobile - lazy load offscreen images
+     */
+    function optimizeImagesForMobile() {
+      const images = document.querySelectorAll('img[data-src]');
+      if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const img = entry.target;
+              img.src = img.dataset.src;
+              img.removeAttribute('data-src');
+              imageObserver.unobserve(img);
+            }
+          });
+        });
+        images.forEach(img => imageObserver.observe(img));
+      } else {
+        // Fallback for older browsers
+        images.forEach(img => {
+          img.src = img.dataset.src;
+          img.removeAttribute('data-src');
+        });
+      }
+    }
+
     // ==================== INITIALIZATION ====================
     // ==================== MAIN INITIALIZATION ====================
     document.addEventListener('DOMContentLoaded', function() {
@@ -3177,6 +3326,7 @@
       let pullMoveY = 0;
       let isPulling = false;
       const pullThreshold = 80; // pixels needed to trigger refresh
+      let rafId = null; // For requestAnimationFrame
 
       const mainContent = document.querySelector('.main-content');
       if (mainContent) {
@@ -3192,9 +3342,12 @@
           pullMoveY = e.touches[0].clientY - pullStartY;
 
           if (pullMoveY > 0 && pullMoveY < pullThreshold * 2) {
-            // Visual feedback - subtle pull indicator
-            mainContent.style.transform = `translateY(${Math.min(pullMoveY / 3, 40)}px)`;
-            mainContent.style.transition = 'transform 0.1s ease-out';
+            // Use RAF for smooth 60fps animation
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(() => {
+              mainContent.style.transform = `translateY(${Math.min(pullMoveY / 3, 40)}px)`;
+              mainContent.style.transition = 'transform 0.1s ease-out';
+            });
           }
         }, {passive: true});
 
