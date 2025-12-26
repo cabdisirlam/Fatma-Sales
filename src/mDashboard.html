@@ -2713,6 +2713,22 @@
       }).getMasterItems();
     }
 
+    // ==================== HELPER FUNCTIONS ====================
+    /**
+     * Safely set textContent on an element (prevents "Cannot set properties of null" errors)
+     * @param {string} elementId - The ID of the element
+     * @param {string|number} value - The value to set
+     * @returns {boolean} - True if successful, false if element not found
+     */
+    function safeSetText(elementId, value) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.textContent = value;
+        return true;
+      }
+      return false;
+    }
+
     // ==================== INITIALIZATION ====================
     // ==================== MAIN INITIALIZATION ====================
     document.addEventListener('DOMContentLoaded', function() {
@@ -2855,8 +2871,8 @@
       // Load sales overview
       google.script.run
         .withSuccessHandler(function(data) {
-          document.getElementById('totalSales').textContent = data.saleCount || 0;
-          document.getElementById('totalRevenue').textContent = formatCurrency(data.totalRevenue || 0);
+          safeSetText('totalSales', data.saleCount || 0);
+          safeSetText('totalRevenue', formatCurrency(data.totalRevenue || 0));
         })
         .withFailureHandler(function(error) {
           console.error('Error loading sales stats:', error);
@@ -2871,19 +2887,19 @@
           console.log('Inventory type:', typeof inventory);
 
           const count = inventory && Array.isArray(inventory) ? inventory.length : 0;
-          document.getElementById('totalProducts').textContent = count;
+          safeSetText('totalProducts', count);
           console.log('Set totalProducts to:', count);
         })
         .withFailureHandler(function(error) {
           console.error('Error loading inventory count:', error);
-          document.getElementById('totalProducts').textContent = '0';
+          safeSetText('totalProducts', '0');
         })
         .getInventory({});
 
       // Load customers count
       google.script.run
         .withSuccessHandler(function(customers) {
-          document.getElementById('totalCustomers').textContent = customers.length || 0;
+          safeSetText('totalCustomers', customers.length || 0);
         })
         .withFailureHandler(function(error) {
           console.error('Error loading customers count:', error);
@@ -3707,8 +3723,8 @@
       google.script.run
         .withSuccessHandler(function(data) {
           document.getElementById('salesTotalRevenue').textContent = formatCurrency(data.totalRevenue);
-          document.getElementById('salesCount').textContent = data.saleCount || 0;
-          document.getElementById('salesCreditCount').textContent = data.creditCount || 0;
+          safeSetText('salesCount', data.saleCount || 0);
+          safeSetText('salesCreditCount', data.creditCount || 0);
           document.getElementById('salesAverageOrder').textContent = formatCurrency(data.averageOrder);
           showSalesAlert('Today\'s revenue: ' + formatCurrency(data.todayRevenue), 'info');
         })
@@ -3735,8 +3751,16 @@
       google.script.run
         .withSuccessHandler(function(data) {
           if (data && data.success && data.overview) {
-            document.getElementById('supplierTotalCount').textContent = data.overview.totalSuppliers || 0;
-            document.getElementById('supplierPendingOrders').textContent = data.overview.pendingOrders || 0;
+            // Add null checks to prevent "Cannot set properties of null" errors
+            const totalCountEl = document.getElementById('supplierTotalCount');
+            const pendingOrdersEl = document.getElementById('supplierPendingOrders');
+
+            if (totalCountEl) {
+              totalCountEl.textContent = data.overview.totalSuppliers || 0;
+            }
+            if (pendingOrdersEl) {
+              pendingOrdersEl.textContent = data.overview.pendingOrders || 0;
+            }
           }
         })
         .withFailureHandler(function(error) {
