@@ -3588,18 +3588,27 @@
         google.script.run
           .withSuccessHandler(function(response) {
             if (response.success) {
+              // IMPORTANT: Close modal BEFORE refreshing inventory (which rebuilds HTML and destroys the modal)
+              const modalEl = document.getElementById('inventoryAddModal');
+              if (modalEl) {
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) {
+                  modal.hide();
+                }
+              }
+
+              // Show success message and reset form
               showQuickAddAlert(alertBox, 'success', 'Product added successfully! Item ID: ' + response.itemId);
               form.reset();
               if (window.localStorage) localStorage.removeItem('draft.inventory.add');
-              // Refresh immediately so new inventory/product is visible without manual reload
-              if (typeof loadInventorySection === 'function') {
-                loadInventorySection(true);
-              }
-              const modalEl = document.getElementById('inventoryAddModal');
-              if (modalEl) {
-                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                modal.hide();
-              }
+
+              // Refresh inventory section AFTER modal is closed
+              // Small delay to ensure modal animation completes before DOM rebuild
+              setTimeout(function() {
+                if (typeof loadInventorySection === 'function') {
+                  loadInventorySection(true);
+                }
+              }, 300);
             } else {
               showQuickAddAlert(alertBox, 'danger', 'Error: ' + (response.message || 'Failed to add product'));
             }
