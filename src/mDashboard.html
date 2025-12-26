@@ -4102,13 +4102,13 @@
 
             return `
               <tr class="${rowClass}">
-                <td><strong>${saleId}</strong><br><small class="text-muted">${row.DateTime || ''}</small></td>
-                <td>${row.Customer_Name || 'Walk-in'}</td>
-                <td class="text-end">${formatCurrency(grand)}</td>
-                <td class="text-end">${formatCurrency(paid)}</td>
-                <td class="text-end ${balance > 0 ? 'text-danger' : ''}">${formatCurrency(balance)}</td>
-                <td>${statusBadge}<br><small class="text-muted">${fulfillStatus || ''}</small></td>
-                <td>
+                <td data-label="Transaction"><strong>${saleId}</strong><br><small class="text-muted">${row.DateTime || ''}</small></td>
+                <td data-label="Customer">${row.Customer_Name || 'Walk-in'}</td>
+                <td data-label="Total" class="text-end">${formatCurrency(grand)}</td>
+                <td data-label="Paid" class="text-end">${formatCurrency(paid)}</td>
+                <td data-label="Balance" class="text-end ${balance > 0 ? 'text-danger' : ''}">${formatCurrency(balance)}</td>
+                <td data-label="Status">${statusBadge}<br><small class="text-muted">${fulfillStatus || ''}</small></td>
+                <td data-label="Actions">
                   <div class="d-flex justify-content-start flex-wrap gap-1">
                     ${printBtn}
                     ${statusMenu}
@@ -4948,7 +4948,7 @@
           <div class="card-header"><i class="bi bi-box-seam"></i> Inventory Items</div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-hover table-sm" style="font-size: 13px;">
+              <table class="table table-hover table-sm mobile-stack-table" style="font-size: 13px;">
                 <thead>
                   <tr>
                     <th>Item ID</th>
@@ -4990,14 +4990,14 @@
 
           html += `
             <tr>
-              <td>${item.Item_ID || ''}</td>
-              <td><strong>${item.Item_Name || ''}</strong></td>
-              <td>${stockQty}</td>
-              <td>${item.Unit || ''}</td>
-              <td>${formatCurrency(costValue)}</td>
-              <td>${formatCurrency(priceValue)}</td>
-              <td>${supplierDisplay}</td>
-              <td>
+              <td data-label="Item ID">${item.Item_ID || ''}</td>
+              <td data-label="Item Name"><strong>${item.Item_Name || ''}</strong></td>
+              <td data-label="Stock">${stockQty}</td>
+              <td data-label="Unit">${item.Unit || ''}</td>
+              <td data-label="Cost Price">${formatCurrency(costValue)}</td>
+              <td data-label="Selling Price">${formatCurrency(priceValue)}</td>
+              <td data-label="Supplier">${supplierDisplay}</td>
+              <td data-label="Actions">
                 <button class="btn btn-sm btn-outline-danger"
                         data-item-id="${item.Item_ID || ''}"
                         data-supplier="${(item.Supplier_ID || item.Supplier || '').toString().replace(/\"/g, '&quot;')}"
@@ -5007,7 +5007,7 @@
                   <i class="bi bi-arrow-90deg-left"></i> Return
                 </button>
               </td>
-              <td>${statusBadge}</td>
+              <td data-label="Status">${statusBadge}</td>
             </tr>
           `;
         });
